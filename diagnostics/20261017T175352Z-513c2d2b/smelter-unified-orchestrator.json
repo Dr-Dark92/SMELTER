@@ -1,0 +1,166 @@
+{
+  "test": "SMELTER unified registry orchestration v1",
+  "model": "qwen3.5:9b",
+  "goal": "Discover installed SMELTER skills and read the asset-pipeline skill instructions. Then create and validate JSON artifact integration-46a123bc.json with these exact values: {\"engine\": \"SMELTER\", \"phase\": \"orchestration\", \"validated\": true}. Use registered tools, not imaginary tools. Finish only after validation succeeds.",
+  "skills_discovered": 7,
+  "capabilities": [
+    {
+      "id": "artifact.read",
+      "description": "Read the named sandbox JSON artifact",
+      "parameters": {
+        "filename": "string"
+      },
+      "read_only": true
+    },
+    {
+      "id": "artifact.validate",
+      "description": "Validate artifact values",
+      "parameters": {
+        "filename": "string",
+        "expected": "object"
+      },
+      "read_only": true
+    },
+    {
+      "id": "artifact.write",
+      "description": "Write the named sandbox JSON artifact",
+      "parameters": {
+        "filename": "string",
+        "data": "object"
+      },
+      "read_only": false
+    },
+    {
+      "id": "skills.list",
+      "description": "Discover installed skills",
+      "parameters": {},
+      "read_only": true
+    },
+    {
+      "id": "skills.read",
+      "description": "Read a specific installed skill's instructions",
+      "parameters": {
+        "skill_id": "string"
+      },
+      "read_only": true
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "skills.list",
+        "arguments": {},
+        "reason": "Discover installed SMELTER skills as the first step."
+      },
+      "eval_count": 37,
+      "result": {
+        "skills": [
+          {
+            "id": "universal-modder-asset-pipeline",
+            "description": "Turn generated or hand-made art into exactly what a game engine loads. Covers sprite cutout, trim and nearest-neighbour fitting to frame sizes, pixelation to a palette, sprite sheets and strips, player/team-colour masks, seamless textures, and rendering a 3D model into sprite frames from the game's own camera (isometric/RTS 8 or 16 headings, side view, top-down) with Blender. Use after generating assets, or when the user asks to make sprites, sprite sheets, animation frames, isometric unit sprites or icons for a game."
+          },
+          {
+            "id": "universal-modder-game-automation",
+            "description": "Launch, see and drive a real game so an agent can test its own mods. Covers launching via Steam or the exe, windowed mode at a fixed size, screenshots of the game window (GPU-safe capture), clicking and typing into menus, holding keys, relative mouse, crash-reporter cleanup, killing by PID, reading logs, scripted test scenes, and an in-game JSON bridge that lets an agent observe and act. Windows-first (also from WSL), with notes for Linux and macOS. Use when a mod must be verified in game, when navigating menus automatically, or when building a repeatable test or demo scene."
+          },
+          {
+            "id": "universal-modder-game-recon",
+            "description": "Figure out how a specific installed game can be modded, before writing any mod code. Covers where it's installed, the engine and version, managed vs native code, anti-cheat, loaders already present, save and config folders, and the community's modding route. Also whether this machine can run it (a Windows game on macOS or Linux, x64 on ARM). Use when the user asks \"can I mod <game>?\", \"what engine is <game>\", \"how do people mod <game>\", or at the start of any modding task. Produces MODDING_PLAN.md."
+          },
+          {
+            "id": "universal-modder-mashup-mods",
+            "description": "Build cross-game mashups and total conversions, the \"Minecraft inside Elden Ring\" or \"skateboarding in MW2\" kind. Covers passthrough mods (two games running at once and exchanging state, rendering and collision), porting one game's content or mechanics into another, embedding a decompiled game as a library, and clean reimplementations that read the user's own game files. Use when the user wants to combine two games, bring an enemy, mechanic or world from one game into another, or rebuild a game's runtime, or reimplement the guest's rules headless inside a real host."
+          },
+          {
+            "id": "universal-modder-mod-any-game",
+            "description": "Mod a PC game the user owns, taking an idea to working in the real game and recorded. It covers new items, weapons, enemies, bosses, units, civilizations, mechanics, art, sound, VR and cross-game mashups. Use when the user wants to mod, extend, hack on, reverse engineer or mash up a game (\"add a nuke to Terraria\", \"make a new civ for Age of Empires\", \"put Minecraft inside X\", \"can I mod this game?\"). It covers recon (engine, loaders, anti-cheat), choosing the route, a safe lab, a first vertical slice, fal-generated assets, in-game verification and a showcase clip."
+          },
+          {
+            "id": "universal-modder-publish-mod",
+            "description": "Package and release a finished game mod. Covers the pre-release lint (no game files, decompiled code or leaked keys), README and install steps, credits and AI disclosure, versioning, where to upload (Nexus Mods, Steam Workshop, Thunderstore, mod.io, GitHub releases), and the post with a video. Use when the user wants to ship, share, upload, release or post a mod."
+          },
+          {
+            "id": "universal-modder-reverse-engineering",
+            "description": "Read how a game actually works so a mod can hook it. Decompile .NET/Mono (ILSpy), IL2CPP (Cpp2IL, Il2CppDumper), Java (Vineflower) and native code (Ghidra, IDA, via MCP servers); dump data and asset formats; reverse-engineer a binary file format and prove it with a round trip; read live memory (Cheat Engine, Frida, x64dbg); find render passes (RenderDoc). Use when a mod needs game internals, e.g. \"how does the boss AI work\", \"find the damage function\", \"what format is this .sld/.pak/.dat\", \"where is the player position in memory\"."
+          }
+        ]
+      },
+      "pass": true,
+      "wall_seconds": 0.639
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "skills.read",
+        "arguments": {
+          "skill_id": "universal-modder-asset-pipeline"
+        },
+        "reason": "Read the asset-pipeline skill instructions as requested by the user goal."
+      },
+      "eval_count": 44,
+      "result": {
+        "skill_id": "universal-modder-asset-pipeline",
+        "instructions_loaded": true
+      },
+      "pass": true,
+      "wall_seconds": 0.646
+    },
+    {
+      "step": 3,
+      "decision": {
+        "tool_id": "artifact.write",
+        "arguments": {
+          "filename": "integration-46a123bc.json",
+          "data": {
+            "engine": "SMELTER",
+            "phase": "orchestration",
+            "validated": true
+          }
+        },
+        "reason": "Write the JSON artifact with the exact values specified in the user goal."
+      },
+      "eval_count": 70,
+      "result": {
+        "status": "written",
+        "filename": "integration-46a123bc.json"
+      },
+      "pass": true,
+      "wall_seconds": 1.059
+    },
+    {
+      "step": 4,
+      "decision": {
+        "tool_id": "artifact.validate",
+        "arguments": {
+          "filename": "integration-46a123bc.json",
+          "expected": {
+            "engine": "SMELTER",
+            "phase": "orchestration",
+            "validated": true
+          }
+        },
+        "reason": "Validate the written artifact to confirm it matches the expected values and complete the user goal."
+      },
+      "eval_count": 73,
+      "result": {
+        "status": "validated",
+        "valid": true,
+        "actual": {
+          "engine": "SMELTER",
+          "phase": "orchestration",
+          "validated": true
+        }
+      },
+      "pass": true,
+      "wall_seconds": 0.878
+    }
+  ],
+  "artifact": "integration-46a123bc.json",
+  "skill_listed": true,
+  "skill_read": true,
+  "validated": true,
+  "independent_check": true,
+  "full_pass": true,
+  "completion_source": "deterministic_validation_gate"
+}
