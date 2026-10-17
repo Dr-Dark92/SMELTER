@@ -38,20 +38,25 @@ try{
  if($expected -gt ($MaxOutputMiB*1MB)){throw "Sample declared size $expected exceeds limit"}
  $payloadLength=$input.Length-16-2-4
  if($payloadLength -le 0){throw 'Zlib payload too short'}
- $memory=New-Object IO.MemoryStream(,$input)
- $memory.Position=18
- $bounded=New-Object IO.MemoryStream
- $deflate=New-Object IO.Compression.DeflateStream($memory,[IO.Compression.CompressionMode]::Decompress,$true)
- $buffer=New-Object byte[] 65536
- $total=0
+ # PowerShell 5.1 overload binding can mis-handle Read(byte[],offset,count);
+ # use an explicit bounded zlib payload and explicit byte-array buffer.
+ $compressed=New-Object byte[] ($input.Length-18)
+ [Array]::Copy($input,18,$compressed,0,$compressed.Length)
+ $memory=[IO.MemoryStream]::new($compressed,$false)
+ $bounded=[IO.MemoryStream]::new()
+ $deflate=[IO.Compression.DeflateStream]::new($memory,[IO.Compression.CompressionMode]::Decompress,$true)
+ [byte[]]$buffer=New-Object byte[] 8192
+ [int]$total=0
  try{
-  while(($n=$deflate.Read($buffer,0,$buffer.Length)) -gt 0){
+  while($true){
+   [int]$n=$deflate.Read([byte[]]$buffer,[int]0,[int]$buffer.Length)
+   if($n -le 0){break}
    $total+=$n
-   if($total -gt ($MaxOutputMiB*1MB)){throw 'Decompressed sample exceeded limit'}
-   $bounded.Write($buffer,0,$n)
+   if($total -gt ($MaxOutputMiB*1MB) -or $total -gt [int]$expected){throw "Decompressed size exceeds declared size $expected"}
+   $bounded.Write([byte[]]$buffer,[int]0,[int]$n)
   }
  }finally{$deflate.Dispose();$memory.Dispose()}
- $bytes=$bounded.ToArray();$bounded.Dispose()
+ [byte[]]$bytes=$bounded.ToArray();$bounded.Dispose()
  $preview=if($bytes.Length){[BitConverter]::ToString($bytes,0,[Math]::Min(96,$bytes.Length))}else{''}
  $ascii=if($bytes.Length){-join ($bytes[0..([Math]::Min(96,$bytes.Length)-1)] | ForEach-Object {if($_ -ge 32 -and $_ -le 126){[char]$_}else{'.'}})}else{''}
  $report.sample=[ordered]@{file=$candidate.Name;input_bytes=$input.Length;declared_size=$expected;decompressed_bytes=$bytes.Length;size_matches=($expected -eq $bytes.Length);first96_hex=$preview;first96_ascii=$ascii;sha256=([BitConverter]::ToString(([Security.Cryptography.SHA256]::Create().ComputeHash($bytes))).Replace('-',''))}
