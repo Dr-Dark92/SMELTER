@@ -62,6 +62,14 @@ foreach($finding in $results){
   [void]$resolved.Add([pscustomobject]@{function=$finding.function;line=$n;status='unverified_multiline_requires_context';source_evidence=$original;model_evidence=$finding.quote})
  }
 }
+foreach($finding in $results){
+ if($finding.status -ne 'edge_whitespace'){continue}
+ $already=@($resolved | Where-Object {$_.function -eq $finding.function -and $_.line -eq [int]$finding.claimed_line})
+ if($already.Count){continue}
+ $lines=$blocks[[string]$finding.function]
+ $locations=@(for($i=0;$i -lt $lines.Count;$i++){if($finding.quote.Trim() -ceq ([string]$lines[$i]).Trim()){$i+1}})
+ [void]$resolved.Add([pscustomobject]@{function=$finding.function;line=[int]$finding.claimed_line;status='quote_found_but_claimed_line_mismatch';source_evidence=[string]$finding.source_at_claimed_line;model_evidence=$finding.quote;matching_source_lines=@($locations)})
+}
 $path=Join-Path $d.FullName 'source-grounded-evidence.json'
 @{source=$m.source;analysis=$d.FullName;items=@($resolved);note='This artifact never overwrites model output. Prefix matches do not verify the complete statement or interpretation.'} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
 Write-Host "Source-grounded evidence: $path"
