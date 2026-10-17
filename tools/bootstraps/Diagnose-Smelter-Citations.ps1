@@ -46,6 +46,25 @@ $repairPath=Join-Path $d.FullName 'citation-repair-candidates.json'
 @{source=$m.source;auto_approved=0;review_required=$repairs.Count;candidates=@($repairs)} | ConvertTo-Json -Depth 8 | Set-Content $repairPath -Encoding UTF8
 Write-Host "Review-required citation candidates: $($repairs.Count); no evidence automatically altered"
 Write-Host "Candidates: $repairPath"
+$resolved=New-Object System.Collections.ArrayList
+foreach($finding in $results){
+ $lines=$blocks[[string]$finding.function]
+ $n=0
+ if(-not [int]::TryParse([string]$finding.claimed_line,[ref]$n)){continue}
+ if($n -lt 1 -or $n -gt $lines.Count){continue}
+ $original=[string]$lines[$n-1]
+ $kind=[string]$finding.status
+ if($kind -eq 'edge_whitespace' -and $finding.quote.Trim() -ceq $original.Trim()){
+  [void]$resolved.Add([pscustomobject]@{function=$finding.function;line=$n;status='verified_whitespace_only';source_evidence=$original;model_evidence=$finding.quote})
+ }elseif($kind -eq 'substring' -and $original.Trim().StartsWith($finding.quote.Trim(),[StringComparison]::Ordinal)){
+  [void]$resolved.Add([pscustomobject]@{function=$finding.function;line=$n;status='partial_prefix_source_confirmed';source_evidence=$original;model_evidence=$finding.quote})
+ }elseif($kind -eq 'not_found'){
+  [void]$resolved.Add([pscustomobject]@{function=$finding.function;line=$n;status='unverified_multiline_requires_context';source_evidence=$original;model_evidence=$finding.quote})
+ }
+}
+$path=Join-Path $d.FullName 'source-grounded-evidence.json'
+@{source=$m.source;analysis=$d.FullName;items=@($resolved);note='This artifact never overwrites model output. Prefix matches do not verify the complete statement or interpretation.'} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+Write-Host "Source-grounded evidence: $path"
 $results | Group-Object status | Select-Object Name,Count | Format-Table -AutoSize
 $accepted=@($results | Where-Object {$_.status -in @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
 $unresolved=@($results | Where-Object {$_.status -notin @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
