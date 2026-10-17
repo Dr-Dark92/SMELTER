@@ -1,0 +1,122 @@
+{
+  "round": "15-repair",
+  "full_pass": false,
+  "source_run": "20261017T174335Z-f90d8ac8",
+  "model": "qwen3.5:9b",
+  "iterations": 4,
+  "elapsed_seconds": 37.64,
+  "events": [
+    {
+      "event": "sandbox.ready",
+      "timestamp": "2026-10-17T17:49:24+00:00",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "source_run": "20261017T174335Z-f90d8ac8"
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:49:24+00:00",
+      "attempt": 1
+    },
+    {
+      "event": "candidate.written",
+      "timestamp": "2026-10-17T17:49:34+00:00",
+      "attempt": 1,
+      "sha256": "b96b675f2a2e59c420a8d8ce52bd9480ce6c968c7a55bd830d8bf4a659f73de8"
+    },
+    {
+      "event": "tests.finished",
+      "timestamp": "2026-10-17T17:49:36+00:00",
+      "attempt": 1,
+      "passed": false,
+      "static_issues": {},
+      "outcomes": {
+        "round14": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+        },
+        "round15": {
+          "passed": false,
+          "exit_code": 1,
+          "stderr": "........FF\n======================================================================\nFAIL: test_uppercase_extensions (__main__.Regression.test_uppercase_extensions)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 10, in test_uppercase_extensions\n    self.assertEqual(inventory([\"A.PAK\",\"b.pak\"])[\"extensions\"][\".pak\"],2)\nAssertionError: 1 != 2\n\n======================================================================\nFAIL: test_windows_separators (__main__.Regression.test_windows_separators)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 8, in test_windows_separators\n    self.assertEqual(detect_engine([r\"Game\\Content\\Paks\\MAIN.PAK\"]),\"unreal\")\nAssertionError: 'unknown' != 'unreal'\n- unknown\n+ unreal\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.005s\n\nFAILED (failures=2)\n"
+        }
+      }
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:49:36+00:00",
+      "attempt": 2
+    },
+    {
+      "event": "candidate.written",
+      "timestamp": "2026-10-17T17:49:43+00:00",
+      "attempt": 2,
+      "sha256": "2f585c1a155a81b581814befdbcdfc824e92750196a4f99609cfb835c84f2c75"
+    },
+    {
+      "event": "tests.finished",
+      "timestamp": "2026-10-17T17:49:45+00:00",
+      "attempt": 2,
+      "passed": false,
+      "static_issues": {},
+      "outcomes": {
+        "round14": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "/work/archive_inventory.py:6: SyntaxWarning: invalid escape sequence '\\)'\n  Handles Windows-style separators (\\) correctly.\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+        },
+        "round15": {
+          "passed": false,
+          "exit_code": 1,
+          "stderr": "/work/archive_inventory.py:6: SyntaxWarning: invalid escape sequence '\\)'\n  Handles Windows-style separators (\\) correctly.\n.........F\n======================================================================\nFAIL: test_windows_separators (__main__.Regression.test_windows_separators)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 8, in test_windows_separators\n    self.assertEqual(detect_engine([r\"Game\\Content\\Paks\\MAIN.PAK\"]),\"unreal\")\nAssertionError: 'unknown' != 'unreal'\n- unknown\n+ unreal\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.004s\n\nFAILED (failures=1)\n"
+        }
+      }
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:49:45+00:00",
+      "attempt": 3
+    },
+    {
+      "event": "candidate.written",
+      "timestamp": "2026-10-17T17:49:52+00:00",
+      "attempt": 3,
+      "sha256": "922576dcb92c7ff1ed2cb8585b35a07971a178e5a2afcefb80e6fd17736c5e99"
+    },
+    {
+      "event": "tests.finished",
+      "timestamp": "2026-10-17T17:49:54+00:00",
+      "attempt": 3,
+      "passed": false,
+      "static_issues": {},
+      "outcomes": {
+        "round14": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.000s\n\nOK\n"
+        },
+        "round15": {
+          "passed": false,
+          "exit_code": 1,
+          "stderr": ".........F\n======================================================================\nFAIL: test_windows_separators (__main__.Regression.test_windows_separators)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 8, in test_windows_separators\n    self.assertEqual(detect_engine([r\"Game\\Content\\Paks\\MAIN.PAK\"]),\"unreal\")\nAssertionError: 'unknown' != 'unreal'\n- unknown\n+ unreal\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.003s\n\nFAILED (failures=1)\n"
+        }
+      }
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:49:54+00:00",
+      "attempt": 4
+    },
+    {
+      "event": "loop.detected",
+      "timestamp": "2026-10-17T17:50:02+00:00",
+      "sha256": "922576dcb92c7ff1ed2cb8585b35a07971a178e5a2afcefb80e6fd17736c5e99"
+    },
+    {
+      "event": "rollback.completed",
+      "timestamp": "2026-10-17T17:50:02+00:00"
+    }
+  ],
+  "promotion": "not authorized",
+  "notes": "Passing source retained only in disposable workspace. No automatic merge."
+}
