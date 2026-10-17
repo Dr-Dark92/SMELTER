@@ -86,7 +86,16 @@ def main():
     def validate():
         if not blend.is_file() or blend.stat().st_size<100:return {"valid":False,"reason":"missing blend"}
         header=blend.open("rb").read(16)
-        if not header.startswith(b"BLENDER"):return {"valid":False,"reason":"invalid blend header","header_hex":header.hex(),"header_repr":repr(header),"file_size":blend.stat().st_size}
+        compressed=header.startswith(bytes.fromhex("28b52ffd"))
+        if not (header.startswith(b"BLENDER") or compressed):
+            return {"valid":False,"reason":"unrecognized blend header","header_hex":header.hex(),"file_size":blend.stat().st_size}
+        # Blender is the authoritative parser for its native files, including compressed ones.
+        probe=subprocess.run([exe,"--background","--factory-startup",str(blend),
+                              "--python-expr","import bpy; assert bpy.data.objects.get('SMELTER_TestCube') is not None"],
+                             cwd=str(run),capture_output=True,text=True,timeout=60)
+        if probe.returncode!=0:
+            return {"valid":False,"reason":"Blender could not reopen and inspect native file",
+                    "returncode":probe.returncode,"stdout_tail":probe.stdout[-900:],"stderr_tail":probe.stderr[-900:]}
         if not glb.is_file() or glb.stat().st_size<20:return {"valid":False,"reason":"missing glb"}
         data=glb.read_bytes()
         magic,version,length=struct.unpack_from("<4sII",data)
@@ -98,7 +107,7 @@ def main():
         meshes=gltf.get("meshes",[])
         return {"valid":"SMELTER_TestCube" in names and bool(meshes),
                 "node_found":"SMELTER_TestCube" in names,"mesh_count":len(meshes),
-                "blend_bytes":blend.stat().st_size,"glb_bytes":len(data)}
+                "blend_bytes":blend.stat().st_size,"glb_bytes":len(data),"blend_compressed":compressed,"blender_reopen_verified":True}
     system=("You are SMELTER's local asset integration agent. Only tools are blender.build_cube and artifact.validate. "
             "Choose one tool per response and return JSON object with tool_id, arguments, reason. "
             "First call blender.build_cube with empty arguments {}, then artifact.validate with empty arguments {}. "
