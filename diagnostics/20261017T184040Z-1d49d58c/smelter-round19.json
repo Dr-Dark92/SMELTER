@@ -1,0 +1,17 @@
+{
+  "round": 19,
+  "model": "qwen3.5:9b",
+  "port": 8767,
+  "skill_source": "[LOCAL_PATH]",
+  "skill_sha256": "93114a81badcbf1c8dad3dd816401c9c1fbae9441ec9b496d226b8f72998b6cf",
+  "skill_available": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "passed": true,
+      "issues": [],
+      "sha256": "5f182b2335ae69418728036aaca02b98e80c9d0e167427e1d9cd716d09ead1fc"
+    }
+  ],
+  "full_pass": true
+}
