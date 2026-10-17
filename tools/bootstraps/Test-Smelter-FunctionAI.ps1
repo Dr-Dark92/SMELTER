@@ -106,6 +106,7 @@ END UNTRUSTED DECOMPILATION
     $quote=[string]$obs.evidence
     $ok=($numeric -and $n -ge 1 -and $n -le $codeLines.Count -and ($quote -ceq ([string]$codeLines[$n-1])))
     $status=if($ok){'exact_line'}else{'rejected'}
+    if(-not $ok -and $numeric -and $n -ge 1 -and $n -le $codeLines.Count -and $quote.Trim() -ceq ([string]$codeLines[$n-1]).Trim()){$ok=$true;$status='indentation_normalized'}
     if(-not $ok -and $quote.Length -gt 0){
      $matches=@(for($j=0;$j -lt $codeLines.Count;$j++){if($quote -ceq ([string]$codeLines[$j])){$j+1}})
      if($matches.Count -eq 1){$status='relocated_exact';$ok=$true;$obs | Add-Member -NotePropertyName corrected_line_number -NotePropertyValue ([int]$matches[0]) -Force}
