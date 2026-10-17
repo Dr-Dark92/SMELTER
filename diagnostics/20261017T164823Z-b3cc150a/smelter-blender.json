@@ -1,0 +1,54 @@
+{
+  "test": "SMELTER headless Blender integration v1",
+  "model": "qwen3.5:9b",
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "blender.build_cube",
+        "arguments": {},
+        "reason": "The goal requires creating a test 3D mesh first, so I will call blender.build_cube with empty arguments to generate the default cube."
+      },
+      "result": {
+        "returncode": 0,
+        "stdout_tail": "Info: Saved as \"smelter_cube.blend\"\nINFO Draco is available, use library at [LOCAL_PATH]\nINFO MeshOptimizer is available, use library at [LOCAL_PATH]\n19:59:57 | INFO: Starting glTF 2.0 export\n19:59:57 | INFO: Extracting primitive: Cube.001\n19:59:57 | INFO: Primitives created: 1\n19:59:57 | INFO: Finished glTF 2.0 export in 0.009395122528076172 s\n\nBlender 5.3.0 Beta (hash 98f8f23151d3 built 2026-10-12 01:36:21)\n\nBlender quit\n",
+        "stderr_tail": ""
+      },
+      "pass": true,
+      "wall_seconds": 1.602
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "artifact.validate",
+        "arguments": {},
+        "reason": "The goal requires validating real .blend and .glb files after creating the test mesh. I will call artifact.validate with empty arguments to perform the validation."
+      },
+      "result": {
+        "valid": true,
+        "node_found": true,
+        "mesh_count": 1,
+        "blend_bytes": 94386,
+        "glb_bytes": 1744,
+        "blend_compressed": true,
+        "blender_reopen_verified": true
+      },
+      "pass": true,
+      "wall_seconds": 1.183
+    }
+  ],
+  "full_pass": true,
+  "blender_version": "Blender 5.3.0 Beta",
+  "built": true,
+  "model_validated": true,
+  "independent_validation": {
+    "valid": true,
+    "node_found": true,
+    "mesh_count": 1,
+    "blend_bytes": 94386,
+    "glb_bytes": 1744,
+    "blend_compressed": true,
+    "blender_reopen_verified": true
+  },
+  "status": "passed"
+}
