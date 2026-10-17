@@ -47,7 +47,7 @@ def main():
  if args.report:
   paths.extend(pathlib.Path(x).resolve() for x in args.report)
  if args.latest:
-  patterns=["smelter-goal-agent.json","smelter-skill-diagnostic.json","smelter-skill-execution.json","smelter-core-tool-chain.json","smelter-core-tool-routing.json","smelter-local-ai-agent-test.json","smelter-unified-orchestrator.json","smelter-multiskill.json","smelter-blender.json","smelter-round9.json","smelter-round10.json","smelter-round11.json","smelter-round12.json","smelter-round13.json"]
+  patterns=["smelter-goal-agent.json","smelter-skill-diagnostic.json","smelter-skill-execution.json","smelter-core-tool-chain.json","smelter-core-tool-routing.json","smelter-local-ai-agent-test.json","smelter-unified-orchestrator.json","smelter-multiskill.json","smelter-blender.json","smelter-round9.json","smelter-round10.json","smelter-round11.json","smelter-round12.json","smelter-round13.json","smelter-round14.json"]
   for pattern in patterns:
    found=[x for x in workspace.rglob(pattern) if x.is_file()]
    if found:paths.append(max(found,key=lambda x:x.stat().st_mtime))
