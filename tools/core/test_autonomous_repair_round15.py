@@ -64,6 +64,17 @@ def main():
     previous={f:(source/f).read_text(encoding="utf-8") for f in base.ALLOWED}
     prompt=base.TASK+"\nExisting implementation (repair, do not merely describe fixes):\n"+json.dumps(previous)
     feedback="Independent regression failures: inventory(['A.PAK','b.pak']) must count '.pak' as 2; detect_engine([r'Game\\Content\\Paks\\MAIN.PAK']) must return 'unreal'. Preserve all Round 14 behavior."
+    # Explain Windows path semantics explicitly: pathlib.Path on Linux does not
+    # interpret backslashes as separators. Qwen must normalize in-memory strings.
+    windows_hint=(
+        "IMPORTANT CROSS-PLATFORM CONTRACT: Docker runs Linux Python, but inputs "
+        "may contain Windows backslash separators. pathlib.Path on Linux treats "
+        "backslash as an ordinary character. Normalize each supplied path string "
+        "by replacing chr(92) with '/' BEFORE matching path components. "
+        "Then lowercase/casefold the normalized path. Example: "
+        "Game\\Content\\Paks\\MAIN.PAK must match unreal. "
+        "Do not access the filesystem. Keep the other two modules working."
+    )
     seen=set()
     passed=False
     start=time.monotonic()
@@ -73,7 +84,7 @@ def main():
             if time.monotonic()-start>1200:break
             emit("attempt.begin",attempt=attempt)
             try:
-                obj=base.model_call(a.url,a.model,prompt+"\nTEST FEEDBACK:\n"+feedback[-5500:])
+                obj=base.model_call(a.url,a.model,prompt+"\nCROSS-PLATFORM REQUIREMENT:\n"+windows_hint+"\nTEST FEEDBACK:\n"+feedback[-5500:])
                 files=obj["files"]
                 if set(files)!=set(base.ALLOWED):raise ValueError("Must supply exactly three files")
                 if any(not isinstance(v,str) for v in files.values()):raise ValueError("File content must be string")
@@ -92,6 +103,8 @@ def main():
                 if passed:break
                 feedback=json.dumps({"static_issues":issues,"outcomes":outcomes})
                 prompt=base.TASK+"\nPrevious candidate:\n"+json.dumps(files)
+                if not outcomes["round15"]["passed"]:
+                    feedback+="\n"+windows_hint
             except Exception as exc:
                 feedback=f"{type(exc).__name__}: {str(exc)[:1000]}"
                 emit("attempt.error",attempt=attempt,error=feedback)
