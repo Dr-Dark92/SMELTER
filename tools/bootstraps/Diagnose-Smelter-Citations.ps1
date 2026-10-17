@@ -32,4 +32,25 @@ foreach($f in @(Get-ChildItem $d.FullName -Filter 'function-*.json' -File)){
 $out=Join-Path $d.FullName 'citation-diagnostics.json'
 @{analysis=$d.FullName;count=$results.Count;findings=@($results)} | ConvertTo-Json -Depth 8 | Set-Content $out -Encoding UTF8
 $results | Group-Object status | Select-Object Name,Count | Format-Table -AutoSize
+$accepted=@($results | Where-Object {$_.status -in @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
+$unresolved=@($results | Where-Object {$_.status -notin @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
+$review=Join-Path $d.FullName 'citation-review.md'
+$report=New-Object System.Collections.Generic.List[string]
+$report.Add('# SMELTER - Offline evidence review')
+$report.Add("Source: $($m.source)")
+$report.Add("Total observations: $($results.Count)")
+$report.Add("Textually supported (exact or whitespace-normalized): $($accepted.Count)")
+$report.Add("Unresolved/partial: $($unresolved.Count)")
+$report.Add('Textual support verifies source quotation only, not the model interpretation.')
+foreach($finding in $unresolved){
+ $report.Add('')
+ $report.Add("## $($finding.function), claimed line $($finding.claimed_line)")
+ $report.Add("Status: $($finding.status)")
+ $report.Add("Model quotation: $($finding.quote)")
+ $report.Add("Actual source at claimed line: $($finding.source_at_claimed_line)")
+}
+[IO.File]::WriteAllLines($review,$report,(New-Object System.Text.UTF8Encoding($false)))
+Write-Host "Supported quotations: $($accepted.Count)/$($results.Count)"
+Write-Host "Unresolved quotations: $($unresolved.Count)"
+Write-Host "Review: $review"
 Write-Host "Offline only. Report: $out"
