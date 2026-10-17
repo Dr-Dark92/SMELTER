@@ -1,0 +1,62 @@
+{
+  "round": "15-repair",
+  "full_pass": false,
+  "source_run": "20261017T174335Z-f90d8ac8",
+  "model": "qwen3.5:9b",
+  "iterations": 2,
+  "elapsed_seconds": 14.57,
+  "events": [
+    {
+      "event": "sandbox.ready",
+      "timestamp": "2026-10-17T17:51:15+00:00",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "source_run": "20261017T174335Z-f90d8ac8"
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:51:15+00:00",
+      "attempt": 1
+    },
+    {
+      "event": "candidate.written",
+      "timestamp": "2026-10-17T17:51:21+00:00",
+      "attempt": 1,
+      "sha256": "3f9599c18f6935ee2cad76f9d200e07b45cf5a0e4963d8837f32cc758d8de87a"
+    },
+    {
+      "event": "tests.finished",
+      "timestamp": "2026-10-17T17:51:23+00:00",
+      "attempt": 1,
+      "passed": false,
+      "static_issues": {},
+      "outcomes": {
+        "round14": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+        },
+        "round15": {
+          "passed": false,
+          "exit_code": 1,
+          "stderr": "........F.\n======================================================================\nFAIL: test_uppercase_extensions (__main__.Regression.test_uppercase_extensions)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 10, in test_uppercase_extensions\n    self.assertEqual(inventory([\"A.PAK\",\"b.pak\"])[\"extensions\"][\".pak\"],2)\nAssertionError: 1 != 2\n\n----------------------------------------------------------------------\nRan 10 tests in 0.005s\n\nFAILED (failures=1)\n"
+        }
+      }
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:51:23+00:00",
+      "attempt": 2
+    },
+    {
+      "event": "loop.detected",
+      "timestamp": "2026-10-17T17:51:29+00:00",
+      "sha256": "3f9599c18f6935ee2cad76f9d200e07b45cf5a0e4963d8837f32cc758d8de87a"
+    },
+    {
+      "event": "rollback.completed",
+      "timestamp": "2026-10-17T17:51:29+00:00"
+    }
+  ],
+  "promotion": "not authorized",
+  "notes": "Passing source retained only in disposable workspace. No automatic merge."
+}
