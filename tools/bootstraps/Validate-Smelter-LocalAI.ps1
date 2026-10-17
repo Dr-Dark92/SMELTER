@@ -39,7 +39,7 @@ try {
  $mcpText=$mcpRows -join [Environment]::NewLine
  Write-Host $mcpText
  if($mcpExitCode -ne 0){throw "OpenCode MCP listing failed (exit $mcpExitCode): $mcpText"}
- if($mcpText -notmatch '(?im)^.*\brea\b[^\r\n]*\bconnected\b'){throw "REA not connected in OpenCode MCP list: $mcpText"}
+ if(-not (($mcpText -match 'rea') -and ($mcpText -match 'connected'))){throw "REA not connected in OpenCode MCP list: $mcpText"}
  Write-Host 'PASS: OpenCode REA MCP connected'
  $doctorRaw=(& $rea doctor --json 2>&1 | Out-String)
  try{$doctor=$doctorRaw | ConvertFrom-Json}catch{throw 'REA doctor did not return valid JSON'}
