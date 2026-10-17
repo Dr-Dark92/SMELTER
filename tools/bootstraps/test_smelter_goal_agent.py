@@ -73,6 +73,10 @@ def main():
    history.append("TOOL_ERROR: "+repr(e))
   entry["wall_seconds"]=round(time.perf_counter()-start,3);report["steps"].append(entry)
   print("Step",i+1,entry["status"],entry.get("decision",{}).get("tool_id"),flush=True)
+  if verified:
+   finished=True
+   report["completion_source"]="deterministic_validation_gate"
+   break
   if finished:break
  # Independent deterministic verification, not based on model claims.
  try:
