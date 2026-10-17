@@ -69,11 +69,28 @@ try{
  $stdout=Join-Path $out 'tool-stdout.log';$stderr=Join-Path $out 'tool-stderr.log'
  $process=Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList $argsList -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
  if(-not $process.WaitForExit($TimeoutSeconds*1000)){try{$process.Kill()}catch{};throw 'Tool timed out'}
- $process.Refresh();$report.exit_code=$process.ExitCode
- if($null -eq $process.ExitCode -or $process.ExitCode -ne 0){
-  $detail=if(Test-Path -LiteralPath $stderr){(Get-Content -LiteralPath $stderr -Tail 8) -join ' '}else{'No stderr log'}
-  throw "Tool process failed. $detail"
+ $process.WaitForExit()
+ $process.Refresh()
+ $report.exit_code=$process.ExitCode
+ if($null -ne $process.ExitCode -and $process.ExitCode -ne 0){throw "Tool process exited with code $($process.ExitCode). See tool-stderr.log"}
+ # A successful child process is not sufficient: verify its output report.
+ $reportName=switch($name){'discover_assets'{'discovery-result.json'};'extract_asset'{'extraction-result.json'};'run_asset_pipeline'{'pipeline-result.json'}}
+ $candidates=@(Get-ChildItem -LiteralPath $out -Filter $reportName -Recurse -File)
+ if($candidates.Count -ne 1){throw "Expected one $reportName, found $($candidates.Count)"}
+ $verified=Get-Content -LiteralPath $candidates[0].FullName -Raw | ConvertFrom-Json
+ if($name -eq 'discover_assets'){
+  if($verified.archive -ne (Join-Path (Join-Path $GamePath 'Data') $archive) -or $verified.pattern -ne $params.Pattern -or $null -eq $verified.matches){throw 'Discovery report validation failed'}
+ }elseif($name -eq 'extract_asset'){
+  if(-not $verified.extracted -or $verified.asset -ne $params.AssetPath -or -not (Test-Path -LiteralPath $verified.output -PathType Leaf)){throw 'Extraction report validation failed'}
+  if((Get-FileHash -LiteralPath $verified.output -Algorithm SHA256).Hash -ne $verified.sha256){throw 'Extraction hash mismatch'}
+ }else{
+  if($verified.passed -ne $params.Count -or $verified.failed -ne 0 -or $verified.selected -ne $params.Count){throw 'Pipeline report validation failed'}
+  foreach($item in @($verified.results)){
+   if($item.status -ne 'passed' -or -not (Test-Path -LiteralPath $item.output -PathType Leaf)){throw 'Pipeline output missing or failed'}
+   if((Get-FileHash -LiteralPath $item.output -Algorithm SHA256).Hash -ne $item.sha256){throw 'Pipeline output hash mismatch'}
+  }
  }
+ $report.verified_report=$candidates[0].FullName
  $report.status='passed'
  Write-Host "Local AI selected: $name"
  Write-Host 'Execution: PASS'
