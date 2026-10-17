@@ -47,10 +47,18 @@ try {
   Write-Host "OpenCode stdout: $out"
   if($err){Write-Host "OpenCode stderr: $err"}
   if($proc.ExitCode -ne 0){throw 'OpenCode inference returned nonzero exit code'}
-  if([string]::IsNullOrWhiteSpace($out)){throw 'OpenCode inference returned empty stdout'}
+  if([string]::IsNullOrWhiteSpace($out)){throw ('OpenCode inference returned empty stdout. Review '+$stderr)}
   Write-Host 'PASS: OpenCode produced a nonempty response using local model'
  } finally {
-  Remove-Item -LiteralPath $testDir -Force -Recurse -ErrorAction SilentlyContinue
+  # Cleanup must never mask the real inference result. Windows PowerShell 5.1
+  # can throw on shortened TEMP paths even with SilentlyContinue.
+  try {
+   if([System.IO.Directory]::Exists($testDir)) {
+    [System.IO.Directory]::Delete($testDir,$true)
+   }
+  } catch {
+   Write-Warning ('Temporary directory cleanup skipped: '+$_.Exception.Message)
+  }
  }
  Write-Host 'PASS: Local inference smoke test complete'
  Write-Host "Log: $log"
