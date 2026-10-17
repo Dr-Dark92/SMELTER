@@ -1,0 +1,89 @@
+{
+  "round": 13,
+  "full_pass": true,
+  "status": "passed",
+  "model": "qwen3.5:9b",
+  "sandbox_image": "python:3.12-alpine",
+  "sandbox_image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+  "iterations": 3,
+  "elapsed_seconds": 33.39,
+  "events": [
+    {
+      "timestamp": "2026-10-17T17:38:00+00:00",
+      "event": "sandbox.ready",
+      "image": "python:3.12-alpine",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "network": "none",
+      "workspace": "[LOCAL_PATH]"
+    },
+    {
+      "timestamp": "2026-10-17T17:38:00+00:00",
+      "event": "attempt.begin",
+      "attempt": 1
+    },
+    {
+      "timestamp": "2026-10-17T17:38:19+00:00",
+      "event": "candidate.written",
+      "attempt": 1,
+      "sha256": "5498b5219901c01c928e0f4a0ea24fb5aa4c34ab01ebd36e1abef914233e9d28",
+      "bytes": 2689
+    },
+    {
+      "timestamp": "2026-10-17T17:38:24+00:00",
+      "event": "tests.finished",
+      "attempt": 1,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "....F..\n======================================================================\nFAIL: test_unity (__main__.ReconTests.test_unity)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 7, in test_unity\n    self.assertEqual(detect_engine([\"Demo_Data/globalgamemanagers\"]), \"unity\")\nAssertionError: 'unknown' != 'unity'\n- unknown\n+ unity\n\n\n----------------------------------------------------------------------\nRan 7 tests in 0.003s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "timestamp": "2026-10-17T17:38:24+00:00",
+      "event": "attempt.begin",
+      "attempt": 2
+    },
+    {
+      "timestamp": "2026-10-17T17:38:28+00:00",
+      "event": "candidate.written",
+      "attempt": 2,
+      "sha256": "0bf001636aed6c5bd21f3a4e705e850ac76acf461e91a5e1356ae2dc42a18c90",
+      "bytes": 1025
+    },
+    {
+      "timestamp": "2026-10-17T17:38:28+00:00",
+      "event": "tests.finished",
+      "attempt": 2,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "F......\n======================================================================\nFAIL: test_case_insensitive (__main__.ReconTests.test_case_insensitive)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 13, in test_case_insensitive\n    self.assertEqual(detect_engine([\"GAME/CONTENT/PAKS/MAIN.PAK\"]), \"unreal\")\nAssertionError: 'unknown' != 'unreal'\n- unknown\n+ unreal\n\n\n----------------------------------------------------------------------\nRan 7 tests in 0.004s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "timestamp": "2026-10-17T17:38:28+00:00",
+      "event": "attempt.begin",
+      "attempt": 3
+    },
+    {
+      "timestamp": "2026-10-17T17:38:33+00:00",
+      "event": "candidate.written",
+      "attempt": 3,
+      "sha256": "471286b7e4dcb1715e011d0105e9ea369472ec5fedf2ba698911a0d0f9499ba3",
+      "bytes": 1358
+    },
+    {
+      "timestamp": "2026-10-17T17:38:34+00:00",
+      "event": "tests.finished",
+      "attempt": 3,
+      "passed": true,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
+    },
+    {
+      "timestamp": "2026-10-17T17:38:34+00:00",
+      "event": "acceptance.passed",
+      "attempt": 3
+    }
+  ],
+  "notes": "Synthetic game recon module only. No host-side execution of model code. Passing artifact remains disposable and is not merged into the repository."
+}
