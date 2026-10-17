@@ -1,0 +1,99 @@
+{
+  "test": "SMELTER Round 11 textured GLB structural roundtrip",
+  "steps": [
+    {
+      "step": 1,
+      "expected_tool": "material.create_fixture",
+      "model_decision": {
+        "tool_id": "material.create_fixture",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "created": true,
+        "source_bytes": 71256
+      },
+      "seconds": 5.442
+    },
+    {
+      "step": 2,
+      "expected_tool": "material.roundtrip",
+      "model_decision": {
+        "tool_id": "material.roundtrip",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "converted": true,
+        "output_bytes": 72408
+      },
+      "seconds": 1.054
+    },
+    {
+      "step": 3,
+      "expected_tool": "material.verify",
+      "model_decision": {
+        "tool_id": "material.verify",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "source": {
+          "mesh_count": 1,
+          "primitive_count": 1,
+          "uv_primitives": 1,
+          "material_count": 1,
+          "textured_materials": 1,
+          "image_count": 1,
+          "texture_count": 1,
+          "bytes": 71256,
+          "valid": true
+        },
+        "roundtrip": {
+          "mesh_count": 1,
+          "primitive_count": 1,
+          "uv_primitives": 1,
+          "material_count": 1,
+          "textured_materials": 1,
+          "image_count": 1,
+          "texture_count": 1,
+          "bytes": 72408,
+          "valid": true
+        },
+        "differences": {},
+        "scope": "structural counts only; not pixel/vertex equivalence"
+      },
+      "seconds": 0.165
+    }
+  ],
+  "full_pass": true,
+  "independent_validation": {
+    "valid": true,
+    "source": {
+      "mesh_count": 1,
+      "primitive_count": 1,
+      "uv_primitives": 1,
+      "material_count": 1,
+      "textured_materials": 1,
+      "image_count": 1,
+      "texture_count": 1,
+      "bytes": 71256,
+      "valid": true
+    },
+    "roundtrip": {
+      "mesh_count": 1,
+      "primitive_count": 1,
+      "uv_primitives": 1,
+      "material_count": 1,
+      "textured_materials": 1,
+      "image_count": 1,
+      "texture_count": 1,
+      "bytes": 72408,
+      "valid": true
+    },
+    "differences": {},
+    "scope": "structural counts only; not pixel/vertex equivalence"
+  },
+  "status": "passed"
+}
