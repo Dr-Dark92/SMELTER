@@ -54,7 +54,7 @@ standard library. Export detect_engine(paths: list[str]) -> str returning one of
 'unreal','unity','godot','unknown'. Recognize Unreal .pak under Content/Paks,
 Unity *_Data/globalgamemanagers, Godot .pck; case insensitive; never inspect
 the host filesystem. Export inventory(paths: list[str]) -> dict with total
-count and extensions mapping (lowercase extension to count). This is synthetic
+count and extensions mapping (lowercase extension to count). The return shape is EXACTLY\n{'total': len(paths), 'extensions': {'.pak': 1, '.pck': 1}} for\npaths ['x.pak', 'y.pck']; never use a different top-level schema.\nUse pathlib.PurePath or os.path.splitext on the supplied string only. This is synthetic
 fixture reconnaissance, NOT real engine detection certification. Do not use
 network, subprocess, shell, dynamic execution, filesystem access, or imports
 of third-party packages. Respond with JSON object containing 'code' string
