@@ -1,0 +1,40 @@
+{
+  "round": 15,
+  "source_round": 14,
+  "source_run": "20261017T174335Z-f90d8ac8",
+  "review": {
+    "engine_detector.py": {
+      "sha256": "4f9c890c51bac3df6632df8397af275430775ea56411fc9ba26e1d49bf5dc737",
+      "bytes": 628,
+      "issues": [],
+      "functions": [
+        "detect_engine"
+      ]
+    },
+    "archive_inventory.py": {
+      "sha256": "d0a5d65165294ac34a9e23d2eb817b2c7ef6f4477676e3540c3e4745b8043de5",
+      "bytes": 861,
+      "issues": [],
+      "functions": [
+        "inventory"
+      ]
+    },
+    "report_generator.py": {
+      "sha256": "c589fc4324d4acc3221165bd9d8db1e5471ab80afea8ea5db9f42ba3b30b6cf2",
+      "bytes": 464,
+      "issues": [],
+      "functions": [
+        "build_report"
+      ]
+    }
+  },
+  "static_pass": true,
+  "dynamic_pass": false,
+  "full_pass": false,
+  "promotion": "not authorized",
+  "test_exit_code": 1,
+  "test_stdout": "",
+  "test_stderr": "........FF\n======================================================================\nFAIL: test_uppercase_extensions (__main__.Regression.test_uppercase_extensions)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 10, in test_uppercase_extensions\n    self.assertEqual(inventory([\"A.PAK\",\"b.pak\"])[\"extensions\"][\".pak\"],2)\nAssertionError: 1 != 2\n\n======================================================================\nFAIL: test_windows_separators (__main__.Regression.test_windows_separators)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/round15_regression_test.py\", line 8, in test_windows_separators\n    self.assertEqual(detect_engine([r\"Game\\Content\\Paks\\MAIN.PAK\"]),\"unreal\")\nAssertionError: 'unknown' != 'unreal'\n- unknown\n+ unreal\n\n\n----------------------------------------------------------------------\nRan 10 tests in 0.005s\n\nFAILED (failures=2)\n",
+  "status": "failed",
+  "timestamp": "2026-10-17T17:47:29.297613+00:00"
+}
