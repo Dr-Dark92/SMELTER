@@ -1,0 +1,93 @@
+{
+  "test": "SMELTER generic goal-driven agent v3",
+  "model": "qwen3.5:9b",
+  "goal": "Ensure the sandbox contains JSON artifact goal-897f256d03.json with exactly these required values: engine=SMELTER, stage=integration, verified=true. Independently decide which tools to call, handle missing artifacts, verify the final contents, then finish.",
+  "artifact": "goal-897f256d03.json",
+  "tools": [
+    {
+      "id": "artifact.read",
+      "description": "Read a JSON artifact by filename from the sandbox. Returns missing if absent.",
+      "parameters": {
+        "filename": "string"
+      }
+    },
+    {
+      "id": "artifact.write",
+      "description": "Write a JSON object to a filename in the sandbox.",
+      "parameters": {
+        "filename": "string",
+        "data": "object"
+      }
+    },
+    {
+      "id": "artifact.validate",
+      "description": "Check a sandbox JSON artifact for required top-level keys and exact expected values.",
+      "parameters": {
+        "filename": "string",
+        "required_keys": "array of strings",
+        "expected_values": "object"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "artifact.write",
+        "arguments": {
+          "filename": "goal-897f256d03.json",
+          "data": {
+            "engine": "SMELTER",
+            "stage": "integration",
+            "verified": true
+          }
+        },
+        "reason": "The artifact goal-897f256d03.json does not exist yet, so I will create it with the required values: engine=SMELTER, stage=integration, verified=true."
+      },
+      "eval_count": 121,
+      "tool_result": {
+        "status": "written",
+        "sha256": "a5c1380bd8653859586f8d78d040077358165ca05e17acf09bb68496fb9bec3b"
+      },
+      "status": "executed",
+      "pass": true,
+      "wall_seconds": 1.326
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "artifact.validate",
+        "arguments": {
+          "filename": "goal-897f256d03.json",
+          "required_keys": [
+            "engine",
+            "stage",
+            "verified"
+          ],
+          "expected_values": {
+            "engine": "SMELTER",
+            "stage": "integration",
+            "verified": true
+          }
+        },
+        "reason": "Now that the artifact has been written, I will validate it to ensure it contains exactly the required keys and values as per the user goal."
+      },
+      "eval_count": 99,
+      "tool_result": {
+        "status": "validated",
+        "valid": true,
+        "missing": [],
+        "mismatch": []
+      },
+      "status": "executed",
+      "pass": true,
+      "wall_seconds": 0.988
+    }
+  ],
+  "max_steps": 8,
+  "completion_source": "deterministic_validation_gate",
+  "model_validated": true,
+  "model_finished": true,
+  "independent_artifact_check": true,
+  "full_pass": true
+}
