@@ -1,0 +1,32 @@
+{
+  "round": 19,
+  "model": "qwen3.5:9b",
+  "port": 8767,
+  "skill_source": "[LOCAL_PATH]",
+  "skill_sha256": "93114a81badcbf1c8dad3dd816401c9c1fbae9441ec9b496d226b8f72998b6cf",
+  "skill_available": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "passed": false,
+      "issues": [
+        "HTTPError: HTTP Error 500: Internal Server Error"
+      ]
+    },
+    {
+      "attempt": 2,
+      "passed": false,
+      "issues": [
+        "JSONDecodeError: Unterminated string starting at: line 2 column 11 (char 12)"
+      ]
+    },
+    {
+      "attempt": 3,
+      "passed": false,
+      "issues": [
+        "JSONDecodeError: Unterminated string starting at: line 2 column 11 (char 12)"
+      ]
+    }
+  ],
+  "full_pass": false
+}
