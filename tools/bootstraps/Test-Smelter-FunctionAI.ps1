@@ -71,26 +71,33 @@ END UNTRUSTED DECOMPILATION
 "@
   $body=@{model='qwen3.5:9b';prompt=$prompt;stream=$false;think=$false;format='json';keep_alive='2m';options=@{num_ctx=8192;num_predict=1400;temperature=0.1}} | ConvertTo-Json -Depth 6
   Write-Host "Local Qwen analysis $($i+1)/$Functions : $name $address"
-  $job=Start-Job -ScriptBlock {
-   param($json,$seconds)
-   Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -ContentType 'application/json' -Body $json -TimeoutSec $seconds
-  } -ArgumentList $body,$TimeoutSeconds
-  try {
-   $deadline=(Get-Date).AddSeconds($TimeoutSeconds)
-   while($job.State -eq 'Running'){
-    if((Get-Date) -gt $deadline){Stop-Job $job;throw "Inference timeout for $address"}
-    Start-Sleep -Seconds 2
-    $gpu=Sample-Gpu
-    $peak=[Math]::Max($peak,$gpu.used);$peakTemp=[Math]::Max($peakTemp,$gpu.temp)
-    if($gpu.used -gt $budget){Stop-Job $job;throw "VRAM soft budget exceeded: $($gpu.used) MiB"}
-    if($gpu.temp -ge 80){Stop-Job $job;throw "GPU temperature threshold reached: $($gpu.temp) C"}
-   }
-   if($job.State -ne 'Completed'){throw "Inference failed: $($job.State)"}
-   $response=Receive-Job $job -ErrorAction Stop
-  } finally {Remove-Job $job -Force -ErrorAction SilentlyContinue}
-  $interpretation=$null;$parseError=$null
-  try {$interpretation=([string]$response.response | ConvertFrom-Json -ErrorAction Stop)}catch{$parseError=$_.Exception.Message}
-  $valid=($null -ne $interpretation -and $null -ne $interpretation.summary -and $null -ne $interpretation.observations -and $null -ne $interpretation.inferences -and $null -ne $interpretation.uncertainties)
+  $interpretation=$null;$parseError=$null;$valid=$false;$response=$null;$attempt=0
+  for($attempt=1;$attempt -le 3;$attempt++){
+   if($attempt -gt 1){Write-Warning "Retrying $name ($address), attempt $attempt/3"}
+   $job=Start-Job -ScriptBlock {
+    param($json,$seconds)
+    Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post -ContentType 'application/json' -Body $json -TimeoutSec $seconds
+   } -ArgumentList $body,$TimeoutSeconds
+   try {
+    $deadline=(Get-Date).AddSeconds($TimeoutSeconds)
+    while($job.State -eq 'Running'){
+     if((Get-Date) -gt $deadline){Stop-Job $job;throw "Inference timeout for $address"}
+     Start-Sleep -Seconds 2
+     $gpu=Sample-Gpu
+     $peak=[Math]::Max($peak,$gpu.used);$peakTemp=[Math]::Max($peakTemp,$gpu.temp)
+     if($gpu.used -gt $budget){Stop-Job $job;throw "VRAM soft budget exceeded: $($gpu.used) MiB"}
+     if($gpu.temp -ge 80){Stop-Job $job;throw "GPU temperature threshold reached: $($gpu.temp) C"}
+    }
+    if($job.State -ne 'Completed'){throw "Inference failed: $($job.State)"}
+    $response=Receive-Job $job -ErrorAction Stop
+   } finally {Remove-Job $job -Force -ErrorAction SilentlyContinue}
+   $interpretation=$null;$parseError=$null
+   try {$interpretation=([string]$response.response | ConvertFrom-Json -ErrorAction Stop)}catch{$parseError=$_.Exception.Message}
+   $valid=($null -ne $interpretation -and $null -ne $interpretation.summary -and $null -ne $interpretation.observations -and $null -ne $interpretation.inferences -and $null -ne $interpretation.uncertainties)
+   if($valid){break}
+   [IO.File]::WriteAllText((Join-Path $out ("failed-{0:D2}-attempt-{1}.txt" -f ($i+1),$attempt)),[string]$response.response)
+   Write-Warning "Invalid response for $name, attempt $attempt : $parseError"
+  }
   $checked=0;$rejected=0
   if($valid){
    foreach($obs in @($interpretation.observations)){
@@ -102,7 +109,7 @@ END UNTRUSTED DECOMPILATION
   }
   $item=[ordered]@{
    rank=$i+1;address=$address;name=$name;score=[int]$row[0].score;source_sha256=$hash
-   code_truncated=$truncated;schema_valid=[bool]$valid;evidence_verified_count=$checked;evidence_rejected_count=$rejected
+   code_truncated=$truncated;schema_valid=[bool]$valid;attempts=$attempt;evidence_verified_count=$checked;evidence_rejected_count=$rejected
    model_output=if($valid){$interpretation}else{$null}
    raw_response=if($valid){$null}else{[string]$response.response};parse_error=$parseError
   }
