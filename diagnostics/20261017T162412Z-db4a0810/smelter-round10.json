@@ -1,0 +1,66 @@
+{
+  "test": "SMELTER Round 10 existing-asset GLB-to-OBJ workflow",
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "mesh_count": 1,
+        "node_names": [
+          "SMELTER_uv_sphere"
+        ],
+        "bytes": 70228
+      },
+      "seconds": 0.292
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "asset.convert_glb_to_obj",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "converted": true,
+        "obj_bytes": 122614,
+        "returncode": 0,
+        "stdout_tail": "20:10:10 | INFO: Data are loaded, start creating Blender stuff\n20:10:10 | INFO: Blender create Mesh node Sphere\n20:10:10 | INFO: glTF import finished in 0.01s\nInfo: File exported successfully\nBlender 5.3.0 Beta (hash 98f8f23151d3 built 2026-10-12 01:36:21)\nWriting to [LOCAL_PATH]\nOBJ export of 'converted.obj' took 2.35 ms\n\nBlender quit\n"
+      },
+      "seconds": 1.042
+    },
+    {
+      "step": 3,
+      "decision": {
+        "tool_id": "asset.validate_obj",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "vertices": 1984,
+        "faces": 960,
+        "blender_reimport_verified": true,
+        "obj_bytes": 122614
+      },
+      "seconds": 0.849
+    }
+  ],
+  "full_pass": true,
+  "source_bytes": 70228,
+  "inspected": true,
+  "converted": true,
+  "model_validated": true,
+  "independent_validation": {
+    "valid": true,
+    "vertices": 1984,
+    "faces": 960,
+    "blender_reimport_verified": true,
+    "obj_bytes": 122614
+  },
+  "status": "passed"
+}
