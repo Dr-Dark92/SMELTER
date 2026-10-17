@@ -25,6 +25,20 @@ def locate_blender():
             base=os.environ.get(env)
             if base:
                 candidates.extend(sorted(pathlib.Path(base,"Blender Foundation").glob("Blender */blender.exe"),reverse=True))
+    if os.name=="nt":
+        for env in ("LOCALAPPDATA","USERPROFILE"):
+            base=os.environ.get(env)
+            if base:
+                for relative in ("Programs/Blender Foundation","scoop/apps/blender/current","scoop/apps/blender"):
+                    folder=pathlib.Path(base,relative)
+                    if folder.is_dir():
+                        candidates.extend(folder.glob("**/blender.exe"))
+        for drive in ("C:","D:","E:"):
+            for relative in ("SteamLibrary/steamapps/common/Blender","Program Files (x86)/Steam/steamapps/common/Blender","Program Files/Steam/steamapps/common/Blender","Blender"):
+                folder=pathlib.Path(drive+"/",relative)
+                if folder.is_dir():
+                    candidates.extend(folder.glob("blender.exe"))
+                    candidates.extend(folder.glob("*/blender.exe"))
     for candidate in candidates:
         if candidate.is_file():return str(candidate.resolve())
     return None
