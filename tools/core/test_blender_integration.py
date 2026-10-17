@@ -85,7 +85,8 @@ def main():
         return result
     def validate():
         if not blend.is_file() or blend.stat().st_size<100:return {"valid":False,"reason":"missing blend"}
-        if blend.open("rb").read(8) not in (b"BLENDER-", b"BLENDER_"):return {"valid":False,"reason":"invalid blend header"}
+        header=blend.open("rb").read(16)
+        if not header.startswith(b"BLENDER"):return {"valid":False,"reason":"invalid blend header","header_hex":header.hex(),"header_repr":repr(header),"file_size":blend.stat().st_size}
         if not glb.is_file() or glb.stat().st_size<20:return {"valid":False,"reason":"missing glb"}
         data=glb.read_bytes()
         magic,version,length=struct.unpack_from("<4sII",data)
