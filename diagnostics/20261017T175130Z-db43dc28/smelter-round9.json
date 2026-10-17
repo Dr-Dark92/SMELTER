@@ -1,0 +1,116 @@
+{
+  "test": "SMELTER Round 9 reusable Blender adapter",
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "blender.build",
+        "arguments": {
+          "shape": "uv_sphere"
+        }
+      },
+      "pass": true,
+      "result": {
+        "shape": "uv_sphere",
+        "blend": "[LOCAL_PATH]",
+        "glb": "[LOCAL_PATH]",
+        "returncode": 0,
+        "stdout_tail": "Info: Saved as \"uv_sphere.blend\"\nINFO Draco is available, use library at [LOCAL_PATH]\nINFO MeshOptimizer is available, use library at [LOCAL_PATH]\n20:04:46 | INFO: Starting glTF 2.0 export\n20:04:46 | INFO: Extracting primitive: Sphere\n20:04:46 | INFO: Primitives created: 1\n20:04:46 | INFO: Finished glTF 2.0 export in 0.013150691986083984 s\n\nBlender 5.3.0 Beta (hash 98f8f23151d3 built 2026-10-12 01:36:21)\n\nBlender quit\n"
+      },
+      "seconds": 1.468
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "blender.build",
+        "arguments": {
+          "shape": "cylinder"
+        }
+      },
+      "pass": true,
+      "result": {
+        "shape": "cylinder",
+        "blend": "[LOCAL_PATH]",
+        "glb": "[LOCAL_PATH]",
+        "returncode": 0,
+        "stdout_tail": "Info: Saved as \"cylinder.blend\"\nINFO Draco is available, use library at [LOCAL_PATH]\nINFO MeshOptimizer is available, use library at [LOCAL_PATH]\n20:04:48 | INFO: Starting glTF 2.0 export\n20:04:48 | INFO: Extracting primitive: Cylinder\n20:04:48 | INFO: Primitives created: 1\n20:04:48 | INFO: Finished glTF 2.0 export in 0.009990215301513672 s\n\nBlender 5.3.0 Beta (hash 98f8f23151d3 built 2026-10-12 01:36:21)\n\nBlender quit\n"
+      },
+      "seconds": 1.253
+    },
+    {
+      "step": 3,
+      "decision": {
+        "tool_id": "artifact.validate",
+        "arguments": {
+          "shape": "uv_sphere"
+        }
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "shape": "uv_sphere",
+        "mesh_count": 1,
+        "node_found": true,
+        "blender_reopen_verified": true,
+        "blend_bytes": 111434,
+        "glb_bytes": 70228
+      },
+      "seconds": 0.983
+    },
+    {
+      "step": 4,
+      "decision": {
+        "tool_id": "artifact.validate",
+        "arguments": {
+          "shape": "cylinder"
+        }
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "shape": "cylinder",
+        "mesh_count": 1,
+        "node_found": true,
+        "blender_reopen_verified": true,
+        "blend_bytes": 95864,
+        "glb_bytes": 7804
+      },
+      "seconds": 1.02
+    }
+  ],
+  "full_pass": true,
+  "target_shapes": [
+    "uv_sphere",
+    "cylinder"
+  ],
+  "blender_discovered": true,
+  "built": [
+    "cylinder",
+    "uv_sphere"
+  ],
+  "model_validated": [
+    "cylinder",
+    "uv_sphere"
+  ],
+  "independent_validation": {
+    "uv_sphere": {
+      "valid": true,
+      "shape": "uv_sphere",
+      "mesh_count": 1,
+      "node_found": true,
+      "blender_reopen_verified": true,
+      "blend_bytes": 111434,
+      "glb_bytes": 70228
+    },
+    "cylinder": {
+      "valid": true,
+      "shape": "cylinder",
+      "mesh_count": 1,
+      "node_found": true,
+      "blender_reopen_verified": true,
+      "blend_bytes": 95864,
+      "glb_bytes": 7804
+    }
+  },
+  "status": "passed"
+}
