@@ -26,9 +26,20 @@ try {
  $modelPresent= @($modelRows | Where-Object {$_ -match '^qwen3\.5:4b\s'}).Count -gt 0
  if(-not $modelPresent){throw 'qwen3.5:4b not found in Ollama model list'}
  Write-Host 'PASS: qwen3.5:4b installed'
- $mcpRows=@(& $opencode mcp list 2>&1 | ForEach-Object { [string]$_ })
- if($LASTEXITCODE -ne 0){throw 'OpenCode MCP listing failed'}
- if(-not (@($mcpRows | Where-Object {$_ -match 'rea connected'}).Count -gt 0)){throw 'REA not connected in OpenCode MCP list'}
+ # Windows PowerShell 5.1 promotes native stderr to ErrorRecord; temporarily
+ # allow it through so that the real process exit code determines success.
+ $priorPreference=$ErrorActionPreference
+ try {
+  $ErrorActionPreference='Continue'
+  $mcpRows=@(& $opencode mcp list 2>&1 | ForEach-Object { [string]$_ })
+  $mcpExitCode=$LASTEXITCODE
+ } finally {
+  $ErrorActionPreference=$priorPreference
+ }
+ $mcpText=$mcpRows -join [Environment]::NewLine
+ Write-Host $mcpText
+ if($mcpExitCode -ne 0){throw "OpenCode MCP listing failed (exit $mcpExitCode): $mcpText"}
+ if($mcpText -notmatch '(?is)rea\s+connected'){throw "REA not connected in OpenCode MCP list: $mcpText"}
  Write-Host 'PASS: OpenCode REA MCP connected'
  $doctorRaw=(& $rea doctor --json 2>&1 | Out-String)
  try{$doctor=$doctorRaw | ConvertFrom-Json}catch{throw 'REA doctor did not return valid JSON'}
