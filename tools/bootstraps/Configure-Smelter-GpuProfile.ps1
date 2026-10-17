@@ -14,14 +14,6 @@ function Set-GpuPowerLimitElevated([string]$NvidiaSmi,[int]$Watts) {
  $status=Join-Path $env:TEMP ('smelter-gpu-status-'+[guid]::NewGuid().ToString('N')+'.txt')
  $safeSmi=$NvidiaSmi.Replace("'","''")
  $safeStatus=$status.Replace("'","''")
- $body=@"
-\$ErrorActionPreference='Continue'
-& '$safeSmi' -i 0 -pl $Watts
-\$result=\$LASTEXITCODE
-Set-Content -LiteralPath '$safeStatus' -Value \$result
-exit \$result
-"@
- # Use a literal single-quoted here-string template instead of interpolated escapes.
  $body="& '"+$safeSmi+"' -i 0 -pl "+$Watts+"; "+'$code=$LASTEXITCODE'+"; Set-Content -LiteralPath '"+$safeStatus+"' -Value "+'$code'+"; exit "+'$code'
  [IO.File]::WriteAllText($helper,$body)
  try {
