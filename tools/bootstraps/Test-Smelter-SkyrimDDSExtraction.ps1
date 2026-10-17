@@ -16,7 +16,7 @@ $code=@'
 using System;
 public static class SmelterLz4Frame {
  public static byte[] DecodeBlock(byte[] src, int start, int length, byte[] dst, int outputStart, int outputLimit) {
-  if(expected<1 || expected>16777216 || start<0 || length<0 || start>src.Length-length) throw new Exception("LZ4 bounds");
+  if(outputStart<0 || outputLimit<outputStart || outputLimit>dst.Length || start<0 || length<0 || start>src.Length-length) throw new Exception("LZ4 bounds");
   int ip=start,end=start+length,op=outputStart;
   while(ip<end) {
    int token=src[ip++]; int literals=token>>4;
