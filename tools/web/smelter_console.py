@@ -6,6 +6,7 @@ Read-only endpoints. Never accepts shell commands, git URLs, or installs skills.
 from __future__ import annotations
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json
+import socket
 from pathlib import Path
 import subprocess
 import urllib.parse
@@ -13,6 +14,7 @@ import urllib.request
 
 HOST="127.0.0.1"
 PORT=8765
+OPENCODE_PORT=4096
 ROOT=Path(__file__).resolve().parents[2]
 HTML=r"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMELTER Console</title>
 <style>body{background:#0c111b;color:#e8eef8;font:15px system-ui;margin:0}header{padding:22px 32px;background:#151d2a;border-bottom:1px solid #303b4b}main{max-width:1100px;margin:30px auto;padding:0 18px}h1{margin:0}small{color:#9baec6}nav{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}button{background:#24334a;color:#fff;border:1px solid #465b76;border-radius:8px;padding:11px 16px;cursor:pointer}button.active{background:#315da0}.panel{background:#151e2c;border:1px solid #303f55;border-radius:12px;padding:22px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.value{font-weight:650;font-size:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#b6d6fb}a{color:#93c5fd}.muted{color:#a2b3c8}</style>
@@ -30,7 +32,12 @@ async function render(page){
  if(page==='Overview'){const x=await data('/api/status');content.innerHTML=panel('System status','<div class="grid">'+Object.entries(x).map(([k,v])=>'<div class="panel"><small>'+safe(k)+'</small><div class="value">'+safe(typeof v==='object'?JSON.stringify(v):v)+'</div></div>').join('')+'</div>')}
  else if(page==='GitHub'){const x=await data('/api/github');content.innerHTML=panel('GitHub repository (read-only)','<pre>'+safe(JSON.stringify(x,null,2))+'</pre><p class="muted">Repository connection, review, and approval controls will be added later.</p>')}
  else if(page==='Skills & Tools'){const x=await data('/api/skills');content.innerHTML=panel('Local skills and tools (discovery only)','<pre>'+safe(JSON.stringify(x,null,2))+'</pre><p class="muted">Remote skill installation is disabled in this MVP.</p>')}
- else if(page==='OpenCode')content.innerHTML=panel('OpenCode workspace','<p>Planned: connect to a separately launched local OpenCode web session.</p><p class="muted">No OpenCode process is started or exposed by this prototype.</p>');
+ else if(page==='OpenCode'){const x=await data('/api/opencode');content.innerHTML=panel('OpenCode workspace',
+ '<p><strong>CLI installed:</strong> '+safe(x.cli?.available?'Yes':'No')+'</p>'+
+ '<p><strong>Local port '+safe(x.port)+':</strong> '+safe(x.listener?'Listening (service not verified)':'Not listening')+'</p>'+
+ '<p><a href="'+safe(x.url)+'" target="_blank" rel="noopener noreferrer">Open local OpenCode interface ↗</a></p>'+
+ '<p>Start OpenCode separately in another PowerShell window:</p><pre>'+safe(x.start_command)+'</pre>'+
+ '<p class="muted">Set a strong OpenCode password. SMELTER never starts OpenCode or exposes it to LAN.</p>');}
  else content.innerHTML=panel('Internet research','<p>Planned: configured search provider, citations, and approved documentation retrieval.</p><p class="muted">No unrestricted web requests from the console.</p>');
 }
 nav.addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)render(b.dataset.page)});
@@ -48,6 +55,16 @@ def ollama():
             d=json.load(r)
         return {"available":True,"models":[m.get("name","") for m in d.get("models",[])][:20]}
     except (OSError,ValueError):return {"available":False}
+def opencode_status():
+    try:
+        with socket.create_connection((HOST,OPENCODE_PORT),timeout=0.5):
+            listening=True
+    except OSError:
+        listening=False
+    return {"cli":run(["opencode","--version"]),"listener":listening,"port":OPENCODE_PORT,
+            "url":f"http://{HOST}:{OPENCODE_PORT}",
+            "start_command":"$env:OPENCODE_SERVER_PASSWORD = Read-Host 'Set OpenCode password'; opencode web --hostname 127.0.0.1 --port 4096"}
+
 def skills():
     locations=[ROOT/"skills",ROOT/".opencode"/"skills",ROOT/"tools"/"skills"]
     names=[]
@@ -58,17 +75,20 @@ def skills():
     return {"count":len(names),"skills":sorted(names)[:100],"remote_installation":"disabled"}
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.headers.get("Host","") not in (f"{HOST}:{PORT}",HOST):
+            self.send_error(403,"Invalid host");return
         path=urllib.parse.urlsplit(self.path).path
         if path=="/":
             body=HTML.encode("utf-8")
             kind="text/html; charset=utf-8"
-        elif path in ("/api/status","/api/github","/api/skills"):
+        elif path in ("/api/status","/api/github","/api/skills","/api/opencode"):
             if path=="/api/status":
                 obj={"mode":"localhost only","root":str(ROOT),"ollama":ollama(),"docker":run(["docker","info","--format","{{.ServerVersion}}"]),"opencode":run(["opencode","--version"])}
             elif path=="/api/github":
                 obj={"repository":"Dr-Dark92/SMELTER","branch":run(["git","branch","--show-current"]),"remote":run(["git","remote","get-url","origin"]),"auth":run(["gh","auth","status"])}
                 # Do not expose gh auth status details, which may include account identifiers.
                 obj["auth"]={"available":obj["auth"]["available"]}
+            elif path=="/api/opencode":obj=opencode_status()
             else:obj=skills()
             body=json.dumps(obj).encode("utf-8")
             kind="application/json; charset=utf-8"
