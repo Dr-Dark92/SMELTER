@@ -6,6 +6,35 @@ param(
  [switch]$SkipPull
 )
 $ErrorActionPreference='Stop'
+# Elevate only the power-limit step; continue model setup as the regular user.
+function Set-GpuPowerLimitElevated([string]$NvidiaSmi,[int]$Watts) {
+ $isAdmin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+ if($isAdmin){ & $NvidiaSmi -i 0 -pl $Watts; return $LASTEXITCODE }
+ $helper=Join-Path $env:TEMP ('smelter-gpu-power-'+[guid]::NewGuid().ToString('N')+'.ps1')
+ $status=Join-Path $env:TEMP ('smelter-gpu-status-'+[guid]::NewGuid().ToString('N')+'.txt')
+ $safeSmi=$NvidiaSmi.Replace("'","''")
+ $safeStatus=$status.Replace("'","''")
+ $body=@"
+\$ErrorActionPreference='Continue'
+& '$safeSmi' -i 0 -pl $Watts
+\$result=\$LASTEXITCODE
+Set-Content -LiteralPath '$safeStatus' -Value \$result
+exit \$result
+"@
+ # Use a literal single-quoted here-string template instead of interpolated escapes.
+ $body="& '"+$safeSmi+"' -i 0 -pl "+$Watts+"; "+'$code=$LASTEXITCODE'+"; Set-Content -LiteralPath '"+$safeStatus+"' -Value "+'$code'+"; exit "+'$code'
+ [IO.File]::WriteAllText($helper,$body)
+ try {
+  Write-Host 'Administrator approval is required to set the NVIDIA power limit.'
+  $p=Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$helper+'"')) -Wait -PassThru
+  if(-not(Test-Path -LiteralPath $status)){throw 'Elevated power-limit helper produced no status'}
+  $result=[int](Get-Content -LiteralPath $status -Raw).Trim()
+  return $result
+ } finally {
+  try{[IO.File]::Delete($helper)}catch{}
+  try{[IO.File]::Delete($status)}catch{}
+ }
+}
 $logs=Join-Path $Root 'workspace\logs'
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $log=Join-Path $logs ('gpu-profile-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.log')
@@ -34,10 +63,8 @@ try {
  $watts=[int][Math]::Floor($default*0.75)
  if($watts -lt $min -or $watts -gt $max){throw "75% target $watts W outside supported [$min,$max] W; no changes made"}
  Write-Host "GPU: $($gpu[1]); VRAM: $total MiB; default power: $default W; target: $watts W"
- $set=@(& $smi '-i' '0' '-pl' ([string]$watts) 2>&1)
- $setExit=$LASTEXITCODE
- Write-Host ($set -join [Environment]::NewLine)
- if($setExit -ne 0){throw "NVIDIA driver refused power limit (exit $setExit). Do not assume it is enforced. Run with appropriate privileges or use vendor-supported controls."}
+ $setExit=Set-GpuPowerLimitElevated -NvidiaSmi $smi -Watts $watts
+ if($setExit -ne 0){throw "NVIDIA driver refused power limit (exit $setExit); no model configuration changed"}
  $gpu=Read-Gpu
  $actual=[double]::Parse($gpu[7],[Globalization.CultureInfo]::InvariantCulture)
  if([Math]::Abs($actual-$watts) -gt 1.0){throw "Power-limit verification failed: requested $watts W, actual $actual W"}
