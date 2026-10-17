@@ -1,0 +1,43 @@
+{
+  "test": "SMELTER Round 12 deep asset integrity",
+  "full_pass": true,
+  "steps": [
+    {
+      "operation": "fingerprint.source",
+      "pass": true,
+      "meshes": 1,
+      "images": 3
+    },
+    {
+      "operation": "fingerprint.roundtrip",
+      "pass": true,
+      "meshes": 1,
+      "images": 3
+    },
+    {
+      "operation": "integrity.compare",
+      "pass": true,
+      "result": {
+        "valid": true,
+        "mismatch_categories": [],
+        "details": {},
+        "vertex_representation_changes": [
+          {
+            "mesh": 0,
+            "source": 1984,
+            "target": 2020
+          }
+        ],
+        "comparison": "quantized Blender-imported polygon-corner world positions/UVs, topology counts, bounds, material PBR defaults, decoded 8-bit pixels; vertex count differences reported separately"
+      }
+    },
+    {
+      "operation": "integrity.negative_test",
+      "pass": true,
+      "detected_categories": [
+        "meshes"
+      ]
+    }
+  ],
+  "status": "passed"
+}
