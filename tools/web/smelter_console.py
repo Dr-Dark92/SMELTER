@@ -30,8 +30,9 @@ async function render(page){
  nav.innerHTML=pages.map(x=>'<button class="'+(x===page?'active':'')+'" data-page="'+safe(x)+'">'+safe(x)+'</button>').join('');
  content.innerHTML=panel(page,'<p class="muted">Loading local status…</p>');
  if(page==='Overview'){const x=await data('/api/status');content.innerHTML=panel('System status','<div class="grid">'+Object.entries(x).map(([k,v])=>'<div class="panel"><small>'+safe(k)+'</small><div class="value">'+safe(typeof v==='object'?JSON.stringify(v):v)+'</div></div>').join('')+'</div>')}
- else if(page==='GitHub'){const x=await data('/api/github');content.innerHTML=panel('GitHub repository (read-only)','<pre>'+safe(JSON.stringify(x,null,2))+'</pre><p class="muted">Repository connection, review, and approval controls will be added later.</p>')}
- else if(page==='Skills & Tools'){const x=await data('/api/skills');content.innerHTML=panel('Local skills and tools (discovery only)','<pre>'+safe(JSON.stringify(x,null,2))+'</pre><p class="muted">Remote skill installation is disabled in this MVP.</p>')}
+ else if(page==='GitHub'){const [x,r]=await Promise.all([data('/api/github'),data('/api/repos')]);content.innerHTML=panel('Current repository','<pre>'+safe(JSON.stringify(x,null,2))+'</pre>')+panel('Available GitHub repositories (read-only)','<p class="muted">Showing up to 30 repositories visible through your existing gh login. Nothing is cloned or connected automatically.</p>'+(r.error?'<pre>'+safe(r.error)+'</pre>':(r.repositories||[]).map(v=>'<div class="panel"><strong>'+safe(v.nameWithOwner)+'</strong> · '+safe(v.isPrivate?'Private':'Public')+'<p class="muted">'+safe(v.description||'No description')+'</p></div>').join('')||'<p>No repositories returned.</p>'))}
+ else if(page==='Skills & Tools'){const [x,c]=await Promise.all([data('/api/skills'),data('/api/catalog')]);content.innerHTML=panel('Local skills and tools (discovery only)','<pre>'+safe(JSON.stringify(x,null,2))+'</pre>')+panel('Recommended capabilities','<p class="muted">Built-in suggestions only; no remote code is downloaded or executed.</p><input id="skill-filter" type="search" placeholder="Search Python, testing, web..." style="width:100%;padding:12px;background:#0c111b;color:white;border:1px solid #465b76;border-radius:8px;box-sizing:border-box">'+
+ '<div id="skill-results"></div>');const draw=()=>{const q=document.querySelector('#skill-filter').value.toLowerCase();document.querySelector('#skill-results').innerHTML=(c.capabilities||[]).filter(v=>JSON.stringify(v).toLowerCase().includes(q)).map(v=>'<div class="panel"><strong>'+safe(v.name)+'</strong> <small>('+safe(v.kind)+')</small><p>'+safe(v.description)+'</p><small>'+safe(v.installation)+'</small></div>').join('')||'<p>No matching capabilities.</p>'};document.querySelector('#skill-filter').addEventListener('input',draw);draw()}
  else if(page==='OpenCode'){const x=await data('/api/opencode');content.innerHTML=panel('OpenCode workspace',
  '<p><strong>CLI installed:</strong> '+safe(x.cli?.available?'Yes':'No')+'</p>'+
  '<p><strong>Local port '+safe(x.port)+':</strong> '+safe(x.listener?'Listening (service not verified)':'Not listening')+'</p>'+
@@ -65,6 +66,31 @@ def opencode_status():
             "url":f"http://{HOST}:{OPENCODE_PORT}",
             "start_command":"$env:OPENCODE_SERVER_PASSWORD = Read-Host 'Set OpenCode password'; opencode web --hostname 127.0.0.1 --port 4096"}
 
+def repositories():
+    try:
+        p=subprocess.run(["gh","repo","list","--limit","30","--json",
+                          "nameWithOwner,isPrivate,description,url"],
+                         cwd=ROOT,capture_output=True,text=True,timeout=12,check=False,
+                         creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
+        if p.returncode:
+            return {"repositories":[],"error":"GitHub CLI not authenticated or repository listing unavailable"}
+        data=json.loads(p.stdout)
+        return {"repositories":[{"nameWithOwner":v.get("nameWithOwner",""),
+                                 "isPrivate":bool(v.get("isPrivate")),
+                                 "description":str(v.get("description") or "")[:200]}
+                                for v in data[:30]]}
+    except (OSError,subprocess.TimeoutExpired,ValueError,TypeError):
+        return {"repositories":[],"error":"GitHub repository listing unavailable"}
+
+CATALOG=[
+    {"name":"Python unit testing","kind":"programming","description":"pytest and unittest acceptance tests","installation":"Review dependencies before enabling"},
+    {"name":"Python linting","kind":"programming","description":"Ruff linting and formatting","installation":"Review dependencies before enabling"},
+    {"name":"Python typing","kind":"programming","description":"mypy static type analysis","installation":"Review dependencies before enabling"},
+    {"name":"Python security review","kind":"security","description":"Bandit checks and dependency audit","installation":"Review dependencies before enabling"},
+    {"name":"GitHub development","kind":"tool","description":"Git and GitHub CLI repository inspection","installation":"Use existing authenticated gh CLI"},
+    {"name":"Documentation research","kind":"research","description":"Search engine and cited documentation retrieval","installation":"Requires approved search provider"},
+    {"name":"Blender automation","kind":"modding","description":"Headless Blender asset pipeline validation","installation":"Use SMELTER existing adapters"},
+]
 def skills():
     locations=[ROOT/"skills",ROOT/".opencode"/"skills",ROOT/"tools"/"skills"]
     names=[]
@@ -75,13 +101,13 @@ def skills():
     return {"count":len(names),"skills":sorted(names)[:100],"remote_installation":"disabled"}
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.headers.get("Host","") not in (f"{HOST}:{PORT}",HOST):
+        if self.client_address[0] not in ("127.0.0.1","::1") or self.headers.get("Host","") not in (f"{HOST}:{PORT}",HOST):
             self.send_error(403,"Invalid host");return
         path=urllib.parse.urlsplit(self.path).path
         if path=="/":
             body=HTML.encode("utf-8")
             kind="text/html; charset=utf-8"
-        elif path in ("/api/status","/api/github","/api/skills","/api/opencode"):
+        elif path in ("/api/status","/api/github","/api/skills","/api/opencode","/api/repos","/api/catalog"):
             if path=="/api/status":
                 obj={"mode":"localhost only","root":str(ROOT),"ollama":ollama(),"docker":run(["docker","info","--format","{{.ServerVersion}}"]),"opencode":run(["opencode","--version"])}
             elif path=="/api/github":
@@ -89,6 +115,8 @@ class Handler(BaseHTTPRequestHandler):
                 # Do not expose gh auth status details, which may include account identifiers.
                 obj["auth"]={"available":obj["auth"]["available"]}
             elif path=="/api/opencode":obj=opencode_status()
+            elif path=="/api/repos":obj=repositories()
+            elif path=="/api/catalog":obj={"capabilities":CATALOG,"remote_installation":"disabled"}
             else:obj=skills()
             body=json.dumps(obj).encode("utf-8")
             kind="application/json; charset=utf-8"
