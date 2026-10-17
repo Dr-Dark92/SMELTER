@@ -75,6 +75,13 @@ def main():
         "Game\\Content\\Paks\\MAIN.PAK must match unreal. "
         "Do not access the filesystem. Keep the other two modules working."
     )
+    inventory_hint=(
+        "INVENTORY CONTRACT: for each input path, normalize separators with "
+        "replace(chr(92), '/'), isolate the final filename, then lowercase "
+        "the extension BEFORE using it as a dictionary key. "
+        "inventory(['A.PAK','b.pak']) must yield extensions['.pak']==2. "
+        "Preserve Windows-path Unreal detection simultaneously."
+    )
     seen=set()
     passed=False
     start=time.monotonic()
@@ -84,7 +91,7 @@ def main():
             if time.monotonic()-start>1200:break
             emit("attempt.begin",attempt=attempt)
             try:
-                obj=base.model_call(a.url,a.model,prompt+"\nCROSS-PLATFORM REQUIREMENT:\n"+windows_hint+"\nTEST FEEDBACK:\n"+feedback[-5500:])
+                obj=base.model_call(a.url,a.model,prompt+"\nCROSS-PLATFORM REQUIREMENT:\n"+windows_hint+"\nINVENTORY REQUIREMENT:\n"+inventory_hint+"\nTEST FEEDBACK:\n"+feedback[-5500:])
                 files=obj["files"]
                 if set(files)!=set(base.ALLOWED):raise ValueError("Must supply exactly three files")
                 if any(not isinstance(v,str) for v in files.values()):raise ValueError("File content must be string")
@@ -104,7 +111,7 @@ def main():
                 feedback=json.dumps({"static_issues":issues,"outcomes":outcomes})
                 prompt=base.TASK+"\nPrevious candidate:\n"+json.dumps(files)
                 if not outcomes["round15"]["passed"]:
-                    feedback+="\n"+windows_hint
+                    feedback+="\n"+windows_hint+"\n"+inventory_hint
             except Exception as exc:
                 feedback=f"{type(exc).__name__}: {str(exc)[:1000]}"
                 emit("attempt.error",attempt=attempt,error=feedback)
