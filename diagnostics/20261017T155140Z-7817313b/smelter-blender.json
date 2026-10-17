@@ -1,0 +1,8 @@
+{
+  "test": "SMELTER headless Blender integration v1",
+  "model": "qwen3.5:9b",
+  "steps": [],
+  "full_pass": false,
+  "status": "blocked",
+  "reason": "Blender executable not found; install Blender or pass --blender with its executable path"
+}
