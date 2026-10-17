@@ -121,19 +121,33 @@ public class SmelterDiscover extends GhidraScript {
   }
   $proc.WaitForExit()
   $proc.Refresh()
-  if($proc.ExitCode -ne 0){throw "Ghidra failed (exit $($proc.ExitCode)); inspect $stdout and $stderr"}
+  $exitCode=$null
+  try {$exitCode=$proc.ExitCode} catch {}
+  if($null -ne $exitCode -and $exitCode -ne 0){
+   throw "Ghidra failed (exit $exitCode); inspect $stdout and $stderr"
+  }
+  if($null -eq $exitCode){
+   Write-Warning 'Ghidra process exit code unavailable; validating generated artifacts instead.'
+  }
  } finally {$proc.Dispose()}
- if(-not(Test-Path $csv) -or -not(Test-Path $out)){throw 'Ghidra did not produce expected outputs'}
+ if(-not(Test-Path $csv) -or -not(Test-Path $out)){
+  $tail=@()
+  if(Test-Path $stdout){$tail+=@(Get-Content $stdout -Tail 25)}
+  if(Test-Path $stderr){$tail+=@(Get-Content $stderr -Tail 25)}
+  throw "Ghidra output missing. Logs: $stdout $stderr`n$($tail -join [Environment]::NewLine)"
+ }
  $body=Get-Content $out -Raw
  if($body -notmatch 'DECOMPILED_COUNT=([1-9][0-9]*)'){throw 'No successfully decompiled candidates'}
  $hash=(Get-FileHash -LiteralPath $targetItem.FullName -Algorithm SHA256).Hash
  $metadata=[ordered]@{
   target=$targetItem.FullName;sha256=$hash;selection='heuristic: function size, call references, names';requested_top=$Top
   decompiled_count=[int]$Matches[1];timestamp=(Get-Date).ToString('o')
+  ghidra_exit_code=$exitCode;exit_code_verified=($null -ne $exitCode)
   note='Function rankings are heuristics; inspect code before drawing conclusions. No AI inference in this phase.'
  }
  $metadata | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $work 'result.json') -Encoding UTF8
  Write-Host "PASS: Selected and decompiled $($metadata.decompiled_count) ranked functions"
+ if($null -eq $exitCode){Write-Warning "Artifacts verified; Ghidra exit status remains unverified."}
  Write-Host "Function index: $csv"
  Write-Host "Decompilation: $out"
  Write-Host "Metadata: $(Join-Path $work 'result.json')"
