@@ -103,7 +103,15 @@ END UNTRUSTED DECOMPILATION
   if($valid){
    foreach($obs in @($interpretation.observations)){
     $n=0;$numeric=[int]::TryParse([string]$obs.line_number,[ref]$n)
-    $ok=($numeric -and $n -ge 1 -and $n -le $codeLines.Count -and [string]$obs.evidence -ceq [string]$codeLines[$n-1])
+    $quote=[string]$obs.evidence
+    $ok=($numeric -and $n -ge 1 -and $n -le $codeLines.Count -and $quote -ceq [string]$codeLines[$n-1])
+    $status=if($ok){'exact_line'}else{'rejected'}
+    if(-not $ok -and $quote.Length -gt 0){
+     $matches=@(for($j=0;$j -lt $codeLines.Count;$j++){if($quote -ceq [string]$codeLines[$j]){$j+1}})
+     if($matches.Count -eq 1){$status='relocated_exact';$ok=$true;$obs | Add-Member -NotePropertyName corrected_line_number -NotePropertyValue ([int]$matches[0]) -Force}
+     elseif($matches.Count -gt 1){$status='ambiguous_duplicate'}
+    }
+    $obs | Add-Member -NotePropertyName evidence_status -NotePropertyValue $status -Force
     $obs | Add-Member -NotePropertyName evidence_verified -NotePropertyValue ([bool]$ok) -Force
     if($ok){$checked++}else{$rejected++}
    }
@@ -130,7 +138,7 @@ END UNTRUSTED DECOMPILATION
   if(-not $item.schema_valid){$report.Add('Invalid JSON model output. Inspect function JSON.');continue}
   $report.Add("Interpretation: $($item.model_output.summary)")
   $report.Add('Observations (model-proposed):')
-  foreach($obs in @($item.model_output.observations)){$report.Add("- Line $($obs.line_number) [$($obs.evidence_verified)]: $($obs.evidence) ; Meaning: $($obs.meaning)")}
+  foreach($obs in @($item.model_output.observations)){$report.Add("- Line $($obs.line_number) [$($obs.evidence_status)]: $($obs.evidence) ; Meaning: $($obs.meaning)")}
   $report.Add('Inferences:')
   foreach($inf in @($item.model_output.inferences)){$report.Add("- $($inf.confidence): $($inf.claim) ; Reason: $($inf.reason)")}
   $report.Add('Uncertainties:')
