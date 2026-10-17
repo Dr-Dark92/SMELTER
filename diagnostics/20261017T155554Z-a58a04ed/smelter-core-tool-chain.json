@@ -1,0 +1,85 @@
+{
+  "test": "SMELTER generic local AI tool chain v2",
+  "model": "qwen3.5:9b",
+  "artifact": "smelter-chain-18320388ad.json",
+  "read_only_game_files": true,
+  "steps": [
+    {
+      "step": "write",
+      "expected_tool": "artifact.write_json",
+      "instruction": "Write JSON artifact named smelter-chain-18320388ad.json containing keys engine with value SMELTER and status with value testing. Call artifact.write_json.",
+      "decision": {
+        "tool_id": "artifact.write_json",
+        "arguments": {
+          "filename": "smelter-chain-18320388ad.json",
+          "data": {
+            "engine": "SMELTER",
+            "status": "testing"
+          }
+        },
+        "reason": "User requested to write a JSON artifact with specific keys and values."
+      },
+      "routing_valid": true,
+      "tool_result": {
+        "status": "written",
+        "filename": "smelter-chain-18320388ad.json",
+        "sha256": "683552c6898d55d4a7337607b0e8530bdced4d625b2ce39abac91246e3de37bc"
+      },
+      "pass": true,
+      "eval_count": 91,
+      "wall_seconds": 1.01
+    },
+    {
+      "step": "read",
+      "expected_tool": "artifact.read_json",
+      "instruction": "Read JSON artifact smelter-chain-18320388ad.json using artifact.read_json.",
+      "decision": {
+        "tool_id": "artifact.read_json",
+        "arguments": {
+          "filename": "smelter-chain-18320388ad.json"
+        },
+        "reason": "User requested to read the JSON artifact that was previously written."
+      },
+      "routing_valid": true,
+      "tool_result": {
+        "status": "read",
+        "filename": "smelter-chain-18320388ad.json",
+        "data": {
+          "engine": "SMELTER",
+          "status": "testing"
+        }
+      },
+      "pass": true,
+      "eval_count": 63,
+      "wall_seconds": 0.694
+    },
+    {
+      "step": "validate",
+      "expected_tool": "artifact.validate_json",
+      "instruction": "Validate JSON artifact smelter-chain-18320388ad.json requires keys engine and status using artifact.validate_json.",
+      "decision": {
+        "tool_id": "artifact.validate_json",
+        "arguments": {
+          "filename": "smelter-chain-18320388ad.json",
+          "required_keys": [
+            "engine",
+            "status"
+          ]
+        },
+        "reason": "User requested to validate that the JSON artifact contains the required keys 'engine' and 'status'."
+      },
+      "routing_valid": true,
+      "tool_result": {
+        "status": "validated",
+        "valid": true,
+        "missing_keys": []
+      },
+      "pass": true,
+      "eval_count": 83,
+      "wall_seconds": 0.869
+    }
+  ],
+  "passed": 3,
+  "total": 3,
+  "full_chain_pass": true
+}
