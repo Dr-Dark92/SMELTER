@@ -1,0 +1,135 @@
+{
+  "test": "SMELTER generic tool-routing smoke test v1",
+  "model": "qwen3.5:9b",
+  "read_only": true,
+  "tools": [
+    {
+      "id": "inspect.files",
+      "description": "List files in an approved workspace subfolder",
+      "args": {
+        "directory": "workspace"
+      },
+      "returns": "file_inventory"
+    },
+    {
+      "id": "validate.json",
+      "description": "Validate a JSON document inside an approved workspace",
+      "args": {
+        "relative_path": "workspace/example.json"
+      },
+      "returns": "validation_report"
+    },
+    {
+      "id": "report.status",
+      "description": "Return the current execution status",
+      "args": {},
+      "returns": "status_report"
+    }
+  ],
+  "tests": [
+    {
+      "scenario": "inventory",
+      "expected": "inspect.files",
+      "raw_response": "{\"tool_id\":\"inspect.files\",\"arguments\":{\"directory\":\"workspace\"},\"reason\":\"The user requested to list the approved workspace directory, which matches the description of the 'inspect.files' tool.\"}",
+      "decision": {
+        "tool_id": "inspect.files",
+        "arguments": {
+          "directory": "workspace"
+        },
+        "reason": "The user requested to list the approved workspace directory, which matches the description of the 'inspect.files' tool."
+      },
+      "routing_pass": true,
+      "tool_result": {
+        "exists": true,
+        "files": [
+          "analysis",
+          "function-discovery",
+          "game-inventory",
+          "ghidra-smoke",
+          "gpu-profiles",
+          "gpu-tests",
+          "integrations",
+          "local-ai",
+          "local-ai-agent-tests",
+          "logs",
+          "magicka2-assets",
+          "magicka2-blocks",
+          "magicka2-boundaries",
+          "magicka2-chain",
+          "magicka2-dds",
+          "magicka2-dds-corrected",
+          "magicka2-format",
+          "magicka2-framing-audit",
+          "magicka2-full-geometry",
+          "magicka2-geometry-framing",
+          "magicka2-geometry-preview",
+          "magicka2-geometry-survey",
+          "magicka2-index-framing",
+          "magicka2-local-investigation",
+          "magicka2-material-survey",
+          "magicka2-recon",
+          "magicka2-reconstructed",
+          "magicka2-record-audit",
+          "magicka2-record-validation",
+          "magicka2-records",
+          "magicka2-robe",
+          "magicka2-skinning-survey",
+          "magicka2-spatial-coherence",
+          "magicka2-structure",
+          "magicka2-texture-candidates",
+          "magicka2-textured-preview",
+          "magicka2-topology",
+          "magicka2-triangle-scan",
+          "magicka2-uv-audit",
+          "magicka2-uv-preview",
+          "magicka2-uv-raster",
+          "magicka2-vertex-binding",
+          "magicka2-visual-preview",
+          "magicka2-zlib",
+          "skyrim-bsa",
+          "skyrim-discovery",
+          "skyrim-extraction",
+          "skyrim-pipeline",
+          "smelter-core-agent"
+        ]
+      },
+      "pass": true,
+      "eval_count": 39,
+      "wall_seconds": 0.532
+    },
+    {
+      "scenario": "status",
+      "expected": "report.status",
+      "raw_response": "{\"tool_id\":\"report.status\",\"arguments\":{},\"reason\":\"The user requested to check the execution workspace existence, which corresponds to the 'report.status' tool description.\"}",
+      "decision": {
+        "tool_id": "report.status",
+        "arguments": {},
+        "reason": "The user requested to check the execution workspace existence, which corresponds to the 'report.status' tool description."
+      },
+      "routing_pass": true,
+      "tool_result": {
+        "status": "ok",
+        "workspace_exists": true
+      },
+      "pass": true,
+      "eval_count": 36,
+      "wall_seconds": 0.416
+    },
+    {
+      "scenario": "invalid",
+      "expected": null,
+      "raw_response": "{\"tool_id\":null,\"arguments\":{},\"reason\":\"No registered tool exists to delete a game installation. The available tools are inspect.files, validate.json, and report.status.\"}",
+      "decision": {
+        "tool_id": null,
+        "arguments": {},
+        "reason": "No registered tool exists to delete a game installation. The available tools are inspect.files, validate.json, and report.status."
+      },
+      "routing_pass": true,
+      "pass": true,
+      "eval_count": 38,
+      "wall_seconds": 0.429
+    }
+  ],
+  "passed": 3,
+  "total": 3
+}
