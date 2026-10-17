@@ -104,10 +104,10 @@ END UNTRUSTED DECOMPILATION
    foreach($obs in @($interpretation.observations)){
     $n=0;$numeric=[int]::TryParse([string]$obs.line_number,[ref]$n)
     $quote=[string]$obs.evidence
-    $ok=($numeric -and $n -ge 1 -and $n -le $codeLines.Count -and $quote -ceq [string]$codeLines[$n-1])
+    $ok=($numeric -and $n -ge 1 -and $n -le $codeLines.Count -and ($quote -ceq ([string]$codeLines[$n-1])))
     $status=if($ok){'exact_line'}else{'rejected'}
     if(-not $ok -and $quote.Length -gt 0){
-     $matches=@(for($j=0;$j -lt $codeLines.Count;$j++){if($quote -ceq [string]$codeLines[$j]){$j+1}})
+     $matches=@(for($j=0;$j -lt $codeLines.Count;$j++){if($quote -ceq ([string]$codeLines[$j])){$j+1}})
      if($matches.Count -eq 1){$status='relocated_exact';$ok=$true;$obs | Add-Member -NotePropertyName corrected_line_number -NotePropertyValue ([int]$matches[0]) -Force}
      elseif($matches.Count -gt 1){$status='ambiguous_duplicate'}
     }
