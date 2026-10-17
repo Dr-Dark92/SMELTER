@@ -1,0 +1,16 @@
+{
+  "round": 19,
+  "model": "qwen3.5:9b",
+  "port": 8766,
+  "skill_source": null,
+  "skill_available": false,
+  "attempts": [
+    {
+      "attempt": 1,
+      "passed": true,
+      "issues": [],
+      "sha256": "a649b061fb3fbc222dba7ed31cea7d7b7d0d8ce4cacb827f9330a49967769ce8"
+    }
+  ],
+  "full_pass": true
+}
