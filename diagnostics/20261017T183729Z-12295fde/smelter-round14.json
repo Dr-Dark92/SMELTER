@@ -1,0 +1,78 @@
+{
+  "round": 14,
+  "full_pass": true,
+  "status": "passed",
+  "model": "qwen3.5:9b",
+  "sandbox_image": "python:3.12-alpine",
+  "sandbox_image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+  "iterations": 2,
+  "elapsed_seconds": 21.02,
+  "events": [
+    {
+      "timestamp": "2026-10-17T17:43:35+00:00",
+      "event": "sandbox.ready",
+      "image": "python:3.12-alpine",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "network": "none",
+      "workspace": "[LOCAL_PATH]"
+    },
+    {
+      "timestamp": "2026-10-17T17:43:35+00:00",
+      "event": "attempt.begin",
+      "attempt": 1
+    },
+    {
+      "timestamp": "2026-10-17T17:43:47+00:00",
+      "event": "candidate.written",
+      "attempt": 1,
+      "sha256": "8a6f4289cd05180a2689fe8cd8e9c6f4ec6a5127d00b6b0f83af6956cf399291",
+      "files": [
+        "engine_detector.py",
+        "archive_inventory.py",
+        "report_generator.py"
+      ],
+      "bytes": 2214
+    },
+    {
+      "timestamp": "2026-10-17T17:43:49+00:00",
+      "event": "tests.finished",
+      "attempt": 1,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "..E.E.....\n======================================================================\nERROR: test_inventory (__main__.IntegrationTests.test_inventory)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 20, in test_inventory\n    self.assertEqual(result[\"extensions\"][\".pak\"],1)\n                     ~~~~~~~~~~~~~~~~~~~~^^^^^^^^\nKeyError: '.pak'\n\n======================================================================\nERROR: test_report (__main__.IntegrationTests.test_report)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 30, in test_report\n    self.assertEqual(result[\"inventory\"][\"extensions\"][\".pak\"],1)\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^\nKeyError: '.pak'\n\n----------------------------------------------------------------------\nRan 10 tests in 0.006s\n\nFAILED (errors=2)\n"
+    },
+    {
+      "timestamp": "2026-10-17T17:43:49+00:00",
+      "event": "attempt.begin",
+      "attempt": 2
+    },
+    {
+      "timestamp": "2026-10-17T17:43:56+00:00",
+      "event": "candidate.written",
+      "attempt": 2,
+      "sha256": "b96b675f2a2e59c420a8d8ce52bd9480ce6c968c7a55bd830d8bf4a659f73de8",
+      "files": [
+        "engine_detector.py",
+        "archive_inventory.py",
+        "report_generator.py"
+      ],
+      "bytes": 1953
+    },
+    {
+      "timestamp": "2026-10-17T17:43:56+00:00",
+      "event": "tests.finished",
+      "attempt": 2,
+      "passed": true,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+    },
+    {
+      "timestamp": "2026-10-17T17:43:56+00:00",
+      "event": "acceptance.passed",
+      "attempt": 2
+    }
+  ],
+  "notes": "Synthetic multi-file game recon library only. No host-side execution of model code. Passing artifact remains disposable and is not merged into the repository."
+}
