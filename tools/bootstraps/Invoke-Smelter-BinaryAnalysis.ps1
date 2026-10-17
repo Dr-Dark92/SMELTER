@@ -30,6 +30,9 @@ import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import java.io.File;
@@ -40,7 +43,7 @@ import java.util.Comparator;
 import java.util.List;
 public class SmelterDiscover extends GhidraScript {
  static class Candidate {
-  Function f; long size; int callers; int score; String name;
+  Function f; long size; int callers; int score; int searchApiHits; int helperApiHits; String name;
   Candidate(Function f) { this.f=f; name=f.getName(); size=f.getBody().getNumAddresses(); }
  }
  boolean runtime(String s) {
@@ -55,6 +58,8 @@ public class SmelterDiscover extends GhidraScript {
   File csv=new File(args[0]), output=new File(args[1]);
   int top=Integer.parseInt(args[2]);
   List<Candidate> items=new ArrayList<>();
+  String[] searchApis={"findfirstfile","findnextfile","findclose","getfullpathname","getfileattributes","getenvironmentvariable","getlongpathname","getshortpathname","pathmatchspec","searchpath"};
+  String[] helperApis={"writeconsole","formatmessage","widechartomultibyte","fprintf","fflush"};
   FunctionIterator it=currentProgram.getFunctionManager().getFunctions(true);
   while(it.hasNext()) {
    Function f=it.next();
@@ -62,11 +67,30 @@ public class SmelterDiscover extends GhidraScript {
    Candidate c=new Candidate(f);
    ReferenceIterator refs=currentProgram.getReferenceManager().getReferencesTo(f.getEntryPoint());
    while(refs.hasNext()) { Reference r=refs.next(); if(r.getReferenceType().isCall()) c.callers++; }
-   // Ranking is a heuristic, not a security or maliciousness assessment.
-   c.score=(int)Math.min(50,c.size/15)+Math.min(30,c.callers*3);
-   if(!runtime(c.name)) c.score+=25;
-   if(c.name.toLowerCase().contains("main")) c.score+=30;
-   if(c.size<20) c.score-=20;
+   // Resolve call targets to imported/thunk symbols when Ghidra exposes them.
+   // This is a heuristic: indirect calls and unresolved imports may be missed.
+   InstructionIterator instructions=currentProgram.getListing().getInstructions(f.getBody(),true);
+   int inspected=0;
+   while(instructions.hasNext() && inspected++<10000) {
+    Instruction ins=instructions.next();
+    for(Reference ref:ins.getReferencesFrom()) {
+     if(!ref.getReferenceType().isCall())continue;
+     String target="";
+     Symbol sym=currentProgram.getSymbolTable().getPrimarySymbol(ref.getToAddress());
+     if(sym!=null)target=sym.getName().toLowerCase();
+     Function callee=currentProgram.getFunctionManager().getFunctionAt(ref.getToAddress());
+     if(callee!=null)target=target+" "+callee.getName().toLowerCase();
+     for(String api:searchApis)if(target.contains(api)){c.searchApiHits++;break;}
+     for(String api:helperApis)if(target.contains(api)){c.helperApiHits++;break;}
+    }
+   }
+   // Prefer behavioral API evidence over frequently called formatting helpers.
+   c.score=(int)Math.min(35,c.size/25)+Math.min(12,c.callers*2);
+   if(!runtime(c.name))c.score+=10;
+   if(c.name.toLowerCase().contains("main"))c.score+=20;
+   c.score+=Math.min(80,c.searchApiHits*20);
+   c.score-=Math.min(45,c.helperApiHits*15);
+   if(c.size<20)c.score-=20;
    items.add(c);
   }
   Collections.sort(items,new Comparator<Candidate>() {
@@ -77,11 +101,11 @@ public class SmelterDiscover extends GhidraScript {
    }
   });
   try(PrintWriter w=new PrintWriter(csv,"UTF-8")) {
-   w.println("rank,address,name,size_bytes_approx,call_references,score,runtime_name_heuristic");
+   w.println("rank,address,name,size_bytes_approx,call_references,score,runtime_name_heuristic,search_api_hits,helper_api_hits");
    int rank=0;
    for(Candidate c:items) {
     String safe=c.name.replace(",","_").replace("\n","_").replace("\r","_");
-    w.println((++rank)+","+c.f.getEntryPoint()+","+safe+","+c.size+","+c.callers+","+c.score+","+runtime(c.name));
+    w.println((++rank)+","+c.f.getEntryPoint()+","+safe+","+c.size+","+c.callers+","+c.score+","+runtime(c.name)+","+c.searchApiHits+","+c.helperApiHits);
    }
   }
   DecompInterface dec=new DecompInterface();
@@ -140,7 +164,7 @@ public class SmelterDiscover extends GhidraScript {
  if($body -notmatch 'DECOMPILED_COUNT=([1-9][0-9]*)'){throw 'No successfully decompiled candidates'}
  $hash=(Get-FileHash -LiteralPath $targetItem.FullName -Algorithm SHA256).Hash
  $metadata=[ordered]@{
-  target=$targetItem.FullName;sha256=$hash;selection='heuristic: function size, call references, names';requested_top=$Top
+  target=$targetItem.FullName;sha256=$hash;selection='heuristic: call-target API categories, function size, call references, names';requested_top=$Top
   decompiled_count=[int]$Matches[1];timestamp=(Get-Date).ToString('o')
   ghidra_exit_code=$exitCode;exit_code_verified=($null -ne $exitCode)
   note='Function rankings are heuristics; inspect code before drawing conclusions. No AI inference in this phase.'
