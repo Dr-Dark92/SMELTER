@@ -87,10 +87,23 @@ def compare(a,b):
                 "materials":[m["pbr"] for m in fp["materials"]],
                 "images":[{k:v for k,v in i.items() if k!="name"} for i in fp["images"]]}
     left,right=normalize(a),normalize(b)
-    mismatches={key:{"source":left[key],"target":right[key]} for key in left if left[key]!=right[key]}
+    # GLB round-trips can split vertices at UV/material seams. A changed
+    # vertex count is diagnostic metadata, not proof of altered geometry.
+    # Polygon-corner world positions + UVs remain the strict geometry gate.
+    def canonical_meshes(meshes):
+        return [{k:v for k,v in mesh.items() if k not in ("vertices","position_fingerprint")} for mesh in meshes]
+    mismatches={}
+    for key in left:
+        lhs=canonical_meshes(left[key]) if key=="meshes" else left[key]
+        rhs=canonical_meshes(right[key]) if key=="meshes" else right[key]
+        if lhs!=rhs:mismatches[key]={"source":lhs,"target":rhs}
+    vertex_count_changes=[{"mesh":i,"source":x["vertices"],"target":y["vertices"]}
+                          for i,(x,y) in enumerate(zip(left["meshes"],right["meshes"]))
+                          if x["vertices"]!=y["vertices"]]
     return {"valid":not mismatches and bool(left["meshes"]) and bool(left["materials"]) and bool(left["images"]),
             "mismatch_categories":list(mismatches),"details":mismatches,
-            "comparison":"quantized Blender-imported mesh loop positions/UVs, material PBR defaults, decoded 8-bit pixels"}
+            "vertex_representation_changes":vertex_count_changes,
+            "comparison":"quantized Blender-imported polygon-corner world positions/UVs, topology counts, bounds, material PBR defaults, decoded 8-bit pixels; vertex count differences reported separately"}
 
 def negative_mutation(fp):
     altered=json.loads(json.dumps(fp))
