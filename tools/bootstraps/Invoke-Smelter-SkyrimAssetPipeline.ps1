@@ -2,14 +2,15 @@
 [CmdletBinding()]
 param(
  [string]$Root='C:\SMELTER',
+ [string]$ScriptsRoot='C:\SMELTER',
  [string]$GamePath='C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition',
  [string]$Archive='Skyrim - Textures6.bsa',
  [string]$Pattern='*skuldafnworld*.dds',
  [ValidateRange(1,10)][int]$Count=3
 )
 $ErrorActionPreference='Stop'
-$discovery=Join-Path $Root 'tools\bootstraps\Find-Smelter-SkyrimAssets.ps1'
-$extractor=Join-Path $Root 'tools\bootstraps\Export-Smelter-SkyrimDDS.ps1'
+$discovery=Join-Path $ScriptsRoot 'tools\bootstraps\Find-Smelter-SkyrimAssets.ps1'
+$extractor=Join-Path $ScriptsRoot 'tools\bootstraps\Export-Smelter-SkyrimDDS.ps1'
 foreach($script in @($discovery,$extractor)){if(-not (Test-Path -LiteralPath $script -PathType Leaf)){throw "Missing script: $script"}}
 $runId=[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fff')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8)
 $out=Join-Path $Root ('workspace\skyrim-pipeline\'+$runId)
