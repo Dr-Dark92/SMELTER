@@ -5,12 +5,13 @@ import argparse,datetime,json,pathlib,sys,time,urllib.request,uuid
 from smelter_blender_adapter import discover
 from smelter_asset_adapter import inspect_glb,convert_glb_to_obj,validate_obj
 
-def choose(url,model,history):
+def choose(url,model,history,allowed):
     prompt=("You are SMELTER's asset-processing agent. Return ONLY one JSON object: "
             '{"tool_id":"...","arguments":{}}. Registered tools: asset.inspect, '
             "asset.convert_glb_to_obj, asset.validate_obj. All tools require exactly empty arguments {}. "
             "Your goal is to inspect an existing GLB asset, convert it to OBJ, and validate the result. "
             "Use tools in that order, exactly once each. Never propose paths or code.\n"+
+            "CURRENT ALLOWED TOOL IDS: "+", ".join(allowed)+"\n"+
             "\n".join(history))
     body={"model":model,"prompt":prompt,"think":False,"stream":False,"format":"json",
           "options":{"temperature":0,"num_ctx":8192,"num_predict":200}}
@@ -53,7 +54,12 @@ def main():
     for i in range(7):
         step={"step":i+1};start=time.perf_counter()
         try:
-            d=choose(a.url,a.model,history)
+            allowed=(["asset.inspect"] if not inspected else ["asset.convert_glb_to_obj"] if not converted else ["asset.validate_obj"])
+            d=choose(a.url,a.model,history,allowed)
+            if d.get("tool_id") not in allowed:
+                step["model_proposed_disallowed_tool"]=d.get("tool_id")
+                d={"tool_id":allowed[0],"arguments":{}}
+                step["deterministic_transition_override"]=True
             step["decision"]=d
             if d.get("arguments")!={}:raise ValueError("Arguments must be {}")
             tool=d.get("tool_id")
