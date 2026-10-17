@@ -58,7 +58,7 @@ try{
    $params.Limit=$n;$tool=Join-Path $Root 'tools\bootstraps\Find-Smelter-SkyrimAssets.ps1'
   }else{
    $n=0;if(-not [int]::TryParse([string]$a.count,[ref]$n) -or $n -lt 1 -or $n -gt 3){throw 'Count outside 1-3'}
-   $params.Count=$n;$tool=Join-Path $Root 'tools\bootstraps\Invoke-Smelter-SkyrimAssetPipeline.ps1'
+   $params.Count=$n;$params.ScriptsRoot=$Root;$tool=Join-Path $Root 'tools\bootstraps\Invoke-Smelter-SkyrimAssetPipeline.ps1'
   }
  }
  if(-not (Test-Path -LiteralPath $tool -PathType Leaf)){throw 'Approved script missing'}
@@ -70,7 +70,10 @@ try{
  $process=Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList $argsList -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
  if(-not $process.WaitForExit($TimeoutSeconds*1000)){try{$process.Kill()}catch{};throw 'Tool timed out'}
  $process.Refresh();$report.exit_code=$process.ExitCode
- if($process.ExitCode -ne 0){throw "Tool failed with exit code $($process.ExitCode). See tool-stderr.log"}
+ if($null -eq $process.ExitCode -or $process.ExitCode -ne 0){
+  $detail=if(Test-Path -LiteralPath $stderr){(Get-Content -LiteralPath $stderr -Tail 8) -join ' '}else{'No stderr log'}
+  throw "Tool process failed. $detail"
+ }
  $report.status='passed'
  Write-Host "Local AI selected: $name"
  Write-Host 'Execution: PASS'
