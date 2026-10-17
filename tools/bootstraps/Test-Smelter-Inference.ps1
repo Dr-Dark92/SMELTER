@@ -17,12 +17,13 @@ try {
  $cfg=Get-Content $config -Raw | ConvertFrom-Json
  if($cfg.model -ne 'ollama/qwen3.5:4b'){throw "Unexpected model: $($cfg.model)"}
  $uri='http://127.0.0.1:11434/api/generate'
- $payload=@{model='qwen3.5:4b';prompt='Reply with exactly: SMELTER_READY';stream=$false;options=@{num_predict=48}} | ConvertTo-Json -Depth 6
+ $payload=@{model='qwen3.5:4b';prompt='Reply with exactly: SMELTER_READY';stream=$false;think=$false;options=@{num_predict=256}} | ConvertTo-Json -Depth 6
  Write-Host 'Testing local Ollama inference...'
  try {
   $reply=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Body $payload -TimeoutSec $TimeoutSeconds
  } catch {throw "Ollama inference failed: $($_.Exception.Message)"}
- if([string]::IsNullOrWhiteSpace([string]$reply.response)){throw 'Ollama returned empty response'}
+ Write-Host ('Ollama metadata: '+($reply | Select-Object model,done,done_reason,eval_count,thinking | ConvertTo-Json -Compress -Depth 4))
+ if([string]::IsNullOrWhiteSpace([string]$reply.response)){throw ('Ollama returned empty final response (done_reason='+$reply.done_reason+'). Inspect metadata above.')}
  Write-Host "Ollama response: $($reply.response)"
  Write-Host 'PASS: Ollama produced a nonempty response'
  # Test OpenCode in a temporary directory so no project-specific files are created.
