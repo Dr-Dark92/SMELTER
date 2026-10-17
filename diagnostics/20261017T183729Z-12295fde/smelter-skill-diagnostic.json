@@ -1,0 +1,112 @@
+{
+  "test": "SMELTER installed skill discovery and selection v1",
+  "model": "qwen3.5:9b",
+  "skills_directory": "[LOCAL_PATH]",
+  "discovered": [
+    {
+      "id": "universal-modder-asset-pipeline",
+      "name": "asset-pipeline",
+      "description": "Turn generated or hand-made art into exactly what a game engine loads. Covers sprite cutout, trim and nearest-neighbour fitting to frame sizes, pixelation to a palette, sprite sheets and strips, player/team-colour masks, seamless textures, and rendering a 3D model into sprite frames from the game's own camera (isometric/RTS 8 or 16 headings, side view, top-down) with Blender. Use after generating assets, or when the user asks to make sprites, sprite sheets, animation frames, isometric unit sprites or icons for a game.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-game-automation",
+      "name": "game-automation",
+      "description": "Launch, see and drive a real game so an agent can test its own mods. Covers launching via Steam or the exe, windowed mode at a fixed size, screenshots of the game window (GPU-safe capture), clicking and typing into menus, holding keys, relative mouse, crash-reporter cleanup, killing by PID, reading logs, scripted test scenes, and an in-game JSON bridge that lets an agent observe and act. Windows-first (also from WSL), with notes for Linux and macOS. Use when a mod must be verified in game, when navigating menus automatically, or when building a repeatable test or demo scene.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-game-recon",
+      "name": "game-recon",
+      "description": "Figure out how a specific installed game can be modded, before writing any mod code. Covers where it's installed, the engine and version, managed vs native code, anti-cheat, loaders already present, save and config folders, and the community's modding route. Also whether this machine can run it (a Windows game on macOS or Linux, x64 on ARM). Use when the user asks \"can I mod <game>?\", \"what engine is <game>\", \"how do people mod <game>\", or at the start of any modding task. Produces MODDING_PLAN.md.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-mashup-mods",
+      "name": "mashup-mods",
+      "description": "Build cross-game mashups and total conversions, the \"Minecraft inside Elden Ring\" or \"skateboarding in MW2\" kind. Covers passthrough mods (two games running at once and exchanging state, rendering and collision), porting one game's content or mechanics into another, embedding a decompiled game as a library, and clean reimplementations that read the user's own game files. Use when the user wants to combine two games, bring an enemy, mechanic or world from one game into another, or rebuild a game's runtime, or reimplement the guest's rules headless inside a real host.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-mod-any-game",
+      "name": "mod-any-game",
+      "description": "Mod a PC game the user owns, taking an idea to working in the real game and recorded. It covers new items, weapons, enemies, bosses, units, civilizations, mechanics, art, sound, VR and cross-game mashups. Use when the user wants to mod, extend, hack on, reverse engineer or mash up a game (\"add a nuke to Terraria\", \"make a new civ for Age of Empires\", \"put Minecraft inside X\", \"can I mod this game?\"). It covers recon (engine, loaders, anti-cheat), choosing the route, a safe lab, a first vertical slice, fal-generated assets, in-game verification and a showcase clip.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-publish-mod",
+      "name": "publish-mod",
+      "description": "Package and release a finished game mod. Covers the pre-release lint (no game files, decompiled code or leaked keys), README and install steps, credits and AI disclosure, versioning, where to upload (Nexus Mods, Steam Workshop, Thunderstore, mod.io, GitHub releases), and the post with a video. Use when the user wants to ship, share, upload, release or post a mod.",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    },
+    {
+      "id": "universal-modder-reverse-engineering",
+      "name": "reverse-engineering",
+      "description": "Read how a game actually works so a mod can hook it. Decompile .NET/Mono (ILSpy), IL2CPP (Cpp2IL, Il2CppDumper), Java (Vineflower) and native code (Ghidra, IDA, via MCP servers); dump data and asset formats; reverse-engineer a binary file format and prove it with a round trip; read live memory (Cheat Engine, Frida, x64dbg); find render passes (RenderDoc). Use when a mod needs game internals, e.g. \"how does the boss AI work\", \"find the damage function\", \"what format is this .sld/.pak/.dat\", \"where is the player position in memory\".",
+      "path": "[LOCAL_PATH]",
+      "truncated": false
+    }
+  ],
+  "discovery_errors": [],
+  "tests": [
+    {
+      "test": "select_skill",
+      "expected": "universal-modder-asset-pipeline",
+      "decision": {
+        "skill_id": "universal-modder-asset-pipeline",
+        "reason": "The task description explicitly matches the definition of the 'asset-pipeline' skill, which handles converting generated or hand-made art into game-ready formats like sprites, sprite sheets, textures, and 3D model renderings."
+      },
+      "eval_count": 69,
+      "pass": true,
+      "wall_seconds": 0.945
+    },
+    {
+      "test": "reject_unknown_skill",
+      "expected": null,
+      "decision": {
+        "skill_id": null,
+        "reason": "The requested skill identifier '__smelter_nonexistent_skill_9c3f__' does not exist in the provided catalog. The available skills are: asset-pipeline, game-automation, game-recon, mashup-mods, mod-any-game, publish-mod, and reverse-engineering."
+      },
+      "eval_count": 77,
+      "pass": true,
+      "wall_seconds": 0.983
+    },
+    {
+      "test": "read_skill_instructions",
+      "expected": "universal-modder-asset-pipeline",
+      "decision": {
+        "skill_id": "universal-modder-asset-pipeline",
+        "instruction_summary": "This skill converts raw art assets into game-ready files by first analyzing the target game's format (dimensions, orientation, alpha, palette). It provides a 2D pipeline using `um sprite` commands for cutting out backgrounds, fitting sizes, pixelating, and generating animations. For 3D assets, it uses `um render3d` with specific presets (like 'aoe2' or 'side') to generate consistent orthographic views and animations from GLB models. It also handles texture generation (tiling, PBR conversion), DDS compression, and includes a specialized workflow for converting Unity game assets into local resource packs while managing memory constraints.",
+        "prerequisites": [
+          "Access to raw art files (PNG, GLB, etc.)",
+          "Knowledge of the target game's asset format specifications",
+          "Blender installed on PATH or via BLENDER environment variable (for 3D workflows)",
+          "UnityPy (for Unity asset conversion tasks)",
+          "DirectXTex or ImageMagick (for DDS compression)"
+        ],
+        "proposed_tools": [
+          "um sprite",
+          "um render3d",
+          "um fal model3d",
+          "um win shot",
+          "UnityPy",
+          "texconv/magick"
+        ],
+        "executed": false
+      },
+      "eval_count": 308,
+      "pass": true,
+      "wall_seconds": 3.109
+    }
+  ],
+  "read_only": true,
+  "passed": 3,
+  "total": 3,
+  "full_pass": true
+}
