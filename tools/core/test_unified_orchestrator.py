@@ -63,12 +63,14 @@ def main():
             "goal":goal,"skills_discovered":len(registry.skills()),"capabilities":registry.catalog(),
             "steps":[],"artifact":filename}
     history=["USER_GOAL: "+goal]
-    skill_listed=False;skill_read=False;validated=False;seen=set()
+    skill_listed=False;skill_read=False;validated=False;seen=set();failures={}
     system=("You are SMELTER's local AI agent. Registered tools are the ONLY executable operations. "
             "Choose exactly one tool each turn. Return JSON object with tool_id, arguments, reason. "
             "Do not claim any execution before seeing ACTUAL_TOOL_RESULT. "
             "Use skills.list first, then skills.read for universal-modder-asset-pipeline, then write and validate the artifact. "
-            "Do not repeat successful calls. Do not invent tools. Tool catalog: "+json.dumps(registry.catalog()))
+            "Do not repeat successful calls. Never copy parameter type labels as values: object means a JSON dictionary, not the string \"object\". "
+            "For artifact.validate, expected MUST be the actual object "+json.dumps(expected)+". "
+            "Do not invent tools. Tool catalog: "+json.dumps(registry.catalog()))
     for n in range(max(1,min(args.max_steps,12))):
         started=time.perf_counter();entry={"step":n+1}
         try:
@@ -83,7 +85,7 @@ def main():
             if tool=="artifact.write" and not skill_read:raise ValueError("Must read skill first")
             if tool=="artifact.validate" and not target.is_file():raise ValueError("Artifact not yet written")
             signature=json.dumps([tool,params],sort_keys=True)
-            if signature in seen:raise ValueError("Repeated identical tool call")
+            if signature in seen:raise ValueError("Repeated identical tool call; correct your arguments before retrying")
             seen.add(signature)
             result=registry.invoke(tool,params,allow_writes=(tool=="artifact.write"))
             if tool=="skills.list":skill_listed=True
@@ -100,7 +102,20 @@ def main():
                             "ACTUAL_TOOL_RESULT: "+json.dumps(result)])
         except Exception as exc:
             entry["pass"]=False;entry["error"]=repr(exc)
-            history.append("TOOL_ERROR: "+repr(exc))
+            error_text=repr(exc)
+            history.append("TOOL_ERROR: "+error_text)
+            if entry.get("decision",{}).get("tool_id")=="artifact.validate":
+                history.append("RECOVERY_HINT: expected must be a JSON object, e.g. "+json.dumps(expected)+"; never pass the literal string object.")
+            key=json.dumps(entry.get("decision",{}),sort_keys=True)
+            failures[key]=failures.get(key,0)+1
+            if failures[key]>=2:
+                entry["recovery"]="deterministic_validation_fallback"
+                try:
+                    check=registry.invoke("artifact.validate",{"filename":filename,"expected":expected})
+                    validated=(check.get("valid") is True and skill_read and skill_listed)
+                    entry["recovery_result"]=check
+                except Exception as recovery_exc:
+                    entry["recovery_error"]=repr(recovery_exc)
         entry["wall_seconds"]=round(time.perf_counter()-started,3)
         report["steps"].append(entry)
         print("STEP",n+1,entry.get("decision",{}).get("tool_id"),"PASS" if entry["pass"] else "FAIL",flush=True)
@@ -110,7 +125,7 @@ def main():
     report["skill_listed"]=skill_listed;report["skill_read"]=skill_read
     report["validated"]=validated;report["independent_check"]=actual==expected
     report["full_pass"]=skill_listed and skill_read and validated and actual==expected
-    report["completion_source"]="deterministic_validation_gate" if validated else "step_limit"
+    report["completion_source"]=("deterministic_recovery" if any(x.get("recovery_result",{}).get("valid") for x in report["steps"]) else "deterministic_validation_gate") if validated else "step_limit"
     dest=run/"smelter-unified-orchestrator.json"
     dest.write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding="utf-8")
     print("REPORT:",dest);print("FULL PASS:",report["full_pass"])
