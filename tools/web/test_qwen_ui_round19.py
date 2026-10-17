@@ -116,12 +116,15 @@ def main():
             record={"attempt":attempt,"passed":not issues,"issues":issues,
                     "sha256":hashlib.sha256(html.encode()).hexdigest()}
             report["attempts"].append(record)
+            # Preserve rejected HTML locally for review; never serve it automatically.
+            if issues:
+                (run/f"rejected-attempt-{attempt}.html.txt").write_text(html,encoding="utf-8")
             print("Attempt",attempt,"PASS" if not issues else "FAIL",issues,flush=True)
             if not issues:
                 (run/"index.html").write_text(html,encoding="utf-8")
                 report["full_pass"]=True
                 break
-            feedback="\n".join(issues)
+            feedback="\n".join(issues)+"\nRemove ALL external href/src URLs. Use plain text labels rather than links. Do not use javascript:, data:, or protocol-relative URLs."
         except (urllib.error.URLError,TimeoutError,ValueError,KeyError,TypeError) as exc:
             report["attempts"].append({"attempt":attempt,"passed":False,
                                         "issues":[type(exc).__name__+": "+str(exc)[:180]]})
