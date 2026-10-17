@@ -46,6 +46,7 @@ foreach($file in $files){
  $texts=New-Object System.Collections.ArrayList
  [void]$texts.Add([string]$obj.model_output.summary)
  foreach($inf in @($obj.model_output.inferences)){[void]$texts.Add([string]$inf.claim);[void]$texts.Add([string]$inf.reason)}
+ foreach($unc in @($obj.model_output.uncertainties)){[void]$texts.Add([string]$unc)}
  foreach($t in $texts){
   if($t -match '(?i)(security.check.cookie|security validation|security check|no (obvious |direct )?(vulnerabilit|buffer overflow|use.after.free)|not vulnerable|safe from|absence of vulnerabilit)'){
    $counts.unsupported_security_claims++
@@ -53,7 +54,7 @@ foreach($file in $files){
   }
   foreach($callee in $known.Keys){
    if($callee -eq $obj.name){continue}
-   if($t.Contains($callee) -and $t -match '(?i)(not decompiled|not analyzed|unknown without (further |additional )?decompilation|not available|not visible|without.*decompilation)'){
+   if($t.Contains($callee) -and $t -match '(?i)(not decompiled|not analyzed|unknown without (further |additional )?decompilation|not available|not visible|without.*decompilation|unknown without further analysis|not.*decompiled|no.*decompilation|exact purpose.*unknown)'){
     $counts.cross_function_conflicts++
     [void]$findings.Add([ordered]@{function=$obj.name;kind='cross_function';status='conflict';detail=$t;related_function=$callee;reason='Related function is present in this analysis batch'})
    }
@@ -65,7 +66,7 @@ foreach($file in $files){
  }
 }
 $report=[ordered]@{
- validator_version='1.0';analysis_directory=$AnalysisDirectory;source=$source
+ validator_version='1.1';analysis_directory=$AnalysisDirectory;source=$source
  source_sha256=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
  function_count=$files.Count;counts=$counts;findings=@($findings)
  limitations=@(
