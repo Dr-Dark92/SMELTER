@@ -1,0 +1,92 @@
+{
+  "test": "SMELTER Round 10 existing-asset GLB-to-OBJ workflow",
+  "steps": [
+    {
+      "step": 1,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": true,
+      "result": {
+        "valid": true,
+        "mesh_count": 1,
+        "node_names": [
+          "SMELTER_uv_sphere"
+        ],
+        "bytes": 70228
+      },
+      "seconds": 0.309
+    },
+    {
+      "step": 2,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.163
+    },
+    {
+      "step": 3,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.186
+    },
+    {
+      "step": 4,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.179
+    },
+    {
+      "step": 5,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.191
+    },
+    {
+      "step": 6,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.196
+    },
+    {
+      "step": 7,
+      "decision": {
+        "tool_id": "asset.inspect",
+        "arguments": {}
+      },
+      "pass": false,
+      "error": "ValueError('Already inspected')",
+      "seconds": 0.2
+    }
+  ],
+  "full_pass": false,
+  "source_bytes": 70228,
+  "inspected": true,
+  "converted": false,
+  "model_validated": false,
+  "independent_validation": {
+    "valid": false,
+    "reason": "not converted"
+  },
+  "status": "failed"
+}
