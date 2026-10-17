@@ -1,0 +1,81 @@
+{
+  "test": "SMELTER Round 12 deep asset integrity",
+  "full_pass": false,
+  "steps": [
+    {
+      "operation": "fingerprint.source",
+      "pass": true,
+      "meshes": 1,
+      "images": 3
+    },
+    {
+      "operation": "fingerprint.roundtrip",
+      "pass": true,
+      "meshes": 1,
+      "images": 3
+    },
+    {
+      "operation": "integrity.compare",
+      "pass": false,
+      "result": {
+        "valid": false,
+        "mismatch_categories": [
+          "meshes"
+        ],
+        "details": {
+          "meshes": {
+            "source": [
+              {
+                "vertices": 1984,
+                "polygons": 960,
+                "triangles": 960,
+                "uv_present": true,
+                "loop_fingerprint": "15794c15057045f873830d1867b437beb805d4b2cbed24437d272b3c1d79e9eb",
+                "position_fingerprint": "1e62709027f9ba2662db5fef4b53e526985502a13ba27b461c0ca8bbe866ef8c",
+                "bounds_min": [
+                  -1.0,
+                  -1.0,
+                  -1.0
+                ],
+                "bounds_max": [
+                  1.0,
+                  1.0,
+                  1.0
+                ]
+              }
+            ],
+            "target": [
+              {
+                "vertices": 2020,
+                "polygons": 960,
+                "triangles": 960,
+                "uv_present": true,
+                "loop_fingerprint": "15794c15057045f873830d1867b437beb805d4b2cbed24437d272b3c1d79e9eb",
+                "position_fingerprint": "19389d24f9e09ae9abf72ec35b46c6d0c0441e72847828a8f9ac4aa71386da99",
+                "bounds_min": [
+                  -1.0,
+                  -1.0,
+                  -1.0
+                ],
+                "bounds_max": [
+                  1.0,
+                  1.0,
+                  1.0
+                ]
+              }
+            ]
+          }
+        },
+        "comparison": "quantized Blender-imported mesh loop positions/UVs, material PBR defaults, decoded 8-bit pixels"
+      }
+    },
+    {
+      "operation": "integrity.negative_test",
+      "pass": true,
+      "detected_categories": [
+        "meshes"
+      ]
+    }
+  ],
+  "status": "failed"
+}
