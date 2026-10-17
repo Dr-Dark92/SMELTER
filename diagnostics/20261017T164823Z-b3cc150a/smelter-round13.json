@@ -1,0 +1,99 @@
+{
+  "round": 13,
+  "full_pass": false,
+  "status": "failed",
+  "model": "qwen3.5:9b",
+  "sandbox_image": "python:3.12-alpine",
+  "sandbox_image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+  "iterations": 4,
+  "elapsed_seconds": 34.75,
+  "events": [
+    {
+      "timestamp": "2026-10-17T16:47:47+00:00",
+      "event": "sandbox.ready",
+      "image": "python:3.12-alpine",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "network": "none",
+      "workspace": "[LOCAL_PATH]"
+    },
+    {
+      "timestamp": "2026-10-17T16:47:47+00:00",
+      "event": "attempt.begin",
+      "attempt": 1
+    },
+    {
+      "timestamp": "2026-10-17T16:48:03+00:00",
+      "event": "candidate.written",
+      "attempt": 1,
+      "sha256": "8f47047e1073c218548b479d66d0a6df56ced6d61b34ae296e7e054dcb2604e7",
+      "bytes": 4776
+    },
+    {
+      "timestamp": "2026-10-17T16:48:04+00:00",
+      "event": "tests.finished",
+      "attempt": 1,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "..E....\n======================================================================\nERROR: test_inventory (__main__.ReconTests.test_inventory)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 17, in test_inventory\n    self.assertEqual(result[\"total\"],4)\n                     ~~~~~~^^^^^^^^^\nKeyError: 'total'\n\n----------------------------------------------------------------------\nRan 7 tests in 0.004s\n\nFAILED (errors=1)\n"
+    },
+    {
+      "timestamp": "2026-10-17T16:48:04+00:00",
+      "event": "attempt.begin",
+      "attempt": 2
+    },
+    {
+      "timestamp": "2026-10-17T16:48:10+00:00",
+      "event": "candidate.written",
+      "attempt": 2,
+      "sha256": "554998f3c0299733319e1672654bc39ed28768bb1445b86823ae9e9ed5f73be8",
+      "bytes": 2202
+    },
+    {
+      "timestamp": "2026-10-17T16:48:11+00:00",
+      "event": "tests.finished",
+      "attempt": 2,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "..E....\n======================================================================\nERROR: test_inventory (__main__.ReconTests.test_inventory)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 18, in test_inventory\n    self.assertEqual(result[\"extensions\"][\".pak\"],1)\n                     ~~~~~~~~~~~~~~~~~~~~^^^^^^^^\nKeyError: '.pak'\n\n----------------------------------------------------------------------\nRan 7 tests in 0.004s\n\nFAILED (errors=1)\n"
+    },
+    {
+      "timestamp": "2026-10-17T16:48:11+00:00",
+      "event": "attempt.begin",
+      "attempt": 3
+    },
+    {
+      "timestamp": "2026-10-17T16:48:15+00:00",
+      "event": "candidate.written",
+      "attempt": 3,
+      "sha256": "829c335a749eb2da54e0c90443d4df30e97180c9cad7271d12fa5736de21bac2",
+      "bytes": 1415
+    },
+    {
+      "timestamp": "2026-10-17T16:48:16+00:00",
+      "event": "tests.finished",
+      "attempt": 3,
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "..E....\n======================================================================\nERROR: test_inventory (__main__.ReconTests.test_inventory)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/acceptance_test.py\", line 17, in test_inventory\n    self.assertEqual(result[\"total\"],4)\n                     ~~~~~~^^^^^^^^^\nKeyError: 'total'\n\n----------------------------------------------------------------------\nRan 7 tests in 0.004s\n\nFAILED (errors=1)\n"
+    },
+    {
+      "timestamp": "2026-10-17T16:48:16+00:00",
+      "event": "attempt.begin",
+      "attempt": 4
+    },
+    {
+      "timestamp": "2026-10-17T16:48:22+00:00",
+      "event": "loop.detected",
+      "sha256": "554998f3c0299733319e1672654bc39ed28768bb1445b86823ae9e9ed5f73be8"
+    },
+    {
+      "timestamp": "2026-10-17T16:48:22+00:00",
+      "event": "rollback.completed",
+      "reason": "No passing candidate; generated code deleted"
+    }
+  ],
+  "notes": "Synthetic game recon module only. No host-side execution of model code. Passing artifact remains disposable and is not merged into the repository."
+}
