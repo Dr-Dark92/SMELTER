@@ -112,7 +112,8 @@ def run_tests(folder):
          "--pids-limit=64","--memory=256m","--cpus=1",
          "--user=65534:65534","--tmpfs=/tmp:rw,noexec,nosuid,size=16m",
          "--mount",f"type=bind,source={mount},target=/work,readonly",
-         "--workdir=/work",IMAGE,"python","-I","-B","-S","/work/acceptance_test.py"]
+         "--workdir=/work",IMAGE,"python","-I","-B","-S","-c",
+         "import sys,runpy;sys.path.insert(0,'/work');runpy.run_path('/work/acceptance_test.py',run_name='__main__')"]
     try:
         result=call(cmd,timeout=40)
         return {"pass":result.returncode==0,"exit_code":result.returncode,
