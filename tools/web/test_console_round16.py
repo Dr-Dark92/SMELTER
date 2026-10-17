@@ -45,6 +45,25 @@ class ConsoleTests(unittest.TestCase):
         code,body=self.request("GET","/api/skills")
         self.assertEqual(code,200)
         self.assertEqual(json.loads(body)["remote_installation"],"disabled")
+    def test_capability_catalog(self):
+        code,body=self.request("GET","/api/catalog")
+        self.assertEqual(code,200)
+        obj=json.loads(body)
+        self.assertEqual(obj["remote_installation"],"disabled")
+        self.assertTrue(any("Python" in x["name"] for x in obj["capabilities"]))
+    def test_repository_discovery_schema(self):
+        code,body=self.request("GET","/api/repos")
+        self.assertEqual(code,200)
+        obj=json.loads(body)
+        self.assertIn("repositories",obj)
+        self.assertIsInstance(obj["repositories"],list)
+        for item in obj["repositories"]:
+            self.assertIn("nameWithOwner",item)
+            self.assertNotIn("token",item)
+    def test_catalog_does_not_modify_repository(self):
+        code,body=self.request("GET","/api/catalog")
+        self.assertEqual(code,200)
+        self.assertNotIn(b"install_command",body)
     def test_post_denied(self):
         code,_=self.request("POST","/api/opencode")
         self.assertEqual(code,405)
