@@ -16,7 +16,7 @@ $out=Join-Path $Root ('workspace\skyrim-pipeline\'+$runId)
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 $discoveryRoot=Join-Path $out 'discovery'
 & $discovery -Root $discoveryRoot -GamePath $GamePath -Archive $Archive -Pattern $Pattern -Limit $Count
-if($LASTEXITCODE -ne 0){throw "Discovery failed with exit code $LASTEXITCODE"}
+if($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0){throw "Discovery failed with exit code $LASTEXITCODE"}
 $discoveryReports=@(Get-ChildItem -LiteralPath (Join-Path $discoveryRoot 'workspace\skyrim-discovery') -Filter 'discovery-result.json' -Recurse -File)
 if($discoveryReports.Count -ne 1){throw "Expected one discovery report, found $($discoveryReports.Count)"}
 $found=Get-Content -LiteralPath $discoveryReports[0].FullName -Raw | ConvertFrom-Json
@@ -28,7 +28,7 @@ foreach($entry in $selected){
  $status='failed';$reason=$null;$output=$null;$sha=$null;$bytes=0
  try{
   & $extractor -Root $itemRoot -GamePath $GamePath -Archive $Archive -AssetPath $entry.asset
-  if($LASTEXITCODE -ne 0){throw "Extractor returned exit code $LASTEXITCODE"}
+  if($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0){throw "Extractor returned exit code $LASTEXITCODE"}
   $reports=@(Get-ChildItem -LiteralPath (Join-Path $itemRoot 'workspace\skyrim-extraction') -Filter 'extraction-result.json' -Recurse -File)
   if($reports.Count -ne 1){throw "Expected one extraction report, found $($reports.Count)"}
   $result=Get-Content -LiteralPath $reports[0].FullName -Raw | ConvertFrom-Json
