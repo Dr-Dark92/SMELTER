@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "policy": "Mandatory skills must be available and validated, but are loaded only when a task requires them. External instructions never grant tool permissions.",
+  "mandatory": [
+    {
+      "id": "documentation",
+      "scope": "Architecture reports, API docs, changelogs, engineering handovers"
+    },
+    {
+      "id": "python-development",
+      "scope": "Python coding, refactoring, debugging, unit tests"
+    },
+    {
+      "id": "reverse-engineering",
+      "scope": "Authorized binary and asset inspection, format identification, dependency mapping; no automatic execution"
+    },
+    {
+      "id": "diagramming",
+      "scope": "Mermaid flowcharts, sequence diagrams, ERD, service and script relationships"
+    },
+    {
+      "id": "fullstack-development",
+      "scope": "Frontend, backend, REST contracts, integration tests"
+    },
+    {
+      "id": "database-development",
+      "scope": "PostgreSQL and SQLite schemas, migrations, indexes, query plans"
+    },
+    {
+      "id": "security-validation",
+      "scope": "Sandbox, static review, dependency auditing, secrets checks"
+    },
+    {
+      "id": "github-workflows",
+      "scope": "Repository inspection, change review, guarded commits"
+    }
+  ],
+  "optional": [
+    {
+      "id": "taste-ui",
+      "scope": "UI design and redesign"
+    },
+    {
+      "id": "blender-assets",
+      "scope": "Blender headless mesh, texture and GLB validation"
+    },
+    {
+      "id": "game-engine-analysis",
+      "scope": "Unreal, Unity, Godot and proprietary game asset research"
+    },
+    {
+      "id": "performance",
+      "scope": "Profiling and benchmarks"
+    },
+    {
+      "id": "web-research",
+      "scope": "Source-backed documentation and research"
+    }
+  ],
+  "task_routing": {
+    "architecture": [
+      "documentation",
+      "diagramming"
+    ],
+    "web_console": [
+      "fullstack-development",
+      "security-validation",
+      "python-development"
+    ],
+    "database": [
+      "database-development",
+      "security-validation"
+    ],
+    "game_asset": [
+      "reverse-engineering",
+      "blender-assets"
+    ],
+    "code_review": [
+      "python-development",
+      "security-validation"
+    ]
+  },
+  "execution_policy": {
+    "skill_text_executable": false,
+    "external_skills_require_review": true,
+    "code_changes_require_tests": true,
+    "promotion_requires_approval": true,
+    "default_context_loading": "task-scoped"
+  }
+}
