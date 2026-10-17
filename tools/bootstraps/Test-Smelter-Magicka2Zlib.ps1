@@ -40,8 +40,8 @@ try{
  if($payloadLength -le 0){throw 'Zlib payload too short'}
  # PowerShell 5.1 overload binding can mis-handle Read(byte[],offset,count);
  # use an explicit bounded zlib payload and explicit byte-array buffer.
- $compressed=New-Object byte[] ($input.Length-18)
- [Array]::Copy($input,18,$compressed,0,$compressed.Length)
+ $compressed=New-Object byte[] $payloadLength
+ [Array]::Copy($input,18,$compressed,0,$payloadLength)
  $memory=[IO.MemoryStream]::new($compressed,$false)
  $bounded=[IO.MemoryStream]::new()
  $deflate=[IO.Compression.DeflateStream]::new($memory,[IO.Compression.CompressionMode]::Decompress,$true)
@@ -57,9 +57,16 @@ try{
   }
  }finally{$deflate.Dispose();$memory.Dispose()}
  [byte[]]$bytes=$bounded.ToArray();$bounded.Dispose()
+ if($bytes.Length -ne [int]$expected){throw "Decoded size $($bytes.Length) does not match declared $expected"}
+ [long]$a=1; [long]$b=0
+ foreach($v in $bytes){$a=($a+[int]$v)%65521;$b=($b+$a)%65521}
+ [uint32]$actualAdler=[uint32](($b -shl 16) -bor $a)
+ $trailer=$input.Length-4
+ [uint32]$expectedAdler=(([uint32]$input[$trailer] -shl 24) -bor ([uint32]$input[$trailer+1] -shl 16) -bor ([uint32]$input[$trailer+2] -shl 8) -bor [uint32]$input[$trailer+3])
+ if($actualAdler -ne $expectedAdler){throw ('Adler32 mismatch: expected {0:X8}, actual {1:X8}' -f $expectedAdler,$actualAdler)}
  $preview=if($bytes.Length){[BitConverter]::ToString($bytes,0,[Math]::Min(96,$bytes.Length))}else{''}
  $ascii=if($bytes.Length){-join ($bytes[0..([Math]::Min(96,$bytes.Length)-1)] | ForEach-Object {if($_ -ge 32 -and $_ -le 126){[char]$_}else{'.'}})}else{''}
- $report.sample=[ordered]@{file=$candidate.Name;input_bytes=$input.Length;declared_size=$expected;decompressed_bytes=$bytes.Length;size_matches=($expected -eq $bytes.Length);first96_hex=$preview;first96_ascii=$ascii;sha256=([BitConverter]::ToString(([Security.Cryptography.SHA256]::Create().ComputeHash($bytes))).Replace('-',''))}
+ $report.sample=[ordered]@{file=$candidate.Name;input_bytes=$input.Length;declared_size=$expected;decompressed_bytes=$bytes.Length;size_matches=($expected -eq $bytes.Length);adler32_verified=$true;first96_hex=$preview;first96_ascii=$ascii;sha256=([BitConverter]::ToString(([Security.Cryptography.SHA256]::Create().ComputeHash($bytes))).Replace('-',''))}
  $report.status=if($bytes.Length -gt 0 -and $expected -eq $bytes.Length){'passed'}else{'needs_review'}
 }catch{$report.status='failed';$report.error=$_.Exception.Message}
 $path=Join-Path $out 'magicka2-zlib-result.json'
