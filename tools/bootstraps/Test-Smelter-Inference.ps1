@@ -40,13 +40,17 @@ try {
    try{$proc.Kill()}catch{}
    throw "OpenCode timed out after $TimeoutSeconds seconds"
   }
-  $proc.Refresh()
+  # WaitForExit(timeout) can return before redirected streams and the exit
+  # status are fully observed in Windows PowerShell 5.1. Complete the wait.
+  $proc.WaitForExit()
+  $exitCode=$proc.ExitCode
   $out=if(Test-Path $stdout){Get-Content $stdout -Raw}else{''}
   $err=if(Test-Path $stderr){Get-Content $stderr -Raw}else{''}
-  Write-Host "OpenCode exit code: $($proc.ExitCode)"
+  Write-Host "OpenCode exit code: $exitCode"
   Write-Host "OpenCode stdout: $out"
   if($err){Write-Host "OpenCode stderr: $err"}
-  if($proc.ExitCode -ne 0){throw 'OpenCode inference returned nonzero exit code'}
+  if($null -eq $exitCode){throw 'OpenCode process exit code unavailable'}
+  if($exitCode -ne 0){throw "OpenCode inference returned exit code $exitCode"}
   if([string]::IsNullOrWhiteSpace($out)){throw ('OpenCode inference returned empty stdout. Review '+$stderr)}
   Write-Host 'PASS: OpenCode produced a nonempty response using local model'
  } finally {
