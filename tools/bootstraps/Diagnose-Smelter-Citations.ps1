@@ -31,6 +31,21 @@ foreach($f in @(Get-ChildItem $d.FullName -Filter 'function-*.json' -File)){
 }
 $out=Join-Path $d.FullName 'citation-diagnostics.json'
 @{analysis=$d.FullName;count=$results.Count;findings=@($results)} | ConvertTo-Json -Depth 8 | Set-Content $out -Encoding UTF8
+$repairs=New-Object System.Collections.ArrayList
+foreach($finding in $results){
+ if($finding.status -in @('substring','not_found')){
+  $n=[int]$finding.claimed_line
+  $lines=$blocks[[string]$finding.function]
+  if($n -lt 1 -or $n -gt $lines.Count){continue}
+  $sourceLine=[string]$lines[$n-1]
+  $kind=if($finding.status -eq 'substring'){'partial_statement'}else{'multiline_or_mismatch'}
+  [void]$repairs.Add([pscustomobject]@{function=$finding.function;line=$n;issue=$kind;model_quote=$finding.quote;original_source_line=$sourceLine;status='requires_review'})
+ }
+}
+$repairPath=Join-Path $d.FullName 'citation-repair-candidates.json'
+@{source=$m.source;auto_approved=0;review_required=$repairs.Count;candidates=@($repairs)} | ConvertTo-Json -Depth 8 | Set-Content $repairPath -Encoding UTF8
+Write-Host "Review-required citation candidates: $($repairs.Count); no evidence automatically altered"
+Write-Host "Candidates: $repairPath"
 $results | Group-Object status | Select-Object Name,Count | Format-Table -AutoSize
 $accepted=@($results | Where-Object {$_.status -in @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
 $unresolved=@($results | Where-Object {$_.status -notin @('exact_numbered','exact_wrong_number','edge_whitespace','internal_whitespace')})
