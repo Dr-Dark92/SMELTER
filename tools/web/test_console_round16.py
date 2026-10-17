@@ -64,6 +64,18 @@ class ConsoleTests(unittest.TestCase):
         code,body=self.request("GET","/api/catalog")
         self.assertEqual(code,200)
         self.assertNotIn(b"install_command",body)
+    def test_skill_inspection_rejects_non_github(self):
+        code,body=self.request("GET","/api/inspect-skill?url=https%3A%2F%2Fevil.example%2Fx")
+        self.assertEqual(code,200)
+        self.assertIn("error",json.loads(body))
+    def test_skill_inspection_rejects_localhost(self):
+        code,body=self.request("GET","/api/inspect-skill?url=http%3A%2F%2F127.0.0.1%3A11434%2Fapi%2Ftags")
+        self.assertEqual(code,200)
+        self.assertIn("error",json.loads(body))
+    def test_skill_inspection_rejects_unrelated_files(self):
+        code,body=self.request("GET","/api/inspect-skill?url=https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Fblob%2Fmain%2FREADME.md")
+        self.assertEqual(code,200)
+        self.assertIn("error",json.loads(body))
     def test_post_denied(self):
         code,_=self.request("POST","/api/opencode")
         self.assertEqual(code,405)
