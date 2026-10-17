@@ -1,0 +1,48 @@
+{
+  "round": "15-repair",
+  "full_pass": true,
+  "source_run": "20261017T174335Z-f90d8ac8",
+  "model": "qwen3.5:9b",
+  "iterations": 1,
+  "elapsed_seconds": 8.68,
+  "events": [
+    {
+      "event": "sandbox.ready",
+      "timestamp": "2026-10-17T17:53:42+00:00",
+      "image_id": "sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4",
+      "source_run": "20261017T174335Z-f90d8ac8"
+    },
+    {
+      "event": "attempt.begin",
+      "timestamp": "2026-10-17T17:53:42+00:00",
+      "attempt": 1
+    },
+    {
+      "event": "candidate.written",
+      "timestamp": "2026-10-17T17:53:49+00:00",
+      "attempt": 1,
+      "sha256": "b1a2616d96df302cda201aa7cc0439e5a7a3fea7afc4d6f2213b863fc625113b"
+    },
+    {
+      "event": "tests.finished",
+      "timestamp": "2026-10-17T17:53:51+00:00",
+      "attempt": 1,
+      "passed": true,
+      "static_issues": {},
+      "outcomes": {
+        "round14": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+        },
+        "round15": {
+          "passed": true,
+          "exit_code": 0,
+          "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.001s\n\nOK\n"
+        }
+      }
+    }
+  ],
+  "promotion": "not authorized",
+  "notes": "Passing source retained only in disposable workspace. No automatic merge."
+}
