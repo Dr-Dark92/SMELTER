@@ -32,12 +32,12 @@ REPORTS = ROOT / ".smelter" / "reports"
 MODEL_PREFS = ROOT / ".smelter" / "model_preferences.json"
 HTML = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SMELTER · Dashboard</title><style>
-body{margin:0;background:#0b111d;color:#e7edfa;font:15px system-ui}main{max-width:980px;margin:35px auto;padding:20px}
+body{margin:0;background:#0b111d;color:#e7edfa;font:15px system-ui}main{max-width:none;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column}#shell{display:grid;grid-template-columns:245px minmax(0,1fr) 315px;gap:12px;flex:1;padding:12px;min-height:0}#leftbar,#workspace,#rightbar{background:#111b2b;border:1px solid #30445e;border-radius:12px;padding:15px;min-width:0}#workspace{display:flex;flex-direction:column}#rightbar{max-height:calc(100vh - 125px);overflow:auto}#rightbar .panel{padding:12px}#leftbar button,#rightbar .navbtn{width:100%;margin:4px 0;text-align:left}#chatlog{flex:1;min-height:180px;color:#aabbd4;overflow:auto}#composer{display:flex;gap:8px}#chatinput{flex:1;min-width:0;padding:12px;background:#0b111d;color:#e7edfa;border:1px solid #30445e;border-radius:8px}#sysfooter{padding:12px 20px;border-top:1px solid #30445e;color:#aabbd4;display:flex;gap:24px;flex-wrap:wrap;font-size:12px}#rightbar .panel{display:none}#rightbar .panel.active{display:block}.navbtn.active{background:#244578}#shell h2{font-size:17px}@media(max-width:850px){#shell{grid-template-columns:1fr}#leftbar,#rightbar{max-height:none}#workspace{min-height:360px}}
 h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30445e;border-radius:14px;padding:22px;margin:16px 0}
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.5 · Staged config validation · no AI required</p>
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.0 · Workspace shell · AI chat and statistics pending</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
