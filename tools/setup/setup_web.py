@@ -53,6 +53,22 @@ def validate_plan():
     return {"profile": "vanilla", "steps": ["Create local .venv if absent", "Run system scanner", "Run setup unit tests"],
             "optional_installations": [], "downloads": False, "system_package_changes": False}
 
+# Winget uses HRESULT 0x8A150014 when a query has no matching applications.
+# Compare unsigned form because Windows subprocess exit codes may be signed.
+WINGET_NO_APPLICATIONS_FOUND = 0x8A150014
+
+def winget_list_state(result, package_id):
+    """Return installed, absent, or raise on ambiguous winget failures."""
+    output = (result.stdout or "") + "\\n" + (result.stderr or "")
+    if result.returncode == 0:
+        if package_id.casefold() in output.casefold():
+            return "installed"
+        # Do not interpret unrecognized successful output as proof of absence.
+        raise RuntimeError("winget list returned success without a matching package ID; manual review required")
+    if result.returncode & 0xFFFFFFFF == WINGET_NO_APPLICATIONS_FOUND:
+        return "absent"
+    raise RuntimeError("winget list failed (exit code " + str(result.returncode) + "); refusing potential upgrade")
+
 class DependencyInstaller:
     def __init__(self):
         self.lock = threading.Lock()
@@ -99,7 +115,8 @@ class DependencyInstaller:
                     cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True,
                     text=True, errors="replace", timeout=30, check=False,
                 )
-                if listed.returncode == 0 and action["package_id"].casefold() in listed.stdout.casefold():
+                state = winget_list_state(listed, action["package_id"])
+                if state == "installed":
                     self.log("Already registered with winget: " + action["name"] + "; skipping install/upgrade.")
                     from check_requirements import scan
                     observed = {t["name"]: t for t in scan()["tools"]}
@@ -107,8 +124,6 @@ class DependencyInstaller:
                         raise RuntimeError(action["name"] + " is registered but executable not verified; check installation location")
                     self.log("Verified: " + action["name"])
                     continue
-                if listed.returncode != 0:
-                    raise RuntimeError("Could not check existing winget installation for " + action["name"] + "; refusing potential upgrade")
                 proc = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.DEVNULL,
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                         text=True, errors="replace")
