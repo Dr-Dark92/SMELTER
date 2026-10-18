@@ -58,3 +58,7 @@ This phase does not send prompts, invoke models, launch an agent, start Ollama, 
 The dashboard provides Reasoning and Lightweight model selectors populated from Ollama's live model list. `POST /api/ollama/preferences` saves a chosen role/model only if the Ollama extension is enabled, the local service is connected, and the exact model name appears in the installed-model response. `GET /api/ollama/preferences` returns saved choices and their current availability.
 
 Preferences are saved atomically to `.smelter/model_preferences.json`. They do not trigger inference, model downloads, OpenCode or other tool execution. The saved choices can become unavailable when a model is removed or Ollama stops; the UI reports availability instead of automatically substituting a model.
+
+## V1.5.2 — OpenCode discovery
+
+The requirements scanner now checks for an optional OpenCode CLI. On Windows, `.cmd`, `.bat` and `.ps1` shims are not executed, and are reported as `detected_unverified`. The OpenCode extension can be enabled for read-only diagnostics when detected, even if version verification is unavailable. `GET /api/opencode/status` returns the scanner result and executable entry type; it does not start an agent, run OpenCode, read project files, or configure model providers. OpenCode agent execution and filesystem permissions are explicitly deferred to a later, separately approved phase.
