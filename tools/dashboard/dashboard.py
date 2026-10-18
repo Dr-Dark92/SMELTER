@@ -29,6 +29,7 @@ from database import inspect_database, select_database
 from config_store import load_config, save_config
 from startup import startup_report
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
+from chat_inference import ask
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -41,7 +42,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>V1.6.3 · Persistent conversations · AI execution pending</p>
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.4 · Local Qwen chat · Persistent transcripts</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -87,9 +88,9 @@ function initShell(){
  const title=document.createElement('h2');title.textContent='SMELTER · Conversation notes';
  const log=document.createElement('div');log.id='chatlog';log.textContent='Select New chat. Notes are stored in SQLite; AI responses are not enabled yet.';
  const composer=document.createElement('div');composer.id='composer';
- const input=document.createElement('input');input.id='chatinput';input.placeholder='Write a note (not sent to AI)';
- const send=document.createElement('button');send.textContent='Save note';
- send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{await api('/api/chats','POST',{action:'note',id:activeChat,content:input.value});input.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
+ const input=document.createElement('input');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
+ const send=document.createElement('button');send.textContent='Send to Qwen';
+ send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value});input.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
  composer.append(input,send);center.append(title,log,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const labels=['Tools / Apps','Workflows','Archive inspection','Media inspection','Blender','Ollama / Models','OpenCode'];
@@ -258,7 +259,9 @@ def handler(token: str):
                 if route == "/api/chats":
                     with STATE_LOCK:
                         action = data.get("action")
-                        if action == "create":
+                        if action == "ask":
+                            result = ask(ROOT, data.get("id"), data.get("content"))
+                        elif action == "create":
                             result = create_chat(ROOT, data.get("title", "New chat"))
                         elif action == "note":
                             result = add_note(ROOT, data.get("id"), data.get("content"))
