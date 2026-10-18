@@ -54,7 +54,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 #sysfooter{flex:0 0 auto;box-sizing:border-box;max-height:76px;overflow:auto;overscroll-behavior:contain;flex-wrap:nowrap;white-space:nowrap;scrollbar-width:thin;background:#0b111d;position:relative;z-index:2}
 #bootstrap{overflow-y:auto;min-height:0}
 @media(max-width:850px){html,body{overflow:auto;height:auto}main{height:auto;min-height:100dvh;overflow:visible}#shell{display:flex;flex-direction:column;overflow:visible}#leftbar,#workspace,#rightbar{height:auto;max-height:45dvh;min-height:180px;overflow-y:auto}#workspace{min-height:360px;max-height:65dvh}#sysfooter{max-height:76px}}
-</style><main><h1>⚒ SMELTER</h1><p>V1.6.4 · Local Qwen chat · Persistent transcripts</p>
+.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.6 · Grouped configuration folders · Local Qwen chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -105,9 +105,29 @@ function initShell(){
  send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value});input.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
  composer.append(input,send);center.append(title,log,composer);
  right.innerHTML='<h2>Configuration</h2>';
- const labels=['Tools / Apps','Workflows','Archive inspection','Media inspection','Blender','Ollama / Models','OpenCode'];
- sections.forEach((section,i)=>{const b=document.createElement('button');b.className='navbtn';b.textContent=labels[i]||'Settings';b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));section.classList.add('active');b.classList.add('active')};right.append(b,section);if(i===0)b.click()});
- for(const name of ['Skills · planned','GitHub · planned','Database · active']){const b=document.createElement('button');b.className='navbtn';b.textContent=name;b.disabled=true;right.append(b)}
+ const folders=[
+  {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
+  {name:'Tools & Integrations',items:[[0,'Installed tools'],[2,'Archive / 7-Zip'],[3,'Media / FFprobe'],[4,'Blender']],planned:['Skills importer','GitHub connector','Tool path overrides']},
+  {name:'Automation & Workflows',items:[[1,'Workflow planner']]},
+  {name:'System & Storage',items:[],planned:['Database management','Startup services','Live hardware statistics']}
+ ];
+ const nav=[];
+ for(const folder of folders){
+  const group=document.createElement('details');group.className='config-folder';
+  const heading=document.createElement('summary');heading.textContent='📁 '+folder.name;group.append(heading);
+  const contents=document.createElement('div');contents.className='config-folder-items';
+  for(const [i,label] of folder.items){
+   const b=document.createElement('button');b.className='navbtn';b.textContent=label;
+   b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));nav.forEach(x=>x.classList.remove('active'));sectionFocus(section=i,button=b)};
+   const section=sections[i];
+   contents.append(b,section);nav.push(b);
+  }
+  for(const label of folder.planned||[]){const b=document.createElement('button');b.className='navbtn';b.textContent=label+' · planned';b.disabled=true;contents.append(b)}
+  group.append(contents);right.append(group);
+ }
+ function sectionFocus(section,button){section.classList.add('active');button.classList.add('active')}
+ folders[0] && (right.querySelector('details').open=true);
+ if(nav.length)nav[0].click();
  shell.append(left,center,right);
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
