@@ -18,6 +18,7 @@ from workflows import definitions, plan
 from reports import attach_inputs, list_reports, save_report
 from execution import inspect_archive
 from media import inspect_media
+from blender import inspect_blender
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -29,7 +30,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.4.3 · Approved media inspection · no AI required</p>
+</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.4.4 · Blender capability check · no AI required</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -46,6 +47,9 @@ small{color:#aabbd4}#error{color:#ff9e9e}
 <input id="mediapath" style="width:100%;box-sizing:border-box;padding:10px;background:#0b111d;color:#e7edfa;border:1px solid #30445e" placeholder="C:\\media\\sample.mp4">
 <p><label><input id="mediaapprove" type="checkbox"> I approve FFprobe reading this media file's metadata only.</label></p>
 <button id="mediainspect">Inspect media (read only)</button><pre id="mediaout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
+<section class="panel"><h2>Controlled execution: Blender capability</h2><p>Check the Blender executable and version only. No project loading, Python scripts, or asset modification.</p>
+<p><label><input id="blenderapprove" type="checkbox"> I approve launching Blender with --version only.</label></p>
+<button id="blenderinspect">Check Blender version</button><pre id="blenderout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
@@ -57,6 +61,7 @@ el('plan').onclick=async()=>{try{const paths=el('inputs').value.split(/\\r?\\n/)
 el('history').onclick=history;history();
 el('inspect').onclick=async()=>{const out=el('inspectout');if(!el('approve').checked){out.textContent='Approval required';return}try{const data=await api('/api/archive/inspect','POST',{path:el('archivepath').value,approval:'LIST ARCHIVE'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+data.stdout+'\\n'+data.stderr;el('approve').checked=false}catch(e){out.textContent=e.message}};
 el('mediainspect').onclick=async()=>{const out=el('mediaout');if(!el('mediaapprove').checked){out.textContent='Approval required';return}el('mediaapprove').checked=false;try{const data=await api('/api/media/inspect','POST',{path:el('mediapath').value,approval:'PROBE MEDIA'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+(data.metadata?JSON.stringify(data.metadata,null,2):data.stderr);await history()}catch(e){out.textContent=e.message}};
+el('blenderinspect').onclick=async()=>{const out=el('blenderout');if(!el('blenderapprove').checked){out.textContent='Approval required';return}el('blenderapprove').checked=false;try{const data=await api('/api/blender/inspect','POST',{approval:'CHECK BLENDER'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+data.stdout+'\\n'+data.stderr;await history()}catch(e){out.textContent=e.message}};
 el('refresh').onclick=refresh;refresh();loadWorkflows();
 </script></main></html>"""
 
@@ -96,7 +101,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -105,6 +110,14 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/blender/inspect":
+                    with STATE_LOCK:
+                        current_state = load_state(STATE)
+                    status = {item["name"]: item["status"] for item in scan()["tools"]}
+                    report = inspect_blender(data.get("approval"), current_state, status)
+                    with STATE_LOCK:
+                        save_report(REPORTS, report)
+                    return self.reply(200, report)
                 if route == "/api/media/inspect":
                     with STATE_LOCK:
                         current_state = load_state(STATE)
