@@ -19,6 +19,7 @@ from reports import attach_inputs, list_reports, save_report
 from execution import inspect_archive
 from media import inspect_media
 from blender import inspect_blender
+from ollama import list_models
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -30,7 +31,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.4.4 · Blender capability check · no AI required</p>
+</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.0 · Optional local Ollama discovery · no AI required</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -50,6 +51,8 @@ small{color:#aabbd4}#error{color:#ff9e9e}
 <section class="panel"><h2>Controlled execution: Blender capability</h2><p>Check the Blender executable and version only. No project loading, Python scripts, or asset modification.</p>
 <p><label><input id="blenderapprove" type="checkbox"> I approve launching Blender with --version only.</label></p>
 <button id="blenderinspect">Check Blender version</button><pre id="blenderout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
+<section class="panel"><h2>Local AI: Ollama / Qwen</h2><p>Discover models already installed in your local Ollama service. No downloads, prompts, or model execution.</p>
+<button id="ollamascan">Discover local models</button><pre id="ollamaout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
@@ -62,6 +65,7 @@ el('history').onclick=history;history();
 el('inspect').onclick=async()=>{const out=el('inspectout');if(!el('approve').checked){out.textContent='Approval required';return}try{const data=await api('/api/archive/inspect','POST',{path:el('archivepath').value,approval:'LIST ARCHIVE'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+data.stdout+'\\n'+data.stderr;el('approve').checked=false}catch(e){out.textContent=e.message}};
 el('mediainspect').onclick=async()=>{const out=el('mediaout');if(!el('mediaapprove').checked){out.textContent='Approval required';return}el('mediaapprove').checked=false;try{const data=await api('/api/media/inspect','POST',{path:el('mediapath').value,approval:'PROBE MEDIA'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+(data.metadata?JSON.stringify(data.metadata,null,2):data.stderr);await history()}catch(e){out.textContent=e.message}};
 el('blenderinspect').onclick=async()=>{const out=el('blenderout');if(!el('blenderapprove').checked){out.textContent='Approval required';return}el('blenderapprove').checked=false;try{const data=await api('/api/blender/inspect','POST',{approval:'CHECK BLENDER'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+data.stdout+'\\n'+data.stderr;await history()}catch(e){out.textContent=e.message}};
+el('ollamascan').onclick=async()=>{try{const data=await api('/api/ollama/models');el('ollamaout').textContent='Ollama: '+data.status+'\\n'+(data.error||'')+'\\n'+data.models.map(m=>m.name+' ('+(m.size===null?'size unknown':(m.size/1073741824).toFixed(2)+' GiB')+')').join('\\n')}catch(e){el('ollamaout').textContent=e.message}};
 el('refresh').onclick=refresh;refresh();loadWorkflows();
 </script></main></html>"""
 
@@ -87,6 +91,14 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/ollama/models":
+                try:
+                    with STATE_LOCK:
+                        current_state = load_state(STATE)
+                    status = {item["name"]: item["status"] for item in scan()["tools"]}
+                    return self.reply(200, list_models(current_state, status))
+                except (ValueError, OSError, json.JSONDecodeError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/workflows/reports":
                 return self.reply(200, {"reports": list_reports(REPORTS)})
             if route == "/api/workflows":
