@@ -3,6 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
+
 from execution import inspect_archive
 
 class ExecutionTests(unittest.TestCase):
