@@ -54,6 +54,20 @@ py -3 -m venv .venv
 
 If the branch is not yet tracked locally, use `git switch --track origin/SMELTERV1` instead of `git switch SMELTERV1`. The commands assume the Python launcher (`py`) is available on Windows. The console is a legacy development entrypoint, not yet the V1 first-run wizard.
 
+## CLI-launched web setup wizard (V1 preview)
+
+On Windows, from the SMELTER checkout:
+
+```powershell
+cd C:\SMELTER
+git pull origin SMELTERV1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\start_setup.ps1
+```
+
+The CLI starts a loopback-only web app at `http://127.0.0.1:8767/` and opens a browser with a per-session authorization token. Leave the PowerShell window open while using the wizard. Review the plan and explicitly approve it before the backend runs a fixed sequence: create a local `.venv` if missing, run the requirements scanner, and run setup unit tests. Logs stream into the browser; no second terminal window is required.
+
+This is an initial functional wizard, **not** a package-manager installer: it does not download dependencies or install Node.js, Java, Blender, FFmpeg, 7-Zip, or other optional tools. Do not expose the loopback service through a proxy or port-forward. The wizard and its browser integration require local Windows testing.
+
 ## Read-only requirements scanner (implemented; Windows verification pending)
 
 Run the scanner before installing optional tools:
