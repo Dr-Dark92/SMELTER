@@ -15,9 +15,17 @@ spec.loader.exec_module(module)
 
 class RequirementsTests(unittest.TestCase):
     def test_missing_optional_is_not_failure(self):
-        with patch.object(module.shutil, "which", return_value=None):
+        with patch.object(module, "find_executable", return_value=None):
             result = module.probe("blender", ["blender", "--version"], "optional")
         self.assertEqual(result["status"], "missing")
+
+    def test_registered_path_detects_new_ffmpeg(self):
+        def which(name, path=None):
+            return r"C:\Winget\ffmpeg\bin\ffmpeg.exe" if name == "ffmpeg" and path == r"C:\Winget\ffmpeg\bin" else None
+        with patch.object(module.os, "name", "nt"):
+            with patch.object(module, "windows_path_entries", return_value=[r"C:\Winget\ffmpeg\bin"]):
+                with patch.object(module.shutil, "which", side_effect=which):
+                    self.assertEqual(module.find_executable("ffmpeg"), r"C:\Winget\ffmpeg\bin\ffmpeg.exe")
 
     def test_7zip_windows_program_files_detection(self):
         with tempfile.TemporaryDirectory() as tmp:
