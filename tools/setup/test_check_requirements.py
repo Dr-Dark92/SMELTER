@@ -19,6 +19,18 @@ class RequirementsTests(unittest.TestCase):
             result = module.probe("blender", ["blender", "--version"], "optional")
         self.assertEqual(result["status"], "missing")
 
+    def test_7zip_windows_program_files_detection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            seven = Path(tmp) / "7-Zip" / "7z.exe"
+            seven.parent.mkdir()
+            seven.write_bytes(b"")
+            with patch.object(module.os, "name", "nt"), patch.dict(module.os.environ, {"ProgramFiles": tmp}, clear=True):
+                with patch.object(module.shutil, "which", return_value=None):
+                    self.assertEqual(module.find_executable("7z"), str(seven))
+
+    def test_7zip_info_command(self):
+        self.assertEqual(module.TOOLS["7z"][0], ["7z", "i"])
+
     def test_successful_version(self):
         completed = subprocess.CompletedProcess(["git", "--version"], 0, "git version 2.0\n", "")
         with patch.object(module.shutil, "which", return_value="/usr/bin/git"):
