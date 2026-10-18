@@ -9,6 +9,7 @@ EXTENSIONS = {
     "ffmpeg": {"label": "FFmpeg", "tool": "ffmpeg", "permissions": ["local_process"], "description": "Media processing"},
     "7z": {"label": "7-Zip", "tool": "7z", "permissions": ["local_process"], "description": "Archive inspection"},
     "ollama": {"label": "Ollama", "tool": "ollama", "permissions": ["loopback_http_read"], "description": "Local model discovery (Qwen and other models)"},
+    "opencode": {"label": "OpenCode", "tool": "opencode", "permissions": ["version_probe_only"], "description": "Coding-agent availability; execution not enabled"},
 }
 DEFAULT = {"schema_version": 1, "enabled": []}
 
