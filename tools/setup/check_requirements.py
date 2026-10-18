@@ -75,16 +75,29 @@ def find_executable(name: str) -> str | None:
     candidates = [p for p in candidates if p.is_file()]
     return str(sorted(candidates, reverse=True)[0]) if candidates else None
 
+def npm_cli_path(shim: str) -> Path | None:
+    """Resolve the known npm CLI relative to npm.cmd, without executing the shim."""
+    candidate = Path(shim).parent / "node_modules" / "npm" / "bin" / "npm-cli.js"
+    return candidate if candidate.is_file() else None
+
 def probe(name: str, argv: list[str], policy: str) -> dict:
     """Never invoke a shell; version checks only, with timeouts and bounded output."""
     found = find_executable(argv[0])
     if not found:
         return {"name": name, "status": "missing", "policy": policy, "version": None}
     try:
-        # Windows .cmd shims need shell execution; do not run them in this read-only scanner.
+        # Never execute a Windows command shim. For npm only, invoke its
+        # known JavaScript CLI using the already-discovered node.exe.
+        command = [found, *argv[1:]]
         if os.name == "nt" and Path(found).suffix.lower() in (".cmd", ".bat", ".ps1"):
-            return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
-        run = subprocess.run([found, *argv[1:]], capture_output=True, text=True, errors="replace",
+            if name != "npm" or Path(found).suffix.lower() != ".cmd":
+                return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
+            cli = npm_cli_path(found)
+            node = find_executable("node")
+            if cli is None or node is None or Path(node).suffix.lower() != ".exe":
+                return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
+            command = [node, str(cli), "--version"]
+        run = subprocess.run(command, capture_output=True, text=True, errors="replace",
                              timeout=5, check=False, stdin=subprocess.DEVNULL)
         output = (run.stdout or run.stderr).strip()
         first = next((line.strip() for line in output.splitlines() if line.strip()), "")
