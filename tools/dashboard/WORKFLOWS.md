@@ -68,3 +68,9 @@ The requirements scanner now checks for an optional OpenCode CLI. On Windows, `.
 The OpenCode panel can now display a proposed OpenCode configuration for the local Ollama OpenAI-compatible endpoint `http://127.0.0.1:11434/v1`. The preview uses the current Reasoning and Lightweight selections and only includes models verified by Ollama's live discovery endpoint. The preview requires OpenCode to be detected and its extension enabled, but does not require version verification for a Windows `.cmd` shim.
 
 This preview is an in-memory proposal only: it does not create or overwrite `opencode.json`, install npm packages, contact the OpenCode provider, run a model, grant agent permissions or modify `projects/`. The proposed provider schema and model behavior still require real OpenCode compatibility testing before configuration deployment.
+
+## V1.5.4 — isolated OpenCode provider deployment
+
+The dashboard supports an explicitly approved, create-only write to `.smelter/opencode-isolated/opencode.json`. The payload is generated from the live, validated provider preview and capped at 32 KiB. The deployment refuses symlink destinations and existing files; it does not overwrite or back up existing OpenCode settings because it never touches them. For an updated deployment, remove or archive the isolated config manually after review, then redeploy.
+
+This is configuration staging, **not** activation: OpenCode is not launched, and the staged directory is not automatically wired into OpenCode. Actual compatibility, runtime provider installation, model inference and project-scoped agent execution remain unverified and disabled.
