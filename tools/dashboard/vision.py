@@ -19,8 +19,8 @@ def validate_image(image: dict) -> str:
     if not raw or len(raw) > MAX_IMAGE_BYTES:
         raise ValueError("Image exceeds 2 MiB limit")
     mime = image["mime"]
-    valid = (mime == "image/png" and raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n")) or (
-        mime == "image/jpeg" and raw.startswith(b"\\xff\\xd8\\xff")) or (
+    valid = (mime == "image/png" and raw.startswith(bytes((137,80,78,71,13,10,26,10)))) or (
+        mime == "image/jpeg" and raw.startswith(bytes((255,216,255)))) or (
         mime == "image/webp" and raw.startswith(b"RIFF") and raw[8:12] == b"WEBP")
     if not valid:
         raise ValueError("Image signature does not match declared format")
