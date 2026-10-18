@@ -10,6 +10,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
+from profiles import catalog, resolve
 
 ROOT = Path(__file__).resolve().parents[2]
 REQ = ROOT / "requirements.txt"
@@ -21,11 +22,14 @@ body{font:15px system-ui;background:#0b101a;color:#e8effb;margin:0}main{max-widt
 </style><main><h1>⚒ SMELTER Vanilla V1</h1><p class="muted">Local setup wizard · no optional tool installs</p>
 <section class="panel"><h2>1 · Check requirements</h2><button id="scan">Scan system</button><pre id="scanout">Not scanned</pre></section>
 <section class="panel"><h2>2 · Review installation plan</h2><label>☑ Vanilla core (required)</label><label>☐ Blender (deferred)</label><label>☐ FFmpeg (deferred)</label><label>☐ 7-Zip (deferred)</label><button id="plan">Review plan</button><pre id="planout">Not reviewed</pre></section>
-<section class="panel"><h2>3 · Approve and install</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
+<section class="panel"><h2>3 · Optional profile dependency preview</h2><p class="muted">Preview only; no additional software will be installed.</p><div id="profiles"></div><button id="preview">Preview selected dependencies</button><pre id="previewout">Select profiles to inspect requirements</pre></section>
+<section class="panel"><h2>4 · Approve Vanilla setup</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');const el=id=>document.getElementById(id);let planId=null;
 async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||r.status);return d}
 function error(e){el('status').textContent='Error: '+e.message}
+async function loadProfiles(){try{const p=await api('/api/profiles');el('profiles').innerHTML=p.profiles.filter(x=>x.id!=='vanilla').map(x=>'<label><input type="checkbox" class="profile" value="'+x.id+'"> '+x.label+' — '+x.description+'</label>').join('')}catch(e){error(e)}}loadProfiles();
+el('preview').onclick=async()=>{try{const selected=[...document.querySelectorAll('.profile:checked')].map(x=>x.value);const p=await api('/api/preview','POST',{profiles:selected});el('previewout').textContent=JSON.stringify(p,null,2)}catch(e){error(e)}};
 el('scan').onclick=async()=>{try{el('scanout').textContent=JSON.stringify(await api('/api/scan'),null,2)}catch(e){error(e)}};
 el('plan').onclick=async()=>{try{const p=await api('/api/plan');planId=p.plan_id;el('planout').textContent=JSON.stringify(p,null,2);el('approve').checked=false;el('apply').disabled=true}catch(e){error(e)}};
 el('approve').onchange=()=>el('apply').disabled=!el('approve').checked||!planId;
@@ -142,7 +146,9 @@ def handler_factory(engine, token, port):
             if not self.auth():
                 return
             try:
-                if path == "/api/scan":
+                if path == "/api/profiles":
+                    self.reply(200, {"profiles": catalog()})
+                elif path == "/api/scan":
                     from check_requirements import scan
                     self.reply(200, scan())
                 elif path == "/api/plan":
@@ -157,7 +163,7 @@ def handler_factory(engine, token, port):
         def do_POST(self):
             if not self.auth():
                 return
-            if urlsplit(self.path).path != "/api/apply":
+            if urlsplit(self.path).path not in ("/api/apply", "/api/preview"):
                 self.reply(404, {"error": "Not found"})
                 return
             try:
@@ -167,8 +173,12 @@ def handler_factory(engine, token, port):
                 body = json.loads(self.rfile.read(length))
                 if not isinstance(body, dict):
                     raise ValueError("Expected JSON object")
-                engine.apply(body.get("plan_id"), body.get("approved") is True)
-                self.reply(202, {"status": "running"})
+                if urlsplit(self.path).path == "/api/preview":
+                    from check_requirements import scan
+                    self.reply(200, resolve(body.get("profiles", []), scan()))
+                else:
+                    engine.apply(body.get("plan_id"), body.get("approved") is True)
+                    self.reply(202, {"status": "running"})
             except (ValueError, TypeError) as exc:
                 self.reply(400, {"error": str(exc)})
 
