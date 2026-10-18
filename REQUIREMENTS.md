@@ -54,7 +54,18 @@ py -3 -m venv .venv
 
 If the branch is not yet tracked locally, use `git switch --track origin/SMELTERV1` instead of `git switch SMELTERV1`. The commands assume the Python launcher (`py`) is available on Windows. The console is a legacy development entrypoint, not yet the V1 first-run wizard.
 
-## Planned environment validation (not implemented yet)
+## Read-only requirements scanner (implemented; Windows verification pending)
+
+Run the scanner before installing optional tools:
+
+```powershell
+.\.venv\Scripts\python.exe tools\setup\check_requirements.py --output diagnostics\requirements-local.json
+.\.venv\Scripts\python.exe -m unittest discover -s tools\setup -p test_check_requirements.py -v
+```
+
+The scanner uses Python's standard library, checks executable presence and version commands, and writes an explicit JSON report. It performs no installation, network access, or system modifications. The report omits executable paths. Some Windows command shims are marked `detected_unverified` rather than executed. The report should be reviewed before sharing; version output may still include local metadata.
+
+## Planned environment validation (remaining work)
 
 1. Detect OS, architecture, Python version, and available tools without changing the system.
 2. Evaluate only the dependencies required by the user's selected extensions.
