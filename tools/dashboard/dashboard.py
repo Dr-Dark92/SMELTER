@@ -42,6 +42,18 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
+/* V1.6.5: independent floating scroll regions. Wheel scroll is local to hovered pane. */
+html,body{height:100%;overflow:hidden}
+main{height:100dvh;min-height:0;overflow:hidden}
+main>h1,main>p{flex-shrink:0;margin:8px 16px}
+#shell{flex:1 1 auto;min-height:0;overflow:hidden;align-items:stretch}
+#leftbar,#workspace,#rightbar{height:100%;max-height:none;min-height:0;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#30445e transparent}
+#workspace{overflow:hidden}
+#chatlog{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#chatHistory{min-height:0}
+#sysfooter{flex:0 0 auto;box-sizing:border-box;max-height:76px;overflow:auto;overscroll-behavior:contain;flex-wrap:nowrap;white-space:nowrap;scrollbar-width:thin;background:#0b111d;position:relative;z-index:2}
+#bootstrap{overflow-y:auto;min-height:0}
+@media(max-width:850px){html,body{overflow:auto;height:auto}main{height:auto;min-height:100dvh;overflow:visible}#shell{display:flex;flex-direction:column;overflow:visible}#leftbar,#workspace,#rightbar{height:auto;max-height:45dvh;min-height:180px;overflow-y:auto}#workspace{min-height:360px;max-height:65dvh}#sysfooter{max-height:76px}}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.4 · Local Qwen chat · Persistent transcripts</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
