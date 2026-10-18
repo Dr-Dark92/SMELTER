@@ -27,6 +27,7 @@ from opencode_deploy import deploy_isolated_config
 from opencode_validate import validate_staged_config
 from database import inspect_database, select_database
 from config_store import load_config, save_config
+from startup import startup_report
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -39,7 +40,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>V1.6.0 · Workspace shell · AI chat and statistics pending</p>
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.2 · Persistent settings and startup preflight · AI chat pending</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -130,8 +131,7 @@ def handler(token: str):
                 return self.reply(403, {"error": "Unauthorized"})
             if route == "/api/startup":
                 try:
-                    db = inspect_database(ROOT)
-                    return self.reply(200, {**db, "inspection": "SQLite schema and integrity checked", "services": {"dashboard": "running", "ollama": "not_required_for_database_startup", "opencode": "not_started"}})
+                    return self.reply(200, startup_report(ROOT, scan, list_models))
                 except (ValueError, OSError, json.JSONDecodeError) as e:
                     return self.reply(400, {"error": str(e)})
             if route == "/api/opencode/validate":
