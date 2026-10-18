@@ -26,6 +26,7 @@ from opencode_provider import provider_preview
 from opencode_deploy import deploy_isolated_config
 from opencode_validate import validate_staged_config
 from database import inspect_database, select_database
+from config_store import load_config, save_config
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -136,8 +137,8 @@ def handler(token: str):
             if route == "/api/opencode/validate":
                 try:
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
-                        preferences = load_preferences(MODEL_PREFS)
+                        current_state = load_config(ROOT, 'extensions.json')
+                        preferences = load_config(ROOT, 'model_preferences.json')
                     status = {item["name"]: item for item in scan()["tools"]}
                     inspect_opencode(current_state, status)
                     discovery = list_models(current_state, {name: item["status"] for name, item in status.items()})
@@ -223,7 +224,12 @@ def handler(token: str):
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
                     discovery = list_models(current_state, status)
                     with STATE_LOCK:
-                        preferences = configure_model(MODEL_PREFS, data.get("role"), data.get("model"), discovery)
+                        role, model = data.get("role"), data.get("model")
+                        if role not in ("reasoning", "lightweight") or not isinstance(model, str) or model not in {item["name"] for item in discovery.get("models", [])} or discovery.get("status") != "connected":
+                            raise ValueError("Model must be installed in connected Ollama and role must be valid")
+                        preferences = load_config(ROOT, "model_preferences.json")
+                        preferences["models"][role] = model
+                        save_config(ROOT, "model_preferences.json", preferences)
                     return self.reply(200, configured_status(preferences, discovery))
                 if route == "/api/blender/inspect":
                     with STATE_LOCK:
@@ -256,7 +262,7 @@ def handler(token: str):
                     return self.reply(200, report)
                 with STATE_LOCK:
                     state = set_enabled(load_state(STATE), data.get("id"), data.get("enabled"), scan())
-                    save_state(STATE, state)
+                    save_config(ROOT, 'extensions.json', state)
                 return self.reply(200, {"enabled": state["enabled"]})
             except (ValueError, OSError, json.JSONDecodeError) as e:
                 return self.reply(400, {"error": str(e)})
