@@ -28,11 +28,37 @@ TOOLS = {
     "7z": (["7z", "i"], "optional"),
 }
 
+def windows_path_entries() -> list[str]:
+    """Read current Windows user/system PATH from registry without modifying it."""
+    if os.name != "nt":
+        return []
+    try:
+        import winreg
+        entries = []
+        for hive, key in (
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+            (winreg.HKEY_CURRENT_USER, r"Environment"),
+        ):
+            try:
+                with winreg.OpenKey(hive, key) as handle:
+                    value, _ = winreg.QueryValueEx(handle, "Path")
+                    entries.extend(os.path.expandvars(part.strip('"')) for part in value.split(";") if part)
+            except OSError:
+                continue
+        return entries
+    except (ImportError, OSError):
+        return []
+
+
 def find_executable(name: str) -> str | None:
     """Check PATH first, then common Windows locations for optional tools."""
     found = shutil.which(name)
     if found or os.name != "nt":
         return found
+    for folder in windows_path_entries():
+        candidate = shutil.which(name, path=folder)
+        if candidate:
+            return candidate
     roots = [os.environ.get("ProgramFiles"), os.environ.get("ProgramW6432"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")]
     candidates = []
     for root in filter(None, roots):
