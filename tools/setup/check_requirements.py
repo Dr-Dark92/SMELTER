@@ -28,16 +28,32 @@ TOOLS = {
     "7z": (["7z", "-version"], "optional"),
 }
 
+def find_executable(name: str) -> str | None:
+    """Check PATH first; locate Blender in conventional Windows installs."""
+    found = shutil.which(name)
+    if found or name != "blender" or os.name != "nt":
+        return found
+    roots = [os.environ.get("ProgramFiles"), os.environ.get("LOCALAPPDATA")]
+    candidates = []
+    for root in filter(None, roots):
+        base = Path(root)
+        if base.name.lower() == "program files":
+            candidates.extend((base / "Blender Foundation").glob("Blender */blender.exe"))
+        else:
+            candidates.extend((base / "Programs" / "Blender Foundation").glob("Blender */blender.exe"))
+    candidates = [p for p in candidates if p.is_file()]
+    return str(sorted(candidates, reverse=True)[0]) if candidates else None
+
 def probe(name: str, argv: list[str], policy: str) -> dict:
     """Never invoke a shell; version checks only, with timeouts and bounded output."""
-    found = shutil.which(argv[0])
+    found = find_executable(argv[0])
     if not found:
         return {"name": name, "status": "missing", "policy": policy, "version": None}
     try:
         # Windows .cmd shims need shell execution; do not run them in this read-only scanner.
         if os.name == "nt" and Path(found).suffix.lower() in (".cmd", ".bat", ".ps1"):
             return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
-        run = subprocess.run(argv, capture_output=True, text=True, errors="replace",
+        run = subprocess.run([found, *argv[1:]], capture_output=True, text=True, errors="replace",
                              timeout=5, check=False, stdin=subprocess.DEVNULL)
         output = (run.stdout or run.stderr).strip()
         first = next((line.strip() for line in output.splitlines() if line.strip()), "")
