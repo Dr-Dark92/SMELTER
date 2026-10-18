@@ -23,6 +23,23 @@ class ExtensionTests(unittest.TestCase):
             path = Path(folder) / "extensions.json"
             save_state(path, {"schema_version": 1, "enabled": ["7z"]})
             self.assertEqual(load_state(path)["enabled"], ["7z"])
+    def test_health_ready_but_permissions_not_granted(self):
+        items = catalog(SCAN, {"schema_version": 1, "enabled": ["blender"]})
+        blender = next(x for x in items if x["id"] == "blender")
+        self.assertEqual(blender["health"], "ready")
+        self.assertFalse(blender["permission_granted"])
+
+    def test_health_disabled(self):
+        items = catalog(SCAN, {"schema_version": 1, "enabled": []})
+        blender = next(x for x in items if x["id"] == "blender")
+        self.assertEqual(blender["health"], "available_disabled")
+
+    def test_health_detects_lost_dependency(self):
+        items = catalog(SCAN, {"schema_version": 1, "enabled": ["ffmpeg"]})
+        ffmpeg = next(x for x in items if x["id"] == "ffmpeg")
+        self.assertEqual(ffmpeg["health"], "dependency_unavailable")
+        self.assertTrue(ffmpeg["enabled"])
+
     def test_catalog_status(self):
         items = catalog(SCAN, {"schema_version": 1, "enabled": ["blender"]})
         self.assertTrue(next(x for x in items if x["id"] == "blender")["enabled"])
