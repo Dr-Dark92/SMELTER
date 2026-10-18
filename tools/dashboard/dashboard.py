@@ -28,6 +28,7 @@ from opencode_validate import validate_staged_config
 from database import inspect_database, select_database
 from config_store import load_config, save_config
 from startup import startup_report
+from system_status import system_status
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 from chat_inference import ask
 
@@ -54,7 +55,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 #sysfooter{flex:0 0 auto;box-sizing:border-box;max-height:76px;overflow:auto;overscroll-behavior:contain;flex-wrap:nowrap;white-space:nowrap;scrollbar-width:thin;background:#0b111d;position:relative;z-index:2}
 #bootstrap{overflow-y:auto;min-height:0}
 @media(max-width:850px){html,body{overflow:auto;height:auto}main{height:auto;min-height:100dvh;overflow:visible}#shell{display:flex;flex-direction:column;overflow:visible}#leftbar,#workspace,#rightbar{height:auto;max-height:45dvh;min-height:180px;overflow-y:auto}#workspace{min-height:360px;max-height:65dvh}#sysfooter{max-height:76px}}
-.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.6 · Grouped configuration folders · Local Qwen chat</p>
+.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.7 · System status · Grouped settings</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -131,6 +132,15 @@ function initShell(){
  shell.append(left,center,right);
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
+ const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
+ const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
+ if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
+}
+async function refreshSystem(){
+ try{const s=await api('/api/system/status');const gb=n=>(n/1073741824).toFixed(1)+' GiB';
+  document.getElementById('sysfooter').textContent='CPU: pending · RAM: pending · GPU: pending · Disk free: '+gb(s.storage.free_bytes)+' / '+gb(s.storage.total_bytes)+' · DB: '+s.database.status;
+  document.getElementById('systemStatusPanel').textContent='Database: '+s.database.status+'\\nLocation: '+(s.database.path||'not selected')+'\\nDisk: '+gb(s.storage.free_bytes)+' free / '+gb(s.storage.total_bytes)+' total\\nDashboard: running\\nOllama: inspect via AI & Models\\nOpenCode: not started\\nCPU/RAM/GPU: instrumentation pending';
+ }catch(e){document.getElementById('sysfooter').textContent='System status unavailable: '+e.message}
 }
 async function refreshChats(){
  const data=await api('/api/chats');const history=document.getElementById('chatHistory');history.replaceChildren();
@@ -170,7 +180,7 @@ async function startup(){
  try{
   const db=await api('/api/startup');
   el('dbstatus').textContent=JSON.stringify(db,null,2);
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats()}
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem()}
  }catch(e){el('dbstatus').textContent=e.message}
 }
 el('dbselect').onclick=async()=>{
@@ -203,6 +213,11 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/system/status":
+                try:
+                    return self.reply(200, system_status(ROOT))
+                except (ValueError, OSError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/chats":
                 try:
                     return self.reply(200, list_chats(ROOT))
