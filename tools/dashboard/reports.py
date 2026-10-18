@@ -70,7 +70,7 @@ def list_reports(folder: Path, limit: int = 20) -> list[dict]:
             if str(UUID(path.stem)) != path.stem or path.stat().st_size > 128 * 1024:
                 continue
             data = json.loads(path.read_text(encoding="utf-8"))
-            if isinstance(data, dict) and data.get("run_id") == path.stem and data.get("mode") == "dry_run":
+            if isinstance(data, dict) and data.get("run_id") == path.stem and data.get("mode") in ("dry_run", "approved_read_only"):
                 reports.append(data)
         except (OSError, ValueError, json.JSONDecodeError):
             continue
