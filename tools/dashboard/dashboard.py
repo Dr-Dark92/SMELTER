@@ -4,6 +4,7 @@ import argparse
 import json
 import secrets
 import sys
+import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,6 +16,7 @@ from check_requirements import scan
 from extensions import catalog, load_state, save_state, set_enabled
 
 STATE = ROOT / ".smelter" / "extensions.json"
+STATE_LOCK = threading.Lock()
 HTML = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SMELTER · Dashboard</title><style>
 body{margin:0;background:#0b111d;color:#e7edfa;font:15px system-ui}main{max-width:980px;margin:35px auto;padding:20px}
@@ -22,15 +24,15 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.3 · Local extension manager · no AI required</p>
-<section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Enabling grants no permission to execute tools.</p>
+</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.3.1 · Extension health &amp; configuration · no AI required</p>
+<section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Next: Workflows</h2><p>Pipeline execution, permissions, and validation will be added separately. This page only manages extension activation state.</p></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error||r.status);return v}
-async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed';b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
+async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed';b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
 el('refresh').onclick=refresh;refresh();
 </script></main></html>"""
 
@@ -74,8 +76,9 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
-                state = set_enabled(load_state(STATE), data.get("id"), data.get("enabled"), scan())
-                save_state(STATE, state)
+                with STATE_LOCK:
+                    state = set_enabled(load_state(STATE), data.get("id"), data.get("enabled"), scan())
+                    save_state(STATE, state)
                 return self.reply(200, {"enabled": state["enabled"]})
             except (ValueError, OSError, json.JSONDecodeError) as e:
                 return self.reply(400, {"error": str(e)})
