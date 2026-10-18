@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 from profiles import catalog, resolve
+from install_actions import build_actions
 
 ROOT = Path(__file__).resolve().parents[2]
 REQ = ROOT / "requirements.txt"
@@ -23,13 +24,18 @@ body{font:15px system-ui;background:#0b101a;color:#e8effb;margin:0}main{max-widt
 <section class="panel"><h2>1 · Check requirements</h2><button id="scan">Scan system</button><pre id="scanout">Not scanned</pre></section>
 <section class="panel"><h2>2 · Review installation plan</h2><label>☑ Vanilla core (required)</label><label>☐ Blender (deferred)</label><label>☐ FFmpeg (deferred)</label><label>☐ 7-Zip (deferred)</label><button id="plan">Review plan</button><pre id="planout">Not reviewed</pre></section>
 <section class="panel"><h2>3 · Optional profile dependency preview</h2><p class="muted">Preview only; no additional software will be installed.</p><div id="profiles"></div><button id="preview">Preview selected dependencies</button><pre id="previewout">Select profiles to inspect requirements</pre></section>
-<section class="panel"><h2>4 · Approve Vanilla setup</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
+<section class="panel"><h2>4 · Optional dependency installation</h2><p class="muted">Windows winget only. Review exact package IDs and approve separately. May request elevation or interactive terms.</p><div id="installchoices"></div><button id="queue">Review install queue</button><pre id="queueout">No install queue</pre><label><input id="installapprove" type="checkbox"> I approve these exact packages and their installation</label><button id="install" disabled>Install approved packages</button><pre id="installlog">No dependency installation run</pre></section>
+<section class="panel"><h2>5 · Approve Vanilla setup</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
 <script>
-const token=new URLSearchParams(location.hash.slice(1)).get('token');const el=id=>document.getElementById(id);let planId=null;
+const token=new URLSearchParams(location.hash.slice(1)).get('token');const el=id=>document.getElementById(id);let planId=null,installId=null,preview=null;
 async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||r.status);return d}
 function error(e){el('status').textContent='Error: '+e.message}
 async function loadProfiles(){try{const p=await api('/api/profiles');el('profiles').innerHTML=p.profiles.filter(x=>x.id!=='vanilla').map(x=>'<label><input type="checkbox" class="profile" value="'+x.id+'"> '+x.label+' — '+x.description+'</label>').join('')}catch(e){error(e)}}loadProfiles();
-el('preview').onclick=async()=>{try{const selected=[...document.querySelectorAll('.profile:checked')].map(x=>x.value);const p=await api('/api/preview','POST',{profiles:selected});el('previewout').textContent=JSON.stringify(p,null,2)}catch(e){error(e)}};
+el('preview').onclick=async()=>{try{const selected=[...document.querySelectorAll('.profile:checked')].map(x=>x.value);const p=await api('/api/preview','POST',{profiles:selected});preview=p;installId=null;el('install').disabled=true;el('installapprove').checked=false;el('previewout').textContent=JSON.stringify(p,null,2);el('installchoices').innerHTML=p.dependencies.filter(x=>x.status!=='installed').map(x=>'<label><input type="checkbox" class="dependency" value="'+x.name+'"> '+x.name+' ('+x.status+')</label>').join('')||'No missing dependencies'}catch(e){error(e)}};
+el('queue').onclick=async()=>{try{if(!preview)throw Error('Preview profiles first');const names=[...document.querySelectorAll('.dependency:checked')].map(x=>x.value);const p=await api('/api/install-plan','POST',{profiles:preview.profiles,names});installId=p.install_id;el('queueout').textContent=JSON.stringify(p,null,2);el('installapprove').checked=false;el('install').disabled=true}catch(e){error(e)}};
+el('installapprove').onchange=()=>el('install').disabled=!el('installapprove').checked||!installId;
+el('install').onclick=async()=>{try{el('install').disabled=true;await api('/api/install-apply','POST',{install_id:installId,approved:true});installPoll()}catch(e){error(e)}};
+async function installPoll(){try{const p=await api('/api/install-progress');el('installlog').textContent=p.status+'\n'+p.lines.join('\n');if(p.status==='running')setTimeout(installPoll,750);else{installId=null;el('installapprove').checked=false}}catch(e){error(e)}}
 el('scan').onclick=async()=>{try{el('scanout').textContent=JSON.stringify(await api('/api/scan'),null,2)}catch(e){error(e)}};
 el('plan').onclick=async()=>{try{const p=await api('/api/plan');planId=p.plan_id;el('planout').textContent=JSON.stringify(p,null,2);el('approve').checked=false;el('apply').disabled=true}catch(e){error(e)}};
 el('approve').onchange=()=>el('apply').disabled=!el('approve').checked||!planId;
@@ -46,6 +52,74 @@ def validate_plan():
         raise ValueError("Vanilla setup refuses third-party Python requirements until reviewed")
     return {"profile": "vanilla", "steps": ["Create local .venv if absent", "Run system scanner", "Run setup unit tests"],
             "optional_installations": [], "downloads": False, "system_package_changes": False}
+
+class DependencyInstaller:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.status = "idle"
+        self.lines = []
+        self.install_id = None
+        self.actions = []
+
+    def plan(self, profiles, names):
+        from check_requirements import scan
+        preview = resolve(profiles, scan())
+        plan = build_actions(preview, names)
+        with self.lock:
+            if self.status == "running":
+                raise ValueError("Installation already running")
+            self.install_id = secrets.token_urlsafe(24)
+            self.actions = plan["actions"]
+            return {"install_id": self.install_id, **plan}
+
+    def apply(self, install_id, approved):
+        with self.lock:
+            if self.status == "running":
+                raise ValueError("Installation already running")
+            if not approved or not self.install_id or install_id != self.install_id:
+                raise ValueError("Exact installation plan approval required")
+            if not self.actions:
+                raise ValueError("No packages selected")
+            self.install_id = None
+            actions = list(self.actions)
+            self.actions = []
+            self.lines = []
+            self.status = "running"
+        threading.Thread(target=self.run, args=(actions,), daemon=True).start()
+
+    def run(self, actions):
+        try:
+            for action in actions:
+                command = action["command"]
+                self.log("Installing " + action["name"] + " (" + action["package_id"] + ")")
+                proc = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.DEVNULL,
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        text=True, errors="replace")
+                for line in proc.stdout:
+                    self.log(line.rstrip())
+                if proc.wait() != 0:
+                    raise RuntimeError("winget failed for " + action["name"])
+                from check_requirements import scan
+                observed = {t["name"]: t for t in scan()["tools"]}
+                if observed.get(action["name"], {}).get("status") != "installed":
+                    raise RuntimeError(action["name"] + " not verified; restart shell or check PATH")
+                self.log("Verified: " + action["name"])
+            status = "completed"
+        except Exception as exc:
+            self.log("ERROR: " + str(exc))
+            status = "failed"
+        with self.lock:
+            self.status = status
+
+    def log(self, message):
+        with self.lock:
+            self.lines.append(str(message)[:400])
+            self.lines = self.lines[-400:]
+
+    def progress(self):
+        with self.lock:
+            return {"status": self.status, "lines": list(self.lines)}
+
 
 class Engine:
     def __init__(self):
@@ -110,7 +184,8 @@ class Engine:
         with self.lock:
             return {"status": self.status, "lines": list(self.lines)}
 
-def handler_factory(engine, token, port):
+def handler_factory(engine, token, port, installer=None):
+    installer = installer or DependencyInstaller()
     class Handler(BaseHTTPRequestHandler):
         def reply(self, code, obj):
             data = json.dumps(obj).encode()
@@ -153,6 +228,8 @@ def handler_factory(engine, token, port):
                     self.reply(200, scan())
                 elif path == "/api/plan":
                     self.reply(200, engine.plan())
+                elif path == "/api/install-progress":
+                    self.reply(200, installer.progress())
                 elif path == "/api/progress":
                     self.reply(200, engine.progress())
                 else:
@@ -163,7 +240,7 @@ def handler_factory(engine, token, port):
         def do_POST(self):
             if not self.auth():
                 return
-            if urlsplit(self.path).path not in ("/api/apply", "/api/preview"):
+            if urlsplit(self.path).path not in ("/api/apply", "/api/preview", "/api/install-plan", "/api/install-apply"):
                 self.reply(404, {"error": "Not found"})
                 return
             try:
@@ -173,7 +250,12 @@ def handler_factory(engine, token, port):
                 body = json.loads(self.rfile.read(length))
                 if not isinstance(body, dict):
                     raise ValueError("Expected JSON object")
-                if urlsplit(self.path).path == "/api/preview":
+                if urlsplit(self.path).path == "/api/install-plan":
+                    self.reply(200, installer.plan(body.get("profiles"), body.get("names")))
+                elif urlsplit(self.path).path == "/api/install-apply":
+                    installer.apply(body.get("install_id"), body.get("approved") is True)
+                    self.reply(202, {"status": "running"})
+                elif urlsplit(self.path).path == "/api/preview":
                     from check_requirements import scan
                     self.reply(200, resolve(body.get("profiles", []), scan()))
                 else:
