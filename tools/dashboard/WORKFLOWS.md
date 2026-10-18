@@ -52,3 +52,9 @@ This verifies executable launch and version output only. It does **not** yet val
 Enable the Ollama extension in the dashboard, then select **Discover local models**. The API reads `GET http://127.0.0.1:11434/api/tags` using Python's standard library with a 3-second timeout and a 256-KiB response cap. The dashboard only displays installed model names and sizes. Qwen models are displayed when present; nothing is downloaded automatically. Ollama must already be running to respond.
 
 This phase does not send prompts, invoke models, launch an agent, start Ollama, or access project files. Model selection, OpenCode integration, and execution approvals are future phases. The endpoint is available only through the dashboard's existing session-token protection.
+
+## V1.5.1 — model role preferences
+
+The dashboard provides Reasoning and Lightweight model selectors populated from Ollama's live model list. `POST /api/ollama/preferences` saves a chosen role/model only if the Ollama extension is enabled, the local service is connected, and the exact model name appears in the installed-model response. `GET /api/ollama/preferences` returns saved choices and their current availability.
+
+Preferences are saved atomically to `.smelter/model_preferences.json`. They do not trigger inference, model downloads, OpenCode or other tool execution. The saved choices can become unavailable when a model is removed or Ollama stops; the UI reports availability instead of automatically substituting a model.
