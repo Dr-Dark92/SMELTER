@@ -36,10 +36,18 @@ def save_state(path: Path, state: dict) -> None:
 
 def catalog(scan: dict, state: dict) -> list[dict]:
     statuses = {tool["name"]: tool["status"] for tool in scan["tools"]}
-    return [
-        {"id": key, **value, "status": statuses.get(value["tool"], "missing"), "enabled": key in state["enabled"]}
-        for key, value in EXTENSIONS.items()
-    ]
+    result = []
+    for key, value in EXTENSIONS.items():
+        status = statuses.get(value["tool"], "missing")
+        enabled = key in state["enabled"]
+        health = "ready" if enabled and status == "installed" else (
+            "dependency_unavailable" if enabled else (
+                "available_disabled" if status == "installed" else "dependency_unavailable"
+            )
+        )
+        result.append({"id": key, **value, "status": status, "enabled": enabled,
+                       "health": health, "permission_granted": False})
+    return result
 
 def set_enabled(state: dict, extension_id: str, enabled: bool, scan: dict) -> dict:
     if extension_id not in EXTENSIONS or type(enabled) is not bool:
