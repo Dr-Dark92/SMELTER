@@ -6,6 +6,7 @@ until the corresponding subsystems are migrated to database-backed storage.
 from __future__ import annotations
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 MARKER = ".smelter/database-location.json"
@@ -50,7 +51,7 @@ def select_database(root: Path, directory: str) -> dict:
     db = folder / DB_NAME
     if db.is_symlink() or db.exists():
         raise ValueError("Database target already exists; refusing to overwrite")
-    with sqlite3.connect(db) as connection:
+    with closing(sqlite3.connect(db)) as connection, connection:
         connection.executescript(SCHEMA)
         connection.execute("PRAGMA foreign_keys=ON")
         connection.execute("INSERT INTO metadata(key,value) VALUES('schema_version','1')")
@@ -73,7 +74,7 @@ def inspect_database(root: Path) -> dict:
     if not db.is_file():
         return {"status": "database_missing", "database": str(db), "ready": False}
     try:
-        with sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=3) as connection:
+        with closing(sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=3)) as connection:
             schema = connection.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()
             integrity = connection.execute("PRAGMA quick_check").fetchone()
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
