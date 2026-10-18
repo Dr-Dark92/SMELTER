@@ -62,3 +62,9 @@ Preferences are saved atomically to `.smelter/model_preferences.json`. They do n
 ## V1.5.2 — OpenCode discovery
 
 The requirements scanner now checks for an optional OpenCode CLI. On Windows, `.cmd`, `.bat` and `.ps1` shims are not executed, and are reported as `detected_unverified`. The OpenCode extension can be enabled for read-only diagnostics when detected, even if version verification is unavailable. `GET /api/opencode/status` returns the scanner result and executable entry type; it does not start an agent, run OpenCode, read project files, or configure model providers. OpenCode agent execution and filesystem permissions are explicitly deferred to a later, separately approved phase.
+
+## V1.5.3 — OpenCode + Ollama provider preview
+
+The OpenCode panel can now display a proposed OpenCode configuration for the local Ollama OpenAI-compatible endpoint `http://127.0.0.1:11434/v1`. The preview uses the current Reasoning and Lightweight selections and only includes models verified by Ollama's live discovery endpoint. The preview requires OpenCode to be detected and its extension enabled, but does not require version verification for a Windows `.cmd` shim.
+
+This preview is an in-memory proposal only: it does not create or overwrite `opencode.json`, install npm packages, contact the OpenCode provider, run a model, grant agent permissions or modify `projects/`. The proposed provider schema and model behavior still require real OpenCode compatibility testing before configuration deployment.
