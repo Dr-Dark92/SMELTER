@@ -8,6 +8,7 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from chats import read_chat, _db
+from vision import validate_image
 from contextlib import closing
 import sqlite3
 
@@ -15,7 +16,7 @@ ENDPOINT = "http://127.0.0.1:11434/api/chat"
 MODEL = "qwen3.5:9b"
 MAX_RESPONSE = 128 * 1024
 
-def ask(root, conversation_id, prompt, opener=urlopen):
+def ask(root, conversation_id, prompt, opener=urlopen, image=None):
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
         raise ValueError("Prompt must be 1–1800 characters")
     chat = read_chat(root, conversation_id)
@@ -23,7 +24,10 @@ def ask(root, conversation_id, prompt, opener=urlopen):
     for m in chat["messages"][-24:]:
         if m["role"] in ("user", "assistant"):
             messages.append({"role":m["role"],"content":m["content"]})
-    messages.append({"role":"user","content":prompt.strip()})
+    user_message = {"role":"user","content":prompt.strip()}
+    if image is not None:
+        user_message["images"] = [validate_image(image)]
+    messages.append(user_message)
     payload = json.dumps({"model":MODEL,"messages":messages,"stream":False,"options":{"num_predict":1024}}).encode()
     request = Request(ENDPOINT, data=payload, method="POST", headers={"Content-Type":"application/json"})
     try:
@@ -47,4 +51,4 @@ def ask(root, conversation_id, prompt, opener=urlopen):
             raise ValueError("Conversation no longer exists")
         conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
         conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer))
-    return {"reply":answer,"model":MODEL,"stored":True,"tools_executed":False}
+    return {"reply":answer,"model":MODEL,"stored":True,"tools_executed":False,"image_analyzed":image is not None}
