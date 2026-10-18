@@ -74,3 +74,7 @@ This preview is an in-memory proposal only: it does not create or overwrite `ope
 The dashboard supports an explicitly approved, create-only write to `.smelter/opencode-isolated/opencode.json`. The payload is generated from the live, validated provider preview and capped at 32 KiB. The deployment refuses symlink destinations and existing files; it does not overwrite or back up existing OpenCode settings because it never touches them. For an updated deployment, remove or archive the isolated config manually after review, then redeploy.
 
 This is configuration staging, **not** activation: OpenCode is not launched, and the staged directory is not automatically wired into OpenCode. Actual compatibility, runtime provider installation, model inference and project-scoped agent execution remain unverified and disabled.
+
+## V1.5.5 — staged OpenCode configuration validation
+
+Use **Validate staged config** in the OpenCode panel to read the existing `.smelter/opencode-isolated/opencode.json`. The check validates the local provider name, expected package and loopback endpoint, configured model availability and whether saved Reasoning/Lightweight preferences have diverged from the deployed model list. It does not write files or launch OpenCode. `valid_stale_preferences` means the staged configuration is structurally valid but no longer matches the currently saved model roles. OpenCode runtime compatibility is still unverified; the next step must test the isolated CLI environment without loading the user's normal OpenCode settings.
