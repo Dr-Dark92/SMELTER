@@ -28,22 +28,40 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None):
     if image is not None:
         user_message["images"] = [validate_image(image)]
     messages.append(user_message)
-    payload = json.dumps({"model":MODEL,"messages":messages,"stream":False,"options":{"num_predict":1024}}).encode()
-    request = Request(ENDPOINT, data=payload, method="POST", headers={"Content-Type":"application/json"})
-    try:
-        with opener(request, timeout=120) as response:
-            raw = response.read(MAX_RESPONSE + 1)
-    except (URLError, HTTPError, TimeoutError, OSError) as exc:
-        raise ValueError("Local Ollama unavailable: " + type(exc).__name__) from exc
-    if len(raw) > MAX_RESPONSE:
-        raise ValueError("Model response too large")
-    try:
-        result = json.loads(raw)
-        answer = result["message"]["content"]
-    except (ValueError, KeyError, TypeError) as exc:
-        raise ValueError("Invalid Ollama response") from exc
-    if not isinstance(answer, str) or not answer.strip() or len(answer) > 64000:
-        raise ValueError("Empty or invalid model answer")
+    def infer(thinking):
+        request_messages = [dict(message) for message in messages]
+        if not thinking:
+            request_messages[0]["content"] += " Respond directly and concisely."
+        payload = json.dumps({"model": MODEL, "messages": request_messages, "stream": False,
+                              "think": thinking, "options": {"num_predict": 2048}}).encode()
+        request = Request(ENDPOINT, data=payload, method="POST",
+                          headers={"Content-Type": "application/json"})
+        try:
+            with opener(request, timeout=180) as response:
+                raw = response.read(MAX_RESPONSE + 1)
+        except (URLError, HTTPError, TimeoutError, OSError) as exc:
+            raise ValueError("Local Ollama unavailable: " + type(exc).__name__) from exc
+        if len(raw) > MAX_RESPONSE:
+            raise ValueError("Model response too large")
+        try:
+            result = json.loads(raw)
+            message = result["message"]
+            answer = message.get("content", "")
+        except (ValueError, KeyError, TypeError, AttributeError) as exc:
+            raise ValueError("Invalid Ollama response") from exc
+        if not isinstance(answer, str):
+            raise ValueError("Invalid Ollama response content")
+        return answer, result.get("done_reason", "unknown")
+
+    # The installed Qwen 3.5 model defaults to thinking. Vision requests can
+    # exhaust their output budget before emitting a final content message.
+    answer, reason = infer(False if image is not None else True)
+    if not answer.strip():
+        answer, retry_reason = infer(False)
+        if not answer.strip():
+            raise ValueError("Qwen returned no final answer (first: %s; retry: %s). Check Ollama logs and model memory." % (reason, retry_reason))
+    if len(answer) > 64000:
+        raise ValueError("Model answer exceeds 64000 characters")
     # Store the prompt and answer atomically, only after inference succeeds.
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
         conn.execute("PRAGMA foreign_keys=ON")
