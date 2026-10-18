@@ -36,6 +36,32 @@ class RequirementsTests(unittest.TestCase):
                 with patch.object(module.shutil, "which", return_value=None):
                     self.assertEqual(module.find_executable("7z"), str(seven))
 
+    def test_npm_cmd_uses_node_not_shim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cli = root / "node_modules" / "npm" / "bin" / "npm-cli.js"
+            cli.parent.mkdir(parents=True)
+            cli.write_text("// mock", encoding="utf-8")
+            npm = root / "npm.cmd"
+            npm.write_text("@echo off", encoding="utf-8")
+            with patch.object(module.os, "name", "nt"):
+                with patch.object(module, "find_executable", side_effect=lambda name: str(npm) if name == "npm" else str(root / "node.exe")):
+                    with patch.object(module.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "11.0.0\\n", "")) as runner:
+                        result = module.probe("npm", ["npm", "--version"], "optional")
+            self.assertEqual(result["status"], "installed")
+            self.assertEqual(runner.call_args.args[0][1:], [str(cli), "--version"])
+
+    def test_npm_missing_cli_is_unverified(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            npm = Path(tmp) / "npm.cmd"
+            npm.write_text("@echo off", encoding="utf-8")
+            with patch.object(module.os, "name", "nt"):
+                with patch.object(module, "find_executable", side_effect=lambda name: str(npm) if name == "npm" else "node.exe"):
+                    with patch.object(module.subprocess, "run") as runner:
+                        result = module.probe("npm", ["npm", "--version"], "optional")
+            self.assertEqual(result["status"], "detected_unverified")
+            runner.assert_not_called()
+
     def test_7zip_info_command(self):
         self.assertEqual(module.TOOLS["7z"][0], ["7z", "i"])
 
