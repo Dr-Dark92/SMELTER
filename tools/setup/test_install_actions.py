@@ -1,8 +1,9 @@
 """Installation queue safety tests (never run winget)."""
+import subprocess
 import unittest
 from unittest.mock import patch
 from install_actions import build_actions
-from setup_web import DependencyInstaller
+from setup_web import DependencyInstaller, winget_list_state, WINGET_NO_APPLICATIONS_FOUND
 
 PREVIEW = {"profiles": ["vanilla", "game_modding"],
            "dependencies": [{"name": "blender", "status": "missing"},
@@ -10,6 +11,28 @@ PREVIEW = {"profiles": ["vanilla", "game_modding"],
                             {"name": "7z", "status": "missing"}]}
 
 class InstallActionTests(unittest.TestCase):
+    def test_winget_not_found_is_safe_to_install(self):
+        result = subprocess.CompletedProcess(["winget", "list"], WINGET_NO_APPLICATIONS_FOUND, "", "")
+        self.assertEqual(winget_list_state(result, "BlenderFoundation.Blender"), "absent")
+
+    def test_winget_signed_not_found(self):
+        result = subprocess.CompletedProcess(["winget", "list"], WINGET_NO_APPLICATIONS_FOUND - (1 << 32), "", "")
+        self.assertEqual(winget_list_state(result, "BlenderFoundation.Blender"), "absent")
+
+    def test_winget_existing_package_skips_install(self):
+        result = subprocess.CompletedProcess(["winget", "list"], 0, "BlenderFoundation.Blender 4.0", "")
+        self.assertEqual(winget_list_state(result, "BlenderFoundation.Blender"), "installed")
+
+    def test_winget_unexpected_failure_blocks(self):
+        result = subprocess.CompletedProcess(["winget", "list"], 1, "", "network failure")
+        with self.assertRaisesRegex(RuntimeError, "refusing potential upgrade"):
+            winget_list_state(result, "BlenderFoundation.Blender")
+
+    def test_winget_unrecognized_success_blocks(self):
+        result = subprocess.CompletedProcess(["winget", "list"], 0, "unexpected output", "")
+        with self.assertRaisesRegex(RuntimeError, "manual review"):
+            winget_list_state(result, "BlenderFoundation.Blender")
+
     def test_allowlisted_exact_package(self):
         with patch("install_actions.sys.platform", "win32"), patch("install_actions.shutil.which", return_value="winget.exe"):
             plan = build_actions(PREVIEW, ["blender"])
