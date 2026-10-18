@@ -28,6 +28,7 @@ from opencode_validate import validate_staged_config
 from database import inspect_database, select_database
 from config_store import load_config, save_config
 from startup import startup_report
+from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -40,7 +41,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>V1.6.2 · Persistent settings and startup preflight · AI chat pending</p>
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.3 · Persistent conversations · AI execution pending</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -71,7 +72,47 @@ small{color:#aabbd4}#error{color:#ff9e9e}
 <button id="providerdeploy">Deploy isolated config (create only)</button> <button id="providervalidate">Validate staged config</button>
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
+<section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
 <script>
+let activeChat=null;
+function initShell(){
+ const main=document.querySelector('main'), sections=[...main.querySelectorAll(':scope > section.panel:not(#bootstrap)')];
+ const shell=document.createElement('div');shell.id='shell';
+ const left=document.createElement('aside');left.id='leftbar';
+ const center=document.createElement('section');center.id='workspace';
+ const right=document.createElement('aside');right.id='rightbar';
+ left.innerHTML='<h2>Chat history</h2>';
+ const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=async()=>{try{const chat=await api('/api/chats','POST',{action:'create'});activeChat=chat.id;await refreshChats();await openChat(chat.id)}catch(e){alert(e.message)}};
+ const history=document.createElement('div');history.id='chatHistory';left.append(newChat,history);
+ const title=document.createElement('h2');title.textContent='SMELTER · Conversation notes';
+ const log=document.createElement('div');log.id='chatlog';log.textContent='Select New chat. Notes are stored in SQLite; AI responses are not enabled yet.';
+ const composer=document.createElement('div');composer.id='composer';
+ const input=document.createElement('input');input.id='chatinput';input.placeholder='Write a note (not sent to AI)';
+ const send=document.createElement('button');send.textContent='Save note';
+ send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{await api('/api/chats','POST',{action:'note',id:activeChat,content:input.value});input.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
+ composer.append(input,send);center.append(title,log,composer);
+ right.innerHTML='<h2>Configuration</h2>';
+ const labels=['Tools / Apps','Workflows','Archive inspection','Media inspection','Blender','Ollama / Models','OpenCode'];
+ sections.forEach((section,i)=>{const b=document.createElement('button');b.className='navbtn';b.textContent=labels[i]||'Settings';b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));section.classList.add('active');b.classList.add('active')};right.append(b,section);if(i===0)b.click()});
+ for(const name of ['Skills · planned','GitHub · planned','Database · active']){const b=document.createElement('button');b.className='navbtn';b.textContent=name;b.disabled=true;right.append(b)}
+ shell.append(left,center,right);
+ const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
+ main.append(shell,footer);
+}
+async function refreshChats(){
+ const data=await api('/api/chats');const history=document.getElementById('chatHistory');history.replaceChildren();
+ for(const chat of data.conversations){
+  const row=document.createElement('div');row.className='ext';
+  const open=document.createElement('button');open.textContent=chat.title;open.onclick=()=>openChat(chat.id);
+  const rename=document.createElement('button');rename.textContent='✎';rename.title='Rename';rename.onclick=async()=>{const title=prompt('Rename conversation',chat.title);if(title===null)return;try{await api('/api/chats','POST',{action:'rename',id:chat.id,title});await refreshChats()}catch(e){alert(e.message)}};
+  const del=document.createElement('button');del.textContent='×';del.title='Delete';del.onclick=async()=>{if(!confirm('Delete this conversation and its notes?'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatlog').textContent='Conversation deleted'}await refreshChats()}catch(e){alert(e.message)}};
+  row.append(open,rename,del);history.append(row);
+ }
+}
+async function openChat(id){
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();for(const msg of chat.messages){const p=document.createElement('p');p.textContent=msg.content;log.append(p)}if(!chat.messages.length)log.textContent='No notes yet.'}catch(e){alert(e.message)}
+}
+initShell();
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error||r.status);return v}
@@ -96,7 +137,7 @@ async function startup(){
  try{
   const db=await api('/api/startup');
   el('dbstatus').textContent=JSON.stringify(db,null,2);
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows()}
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats()}
  }catch(e){el('dbstatus').textContent=e.message}
 }
 el('dbselect').onclick=async()=>{
@@ -129,6 +170,16 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/chats":
+                try:
+                    return self.reply(200, list_chats(ROOT))
+                except (ValueError, OSError) as e:
+                    return self.reply(400, {"error": str(e)})
+            if route.startswith("/api/chats/"):
+                try:
+                    return self.reply(200, read_chat(ROOT, route.removeprefix("/api/chats/")))
+                except (ValueError, OSError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/startup":
                 try:
                     return self.reply(200, startup_report(ROOT, scan, list_models))
@@ -195,7 +246,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -204,6 +255,20 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/chats":
+                    with STATE_LOCK:
+                        action = data.get("action")
+                        if action == "create":
+                            result = create_chat(ROOT, data.get("title", "New chat"))
+                        elif action == "note":
+                            result = add_note(ROOT, data.get("id"), data.get("content"))
+                        elif action == "rename":
+                            result = rename_chat(ROOT, data.get("id"), data.get("title"))
+                        elif action == "delete":
+                            result = delete_chat(ROOT, data.get("id"))
+                        else:
+                            raise ValueError("Unknown chat action")
+                    return self.reply(200, result)
                 if route == "/api/database/select":
                     with STATE_LOCK:
                         return self.reply(200, select_database(ROOT, data.get("directory")))
