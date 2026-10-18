@@ -8,6 +8,7 @@ EXTENSIONS = {
     "blender": {"label": "Blender", "tool": "blender", "permissions": ["local_process"], "description": "3D asset preparation"},
     "ffmpeg": {"label": "FFmpeg", "tool": "ffmpeg", "permissions": ["local_process"], "description": "Media processing"},
     "7z": {"label": "7-Zip", "tool": "7z", "permissions": ["local_process"], "description": "Archive inspection"},
+    "ollama": {"label": "Ollama", "tool": "ollama", "permissions": ["loopback_http_read"], "description": "Local model discovery (Qwen and other models)"},
 }
 DEFAULT = {"schema_version": 1, "enabled": []}
 
