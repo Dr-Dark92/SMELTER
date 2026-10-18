@@ -25,6 +25,7 @@ from opencode import inspect_opencode
 from opencode_provider import provider_preview
 from opencode_deploy import deploy_isolated_config
 from opencode_validate import validate_staged_config
+from database import inspect_database, select_database
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -32,7 +33,7 @@ REPORTS = ROOT / ".smelter" / "reports"
 MODEL_PREFS = ROOT / ".smelter" / "model_preferences.json"
 HTML = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SMELTER · Dashboard</title><style>
-body{margin:0;background:#0b111d;color:#e7edfa;font:15px system-ui}main{max-width:none;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column}#shell{display:grid;grid-template-columns:245px minmax(0,1fr) 315px;gap:12px;flex:1;padding:12px;min-height:0}#leftbar,#workspace,#rightbar{background:#111b2b;border:1px solid #30445e;border-radius:12px;padding:15px;min-width:0}#workspace{display:flex;flex-direction:column}#rightbar{max-height:calc(100vh - 125px);overflow:auto}#rightbar .panel{padding:12px}#leftbar button,#rightbar .navbtn{width:100%;margin:4px 0;text-align:left}#chatlog{flex:1;min-height:180px;color:#aabbd4;overflow:auto}#composer{display:flex;gap:8px}#chatinput{flex:1;min-width:0;padding:12px;background:#0b111d;color:#e7edfa;border:1px solid #30445e;border-radius:8px}#sysfooter{padding:12px 20px;border-top:1px solid #30445e;color:#aabbd4;display:flex;gap:24px;flex-wrap:wrap;font-size:12px}#rightbar .panel{display:none}#rightbar .panel.active{display:block}.navbtn.active{background:#244578}#shell h2{font-size:17px}@media(max-width:850px){#shell{grid-template-columns:1fr}#leftbar,#rightbar{max-height:none}#workspace{min-height:360px}}
+body{margin:0;background:#0b111d;color:#e7edfa;font:15px system-ui}main{max-width:none;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column}#shell{display:grid;grid-template-columns:245px minmax(0,1fr) 315px;gap:12px;flex:1;padding:12px;min-height:0}#leftbar,#workspace,#rightbar{background:#111b2b;border:1px solid #30445e;border-radius:12px;padding:15px;min-width:0}#workspace{display:flex;flex-direction:column}#rightbar{max-height:calc(100vh - 125px);overflow:auto}#rightbar .panel{padding:12px}#leftbar button,#rightbar .navbtn{width:100%;margin:4px 0;text-align:left}#chatlog{flex:1;min-height:180px;color:#aabbd4;overflow:auto}#composer{display:flex;gap:8px}#chatinput{flex:1;min-width:0;padding:12px;background:#0b111d;color:#e7edfa;border:1px solid #30445e;border-radius:8px}#bootstrap{margin:24px auto;max-width:640px;width:calc(100% - 48px)}#bootstrap input{width:100%;box-sizing:border-box;background:#0b111d;color:#e7edfa;border:1px solid #30445e;border-radius:8px;padding:12px}#sysfooter{padding:12px 20px;border-top:1px solid #30445e;color:#aabbd4;display:flex;gap:24px;flex-wrap:wrap;font-size:12px}#rightbar .panel{display:none}#rightbar .panel.active{display:block}.navbtn.active{background:#244578}#shell h2{font-size:17px}@media(max-width:850px){#shell{grid-template-columns:1fr}#leftbar,#rightbar{max-height:none}#workspace{min-height:360px}}
 h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30445e;border-radius:14px;padding:22px;margin:16px 0}
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
@@ -87,7 +88,21 @@ el('opencodecheck').onclick=async()=>{try{const data=await api('/api/opencode/st
 el('providerpreview').onclick=async()=>{try{const data=await api('/api/opencode/provider-preview');el('providerout').textContent='Preview only (not written or executed)\\n'+JSON.stringify(data,null,2)}catch(e){el('providerout').textContent=e.message}};
 el('providerdeploy').onclick=async()=>{const out=el('deployout');if(!el('deployapprove').checked){out.textContent='Approval required';return}el('deployapprove').checked=false;try{const data=await api('/api/opencode/deploy','POST',{approval:'DEPLOY ISOLATED CONFIG'});out.textContent=JSON.stringify(data,null,2)}catch(e){out.textContent=e.message}};
 el('providervalidate').onclick=async()=>{try{const data=await api('/api/opencode/validate');el('validateout').textContent=JSON.stringify(data,null,2)}catch(e){el('validateout').textContent=e.message}};
-el('refresh').onclick=refresh;refresh();loadWorkflows();
+async function startup(){
+ const boot=el('bootstrap'),shell=el('shell'),footer=el('sysfooter');
+ boot.hidden=false;shell.hidden=true;footer.hidden=true;
+ try{
+  const db=await api('/api/startup');
+  el('dbstatus').textContent=JSON.stringify(db,null,2);
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows()}
+ }catch(e){el('dbstatus').textContent=e.message}
+}
+el('dbselect').onclick=async()=>{
+ try{el('dbstatus').textContent='Initializing database...';await api('/api/database/select','POST',{directory:el('dbdirectory').value});await startup()}
+ catch(e){el('dbstatus').textContent=e.message}
+};
+el('dbretry').onclick=startup;
+el('refresh').onclick=refresh;startup();
 </script></main></html>"""
 
 def handler(token: str):
@@ -112,6 +127,12 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/startup":
+                try:
+                    db = inspect_database(ROOT)
+                    return self.reply(200, {**db, "inspection": "SQLite schema and integrity checked", "services": {"dashboard": "running", "ollama": "not_required_for_database_startup", "opencode": "not_started"}})
+                except (ValueError, OSError, json.JSONDecodeError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/opencode/validate":
                 try:
                     with STATE_LOCK:
@@ -173,7 +194,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -182,6 +203,9 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/database/select":
+                    with STATE_LOCK:
+                        return self.reply(200, select_database(ROOT, data.get("directory")))
                 if route == "/api/opencode/deploy":
                     with STATE_LOCK:
                         current_state = load_state(STATE)
