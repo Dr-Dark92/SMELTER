@@ -46,3 +46,9 @@ FFprobe parses media, so test only trusted files; this is not a sandbox and does
 The dashboard now supports an explicitly approved `CHECK BLENDER` action. It requires an enabled Blender extension, a verified scanner status and a discovered `.exe`. It runs exactly `blender.exe --version` without shell, file inputs, Python expressions or project loading. Timeout is 20 seconds; output is bounded and saved to the existing report history.
 
 This verifies executable launch and version output only. It does **not** yet validate Blender's embedded Python environment, import/export add-ons, headless rendering, asset parsing or scene operations. Those require separate narrowly scoped probes with their own permissions and tests.
+
+## V1.5.0 — optional Ollama / Qwen discovery
+
+Enable the Ollama extension in the dashboard, then select **Discover local models**. The API reads `GET http://127.0.0.1:11434/api/tags` using Python's standard library with a 3-second timeout and a 256-KiB response cap. The dashboard only displays installed model names and sizes. Qwen models are displayed when present; nothing is downloaded automatically. Ollama must already be running to respond.
+
+This phase does not send prompts, invoke models, launch an agent, start Ollama, or access project files. Model selection, OpenCode integration, and execution approvals are future phases. The endpoint is available only through the dashboard's existing session-token protection.
