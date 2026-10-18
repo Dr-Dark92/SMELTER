@@ -54,6 +54,16 @@ py -3 -m venv .venv
 
 If the branch is not yet tracked locally, use `git switch --track origin/SMELTERV1` instead of `git switch SMELTERV1`. The commands assume the Python launcher (`py`) is available on Windows. The console is a legacy development entrypoint, not yet the V1 first-run wizard.
 
+## Optional profile preview (V1.1)
+
+The local setup wizard now exposes **Developer**, **Local AI**, and **Game Modding** profiles in addition to Vanilla. Profile selection produces a read-only dependency preview using the requirements scanner. Missing or unverified dependencies are marked for manual review. **No optional tool installation commands are generated or executed.** The approved Vanilla setup flow remains independent of preview selections.
+
+The profile catalog and resolver are defined in `tools/setup/profiles.py`; their unit tests are in `tools/setup/test_profiles.py`. Re-run all setup tests with:
+
+```powershell
+py -3 -m unittest discover -s tools\setup -p 'test_*.py' -v
+```
+
 ## CLI-launched web setup wizard (V1 preview)
 
 On Windows, from the SMELTER checkout:
