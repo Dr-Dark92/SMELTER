@@ -92,6 +92,23 @@ class DependencyInstaller:
             for action in actions:
                 command = action["command"]
                 self.log("Installing " + action["name"] + " (" + action["package_id"] + ")")
+                # Winget install can UPGRADE an existing package when its executable
+                # is absent from PATH. Check registered packages before invoking it.
+                listed = subprocess.run(
+                    ["winget", "list", "--id", action["package_id"], "--exact"],
+                    cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True,
+                    text=True, errors="replace", timeout=30, check=False,
+                )
+                if listed.returncode == 0 and action["package_id"].casefold() in listed.stdout.casefold():
+                    self.log("Already registered with winget: " + action["name"] + "; skipping install/upgrade.")
+                    from check_requirements import scan
+                    observed = {t["name"]: t for t in scan()["tools"]}
+                    if observed.get(action["name"], {}).get("status") != "installed":
+                        raise RuntimeError(action["name"] + " is registered but executable not verified; check installation location")
+                    self.log("Verified: " + action["name"])
+                    continue
+                if listed.returncode != 0:
+                    raise RuntimeError("Could not check existing winget installation for " + action["name"] + "; refusing potential upgrade")
                 proc = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.DEVNULL,
                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                         text=True, errors="replace")
