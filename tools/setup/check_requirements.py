@@ -24,6 +24,7 @@ TOOLS = {
     "pwsh": (["pwsh", "--version"], "optional"),
     "docker": (["docker", "--version"], "optional"),
     "ollama": (["ollama", "--version"], "optional"),
+    "opencode": (["opencode", "--version"], "optional"),
     "blender": (["blender", "--version"], "optional"),
     "ffmpeg": (["ffmpeg", "-version"], "optional"),
     "7z": (["7z", "i"], "optional"),
