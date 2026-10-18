@@ -20,6 +20,7 @@ TOOLS = {
     "java": (["java", "-version"], "optional"),
     "javac": (["javac", "-version"], "optional"),
     "gh": (["gh", "--version"], "optional"),
+    "powershell": (["powershell", "-NoProfile", "-NonInteractive", "-Command", "$PSVersionTable.PSVersion.ToString()"], "optional"),
     "pwsh": (["pwsh", "--version"], "optional"),
     "docker": (["docker", "--version"], "optional"),
     "ollama": (["ollama", "--version"], "optional"),
