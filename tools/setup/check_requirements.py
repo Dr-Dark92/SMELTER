@@ -25,22 +25,27 @@ TOOLS = {
     "ollama": (["ollama", "--version"], "optional"),
     "blender": (["blender", "--version"], "optional"),
     "ffmpeg": (["ffmpeg", "-version"], "optional"),
-    "7z": (["7z", "-version"], "optional"),
+    "7z": (["7z", "i"], "optional"),
 }
 
 def find_executable(name: str) -> str | None:
-    """Check PATH first; locate Blender in conventional Windows installs."""
+    """Check PATH first, then common Windows locations for optional tools."""
     found = shutil.which(name)
-    if found or name != "blender" or os.name != "nt":
+    if found or os.name != "nt":
         return found
-    roots = [os.environ.get("ProgramFiles"), os.environ.get("LOCALAPPDATA")]
+    roots = [os.environ.get("ProgramFiles"), os.environ.get("ProgramW6432"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")]
     candidates = []
     for root in filter(None, roots):
         base = Path(root)
-        if base.name.lower() == "program files":
+        if name == "7z":
+            candidates.append(base / "7-Zip" / "7z.exe")
+            candidates.append(base / "Programs" / "7-Zip" / "7z.exe")
+        elif name == "blender":
             candidates.extend((base / "Blender Foundation").glob("Blender */blender.exe"))
-        else:
             candidates.extend((base / "Programs" / "Blender Foundation").glob("Blender */blender.exe"))
+        elif name == "ffmpeg":
+            candidates.extend(base.glob("ffmpeg*/bin/ffmpeg.exe"))
+            candidates.extend((base / "Programs").glob("ffmpeg*/bin/ffmpeg.exe"))
     candidates = [p for p in candidates if p.is_file()]
     return str(sorted(candidates, reverse=True)[0]) if candidates else None
 
