@@ -18,7 +18,8 @@ if ($py) {
     throw 'Python 3.12+ not found. Install Python first, then rerun setup.'
 }
 
-$version = & $base[0] @($base[1..($base.Count - 1)] | Where-Object { $_ }) -c 'import sys; print(".".join(map(str,sys.version_info[:3])))'
+if ($base.Count -eq 2) { $version = & $base[0] $base[1] -c 'import sys; print(".".join(map(str,sys.version_info[:3])))' }
+else { $version = & $base[0] -c 'import sys; print(".".join(map(str,sys.version_info[:3])))' }
 if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'Unable to query Python version.' }
 $parts = $version.Trim().Split('.')
 if ([int]$parts[0] -lt 3 -or ([int]$parts[0] -eq 3 -and [int]$parts[1] -lt 12)) {
