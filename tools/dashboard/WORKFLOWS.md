@@ -16,3 +16,13 @@ git pull origin SMELTERV1
 py -3 -m unittest discover -s tools\dashboard -p "test_*.py" -v
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\dashboard\start_dashboard.ps1
 ```
+
+## V1.4.1 — input validation and report history
+
+The planner accepts an optional `inputs` array of up to 16 **absolute** file or directory paths. Input validation checks metadata only; it does not open, hash, or process file contents. Missing paths block the dry-run report. Empty inputs remain valid for capability-only preflight.
+
+Each preview is saved as a unique UUID-named JSON file under `.smelter/reports/`. Existing report files are not overwritten. `GET /api/workflows/reports` returns the 20 most recent valid reports (bounded at 128 KiB per report). Reports contain the paths the user supplied, so avoid including sensitive locations in screenshots or shared logs.
+
+The output validation status is `not_applicable` until actual execution is introduced. No files under `projects/` are modified. No tools are executed.
+
+The dashboard's previous instance must be stopped before launching the new version on port 8768.
