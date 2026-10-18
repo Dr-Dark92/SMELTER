@@ -34,3 +34,9 @@ The dashboard includes a separate archive inspection form. It requires a path to
 Only `7z l -slt -bd -- <absolute-path>` is allowed, invoked without a shell and with a 20-second timeout. It captures at most 12,000 characters from each output stream and saves a report with `mode: approved_read_only`. No extraction, modifications, or external downloads are requested.
 
 The initial version does not provide process isolation or a sandbox. Inspect only archives you trust; even listing a malicious archive exposes the installed 7-Zip parser to untrusted data. Restart the dashboard after pulling changes.
+
+## V1.4.3 — FFprobe metadata inspection
+
+The dashboard has an additional read-only media inspection form. It requires a regular file, enabled and verified FFmpeg extension, and explicit `PROBE MEDIA` approval per request. The implementation resolves `ffprobe.exe` adjacent to the detected `ffmpeg.exe` and invokes it directly with `-v error -show_format -show_streams -of json -i <path>`, without a shell. Timeout: 20 seconds. Captured JSON is bounded at 32,000 characters; invalid/oversized metadata results are failures. Reports use `mode: approved_read_only` and are saved in `.smelter/reports`.
+
+FFprobe parses media, so test only trusted files; this is not a sandbox and does not yet isolate processes. No transcoding or generated media outputs are requested.
