@@ -55,7 +55,7 @@ def set_enabled(state: dict, extension_id: str, enabled: bool, scan: dict) -> di
     if extension_id not in EXTENSIONS or type(enabled) is not bool:
         raise ValueError("Unknown extension or invalid state")
     statuses = {tool["name"]: tool["status"] for tool in scan["tools"]}
-    if enabled and statuses.get(EXTENSIONS[extension_id]["tool"]) != "installed":
+    if enabled and not (statuses.get(EXTENSIONS[extension_id]["tool"]) == "installed" or (extension_id == "opencode" and statuses.get("opencode") == "detected_unverified")):
         raise ValueError("Extension dependency is not verified")
     current = set(state["enabled"])
     if enabled:
