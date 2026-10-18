@@ -40,3 +40,9 @@ The initial version does not provide process isolation or a sandbox. Inspect onl
 The dashboard has an additional read-only media inspection form. It requires a regular file, enabled and verified FFmpeg extension, and explicit `PROBE MEDIA` approval per request. The implementation resolves `ffprobe.exe` adjacent to the detected `ffmpeg.exe` and invokes it directly with `-v error -show_format -show_streams -of json -i <path>`, without a shell. Timeout: 20 seconds. Captured JSON is bounded at 32,000 characters; invalid/oversized metadata results are failures. Reports use `mode: approved_read_only` and are saved in `.smelter/reports`.
 
 FFprobe parses media, so test only trusted files; this is not a sandbox and does not yet isolate processes. No transcoding or generated media outputs are requested.
+
+## V1.4.4 — Blender version capability check
+
+The dashboard now supports an explicitly approved `CHECK BLENDER` action. It requires an enabled Blender extension, a verified scanner status and a discovered `.exe`. It runs exactly `blender.exe --version` without shell, file inputs, Python expressions or project loading. Timeout is 20 seconds; output is bounded and saved to the existing report history.
+
+This verifies executable launch and version output only. It does **not** yet validate Blender's embedded Python environment, import/export add-ons, headless rendering, asset parsing or scene operations. Those require separate narrowly scoped probes with their own permissions and tests.
