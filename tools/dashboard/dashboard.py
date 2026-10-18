@@ -55,7 +55,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 #sysfooter{flex:0 0 auto;box-sizing:border-box;max-height:76px;overflow:auto;overscroll-behavior:contain;flex-wrap:nowrap;white-space:nowrap;scrollbar-width:thin;background:#0b111d;position:relative;z-index:2}
 #bootstrap{overflow-y:auto;min-height:0}
 @media(max-width:850px){html,body{overflow:auto;height:auto}main{height:auto;min-height:100dvh;overflow:visible}#shell{display:flex;flex-direction:column;overflow:visible}#leftbar,#workspace,#rightbar{height:auto;max-height:45dvh;min-height:180px;overflow-y:auto}#workspace{min-height:360px;max-height:65dvh}#sysfooter{max-height:76px}}
-.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.7 · System status · Grouped settings</p>
+.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -103,8 +103,11 @@ function initShell(){
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('input');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  const send=document.createElement('button');send.textContent='Send to Qwen';
- send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value});input.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
- composer.append(input,send);center.append(title,log,composer);
+ send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{let attachment=null;const file=imageInput.files[0];
+ if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
+ await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
+ const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
+ composer.append(input,imageInput,send);center.append(title,log,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
@@ -298,7 +301,7 @@ def handler(token: str):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= 2048:
+                if not 0 < length <= (3 * 1024 * 1024 if route == "/api/chats" else 2048):
                     raise ValueError("Invalid request size")
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
@@ -307,7 +310,7 @@ def handler(token: str):
                     with STATE_LOCK:
                         action = data.get("action")
                         if action == "ask":
-                            result = ask(ROOT, data.get("id"), data.get("content"))
+                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"))
                         elif action == "create":
                             result = create_chat(ROOT, data.get("title", "New chat"))
                         elif action == "note":
