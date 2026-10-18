@@ -1,6 +1,10 @@
 import subprocess
 import unittest
 from unittest.mock import Mock
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "setup"))
+
 from blender import inspect_blender
 
 class BlenderTests(unittest.TestCase):
