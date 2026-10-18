@@ -23,6 +23,7 @@ from ollama import list_models
 from model_preferences import load_preferences, configure_model, configured_status
 from opencode import inspect_opencode
 from opencode_provider import provider_preview
+from opencode_deploy import deploy_isolated_config
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -35,7 +36,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.3 · OpenCode provider preview · no AI required</p>
+</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.4 · Isolated OpenCode configuration · no AI required</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -62,7 +63,9 @@ small{color:#aabbd4}#error{color:#ff9e9e}
 <button id="modelsave">Save model preference</button><pre id="modelout"></pre><pre id="ollamaout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section class="panel"><h2>OpenCode agent readiness</h2><p>Detect the installed CLI and report version verification. No agent sessions, commands, or project access.</p>
 <button id="opencodecheck">Check OpenCode</button> <button id="providerpreview">Preview Ollama provider config</button>
-<pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
+<p><label><input id="deployapprove" type="checkbox"> I approve creating an isolated OpenCode configuration in .smelter only.</label></p>
+<button id="providerdeploy">Deploy isolated config (create only)</button>
+<pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
@@ -80,6 +83,7 @@ el('ollamascan').onclick=loadModels;
 el('modelsave').onclick=async()=>{try{const result=await api('/api/ollama/preferences','POST',{role:el('modelrole').value,model:el('modelchoice').value});el('modelout').textContent='Saved: '+JSON.stringify(result.preferences.models)+'\\nAvailability: '+JSON.stringify(result.availability)}catch(e){el('modelout').textContent=e.message}};
 el('opencodecheck').onclick=async()=>{try{const data=await api('/api/opencode/status');el('opencodeout').textContent='Status: '+data.status+'\\nDetected: '+data.detected+'\\nEntry type: '+data.entry_type+'\\nVersion: '+(data.version||'unverified')+'\\nAgent execution: disabled\\n'+data.notes}catch(e){el('opencodeout').textContent=e.message}};
 el('providerpreview').onclick=async()=>{try{const data=await api('/api/opencode/provider-preview');el('providerout').textContent='Preview only (not written or executed)\\n'+JSON.stringify(data,null,2)}catch(e){el('providerout').textContent=e.message}};
+el('providerdeploy').onclick=async()=>{const out=el('deployout');if(!el('deployapprove').checked){out.textContent='Approval required';return}el('deployapprove').checked=false;try{const data=await api('/api/opencode/deploy','POST',{approval:'DEPLOY ISOLATED CONFIG'});out.textContent=JSON.stringify(data,null,2)}catch(e){out.textContent=e.message}};
 el('refresh').onclick=refresh;refresh();loadWorkflows();
 </script></main></html>"""
 
@@ -155,7 +159,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -164,6 +168,17 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/opencode/deploy":
+                    with STATE_LOCK:
+                        current_state = load_state(STATE)
+                        preferences = load_preferences(MODEL_PREFS)
+                    status = {item["name"]: item for item in scan()["tools"]}
+                    discovery = list_models(current_state, {name: item["status"] for name, item in status.items()})
+                    agent = inspect_opencode(current_state, status)
+                    preview = provider_preview(preferences, discovery, agent)
+                    with STATE_LOCK:
+                        result = deploy_isolated_config(ROOT / ".smelter" / "opencode-isolated", preview, data.get("approval"))
+                    return self.reply(200, result)
                 if route == "/api/ollama/preferences":
                     with STATE_LOCK:
                         current_state = load_state(STATE)
