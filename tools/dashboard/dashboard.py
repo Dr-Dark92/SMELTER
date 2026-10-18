@@ -21,6 +21,7 @@ from media import inspect_media
 from blender import inspect_blender
 from ollama import list_models
 from model_preferences import load_preferences, configure_model, configured_status
+from opencode import inspect_opencode
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -33,7 +34,7 @@ h1{font-size:32px}p{color:#aabbd4}.panel{background:#151f31;border:1px solid #30
 button{background:#346de0;color:white;border:0;border-radius:7px;padding:10px 15px;cursor:pointer}button:disabled{opacity:.4}
 .ext{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid #30445e;padding:17px 0}
 small{color:#aabbd4}#error{color:#ff9e9e}
-</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.1 · Qwen model preferences · no AI required</p>
+</style><main><h1>⚒ SMELTER</h1><p>Vanilla V1.5.2 · OpenCode detection · no AI required</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -58,11 +59,13 @@ small{color:#aabbd4}#error{color:#ff9e9e}
 <p><label>Role <select id="modelrole"><option value="reasoning">Reasoning</option><option value="lightweight">Lightweight</option></select></label>
 <label> Installed model <select id="modelchoice"></select></label></p>
 <button id="modelsave">Save model preference</button><pre id="modelout"></pre><pre id="ollamaout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
+<section class="panel"><h2>OpenCode agent readiness</h2><p>Detect the installed CLI and report version verification. No agent sessions, commands, or project access.</p>
+<button id="opencodecheck">Check OpenCode</button><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error||r.status);return v}
-async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed';b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
+async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
 async function loadWorkflows(){try{const data=await api('/api/workflows');for(const w of data.workflows){const opt=document.createElement('option');opt.value=w.id;opt.textContent=w.label+' — '+w.description;el('workflow').append(opt)}}catch(e){el('error').textContent=e.message}}
 async function history(){try{const data=await api('/api/workflows/reports');el('historyout').textContent='Recent reports:\\n'+data.reports.map(r=>r.timestamp_utc+' | '+r.workflow_id+' | '+r.status+' | '+r.run_id).join('\\n')}catch(e){el('historyout').textContent=e.message}}
 el('plan').onclick=async()=>{try{const paths=el('inputs').value.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);const data=await api('/api/workflows/plan','POST',{workflow_id:el('workflow').value,inputs:paths});el('planout').textContent='Status: '+data.status+' | Mode: '+data.mode+' | Executed: '+data.executed+'\\n'+data.steps.map(s=>s.label+': '+s.status+(s.reason?' ('+s.reason+')':'')).join('\\n')+'\\nInputs: '+data.inputs.map(x=>x.path+' ('+x.status+')').join(', ')+'\\nOutput validation: '+data.output_validation.status;await history()}catch(e){el('planout').textContent=e.message}};
@@ -73,6 +76,7 @@ el('blenderinspect').onclick=async()=>{const out=el('blenderout');if(!el('blende
 async function loadModels(){try{const data=await api('/api/ollama/models');el('ollamaout').textContent='Ollama: '+data.status+'\\n'+(data.error||'')+'\\n'+data.models.map(m=>m.name+' ('+(m.size===null?'size unknown':(m.size/1073741824).toFixed(2)+' GiB')+')').join('\\n');const choices=el('modelchoice');choices.replaceChildren();for(const m of data.models){const option=document.createElement('option');option.value=m.name;option.textContent=m.name;choices.append(option)}const pref=await api('/api/ollama/preferences');el('modelout').textContent='Saved preferences: '+JSON.stringify(pref.preferences.models)+'\\nAvailability: '+JSON.stringify(pref.availability)}catch(e){el('ollamaout').textContent=e.message}}
 el('ollamascan').onclick=loadModels;
 el('modelsave').onclick=async()=>{try{const result=await api('/api/ollama/preferences','POST',{role:el('modelrole').value,model:el('modelchoice').value});el('modelout').textContent='Saved: '+JSON.stringify(result.preferences.models)+'\\nAvailability: '+JSON.stringify(result.availability)}catch(e){el('modelout').textContent=e.message}};
+el('opencodecheck').onclick=async()=>{try{const data=await api('/api/opencode/status');el('opencodeout').textContent='Status: '+data.status+'\\nDetected: '+data.detected+'\\nEntry type: '+data.entry_type+'\\nVersion: '+(data.version||'unverified')+'\\nAgent execution: disabled\\n'+data.notes}catch(e){el('opencodeout').textContent=e.message}};
 el('refresh').onclick=refresh;refresh();loadWorkflows();
 </script></main></html>"""
 
@@ -98,6 +102,14 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/opencode/status":
+                try:
+                    with STATE_LOCK:
+                        current_state = load_state(STATE)
+                    status = {item["name"]: item for item in scan()["tools"]}
+                    return self.reply(200, inspect_opencode(current_state, status))
+                except (ValueError, OSError, json.JSONDecodeError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/ollama/preferences":
                 try:
                     with STATE_LOCK:
