@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,7 +20,7 @@ class DatabaseBootstrapTests(unittest.TestCase):
         result = select_database(self.root, str(self.destination))
         self.assertTrue(result["legacy_files_preserved"])
         self.assertEqual(inspect_database(self.root)["status"], "ready")
-        with sqlite3.connect(chosen_database(self.root)) as conn:
+        with closing(sqlite3.connect(chosen_database(self.root))) as conn:
             row = conn.execute("SELECT payload FROM config_snapshots WHERE name='extensions.json'").fetchone()
         self.assertEqual(json.loads(row[0])["enabled"], [])
     def test_refuse_reselection(self):
