@@ -54,6 +54,14 @@ py -3 -m venv .venv
 
 If the branch is not yet tracked locally, use `git switch --track origin/SMELTERV1` instead of `git switch SMELTERV1`. The commands assume the Python launcher (`py`) is available on Windows. The console is a legacy development entrypoint, not yet the V1 first-run wizard.
 
+## Controlled optional installation queue (V1.2)
+
+The web wizard can now prepare and run a separate, explicitly approved Windows `winget` queue for allowlisted optional tools. This is **opt-in**: selecting a profile does not install anything. The queue displays exact package IDs and commands before approval; execution is sequential and stops on first failure. Each successful command is followed by a requirements rescan to verify the tool is detected.
+
+Supported allowlist: Git (`Git.Git`), Node LTS (`OpenJS.NodeJS.LTS`), GitHub CLI (`GitHub.cli`), Ollama (`Ollama.Ollama`), Blender (`BlenderFoundation.Blender`), FFmpeg (`Gyan.FFmpeg`), 7-Zip (`7zip.7zip`). This feature requires Windows and `winget`. It deliberately does **not** use silent mode, automatically accept agreements, elevate privileges, or install dependencies merely because a profile was selected. Some packages may require an interactive prompt or elevation that this browser-driven background process cannot satisfy; those installs may fail and must be completed manually in a terminal. Installation rollback and cancellation are not implemented. Restarting the shell may be needed for PATH updates before verification.
+
+Run all tests with `py -3 -m unittest discover -s tools\setup -p "test_*.py" -v`. Windows integration and actual `winget` installs have not yet been verified.
+
 ## Optional profile preview (V1.1)
 
 The local setup wizard now exposes **Developer**, **Local AI**, and **Game Modding** profiles in addition to Vanilla. Profile selection produces a read-only dependency preview using the requirements scanner. Missing or unverified dependencies are marked for manual review. **No optional tool installation commands are generated or executed.** The approved Vanilla setup flow remains independent of preview selections.
