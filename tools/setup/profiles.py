@@ -13,7 +13,7 @@ def catalog() -> list[dict]:
                              "requires": list(value["requires"])}} for name, value in PROFILES.items()]
 
 def resolve(selected: list[str], scan: dict) -> dict:
-    if not isinstance(selected, list) or not selected or len(selected) > len(PROFILES):
+    if not isinstance(selected, list) or len(selected) > len(PROFILES):
         raise ValueError("Choose one or more known profiles")
     if any(not isinstance(name, str) or name not in PROFILES for name in selected):
         raise ValueError("Unknown profile")
