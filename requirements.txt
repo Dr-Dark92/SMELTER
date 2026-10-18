@@ -1,0 +1,5 @@
+# SMELTER Vanilla V1 — Python dependencies
+# Current vanilla backend uses Python standard library only.
+# Keep this file empty of third-party packages until imports require them.
+# Install with: python -m pip install -r requirements.txt
+# External runtimes (Node.js, Java, Git, etc.) are documented in REQUIREMENTS.md.
