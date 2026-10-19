@@ -70,9 +70,33 @@ class PythonToolTests(unittest.TestCase):
         report = inventory(self.grants, {"relative_path": ".", "max_depth": 0})
         self.assertEqual(report["files_observed"], 1)
         self.assertTrue(report["truncated"])
+        self.assertFalse(report["scan_complete"])
+        self.assertIn("depth_limit", report["scan_stop_reasons"])
         complete = inventory(self.grants, {"relative_path": "."})
         self.assertEqual(complete["files_observed"], 2)
         self.assertEqual(complete["extensions_observed"], {".pak": 1, ".dds": 1})
+        self.assertTrue(complete["scan_complete"])
+        self.assertFalse(complete["entries_truncated"])
+
+    def test_completed_scan_with_short_sample_does_not_claim_incomplete_counts(self):
+        for index in range(200):
+            (self.game / f"sample-{index:03d}.oppc").touch()
+        report = inventory(self.grants, {"relative_path": "."})
+        self.assertTrue(report["scan_complete"])
+        self.assertEqual(report["scan_stop_reasons"], [])
+        self.assertEqual(report["files_observed"], 202)
+        self.assertEqual(report["extensions_observed"][".oppc"], 200)
+        self.assertTrue(report["entries_truncated"])
+        self.assertLess(report["returned_entries"], report["observed_entries"])
+        self.assertEqual(report["returned_entries"], len(report["entries"]))
+        self.assertLessEqual(len(json.dumps(report, ensure_ascii=True)), 8000)
+        self.assertIn("response_size_limit", report["listing_limit_reasons"])
+
+    def test_scan_entry_limit_is_distinct_from_response_limit(self):
+        with patch("python_tools.MAX_VISITED", 1):
+            report = inventory(self.grants, {"relative_path": "."})
+        self.assertFalse(report["scan_complete"])
+        self.assertIn("entry_scan_limit", report["scan_stop_reasons"])
 
     def test_inventory_rejects_escapes_and_invalid_args(self):
         for relative in ("../checkout", str(self.root), "C:/Windows", "..\\checkout", "//server/share"):
@@ -103,6 +127,7 @@ class PythonToolTests(unittest.TestCase):
         raw = Path(first["path"]).read_bytes()
         self.assertEqual(raw, b"# Report\nVerified\n")
         self.assertEqual(first["sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertFalse(first["content_verified"])
 
     def test_write_denied_traversal_reserved_size_and_extra_args(self):
         with self.assertRaises(ValueError):

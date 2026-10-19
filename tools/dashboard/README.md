@@ -39,7 +39,13 @@ off by default and reset after Send (including a failed Send):
 The native Ollama `/api/chat` tool-calling loop has four calls and a 180-second
 turn budget. Inventory is limited to depth 8, 3,000 observed entries, 150 listed
 entries, and a five-second traversal budget between filesystem operations.
-The result declares partial coverage. OS filesystem calls may themselves block;
+`scan_complete` and `scan_stop_reasons` describe traversal. `returned_entries`,
+`entries_truncated`, and `listing_limit_reasons` describe the returned path
+sample separately. A completed traversal may return a short path sample while
+the aggregate file/extension counts cover every observed entry. The legacy
+`truncated` flag is true for either type of limit; never use it alone to infer
+incomplete traversal. Inventory is not an atomic filesystem snapshot.
+OS filesystem calls may themselves block;
 this is a local application permission boundary, not an OS sandbox against a
 hostile local process changing paths concurrently. Links/junctions/reparse points
 and inventory roots including `projects/` are rejected. No arbitrary Python,
@@ -50,6 +56,9 @@ history includes controller-generated receipts with the actual saved report
 path, byte count and SHA-256, or errors. A failed model follow-up after a tool
 action keeps its receipts. Repeated identical requests within a turn reuse the
 first successful result instead of writing another file.
+These receipts verify execution and saved file bytes, not the factual accuracy
+of model-generated prose (`content_verified: false`). Prompts require raw byte
+sizes, unknown asset semantics, and separate observations/hypotheses.
 
 Enabled skills still need selection in **Skills Manager** (or supported auto
 routing) to enter the prompt. The skill reference budget is 48,000 characters,
