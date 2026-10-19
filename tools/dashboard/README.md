@@ -61,7 +61,8 @@ of model-generated prose (`content_verified: false`). Prompts require raw byte
 sizes, unknown asset semantics, and separate observations/hypotheses.
 
 Enabled skills still need selection in **Skills Manager** (or supported auto
-routing) to enter the prompt. The skill reference budget is 48,000 characters,
+routing) to enter the prompt. Approving REA automatically selects its enabled
+skill for that message. The skill reference budget is 48,000 characters,
 at most three skills, and tool/skill chats request a 32,768-token Ollama context.
 This can use more model memory than plain chat. Large history is bounded to the
 most recent whole messages within 12,000 characters.
@@ -77,3 +78,51 @@ First Windows smoke test (not exercised by the offline unit tests):
    writing. Ask Qwen to inventory the approved folder, write a handover using
    the actual metadata returned, mark partial coverage, and make no extraction
    or game-engine/War mesh identification claims without evidence.
+
+### REA connection through Python
+
+The REA checkbox grants two fixed CLI operations for one message:
+`rea_capabilities` and `rea_inspect_pe_resources`. Both require the installed,
+enabled `morluto-rea/reverse-engineer-anything` skill. PE inspection additionally
+requires the analysis folder entered above the checkbox. Inventory permission
+is separate. Checkboxes reset after sending.
+
+Install the isolated upstream package from PowerShell in `C:\SMELTER`:
+
+```powershell
+node --version
+if ($LASTEXITCODE -ne 0) { throw "Install supported Node.js first" }
+npm view rea-agents@6.7.0 version
+if ($LASTEXITCODE -ne 0) { throw "Pinned REA release unavailable; stop" }
+npm install --prefix .smelter\tooling\rea --save-exact --omit=optional rea-agents@6.7.0
+if ($LASTEXITCODE -ne 0) { throw "REA installation failed" }
+python tools\dashboard\rea_connection.py
+```
+
+The adapter checks the package name/version, installed `scripts/rea.mjs`
+launcher, and Node engine requirement: 22.19+, 24.11+, or 26+; odd majors 23/25
+are unsupported. It invokes the real Node executable without a shell, npx,
+model-supplied commands, or automatic dependency installation. The passive
+**Check REA connection** button checks installed files; runtime verification
+occurs on an approved invocation. npm release availability and Windows runtime
+behavior require the local installation/live test; offline tests mock Node.
+
+First live test: create a new chat, approve REA, and ask:
+`Call rea_capabilities. Report its actual supported operations and limitations.`
+No analysis folder is needed for this command. Then approve REA with a selected
+folder and request `rea_inspect_pe_resources` for a relative `.exe` or `.dll`
+path using forward slashes. The adapter validates scope, rejects links and
+traversal, requires an MZ signature, and limits the input to 64 MiB. REA parses
+the file as data; it does not launch the target.
+
+Full JSON results are retained under `.smelter/rea-evidence/` with SHA-256
+receipts and tool-run audit entries carrying the REA skill ID. Results over
+10,000 characters produce an explicitly partial preview for Qwen. REA calls
+have a 35-second timeout and a 2 MiB accepted JSON output limit. Node version
+checks have a separate five-second timeout. The output limit is checked after
+capture, rather than serving as a process memory limit. REA may create its own
+local runtime/cache files. No providers are installed or configured by chat.
+
+This adapter does not expose native decompilers, arbitrary REA commands,
+`.oppc` extraction, or Blender. Those need separately verified adapters and
+dependencies. Installed skill instructions alone do not supply these tools.

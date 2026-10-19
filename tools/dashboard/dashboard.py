@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SMELTER V1.3 local dashboard: extension control, no tool execution."""
+"""SMELTER local dashboard with explicit per-message tool permissions."""
 import argparse
 import json
 import secrets
@@ -36,6 +36,7 @@ from skill_manager import add_skill, remove_skill, set_skill_enabled
 from github_skill_discovery import discover_github_skill, discover_github_repository, install_discovered_skill
 from skill_collections import install_collection
 from aero_classifier import classify_task
+from rea_connection import package_status as rea_package_status
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -114,14 +115,19 @@ function initShell(){
  const readLabel=document.createElement('label');readLabel.append(readGrant,document.createTextNode(' Allow read-only inventory of this folder'));
  const writeGrant=document.createElement('input');writeGrant.type='checkbox';writeGrant.id='approveDiagnostics';
  const writeLabel=document.createElement('label');writeLabel.append(writeGrant,document.createTextNode(' Allow new Markdown reports in diagnostics/ (no overwrite)'));
+ const reaGrant=document.createElement('input');reaGrant.type='checkbox';reaGrant.id='approveRea';
+ const reaLabel=document.createElement('label');reaLabel.append(reaGrant,document.createTextNode(' Allow REA CLI for this message (runs Node; static PE inspection in the folder above)'));
+ const reaCheck=document.createElement('button');reaCheck.type='button';reaCheck.textContent='Check REA connection';
+ const reaStatus=document.createElement('p');reaStatus.id='reaStatus';
+ reaCheck.onclick=async()=>{try{const s=await api('/api/rea/status');reaStatus.textContent='REA: '+s.status+' | version: '+(s.installed_version||'not installed')+' | '+s.reason}catch(e){reaStatus.textContent=e.message}};
  const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. No scripts, shell commands or extraction. Tool results are logged locally.';
- permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,toolsNote);
+ permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('input');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  const send=document.createElement('button');send.textContent='Send to Qwen';
  send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}if(send.disabled)return;send.disabled=true;
- const toolPermissions={inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked};
- readGrant.checked=false;writeGrant.checked=false;
+ const toolPermissions={inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
+ readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
  await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}finally{send.disabled=false}};
@@ -365,6 +371,8 @@ def handler(token: str):
                     return self.reply(200, catalog_skills(ROOT))
                 except (OSError, ValueError) as e:
                     return self.reply(400, {"error": str(e)})
+            if route == "/api/rea/status":
+                return self.reply(200, rea_package_status(ROOT))
             if route == "/api/system/status":
                 try:
                     return self.reply(200, system_status(ROOT))
