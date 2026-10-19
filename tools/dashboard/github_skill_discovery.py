@@ -10,7 +10,7 @@ import re
 from urllib.parse import urlsplit, quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from skill_manager import add_skill
+from skill_manager import add_skill, set_skill_enabled
 
 SEG = re.compile(r"^[A-Za-z0-9_.-]{1,100}$")
 MAX_API = 100 * 1024
@@ -83,7 +83,8 @@ def install_discovered_skill(root, name, url, sha256, approval=False, opener=url
     if discovered["sha256"] != sha256:
         raise ValueError("GitHub skill changed since discovery; review again")
     result = add_skill(root, name, discovered["content"], approval=True)
-    return {**result, "source": "github", "source_url": url, "sha256": sha256}
+    set_skill_enabled(root, name, False, approval=True)
+    return {**result, "enabled": False, "source": "github", "source_url": url, "sha256": sha256}
 
 
 MAX_TREE_BYTES = 1024 * 1024
