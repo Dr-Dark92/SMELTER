@@ -177,6 +177,7 @@ function initShell(){
     const clear=document.createElement('button');clear.textContent='Clear manual selections';
     clear.onclick=()=>{selectedSkills=[];skillsPanel.querySelectorAll('input[data-skill-id]').forEach(x=>x.checked=false);updateSummary()};
     skillsPanel.append(clear);
+    const collectionFolders=new Map();
     for(const s of data.skills){
      const item=document.createElement('div');item.style.margin='12px 0';item.style.padding='10px';item.style.border='1px solid #7775';item.style.borderRadius='8px';
      const label=document.createElement('label');label.style.display='block';
@@ -194,7 +195,15 @@ function initShell(){
      const remove=document.createElement('button');remove.textContent='Remove';remove.disabled=!s.removable;remove.title=s.removable?'Delete user-added skill':'Bundled skills cannot be deleted';
      remove.onclick=async()=>{if(!confirm('Permanently remove skill '+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'remove',id:s.id,approval:true});selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
      const description=document.createElement('p');description.textContent=s.description||'No purpose available.';
-     item.append(label,status,description,toggle,remove);skillsPanel.append(item);
+     item.append(label,status,description,toggle,remove);
+     if(s.collection){
+       if(!collectionFolders.has(s.collection)){
+         const folder=document.createElement('details');folder.style.margin='12px 0';
+         const heading=document.createElement('summary');heading.textContent='📁 '+s.collection;folder.append(heading);
+         collectionFolders.set(s.collection,folder);skillsPanel.append(folder);
+       }
+       collectionFolders.get(s.collection).append(item);
+     }else skillsPanel.append(item);
     }
     const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
     const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
