@@ -55,4 +55,36 @@ def catalog_skills(root):
                 "removable": source == "managed", "bytes": size,
                 "loaded_into_model": False, "executable": False,
             })
+    collections = root / ".smelter" / "managed-skills" / "collections"
+    if collections.is_dir() and not collections.is_symlink():
+        for group in sorted(collections.iterdir()):
+            if group.is_symlink() or not group.is_dir():
+                continue
+            for folder in sorted(group.iterdir()):
+                if len(found) >= MAX_SKILLS:
+                    break
+                if folder.is_symlink() or not folder.is_dir():
+                    continue
+                manifest = folder / "SKILL.md"
+                if manifest.is_symlink() or not manifest.is_file():
+                    continue
+                skill_id = group.name + "/" + folder.name
+                size = manifest.stat().st_size
+                status = "ready" if size <= MAX_SKILL_BYTES else "oversized"
+                meta = {"name": folder.name, "description": ""}
+                if status == "ready":
+                    try:
+                        meta = parse_skill_manifest(manifest.read_text(encoding="utf-8"))
+                        if not meta["valid"]:
+                            status = "incomplete"
+                    except (OSError, UnicodeError):
+                        status = "unreadable"
+                found.append({
+                    "id": skill_id, "name": meta["name"] or folder.name,
+                    "description": meta["description"], "status": status,
+                    "enabled": state.get(skill_id, False) and status == "ready",
+                    "source": "collection", "collection": group.name,
+                    "removable": False, "bytes": size,
+                    "loaded_into_model": False, "executable": False,
+                })
     return {"skills": found, "count": len(found), "read_only": True}
