@@ -33,7 +33,7 @@ from chats import list_chats, create_chat, read_chat, add_note, rename_chat, del
 from chat_inference import ask
 from skills_catalog import catalog_skills
 from skill_manager import add_skill, remove_skill, set_skill_enabled
-from github_skill_discovery import discover_github_skill, install_discovered_skill
+from github_skill_discovery import discover_github_skill, discover_github_repository, install_discovered_skill
 from aero_classifier import classify_task
 
 STATE = ROOT / ".smelter" / "extensions.json"
@@ -197,6 +197,18 @@ function initShell(){
     }
     const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
     const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
+    const repoButton=document.createElement('button');repoButton.textContent='Discover repository skills';
+    const candidates=document.createElement('div');
+    repoButton.onclick=async()=>{candidates.replaceChildren();try{
+      const result=await api('/api/skills/discover-repository','POST',{url:urlInput.value});
+      const info=document.createElement('p');info.textContent=result.count+' skill manifest(s) found in '+result.owner+'/'+result.repository+' @ '+result.ref;
+      candidates.append(info);
+      for(const skill of result.skills){
+        const choose=document.createElement('button');choose.textContent='Inspect '+skill.path;choose.style.display='block';
+        choose.onclick=()=>{urlInput.value=skill.url;urlInput.dispatchEvent(new Event('input'));discoverButton.click()};
+        candidates.append(choose);
+      }
+    }catch(e){const error=document.createElement('p');error.textContent=e.message;candidates.append(error)}};
     const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect';
     const preview=document.createElement('pre');preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';preview.style.maxHeight='260px';preview.style.overflow='auto';
     const idInput=document.createElement('input');idInput.placeholder='Local skill ID';idInput.style.width='100%';idInput.hidden=true;
@@ -213,7 +225,7 @@ function initShell(){
     installButton.onclick=async()=>{if(!discovery)return;if(!confirm('Install reviewed GitHub skill '+idInput.value+'? Instructions only; no execution permissions.'))return;try{
       await api('/api/skills/manage','POST',{action:'install_github',id:idInput.value,url:discovery.url,sha256:discovery.sha256,approval:true});await btn.onclick()
     }catch(e){alert(e.message)}};
-    skillsPanel.append(addHeading,urlInput,discoverButton,preview,idInput,installButton);
+    skillsPanel.append(addHeading,urlInput,repoButton,candidates,discoverButton,preview,idInput,installButton);
     updateSummary();
    }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
   };
@@ -386,7 +398,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -395,6 +407,8 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/skills/discover-repository":
+                    return self.reply(200, discover_github_repository(data.get("url")))
                 if route == "/api/skills/discover":
                     return self.reply(200, discover_github_skill(data.get("url")))
                 if route == "/api/skills/manage":
