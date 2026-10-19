@@ -34,6 +34,7 @@ from chat_inference import ask
 from skills_catalog import catalog_skills
 from skill_manager import add_skill, remove_skill, set_skill_enabled
 from github_skill_discovery import discover_github_skill, discover_github_repository, install_discovered_skill
+from skill_collections import install_collection
 from aero_classifier import classify_task
 
 STATE = ROOT / ".smelter" / "extensions.json"
@@ -198,20 +199,44 @@ function initShell(){
     const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
     const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
     const repoButton=document.createElement('button');repoButton.textContent='Discover repository skills';
-    const candidates=document.createElement('div');candidates.style.maxHeight='250px';candidates.style.overflowY='auto';
-    const discoveredSelect=document.createElement('select');discoveredSelect.style.width='100%';discoveredSelect.hidden=true;
-    const inspectSelected=document.createElement('button');inspectSelected.textContent='Inspect selected skill';inspectSelected.hidden=true;
-    let repositoryResults=[];
-    repoButton.onclick=async()=>{candidates.replaceChildren();discoveredSelect.hidden=true;inspectSelected.hidden=true;repositoryResults=[];try{
-      const result=await api('/api/skills/discover-repository','POST',{url:urlInput.value});
+    const candidates=document.createElement('div');candidates.style.maxHeight='300px';candidates.style.overflowY='auto';
+    const selectAll=document.createElement('button');selectAll.textContent='Select all';selectAll.hidden=true;
+    const clearAll=document.createElement('button');clearAll.textContent='Clear';clearAll.hidden=true;
+    const previewBatch=document.createElement('button');previewBatch.textContent='Review selected skills';previewBatch.hidden=true;
+    const batchReview=document.createElement('pre');batchReview.style.whiteSpace='pre-wrap';batchReview.style.overflowWrap='anywhere';batchReview.style.maxHeight='320px';batchReview.style.overflow='auto';
+    const installBatch=document.createElement('button');installBatch.textContent='Approve & install collection';installBatch.hidden=true;
+    let repositoryUrl='', repositoryResults=[], reviewedBatch=[];
+    const selectedUrls=()=>[...candidates.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
+    const resetBatch=()=>{reviewedBatch=[];installBatch.hidden=true;batchReview.textContent=''};
+    repoButton.onclick=async()=>{candidates.replaceChildren();selectAll.hidden=true;clearAll.hidden=true;previewBatch.hidden=true;resetBatch();try{
+      repositoryUrl=urlInput.value;
+      const result=await api('/api/skills/discover-repository','POST',{url:repositoryUrl});
       repositoryResults=result.skills;
-      const info=document.createElement('p');info.textContent=result.count+' skill(s) found in '+result.owner+'/'+result.repository+' @ '+result.ref;
-      candidates.append(info);discoveredSelect.replaceChildren();
-      for(const skill of result.skills){const option=document.createElement('option');option.value=skill.url;option.textContent=skill.path;discoveredSelect.append(option)}
-      discoveredSelect.hidden=!result.skills.length;inspectSelected.hidden=!result.skills.length;
+      const info=document.createElement('p');info.textContent=result.count+' skills found in '+result.owner+'/'+result.repository+' @ '+result.ref;
+      candidates.append(info);
+      for(const skill of result.skills){
+        const label=document.createElement('label');label.style.display='block';label.style.margin='6px 0';
+        const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=skill.url;checkbox.onchange=resetBatch;
+        label.append(checkbox,document.createTextNode(' '+skill.path.replace(/^skills\\//,'').replace(/\\/SKILL.md$/,'')));
+        candidates.append(label);
+      }
+      selectAll.hidden=clearAll.hidden=previewBatch.hidden=!result.skills.length;
     }catch(e){const error=document.createElement('p');error.textContent=e.message;candidates.append(error)}};
+    selectAll.onclick=()=>{candidates.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true);resetBatch()};
+    clearAll.onclick=()=>{candidates.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=false);resetBatch()};
+    previewBatch.onclick=async()=>{resetBatch();const urls=selectedUrls();if(!urls.length){batchReview.textContent='Select at least one skill';return}
+      batchReview.textContent='Fetching selected manifests for review...';
+      try{const result=await api('/api/skills/collection-preview','POST',{urls});
+        reviewedBatch=result.skills.map(s=>({url:s.url,sha256:s.sha256,id:(s.path.split('/').slice(-2,-1)[0]||s.repository).toLowerCase().replace(/[^a-z0-9_-]/g,'-')}));
+        batchReview.textContent=result.skills.map(s=>'--- '+s.path+' ---\\nWarnings: '+(s.warnings.join(', ')||'none detected')+'\\nSHA256: '+s.sha256+'\\n'+s.content).join('\\n\\n');
+        installBatch.hidden=false;
+      }catch(e){batchReview.textContent=e.message}};
+    installBatch.onclick=async()=>{if(!reviewedBatch.length)return;
+      if(!confirm('Install '+reviewedBatch.length+' reviewed skills as a disabled collection?'))return;
+      try{await api('/api/skills/manage','POST',{action:'install_collection',repository_url:repositoryUrl,selected:reviewedBatch,approval:true});await btn.onclick()}
+      catch(e){alert(e.message)}};
     const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect URL';
-    inspectSelected.onclick=()=>{if(!discoveredSelect.value)return;urlInput.value=discoveredSelect.value;urlInput.dispatchEvent(new Event('input'));discoverButton.click()};
+
     const preview=document.createElement('pre');preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';preview.style.maxHeight='260px';preview.style.overflow='auto';
     const idInput=document.createElement('input');idInput.placeholder='Local skill ID';idInput.style.width='100%';idInput.hidden=true;
     const installButton=document.createElement('button');installButton.textContent='Approve & install';installButton.hidden=true;
@@ -227,7 +252,7 @@ function initShell(){
     installButton.onclick=async()=>{if(!discovery)return;if(!confirm('Install reviewed GitHub skill '+idInput.value+'? Instructions only; no execution permissions.'))return;try{
       await api('/api/skills/manage','POST',{action:'install_github',id:idInput.value,url:discovery.url,sha256:discovery.sha256,approval:true});await btn.onclick()
     }catch(e){alert(e.message)}};
-    skillsPanel.append(addHeading,urlInput,repoButton,candidates,discoveredSelect,inspectSelected,discoverButton,preview,idInput,installButton);
+    skillsPanel.append(addHeading,urlInput,repoButton,candidates,selectAll,clearAll,previewBatch,batchReview,installBatch,discoverButton,preview,idInput,installButton);
     updateSummary();
    }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
   };
@@ -400,15 +425,21 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= (3 * 1024 * 1024 if route == "/api/chats" else 2048):
+                if not 0 < length <= (3 * 1024 * 1024 if route == "/api/chats" else 16384):
                     raise ValueError("Invalid request size")
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/skills/collection-preview":
+                    urls = data.get("urls")
+                    if not isinstance(urls, list) or not 1 <= len(urls) <= 40:
+                        raise ValueError("Select 1-40 skills")
+                    results = [discover_github_skill(url) for url in urls]
+                    return self.reply(200, {"skills": results})
                 if route == "/api/skills/discover-repository":
                     return self.reply(200, discover_github_repository(data.get("url")))
                 if route == "/api/skills/discover":
@@ -418,6 +449,8 @@ def handler(token: str):
                         action = data.get("action")
                         if action == "add":
                             raise ValueError("Use GitHub discovery before installation")
+                        elif action == "install_collection":
+                            result = install_collection(ROOT, data.get("repository_url"), data.get("selected"), data.get("approval"))
                         elif action == "install_github":
                             result = install_discovered_skill(ROOT, data.get("id"), data.get("url"), data.get("sha256"), data.get("approval"))
                         elif action == "enable":
