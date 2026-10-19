@@ -40,8 +40,8 @@ def catalog_skills(root):
             else:
                 try:
                     content = manifest.read_text(encoding="utf-8")
-                    heading = re.search(r"^#\\s+(.+?)\\s*$", content, re.MULTILINE)
-                    purpose = re.search(r"^##\\s+Purpose\\s*$\\n+([^#\\n][^\\n]*)", content, re.MULTILINE | re.IGNORECASE)
+                    heading = re.search(r"^#\s+(.+?)\s*$", content, re.MULTILINE)
+                    purpose = re.search(r"^##\s+Purpose\s*$\n+([^#\n][^\n]*)", content, re.MULTILINE | re.IGNORECASE)
                     if heading:
                         name = heading.group(1).strip()[:120]
                     if purpose:
