@@ -74,7 +74,14 @@ def add_skill(root, name, content, approval=False):
 
 
 def set_skill_enabled(root, name, enabled, approval=False):
-    _safe_id(name)
+    if isinstance(name, str) and "/" in name:
+        parts = name.split("/")
+        if len(parts) != 2:
+            raise ValueError("Invalid collection skill ID")
+        for part in parts:
+            _safe_id(part)
+    else:
+        _safe_id(name)
     if not isinstance(enabled, bool) or approval is not True:
         raise ValueError("Explicit approval and boolean enabled value required")
     from skills_catalog import catalog_skills
