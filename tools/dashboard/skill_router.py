@@ -19,7 +19,7 @@ def route_skills(root, prompt):
     if not isinstance(prompt, str):
         raise ValueError("Prompt must be text")
     words = " " + re.sub(r"[^a-z0-9]+", " ", prompt.lower()) + " "
-    available = {s["id"] for s in catalog_skills(root)["skills"] if s["status"] == "ready"}
+    available = {s["id"] for s in catalog_skills(root)["skills"] if s["status"] == "ready" and s["enabled"]}
     scores = []
     for skill, keywords in KEYWORDS.items():
         if skill not in available:
