@@ -12,7 +12,7 @@ from skills_catalog import catalog_skills
 MAX_SELECTED = 3
 MAX_CONTEXT_CHARS = 12000
 MAX_MANIFEST_BYTES = 64 * 1024
-ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}(?:/[a-z][a-z0-9_-]{0,63})?$")
 
 
 def build_skill_context(root, selected):
@@ -31,6 +31,8 @@ def build_skill_context(root, selected):
         if name not in known:
             raise ValueError("Skill unavailable or incomplete: " + name)
         folder = (base if known[name]["source"] == "bundled" else Path(root) / ".smelter" / "managed-skills") / name
+        if known[name]["source"] == "collection":
+            folder = Path(root) / ".smelter" / "managed-skills" / "collections" / name
         manifest = folder / "SKILL.md"
         if folder.is_symlink() or manifest.is_symlink() or not manifest.is_file():
             raise ValueError("Unsafe skill path")
