@@ -112,9 +112,14 @@ def run_rea(root, grants, name, arguments, runner=subprocess.run, finder=shutil.
         if not isinstance(relative, str) or not relative or len(relative) > 500 or "\\" in relative or ":" in relative:
             raise ValueError("Use a relative path with forward slashes")
         rel = Path(relative)
-        if rel.is_absolute() or ".." in rel.parts:
+        # Windows rooted paths such as /etc/passwd have an anchor but are not
+        # is_absolute() until a drive is supplied. Reject them on every OS.
+        if relative.startswith("/") or rel.anchor or ".." in rel.parts:
             raise ValueError("Path escapes approved folder")
-        target = _plain_path(Path(scope) / rel).resolve(strict=True)
+        try:
+            target = _plain_path(Path(scope) / rel).resolve(strict=True)
+        except OSError as exc:
+            raise ValueError("REA target is missing or inaccessible") from exc
         if not target.is_relative_to(Path(scope)) or not target.is_file():
             raise ValueError("REA target must be a file inside the approved folder")
         if target.suffix.lower() not in {".exe", ".dll"}:

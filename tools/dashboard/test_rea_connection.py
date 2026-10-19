@@ -19,7 +19,8 @@ class ReaConnectionTests(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        self.base = Path(temp.name)
+        # Windows tempfile may return an 8.3 alias; the adapter resolves paths.
+        self.base = Path(temp.name).resolve()
         self.root = self.base / 'checkout'
         self.root.mkdir()
         self.game = self.base / 'game'
@@ -83,6 +84,18 @@ class ReaConnectionTests(unittest.TestCase):
             self.skipTest('Symlink privilege unavailable')
         with self.assertRaises(ValueError):
             self.run_tool('rea_inspect_pe_resources', {'relative_path': 'linked.exe'})
+        self.runner.assert_not_called()
+
+    def test_windows_rooted_path_rejected_before_resolution(self):
+        from pathlib import PureWindowsPath
+        self.assertFalse(PureWindowsPath('/etc/passwd').is_absolute())
+        with self.assertRaisesRegex(ValueError, 'escapes approved folder'):
+            self.run_tool('rea_inspect_pe_resources', {'relative_path': '/etc/passwd'})
+        self.runner.assert_not_called()
+
+    def test_missing_file_is_validation_error(self):
+        with self.assertRaisesRegex(ValueError, 'missing or inaccessible'):
+            self.run_tool('rea_inspect_pe_resources', {'relative_path': 'missing.exe'})
         self.runner.assert_not_called()
 
     def test_missing_and_incompatible_package(self):
