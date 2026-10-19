@@ -147,9 +147,53 @@ function initShell(){
  aeroPanel.append(aeroInput,aeroButton,aeroResult);
  const automationFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Automation & Workflows'));
  if(automationFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='AERO task preview';btn.onclick=()=>{automationFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));aeroPanel.classList.add('active');btn.classList.add('active')};automationFolder.querySelector('.config-folder-items').append(btn,aeroPanel)}
- const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Select Skills catalog to inspect installed skills.';
+ const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Open Skills Manager to inspect installed skills.';
  const toolsFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
- if(toolsFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills catalog';btn.onclick=async()=>{toolsFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));skillsPanel.classList.add('active');btn.classList.add('active');try{const data=await api('/api/skills');skillsPanel.replaceChildren();const heading=document.createElement('p');heading.textContent='Select up to 3 skills for future Qwen messages. Read-only references; no skill scripts execute.';skillsPanel.append(heading);const autoLabel=document.createElement('label');autoLabel.style.display='block';autoLabel.style.margin='12px 0';const autoBox=document.createElement('input');autoBox.type='checkbox';autoBox.checked=autoSkills;autoBox.onchange=()=>{autoSkills=autoBox.checked};autoLabel.append(autoBox,document.createTextNode(' Automatically select relevant skills when none are manually selected'));skillsPanel.append(autoLabel);for(const s of data.skills){const label=document.createElement('label');label.style.display='block';label.style.margin='10px 0';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.disabled=s.status!=='ready';checkbox.checked=selectedSkills.includes(s.id);checkbox.onchange=()=>{if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three skills');return}selectedSkills.push(s.id)}else{selectedSkills=selectedSkills.filter(x=>x!==s.id)}};label.append(checkbox,document.createTextNode(' '+s.name+' ['+s.status+'] — '+(s.description||'')));skillsPanel.append(label)}}catch(e){skillsPanel.textContent=e.message}};toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel)}
+ if(toolsFolder){
+  const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills Manager';
+  btn.onclick=async()=>{
+   toolsFolder.open=true;
+   right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+   right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));
+   skillsPanel.classList.add('active');btn.classList.add('active');
+   try{
+    const data=await api('/api/skills');
+    skillsPanel.replaceChildren();
+    const heading=document.createElement('h2');heading.textContent='Skills Manager';
+    const summary=document.createElement('p');
+    const updateSummary=()=>{
+     const mode=selectedSkills.length?'Manual override ('+selectedSkills.join(', ')+')':(autoSkills?'Automatic routing':'No skills selected');
+     summary.textContent='Next Qwen message: '+mode+'. Installed: '+data.count+'. Context only; no execution permission.';
+    };
+    skillsPanel.append(heading,summary);
+    const autoLabel=document.createElement('label');autoLabel.style.display='block';autoLabel.style.margin='12px 0';
+    const autoBox=document.createElement('input');autoBox.type='checkbox';autoBox.checked=autoSkills;
+    autoBox.onchange=()=>{autoSkills=autoBox.checked;updateSummary()};
+    autoLabel.append(autoBox,document.createTextNode(' Enable automatic skill routing when no manual skills are selected'));
+    skillsPanel.append(autoLabel);
+    const clear=document.createElement('button');clear.textContent='Clear manual selections';
+    clear.onclick=()=>{selectedSkills=[];skillsPanel.querySelectorAll('input[data-skill-id]').forEach(x=>x.checked=false);updateSummary()};
+    skillsPanel.append(clear);
+    for(const s of data.skills){
+     const item=document.createElement('div');item.style.margin='12px 0';item.style.padding='10px';item.style.border='1px solid #7775';item.style.borderRadius='8px';
+     const label=document.createElement('label');label.style.display='block';
+     const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.skillId=s.id;
+     checkbox.disabled=s.status!=='ready';checkbox.checked=selectedSkills.includes(s.id);
+     checkbox.onchange=()=>{
+      if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three manually selected skills');return}selectedSkills.push(s.id)}
+      else selectedSkills=selectedSkills.filter(x=>x!==s.id);
+      updateSummary();
+     };
+     label.append(checkbox,document.createTextNode(' '+(s.name||s.id)));
+     const status=document.createElement('p');status.textContent='Status: '+s.status+' · '+(s.bytes||0)+' bytes · Instructions only · Execution disabled';
+     const description=document.createElement('p');description.textContent=s.description||'No purpose available.';
+     item.append(label,status,description);skillsPanel.append(item);
+    }
+    updateSummary();
+   }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
+  };
+  toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel);
+ }
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
  const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
  if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
