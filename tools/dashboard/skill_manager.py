@@ -8,6 +8,7 @@ import json
 import os
 import re
 from pathlib import Path
+from skill_manifest import parse_skill_manifest
 
 ID = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 MAX_CONTENT = 48 * 1024
@@ -55,8 +56,8 @@ def add_skill(root, name, content, approval=False):
         raise ValueError("Explicit approval required")
     if not isinstance(content, str) or not content.strip() or len(content.encode("utf-8")) > MAX_CONTENT:
         raise ValueError("Invalid skill content or size")
-    if not re.search(r"^#\s+\S+", content, re.M) or not re.search(r"^##\s+Purpose\s*\n+\S+", content, re.M | re.I):
-        raise ValueError("SKILL.md requires title and Purpose section")
+    if not parse_skill_manifest(content)["valid"]:
+        raise ValueError("SKILL.md requires recognizable name and description")
     state_path, base = _paths(root)
     bundled = Path(root) / "skills" / name
     if bundled.exists() or bundled.is_symlink():
