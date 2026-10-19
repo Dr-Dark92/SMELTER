@@ -32,6 +32,7 @@ from system_status import system_status
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 from chat_inference import ask
 from skills_catalog import catalog_skills
+from skill_manager import add_skill, remove_skill, set_skill_enabled
 from aero_classifier import classify_task
 
 STATE = ROOT / ".smelter" / "extensions.json"
@@ -178,17 +179,27 @@ function initShell(){
      const item=document.createElement('div');item.style.margin='12px 0';item.style.padding='10px';item.style.border='1px solid #7775';item.style.borderRadius='8px';
      const label=document.createElement('label');label.style.display='block';
      const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.skillId=s.id;
-     checkbox.disabled=s.status!=='ready';checkbox.checked=selectedSkills.includes(s.id);
+     checkbox.disabled=s.status!=='ready'||!s.enabled;checkbox.checked=s.enabled&&selectedSkills.includes(s.id);
      checkbox.onchange=()=>{
       if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three manually selected skills');return}selectedSkills.push(s.id)}
       else selectedSkills=selectedSkills.filter(x=>x!==s.id);
       updateSummary();
      };
      label.append(checkbox,document.createTextNode(' '+(s.name||s.id)));
-     const status=document.createElement('p');status.textContent='Status: '+s.status+' · '+(s.bytes||0)+' bytes · Instructions only · Execution disabled';
+     const status=document.createElement('p');status.textContent='Status: '+s.status+' · '+(s.enabled?'Enabled':'Disabled')+' · '+s.source+' · '+(s.bytes||0)+' bytes · No execution rights';
+     const toggle=document.createElement('button');toggle.textContent=s.enabled?'Disable':'Enable';toggle.disabled=!s.enabled&&s.status!=='ready';
+     toggle.onclick=async()=>{if(!confirm((s.enabled?'Disable ':'Enable ')+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'enable',id:s.id,enabled:!s.enabled,approval:true});if(s.enabled)selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
+     const remove=document.createElement('button');remove.textContent='Remove';remove.disabled=!s.removable;remove.title=s.removable?'Delete user-added skill':'Bundled skills cannot be deleted';
+     remove.onclick=async()=>{if(!confirm('Permanently remove skill '+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'remove',id:s.id,approval:true});selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
      const description=document.createElement('p');description.textContent=s.description||'No purpose available.';
-     item.append(label,status,description);skillsPanel.append(item);
+     item.append(label,status,description,toggle,remove);skillsPanel.append(item);
     }
+    const addHeading=document.createElement('h3');addHeading.textContent='Add skill';
+    const idInput=document.createElement('input');idInput.placeholder='Skill ID (e.g. my-skill)';idInput.style.width='100%';
+    const manifestInput=document.createElement('textarea');manifestInput.rows=6;manifestInput.style.width='100%';manifestInput.placeholder='# My Skill\\n\\n## Purpose\\nDescribe what this skill does.\\n';
+    const addButton=document.createElement('button');addButton.textContent='Add skill';
+    addButton.onclick=async()=>{if(!confirm('Install this local instruction-only skill? Review its text before confirming.'))return;try{await api('/api/skills/manage','POST',{action:'add',id:idInput.value,content:manifestInput.value,approval:true});await btn.onclick()}catch(e){alert(e.message)}};
+    skillsPanel.append(addHeading,idInput,manifestInput,addButton);
     updateSummary();
    }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
   };
@@ -361,7 +372,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -370,6 +381,18 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/skills/manage":
+                    with STATE_LOCK:
+                        action = data.get("action")
+                        if action == "add":
+                            result = add_skill(ROOT, data.get("id"), data.get("content"), data.get("approval"))
+                        elif action == "enable":
+                            result = set_skill_enabled(ROOT, data.get("id"), data.get("enabled"), data.get("approval"))
+                        elif action == "remove":
+                            result = remove_skill(ROOT, data.get("id"), data.get("approval"))
+                        else:
+                            raise ValueError("Unknown skill action")
+                    return self.reply(200, result)
                 if route == "/api/aero/classify":
                     return self.reply(200, classify_task(data.get("task")))
                 if route == "/api/chats":
