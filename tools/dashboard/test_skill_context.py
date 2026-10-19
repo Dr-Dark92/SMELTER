@@ -20,6 +20,11 @@ class SkillContextTests(unittest.TestCase):
     def test_no_selection_no_context(self):
         self.assertEqual(build_skill_context(self.tmp.name, []), "")
 
+    def test_single_large_external_manifest_fits_bounded_context(self):
+        path = Path(self.tmp.name) / "skills" / "documentation" / "SKILL.md"
+        path.write_text("# Documentation Skill\n\n## Purpose\nWrite verified docs.\n" + "reference " * 2400, encoding="utf-8")
+        self.assertIn("Write verified docs.", build_skill_context(self.tmp.name, ["documentation"]))
+
     def test_unknown_rejected(self):
         with self.assertRaises(ValueError):
             build_skill_context(self.tmp.name, ["missing"])

@@ -105,16 +105,28 @@ function initShell(){
  left.innerHTML='<h2>Chat history</h2>';
  const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=async()=>{try{const chat=await api('/api/chats','POST',{action:'create'});activeChat=chat.id;await refreshChats();await openChat(chat.id)}catch(e){alert(e.message)}};
  const history=document.createElement('div');history.id='chatHistory';left.append(newChat,history);
- const title=document.createElement('h2');title.textContent='SMELTER · Conversation notes';
- const log=document.createElement('div');log.id='chatlog';log.textContent='Select New chat. Notes are stored in SQLite; AI responses are not enabled yet.';
+ const title=document.createElement('h2');title.textContent='SMELTER · Local chat';
+ const log=document.createElement('div');log.id='chatlog';log.style.whiteSpace='pre-wrap';log.style.overflowWrap='anywhere';log.textContent='Select New chat. Python tools require permission for each message.';
+ const permissionsBox=document.createElement('details');permissionsBox.id='pythonTools';
+ const permissionsTitle=document.createElement('summary');permissionsTitle.textContent='Python tools for the next message';
+ const readFolder=document.createElement('input');readFolder.id='inventoryRoot';readFolder.placeholder='Absolute folder to inventory';readFolder.style.width='95%';
+ const readGrant=document.createElement('input');readGrant.type='checkbox';readGrant.id='approveInventory';
+ const readLabel=document.createElement('label');readLabel.append(readGrant,document.createTextNode(' Allow read-only inventory of this folder'));
+ const writeGrant=document.createElement('input');writeGrant.type='checkbox';writeGrant.id='approveDiagnostics';
+ const writeLabel=document.createElement('label');writeLabel.append(writeGrant,document.createTextNode(' Allow new Markdown reports in diagnostics/ (no overwrite)'));
+ const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. No scripts, shell commands or extraction. Tool results are logged locally.';
+ permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('input');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  const send=document.createElement('button');send.textContent='Send to Qwen';
- send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{let attachment=null;const file=imageInput.files[0];
+ send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}if(send.disabled)return;send.disabled=true;
+ const toolPermissions={inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked};
+ readGrant.checked=false;writeGrant.checked=false;
+ try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment,skills:selectedSkills,auto_skills:autoSkills});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
+ await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}finally{send.disabled=false}};
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
- composer.append(input,imageInput,send);center.append(title,log,composer);
+ composer.append(input,imageInput,send);center.append(title,log,permissionsBox,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
@@ -475,7 +487,7 @@ def handler(token: str):
                     with STATE_LOCK:
                         action = data.get("action")
                         if action == "ask":
-                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"), skills=data.get("skills"), auto_skills=data.get("auto_skills", False))
+                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"), skills=data.get("skills"), auto_skills=data.get("auto_skills", False), tool_permissions=data.get("tool_permissions"))
                         elif action == "create":
                             result = create_chat(ROOT, data.get("title", "New chat"))
                         elif action == "note":

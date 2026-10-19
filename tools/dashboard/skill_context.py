@@ -10,7 +10,7 @@ import re
 from skills_catalog import catalog_skills
 
 MAX_SELECTED = 3
-MAX_CONTEXT_CHARS = 12000
+MAX_CONTEXT_CHARS = 48000
 MAX_MANIFEST_BYTES = 64 * 1024
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}(?:/[a-z][a-z0-9_-]{0,63})?$")
 
