@@ -31,6 +31,7 @@ from startup import startup_report
 from system_status import system_status
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 from chat_inference import ask
+from skills_catalog import catalog_skills
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -111,7 +112,7 @@ function initShell(){
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
-  {name:'Tools & Integrations',items:[[0,'Installed tools'],[2,'Archive / 7-Zip'],[3,'Media / FFprobe'],[4,'Blender']],planned:['Skills importer','GitHub connector','Tool path overrides']},
+  {name:'Tools & Integrations',items:[[0,'Installed tools'],[2,'Archive / 7-Zip'],[3,'Media / FFprobe'],[4,'Blender']],planned:['GitHub connector','Tool path overrides']},
   {name:'Automation & Workflows',items:[[1,'Workflow planner']]},
   {name:'System & Storage',items:[],planned:['Database management','Startup services','Live hardware statistics']}
  ];
@@ -135,6 +136,9 @@ function initShell(){
  shell.append(left,center,right);
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
+ const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Select Skills catalog to inspect installed skills.';
+ const toolsFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
+ if(toolsFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills catalog';btn.onclick=async()=>{toolsFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));skillsPanel.classList.add('active');btn.classList.add('active');try{const data=await api('/api/skills');skillsPanel.textContent='Installed skills: '+data.count+' (read-only; not loaded into Qwen)\\n\\n'+data.skills.map(s=>s.name+' ['+s.status+']\\n'+s.description).join('\\n\\n')}catch(e){skillsPanel.textContent=e.message}};toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel)}
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
  const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
  if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
@@ -216,6 +220,11 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == "/api/skills":
+                try:
+                    return self.reply(200, catalog_skills(ROOT))
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/system/status":
                 try:
                     return self.reply(200, system_status(ROOT))
