@@ -32,6 +32,7 @@ from system_status import system_status
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 from chat_inference import ask
 from skills_catalog import catalog_skills
+from aero_classifier import classify_task
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -138,6 +139,14 @@ function initShell(){
  shell.append(left,center,right);
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
+ const aeroPanel=document.createElement('div');aeroPanel.className='panel';aeroPanel.id='aeroPanel';
+ const aeroInput=document.createElement('textarea');aeroInput.rows=3;aeroInput.placeholder='Describe an engineering task for read-only classification';aeroInput.style.width='100%';aeroInput.style.boxSizing='border-box';
+ const aeroButton=document.createElement('button');aeroButton.textContent='Preview AERO classification';
+ const aeroResult=document.createElement('pre');aeroResult.style.whiteSpace='pre-wrap';aeroResult.style.overflowWrap='anywhere';
+ aeroButton.onclick=async()=>{try{const result=await api('/api/aero/classify','POST',{task:aeroInput.value});aeroResult.textContent=JSON.stringify(result,null,2)}catch(e){aeroResult.textContent=e.message}};
+ aeroPanel.append(aeroInput,aeroButton,aeroResult);
+ const automationFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Automation & Workflows'));
+ if(automationFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='AERO task preview';btn.onclick=()=>{automationFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));aeroPanel.classList.add('active');btn.classList.add('active')};automationFolder.querySelector('.config-folder-items').append(btn,aeroPanel)}
  const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Select Skills catalog to inspect installed skills.';
  const toolsFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
  if(toolsFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills catalog';btn.onclick=async()=>{toolsFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));skillsPanel.classList.add('active');btn.classList.add('active');try{const data=await api('/api/skills');skillsPanel.replaceChildren();const heading=document.createElement('p');heading.textContent='Select up to 3 skills for future Qwen messages. Read-only references; no skill scripts execute.';skillsPanel.append(heading);const autoLabel=document.createElement('label');autoLabel.style.display='block';autoLabel.style.margin='12px 0';const autoBox=document.createElement('input');autoBox.type='checkbox';autoBox.checked=autoSkills;autoBox.onchange=()=>{autoSkills=autoBox.checked};autoLabel.append(autoBox,document.createTextNode(' Automatically select relevant skills when none are manually selected'));skillsPanel.append(autoLabel);for(const s of data.skills){const label=document.createElement('label');label.style.display='block';label.style.margin='10px 0';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.disabled=s.status!=='ready';checkbox.checked=selectedSkills.includes(s.id);checkbox.onchange=()=>{if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three skills');return}selectedSkills.push(s.id)}else{selectedSkills=selectedSkills.filter(x=>x!==s.id)}};label.append(checkbox,document.createTextNode(' '+s.name+' ['+s.status+'] — '+(s.description||'')));skillsPanel.append(label)}}catch(e){skillsPanel.textContent=e.message}};toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel)}
@@ -308,7 +317,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -317,6 +326,8 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/aero/classify":
+                    return self.reply(200, classify_task(data.get("task")))
                 if route == "/api/chats":
                     with STATE_LOCK:
                         action = data.get("action")
