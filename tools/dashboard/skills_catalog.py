@@ -13,37 +13,48 @@ MAX_SKILLS = 256
 
 
 def catalog_skills(root):
-    base = Path(root) / "skills"
-    if not base.is_dir() or base.is_symlink():
-        return {"skills": [], "count": 0, "read_only": True}
+    from skill_manager import enabled_map
+    root = Path(root)
+    state = enabled_map(root)
     found = []
-    for folder in sorted(base.iterdir(), key=lambda p: p.name.casefold()):
-        if len(found) >= MAX_SKILLS:
-            break
-        if folder.is_symlink() or not folder.is_dir() or folder.name.startswith("."):
+    sources = ((root / "skills", "bundled"), (root / ".smelter" / "managed-skills", "managed"))
+    seen = set()
+    for base, source in sources:
+        if not base.is_dir() or base.is_symlink():
             continue
-        manifest = folder / "SKILL.md"
-        if manifest.is_symlink() or not manifest.is_file():
-            continue
-        size = manifest.stat().st_size
-        if size > MAX_SKILL_BYTES:
-            found.append({"id": folder.name, "status": "oversized", "description": "", "bytes": size})
-            continue
-        try:
-            text = manifest.read_text(encoding="utf-8")
-        except (UnicodeError, OSError):
-            found.append({"id": folder.name, "status": "unreadable", "description": "", "bytes": size})
-            continue
-        heading = re.search(r"^#\s+(.+?)\s*$", text, re.MULTILINE)
-        purpose = re.search(r"^##\s+Purpose\s*$\n+([^#\n][^\n]*)", text, re.MULTILINE | re.IGNORECASE)
-        valid = bool(heading and purpose)
-        found.append({
-            "id": folder.name,
-            "name": heading.group(1).strip()[:120] if heading else folder.name,
-            "description": purpose.group(1).strip()[:300] if purpose else "",
-            "status": "ready" if valid else "incomplete",
-            "bytes": size,
-            "loaded_into_model": False,
-            "executable": False,
-        })
+        for folder in sorted(base.iterdir(), key=lambda p: p.name.casefold()):
+            if len(found) >= MAX_SKILLS:
+                break
+            if folder.is_symlink() or not folder.is_dir() or folder.name.startswith(".") or folder.name in seen:
+                continue
+            manifest = folder / "SKILL.md"
+            if manifest.is_symlink() or not manifest.is_file():
+                continue
+            seen.add(folder.name)
+            size = manifest.stat().st_size
+            status = "ready"
+            name = folder.name
+            description = ""
+            if size > MAX_SKILL_BYTES:
+                status = "oversized"
+            else:
+                try:
+                    content = manifest.read_text(encoding="utf-8")
+                    heading = re.search(r"^#\\s+(.+?)\\s*$", content, re.MULTILINE)
+                    purpose = re.search(r"^##\\s+Purpose\\s*$\\n+([^#\\n][^\\n]*)", content, re.MULTILINE | re.IGNORECASE)
+                    if heading:
+                        name = heading.group(1).strip()[:120]
+                    if purpose:
+                        description = purpose.group(1).strip()[:300]
+                    if not heading or not purpose:
+                        status = "incomplete"
+                except (UnicodeError, OSError):
+                    status = "unreadable"
+            enabled = state.get(folder.name, True)
+            found.append({
+                "id": folder.name, "name": name, "description": description,
+                "status": status, "enabled": enabled, "source": source,
+                "removable": source == "managed", "bytes": size,
+                "loaded_into_model": False, "executable": False,
+            })
     return {"skills": found, "count": len(found), "read_only": True}
