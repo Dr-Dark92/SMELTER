@@ -198,18 +198,20 @@ function initShell(){
     const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
     const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
     const repoButton=document.createElement('button');repoButton.textContent='Discover repository skills';
-    const candidates=document.createElement('div');
-    repoButton.onclick=async()=>{candidates.replaceChildren();try{
+    const candidates=document.createElement('div');candidates.style.maxHeight='250px';candidates.style.overflowY='auto';
+    const discoveredSelect=document.createElement('select');discoveredSelect.style.width='100%';discoveredSelect.hidden=true;
+    const inspectSelected=document.createElement('button');inspectSelected.textContent='Inspect selected skill';inspectSelected.hidden=true;
+    let repositoryResults=[];
+    repoButton.onclick=async()=>{candidates.replaceChildren();discoveredSelect.hidden=true;inspectSelected.hidden=true;repositoryResults=[];try{
       const result=await api('/api/skills/discover-repository','POST',{url:urlInput.value});
-      const info=document.createElement('p');info.textContent=result.count+' skill manifest(s) found in '+result.owner+'/'+result.repository+' @ '+result.ref;
-      candidates.append(info);
-      for(const skill of result.skills){
-        const choose=document.createElement('button');choose.textContent='Inspect '+skill.path;choose.style.display='block';
-        choose.onclick=()=>{urlInput.value=skill.url;urlInput.dispatchEvent(new Event('input'));discoverButton.click()};
-        candidates.append(choose);
-      }
+      repositoryResults=result.skills;
+      const info=document.createElement('p');info.textContent=result.count+' skill(s) found in '+result.owner+'/'+result.repository+' @ '+result.ref;
+      candidates.append(info);discoveredSelect.replaceChildren();
+      for(const skill of result.skills){const option=document.createElement('option');option.value=skill.url;option.textContent=skill.path;discoveredSelect.append(option)}
+      discoveredSelect.hidden=!result.skills.length;inspectSelected.hidden=!result.skills.length;
     }catch(e){const error=document.createElement('p');error.textContent=e.message;candidates.append(error)}};
-    const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect';
+    const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect URL';
+    inspectSelected.onclick=()=>{if(!discoveredSelect.value)return;urlInput.value=discoveredSelect.value;urlInput.dispatchEvent(new Event('input'));discoverButton.click()};
     const preview=document.createElement('pre');preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';preview.style.maxHeight='260px';preview.style.overflow='auto';
     const idInput=document.createElement('input');idInput.placeholder='Local skill ID';idInput.style.width='100%';idInput.hidden=true;
     const installButton=document.createElement('button');installButton.textContent='Approve & install';installButton.hidden=true;
@@ -225,7 +227,7 @@ function initShell(){
     installButton.onclick=async()=>{if(!discovery)return;if(!confirm('Install reviewed GitHub skill '+idInput.value+'? Instructions only; no execution permissions.'))return;try{
       await api('/api/skills/manage','POST',{action:'install_github',id:idInput.value,url:discovery.url,sha256:discovery.sha256,approval:true});await btn.onclick()
     }catch(e){alert(e.message)}};
-    skillsPanel.append(addHeading,urlInput,repoButton,candidates,discoverButton,preview,idInput,installButton);
+    skillsPanel.append(addHeading,urlInput,repoButton,candidates,discoveredSelect,inspectSelected,discoverButton,preview,idInput,installButton);
     updateSummary();
    }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
   };
