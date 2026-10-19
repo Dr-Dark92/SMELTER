@@ -217,7 +217,7 @@ function initShell(){
       for(const skill of result.skills){
         const label=document.createElement('label');label.style.display='block';label.style.margin='6px 0';
         const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=skill.url;checkbox.onchange=resetBatch;
-        label.append(checkbox,document.createTextNode(' '+skill.path.replace(/^skills\\//,'').replace(/\\/SKILL.md$/,'')));
+        label.append(checkbox,document.createTextNode(' '+skill.path.replace('skills/','').replace('/SKILL.md','')));
         candidates.append(label);
       }
       selectAll.hidden=clearAll.hidden=previewBatch.hidden=!result.skills.length;
