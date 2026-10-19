@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+from skill_manifest import parse_skill_manifest
 
 MAX_SKILL_BYTES = 64 * 1024
 MAX_SKILLS = 256
@@ -40,17 +41,14 @@ def catalog_skills(root):
             else:
                 try:
                     content = manifest.read_text(encoding="utf-8")
-                    heading = re.search(r"^#\s+(.+?)\s*$", content, re.MULTILINE)
-                    purpose = re.search(r"^##\s+Purpose\s*$\n+([^#\n][^\n]*)", content, re.MULTILINE | re.IGNORECASE)
-                    if heading:
-                        name = heading.group(1).strip()[:120]
-                    if purpose:
-                        description = purpose.group(1).strip()[:300]
-                    if not heading or not purpose:
+                    metadata = parse_skill_manifest(content)
+                    name = metadata["name"] or folder.name
+                    description = metadata["description"]
+                    if not metadata["valid"]:
                         status = "incomplete"
                 except (UnicodeError, OSError):
                     status = "unreadable"
-            enabled = state.get(folder.name, True)
+            enabled = state.get(folder.name, True) and status == "ready"
             found.append({
                 "id": folder.name, "name": name, "description": description,
                 "status": status, "enabled": enabled, "source": source,
