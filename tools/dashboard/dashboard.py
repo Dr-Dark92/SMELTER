@@ -33,6 +33,7 @@ from chats import list_chats, create_chat, read_chat, add_note, rename_chat, del
 from chat_inference import ask
 from skills_catalog import catalog_skills
 from skill_manager import add_skill, remove_skill, set_skill_enabled
+from github_skill_discovery import discover_github_skill, install_discovered_skill
 from aero_classifier import classify_task
 
 STATE = ROOT / ".smelter" / "extensions.json"
@@ -194,12 +195,25 @@ function initShell(){
      const description=document.createElement('p');description.textContent=s.description||'No purpose available.';
      item.append(label,status,description,toggle,remove);skillsPanel.append(item);
     }
-    const addHeading=document.createElement('h3');addHeading.textContent='Add skill';
-    const idInput=document.createElement('input');idInput.placeholder='Skill ID (e.g. my-skill)';idInput.style.width='100%';
-    const manifestInput=document.createElement('textarea');manifestInput.rows=6;manifestInput.style.width='100%';manifestInput.placeholder='# My Skill\\n\\n## Purpose\\nDescribe what this skill does.\\n';
-    const addButton=document.createElement('button');addButton.textContent='Add skill';
-    addButton.onclick=async()=>{if(!confirm('Install this local instruction-only skill? Review its text before confirming.'))return;try{await api('/api/skills/manage','POST',{action:'add',id:idInput.value,content:manifestInput.value,approval:true});await btn.onclick()}catch(e){alert(e.message)}};
-    skillsPanel.append(addHeading,idInput,manifestInput,addButton);
+    const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
+    const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
+    const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect';
+    const preview=document.createElement('pre');preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';preview.style.maxHeight='260px';preview.style.overflow='auto';
+    const idInput=document.createElement('input');idInput.placeholder='Local skill ID';idInput.style.width='100%';idInput.hidden=true;
+    const installButton=document.createElement('button');installButton.textContent='Approve & install';installButton.hidden=true;
+    let discovery=null;
+    urlInput.oninput=()=>{discovery=null;preview.textContent='';installButton.hidden=true;idInput.hidden=true};
+    discoverButton.onclick=async()=>{discovery=null;installButton.hidden=true;idInput.hidden=true;preview.textContent='Discovering...';try{
+      const result=await api('/api/skills/discover','POST',{url:urlInput.value});
+      discovery=result;
+      preview.textContent='Source: '+result.owner+'/'+result.repository+' @ '+result.ref+'\\nPath: '+result.path+'\\nSHA256: '+result.sha256+'\\nWarnings: '+(result.warnings.join(', ')||'none detected (not a security guarantee)')+'\\n\\n--- SKILL.md ---\\n'+result.content;
+      idInput.value=result.path.split('/').slice(-2,-1)[0]||result.repository.toLowerCase().replace(/[^a-z0-9_-]/g,'-');
+      idInput.hidden=false;installButton.hidden=false;
+    }catch(e){preview.textContent=e.message}};
+    installButton.onclick=async()=>{if(!discovery)return;if(!confirm('Install reviewed GitHub skill '+idInput.value+'? Instructions only; no execution permissions.'))return;try{
+      await api('/api/skills/manage','POST',{action:'install_github',id:idInput.value,url:discovery.url,sha256:discovery.sha256,approval:true});await btn.onclick()
+    }catch(e){alert(e.message)}};
+    skillsPanel.append(addHeading,urlInput,discoverButton,preview,idInput,installButton);
     updateSummary();
    }catch(e){skillsPanel.textContent='Skills Manager error: '+e.message}
   };
@@ -372,7 +386,7 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage"):
+            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -381,11 +395,15 @@ def handler(token: str):
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/skills/discover":
+                    return self.reply(200, discover_github_skill(data.get("url")))
                 if route == "/api/skills/manage":
                     with STATE_LOCK:
                         action = data.get("action")
                         if action == "add":
-                            result = add_skill(ROOT, data.get("id"), data.get("content"), data.get("approval"))
+                            raise ValueError("Use GitHub discovery before installation")
+                        elif action == "install_github":
+                            result = install_discovered_skill(ROOT, data.get("id"), data.get("url"), data.get("sha256"), data.get("approval"))
                         elif action == "enable":
                             result = set_skill_enabled(ROOT, data.get("id"), data.get("enabled"), data.get("approval"))
                         elif action == "remove":
