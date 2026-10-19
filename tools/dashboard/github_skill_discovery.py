@@ -45,8 +45,11 @@ def discover_github_skill(url, opener=urlopen):
     try:
         with opener(request, timeout=12) as response:
             raw = response.read(MAX_API + 1)
-    except (HTTPError, URLError, TimeoutError, OSError) as exc:
-        raise ValueError("GitHub discovery unavailable: " + type(exc).__name__) from exc
+    except HTTPError as exc:
+        detail = {403: "GitHub API rate limit or access denied", 404: "SKILL.md not found at selected path/ref", 429: "GitHub rate limit exceeded"}.get(exc.code, "GitHub API error")
+        raise ValueError("{} (HTTP {})".format(detail, exc.code)) from exc
+    except (URLError, TimeoutError, OSError) as exc:
+        raise ValueError("GitHub discovery network error: " + type(exc).__name__) from exc
     if len(raw) > MAX_API:
         raise ValueError("GitHub response too large")
     try:
