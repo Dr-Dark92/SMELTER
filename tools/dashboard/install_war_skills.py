@@ -16,7 +16,7 @@ from skill_manager import set_skill_enabled
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = [
     ("https://github.com/morluto/rea", [
-        ("reverse-engineer-anything", "https://github.com/morluto/rea/blob/main/skill-src/reverse-engineer-anything/SKILL.md"),
+        ("reverse-engineer-anything", "https://github.com/morluto/rea/blob/main/.agents/skills/reverse-engineer-anything/SKILL.md"),
     ]),
     ("https://github.com/majidmanzarpour/blender-game-skills", [
         ("blender-image-to-3d", "https://github.com/majidmanzarpour/blender-game-skills/blob/main/skills/blender-image-to-3d/SKILL.md"),
@@ -32,7 +32,12 @@ def main():
     for repo, entries in SOURCES:
         selected = []
         for name, url in entries:
-            preview = discover_github_skill(url)
+            try:
+                preview = discover_github_skill(url)
+            except ValueError as exc:
+                print("DISCOVERY FAILED:", url, "-", exc)
+                print("No skills installed or enabled. Check the repository path and retry.")
+                return 1
             selected.append({"id": name, "url": url, "sha256": preview["sha256"]})
             print("SOURCE:", url)
             print("NAME:", preview["metadata"]["name"])
@@ -44,14 +49,15 @@ def main():
         plans.append((repo, selected))
     if not args.install:
         print("Discovery complete; nothing installed. Re-run with --install after review.")
-        return
+        return 0
     for repo, selected in plans:
         result = install_collection(ROOT, repo, selected, approval=True)
         for name in result["installed"]:
             set_skill_enabled(ROOT, result["collection"] + "/" + name, True, approval=True)
         print("INSTALLED AND ENABLED:", result["collection"], result["installed"])
     print("Skill manifests enabled. REA MCP and Blender automation remain unconfigured.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
