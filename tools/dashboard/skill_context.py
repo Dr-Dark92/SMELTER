@@ -24,13 +24,13 @@ def build_skill_context(root, selected):
         raise ValueError("Invalid skill identifier")
     if len(set(selected)) != len(selected):
         raise ValueError("Duplicate skill identifier")
-    known = {s["id"]: s for s in catalog_skills(root)["skills"] if s["status"] == "ready"}
+    known = {s["id"]: s for s in catalog_skills(root)["skills"] if s["status"] == "ready" and s["enabled"]}
     base = Path(root) / "skills"
     pieces = []
     for name in selected:
         if name not in known:
             raise ValueError("Skill unavailable or incomplete: " + name)
-        folder = base / name
+        folder = (base if known[name]["source"] == "bundled" else Path(root) / ".smelter" / "managed-skills") / name
         manifest = folder / "SKILL.md"
         if folder.is_symlink() or manifest.is_symlink() or not manifest.is_file():
             raise ValueError("Unsafe skill path")
