@@ -84,3 +84,63 @@ def install_discovered_skill(root, name, url, sha256, approval=False, opener=url
         raise ValueError("GitHub skill changed since discovery; review again")
     result = add_skill(root, name, discovered["content"], approval=True)
     return {**result, "source": "github", "source_url": url, "sha256": sha256}
+
+
+MAX_TREE_BYTES = 1024 * 1024
+MAX_DISCOVERED = 40
+
+
+def discover_github_repository(url, opener=urlopen):
+    """List SKILL.md paths using GitHub's default branch tree; never fetch scripts."""
+    owner, repo, ref, path = parse_github_skill(url)
+    if path != "SKILL.md" or "/blob/" in url:
+        raise ValueError("Repository discovery requires a GitHub repository root URL")
+    repo_endpoint = "https://api.github.com/repos/{}/{}".format(quote(owner), quote(repo))
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "SMELTER-skill-discovery"}
+    def get_json(endpoint, limit):
+        request = Request(endpoint, headers=headers)
+        try:
+            with opener(request, timeout=12) as response:
+                raw = response.read(limit + 1)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            raise ValueError("GitHub discovery unavailable: " + type(exc).__name__) from exc
+        if len(raw) > limit:
+            raise ValueError("GitHub discovery response too large")
+        try:
+            data = json.loads(raw)
+        except (ValueError, UnicodeError) as exc:
+            raise ValueError("Invalid GitHub discovery response") from exc
+        if not isinstance(data, dict):
+            raise ValueError("Invalid GitHub discovery response")
+        return data
+    metadata = get_json(repo_endpoint, MAX_API)
+    branch = metadata.get("default_branch")
+    if not isinstance(branch, str) or not branch or len(branch) > 150:
+        raise ValueError("GitHub repository has no valid default branch")
+    tree_endpoint = repo_endpoint + "/git/trees/" + quote(branch, safe="") + "?recursive=1"
+    tree = get_json(tree_endpoint, MAX_TREE_BYTES)
+    if tree.get("truncated") is True:
+        raise ValueError("Repository tree is truncated; cannot guarantee complete discovery")
+    entries = tree.get("tree")
+    if not isinstance(entries, list):
+        raise ValueError("Invalid repository tree")
+    paths = []
+    for item in entries:
+        if not isinstance(item, dict) or item.get("type") != "blob":
+            continue
+        candidate = item.get("path")
+        if not isinstance(candidate, str) or candidate.split("/")[-1] != "SKILL.md":
+            continue
+        if len(candidate) > 500 or any(not SEG.fullmatch(p) for p in candidate.split("/")):
+            continue
+        paths.append(candidate)
+    paths.sort()
+    if len(paths) > MAX_DISCOVERED:
+        raise ValueError("Too many skills; narrow the repository before discovery")
+    return {
+        "owner": owner, "repository": repo, "ref": branch,
+        "skills": [{"path": p, "url": "https://github.com/{}/{}/blob/{}/{}".format(
+            owner, repo, quote(branch, safe=""), p)} for p in paths],
+        "count": len(paths), "discovery_only": True,
+        "execution_allowed": False,
+    }
