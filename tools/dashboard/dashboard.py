@@ -90,6 +90,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
 <script>
 let activeChat=null;
+let selectedSkills=[];
 function initShell(){
  const main=document.querySelector('main'), sections=[...main.querySelectorAll(':scope > section.panel:not(#bootstrap)')];
  const shell=document.createElement('div');shell.id='shell';
@@ -106,7 +107,7 @@ function initShell(){
  const send=document.createElement('button');send.textContent='Send to Qwen';
  send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
+ await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment,skills:selectedSkills});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}};
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
  composer.append(input,imageInput,send);center.append(title,log,composer);
  right.innerHTML='<h2>Configuration</h2>';
@@ -138,7 +139,7 @@ function initShell(){
  main.append(shell,footer);
  const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Select Skills catalog to inspect installed skills.';
  const toolsFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
- if(toolsFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills catalog';btn.onclick=async()=>{toolsFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));skillsPanel.classList.add('active');btn.classList.add('active');try{const data=await api('/api/skills');skillsPanel.textContent='Installed skills: '+data.count+' (read-only; not loaded into Qwen)\\n\\n'+data.skills.map(s=>s.name+' ['+s.status+']\\n'+s.description).join('\\n\\n')}catch(e){skillsPanel.textContent=e.message}};toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel)}
+ if(toolsFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills catalog';btn.onclick=async()=>{toolsFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));skillsPanel.classList.add('active');btn.classList.add('active');try{const data=await api('/api/skills');skillsPanel.replaceChildren();const heading=document.createElement('p');heading.textContent='Select up to 3 skills for future Qwen messages. Read-only references; no skill scripts execute.';skillsPanel.append(heading);for(const s of data.skills){const label=document.createElement('label');label.style.display='block';label.style.margin='10px 0';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.disabled=s.status!=='ready';checkbox.checked=selectedSkills.includes(s.id);checkbox.onchange=()=>{if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three skills');return}selectedSkills.push(s.id)}else{selectedSkills=selectedSkills.filter(x=>x!==s.id)}};label.append(checkbox,document.createTextNode(' '+s.name+' ['+s.status+'] — '+(s.description||'')));skillsPanel.append(label)}}catch(e){skillsPanel.textContent=e.message}};toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel)}
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
  const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
  if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
@@ -319,7 +320,7 @@ def handler(token: str):
                     with STATE_LOCK:
                         action = data.get("action")
                         if action == "ask":
-                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"))
+                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"), skills=data.get("skills"))
                         elif action == "create":
                             result = create_chat(ROOT, data.get("title", "New chat"))
                         elif action == "note":
