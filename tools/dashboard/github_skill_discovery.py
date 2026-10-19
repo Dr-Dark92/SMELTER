@@ -11,6 +11,7 @@ from urllib.parse import urlsplit, quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from skill_manager import add_skill, set_skill_enabled
+from skill_manifest import parse_skill_manifest
 
 SEG = re.compile(r"^[A-Za-z0-9_.-]{1,100}$")
 MAX_API = 100 * 1024
@@ -61,8 +62,9 @@ def discover_github_skill(url, opener=urlopen):
         raise ValueError("Invalid GitHub skill content") from exc
     if len(content.encode("utf-8")) > 48 * 1024:
         raise ValueError("Skill exceeds maximum size")
-    if not re.search(r"^#\s+\S+", content, re.M) or not re.search(r"^##\s+Purpose\s*\n+\S+", content, re.M | re.I):
-        raise ValueError("Skill requires a title and Purpose section")
+    metadata = parse_skill_manifest(content)
+    if not metadata["valid"]:
+        raise ValueError("Skill requires recognizable name and description")
     warnings = []
     for label, pattern in (
         ("shell commands", r"(?im)^\s*(?:sudo|curl|wget|powershell|bash|sh|pip|npm)\b"),
@@ -74,7 +76,7 @@ def discover_github_skill(url, opener=urlopen):
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
     return {"url": url, "owner": owner, "repository": repo, "ref": ref, "path": path,
             "sha256": digest, "content": content, "bytes": len(content.encode("utf-8")),
-            "warnings": warnings, "execution_allowed": False, "discovery_only": True}
+            "warnings": warnings, "metadata": metadata, "execution_allowed": False, "discovery_only": True}
 
 
 def install_discovered_skill(root, name, url, sha256, approval=False, opener=urlopen):
