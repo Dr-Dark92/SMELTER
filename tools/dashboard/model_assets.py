@@ -171,3 +171,105 @@ def rename_animation(root, data):
         metadata.setdefault('animation_labels', {})[str(index)] = label.strip()
         conn.execute('UPDATE model_attachments SET metadata=? WHERE id=?', (json.dumps(metadata), aid))
     return {'id': aid, 'filename': row[0], **metadata}
+
+
+def inspect_attachment(root, grants, arguments):
+    """Read an approved saved GLB; durations come from embedded time accessors."""
+    import math
+    if not isinstance(arguments, dict) or set(arguments) - {'attachment_id', 'animation_offset', 'animation_limit'}:
+        raise ValueError('Unknown model inspection argument')
+    aid = _id(arguments.get('attachment_id'))
+    if aid not in grants.get('model_ids', []):
+        raise ValueError('Model attachment was not approved for this message')
+    offset, limit = arguments.get('animation_offset', 0), arguments.get('animation_limit', 50)
+    if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100:
+        raise ValueError('Choose a nonnegative animation offset and a limit from 1 to 100')
+    raw = model_path(root, aid).read_bytes()
+    summary = inspect_glb(raw)
+    size = struct.unpack_from('<I', raw, 12)[0]
+    document = json.loads(raw[20:20 + size])
+    bin_start = 28 + size if 28 + size <= len(raw) else len(raw)
+    views, accessors = document.get('bufferViews', []), document.get('accessors', [])
+    if not isinstance(views, list):
+        raise ValueError('Invalid buffer views')
+    embedded_length = document['buffers'][0]['byteLength'] if document.get('buffers') else 0
+    cache, sampled = {}, 0
+
+    def time_bounds(index):
+        nonlocal sampled
+        if type(index) is not int or not 0 <= index < len(accessors):
+            raise ValueError('Invalid animation time accessor')
+        if index in cache:
+            return cache[index]
+        item = accessors[index]
+        if item.get('componentType') != 5126 or item.get('type') != 'SCALAR' or 'sparse' in item or item.get('normalized'):
+            return None, 'Unsupported time accessor layout'
+        view_index, count = item.get('bufferView'), item.get('count')
+        if type(view_index) is not int or not 0 <= view_index < len(views) or type(count) is not int or count < 1:
+            raise ValueError('Invalid animation time buffer')
+        view = views[view_index]
+        if not isinstance(view, dict) or view.get('buffer') != 0:
+            raise ValueError('Animation time buffer must be embedded')
+        start, byte_offset, length, stride = item.get('byteOffset', 0), view.get('byteOffset', 0), view.get('byteLength'), view.get('byteStride', 4)
+        if any(type(x) is not int for x in (start, byte_offset, length, stride)) or min(start, byte_offset, length) < 0 or not 4 <= stride <= 252 or stride % 4:
+            raise ValueError('Invalid animation time offsets')
+        if start + (count - 1) * stride + 4 > length or byte_offset + length > embedded_length or bin_start + byte_offset + length > len(raw):
+            raise ValueError('Animation time accessor exceeds embedded buffer')
+        if sampled + count > 250000:
+            cache[index] = (None, 'Time sampling budget reached')
+            return cache[index]
+        sampled += count
+        first, previous = None, -1.0
+        for i in range(count):
+            value = struct.unpack_from('<f', raw, bin_start + byte_offset + start + i * stride)[0]
+            if not math.isfinite(value) or value < 0 or value <= previous:
+                raise ValueError('Animation times must be finite, nonnegative and strictly increasing')
+            if first is None:
+                first = value
+            previous = value
+        cache[index] = ((first, previous), None)
+        return cache[index]
+
+    animations = document.get('animations', [])
+    clips = []
+    for index in range(offset, min(len(animations), offset + limit)):
+        animation = animations[index]
+        samplers, channels = animation.get('samplers', []), animation.get('channels', [])
+        if not isinstance(samplers, list) or not isinstance(channels, list) or any(not isinstance(s, dict) for s in samplers):
+            raise ValueError('Invalid animation samplers or channels')
+        bounds, reasons = [], []
+        for sampler in samplers:
+            bound, reason = time_bounds(sampler.get('input'))
+            if bound is not None:
+                bounds.append(bound)
+            if reason:
+                reasons.append(reason)
+        start = min((x[0] for x in bounds), default=None)
+        end = max((x[1] for x in bounds), default=None)
+        clips.append({'index': index, 'source_name': animation.get('name'), 'channels': len(channels),
+                      'duration_seconds': end if bounds and not reasons else None,
+                      'first_keyframe_seconds': start, 'zero_duration': end == 0 if bounds and not reasons else None,
+                      'duration_status': 'verified_embedded_keyframe_times' if bounds and not reasons else 'unknown',
+                      'limitations': sorted(set(reasons)) or ([] if bounds else ['No animation samplers'])})
+    skins = document.get('skins', [])
+    if not isinstance(skins, list) or len(skins) > 10000:
+        raise ValueError('Invalid skins')
+    joint_counts = []
+    for skin in skins:
+        joints = skin.get('joints') if isinstance(skin, dict) else None
+        if not isinstance(joints, list) or any(type(i) is not int or not 0 <= i < summary['nodes'] for i in joints):
+            raise ValueError('Invalid skeleton joints')
+        joint_counts.append(len(joints))
+    with closing(sqlite3.connect(_db(root))) as conn:
+        row = conn.execute('SELECT filename,metadata FROM model_attachments WHERE id=?', (aid,)).fetchone()
+        if row is None:
+            raise ValueError('Model attachment no longer exists')
+        aliases = json.loads(row[1]).get('animation_labels', {})
+    for clip in clips:
+        clip['label'] = aliases.get(str(clip['index']))
+    summary.pop('animation_clips', None)
+    return {'status': 'model_inspected', 'attachment_id': aid, 'filename': row[0], **summary,
+            'skins': len(skins), 'joints_per_skin': joint_counts, 'animation_clips': clips,
+            'animation_offset': offset, 'animation_limit': limit,
+            'next_animation_offset': offset + len(clips) if offset + len(clips) < len(animations) else None,
+            'scope': 'Read-only GLB structure and embedded animation time values; no rendering, extraction, semantic animation classification or engine compatibility validation'}

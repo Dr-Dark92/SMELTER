@@ -4,6 +4,15 @@ MAX_DEPTH = 8
 
 def schemas(grants):
     tools = []
+    if grants.get('model_ids'):
+        tools.append({'type': 'function', 'function': {
+            'name': 'inspect_model_attachment',
+            'description': 'Read an explicitly approved saved GLB attachment. Return mesh/material/image counts, skeleton joint counts, original clip names, user labels and durations from embedded keyframe times. No rendering, file writes, extraction, animation meaning identification or engine compatibility proof. Use pagination for more than 50 clips.',
+            'parameters': {'type': 'object', 'properties': {
+                'attachment_id': {'type': 'string', 'enum': grants['model_ids']},
+                'animation_offset': {'type': 'integer', 'minimum': 0},
+                'animation_limit': {'type': 'integer', 'minimum': 1, 'maximum': 100}},
+                'required': ['attachment_id'], 'additionalProperties': False}}})
     if grants.get("rea_analysis"):
         tools.append({"type": "function", "function": {
             "name": "rea_capabilities", "description": "Run the connected local REA CLI capabilities command. Reports actual REA capabilities and limitations; does not install providers or execute a target.",
@@ -33,6 +42,9 @@ def schemas(grants):
 
 def execute_builtin(root, grants, name, arguments):
     from python_tools import inventory, write_markdown
+    if name == 'inspect_model_attachment':
+        from model_assets import inspect_attachment
+        return inspect_attachment(root, grants, arguments)
     if name == 'inventory_directory':
         return inventory(grants, arguments)
     if name == 'write_diagnostic_markdown':

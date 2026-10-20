@@ -104,3 +104,30 @@ The default grant is empty: no tools. Trusted launchers can set
 `SMELTER_MCP_GRANTS` to a JSON object with the existing built-in permission keys
 (`inventory_root`, `write_diagnostics`, `rea_root`, `rea_analysis`). The server
 never accepts a tool call that changes those grants.
+
+## Saved GLB inspection
+
+Attach a GLB to a titled conversation, then select its **Allow read-only GLB
+inspection** checkbox under the next-message permissions (up to eight files).
+Select MCP routing to expose `inspect_model_attachment` over the same server.
+The model receives the approved attachment IDs and filenames; the tool schema
+limits IDs to that selection. The chat backend rejects attachments belonging to
+another conversation. Neither discovery nor an enabled skill grants file access.
+
+The inspector reads the saved original bytes without Blender, rendering,
+extraction or modification. It returns mesh/material/image/node counts, skin
+counts and joint counts, original clip names, saved display labels, and the last
+keyframe time as duration. It reads embedded FLOAT/SCALAR time accessors rather
+than trusting declared accessor min/max values. Nonfinite or unordered timestamps
+are rejected. Unsupported sparse layouts and a bounded 250,000-value timing
+budget produce unknown durations, not invented values. Paginate clip lists with
+`animation_offset` and `animation_limit` (default 50, maximum 100).
+
+Structural metadata does not identify animation meanings, visually verify the
+character, or prove compatibility with an engine. Zero-duration tracks are
+reported explicitly. The controller records the inspected GLB's SHA-256.
+
+The connection panel now separates SDK availability, the timestamped last
+**discovery snapshot**, and current next-message selections. Changing/resetting
+permissions marks built-in discovery results as historical instead of leaving a
+misleading current “No tools exposed” claim.

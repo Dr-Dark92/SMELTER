@@ -72,3 +72,57 @@ class ModelAssetTests(unittest.TestCase):
         for index, label in [(True, 'Walk'), (-1, 'Walk'), (2, 'Walk'), (0, ''), (0, 'a\nB'), (0, 'x' * 121)]:
             with self.subTest(index=index, label=label), self.assertRaises(ValueError):
                 rename_animation(self.root, {'id': asset['id'], 'index': index, 'label': label})
+
+    def animated(self, count=2, values=(0.0, 0.5, 1.25)):
+        binary = struct.pack('<3f', *values)
+        doc = {'asset': {'version': '2.0'}, 'nodes': [{}], 'meshes': [], 'skins': [{'joints': [0]}],
+               'buffers': [{'byteLength': len(binary)}], 'bufferViews': [{'buffer': 0, 'byteLength': len(binary)}],
+               'accessors': [{'bufferView': 0, 'componentType': 5126, 'type': 'SCALAR', 'count': 3, 'min': [0], 'max': [999]},
+                             {'bufferView': 0, 'componentType': 5126, 'type': 'SCALAR', 'count': 1}],
+               'animations': [{'name': 'Clip_' + str(i), 'samplers': [{'input': 0 if i != 1 else 1}], 'channels': [{}]} for i in range(count)]}
+        raw = glb(doc)
+        raw = raw[:8] + struct.pack('<I', len(raw) + 8 + len(binary)) + raw[12:] + struct.pack('<II', len(binary), 0x004e4942) + binary
+        return attach_model(self.root, {'conversation_id': self.cid, 'filename': 'animated.glb', 'base64': base64.b64encode(raw).decode()})
+
+    def test_attachment_inspection_reads_times_instead_of_declared_bounds(self):
+        from model_assets import inspect_attachment
+        asset = self.animated()
+        original = model_path(self.root, asset['id']).read_bytes()
+        rename_animation(self.root, {'id': asset['id'], 'index': 0, 'label': 'Walk'})
+        result = inspect_attachment(self.root, {'model_ids': [asset['id']]}, {'attachment_id': asset['id']})
+        self.assertEqual(result['animation_clips'][0]['duration_seconds'], 1.25)
+        self.assertEqual(result['animation_clips'][0]['source_name'], 'Clip_0')
+        self.assertEqual(result['animation_clips'][0]['label'], 'Walk')
+        self.assertTrue(result['animation_clips'][1]['zero_duration'])
+        self.assertEqual(result['joints_per_skin'], [1])
+        self.assertEqual(model_path(self.root, asset['id']).read_bytes(), original)
+
+    def test_attachment_inspection_grants_and_pagination(self):
+        from model_assets import inspect_attachment
+        from python_tools import ToolSession
+        asset = self.animated(105)
+        with self.assertRaises(ValueError):
+            inspect_attachment(self.root, {}, {'attachment_id': asset['id']})
+        grants = {'model_ids': [asset['id']]}
+        result = inspect_attachment(self.root, grants, {'attachment_id': asset['id'], 'animation_offset': 100})
+        self.assertEqual(len(result['animation_clips']), 5)
+        self.assertIsNone(result['next_animation_offset'])
+        other = create_chat(self.root, 'Other chat')['id']
+        with self.assertRaisesRegex(ValueError, 'this conversation'):
+            ToolSession(self.root, grants, other)
+        session = ToolSession(self.root, grants, self.cid)
+        self.assertEqual(session.tools[0]['function']['name'], 'inspect_model_attachment')
+        result = session.execute({'function': {'name': 'inspect_model_attachment', 'arguments': {'attachment_id': asset['id']}}})
+        self.assertEqual(result['next_animation_offset'], 50)
+        self.assertIn('animated.glb', session.context())
+        self.assertIn('105 clips', session.receipt())
+
+    def test_attachment_inspection_rejects_bad_timing_and_flags(self):
+        from model_assets import inspect_attachment
+        asset = self.animated(values=(0, float('nan'), 1))
+        grants = {'model_ids': [asset['id']]}
+        with self.assertRaisesRegex(ValueError, 'finite'):
+            inspect_attachment(self.root, grants, {'attachment_id': asset['id']})
+        for extra in ({'animation_offset': True}, {'animation_limit': 101}, {'path': '../elsewhere.glb'}):
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                inspect_attachment(self.root, grants, {'attachment_id': asset['id'], **extra})

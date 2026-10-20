@@ -25,7 +25,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     chat = read_chat(root, conversation_id)
     session = ToolSession(root, tool_permissions, conversation_id)
     messages = [{"role":"system","content":"You are SMELTER's local assistant. " + session.context() +
-                 " 3D attachment markers in history are filenames only. GLB bytes are not sent to you; do not claim to inspect their geometry or rendered images."}]
+                 " 3D attachment markers in history are filenames only. GLB bytes and rendered images are not sent to you. Only an actual approved inspect_model_attachment tool result establishes GLB metadata; do not claim visual inspection."}]
     if not isinstance(auto_skills, bool):
         raise ValueError("Invalid automatic skill setting")
     active_skills = route_skills(root, prompt) if auto_skills and not skills else skills

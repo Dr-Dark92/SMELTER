@@ -132,6 +132,26 @@ class McpIntegrationTests(McpFixture, unittest.TestCase):
         self.assertEqual(record['events'][0]['result']['status'], 'written')
         self.assertEqual((self.root / 'diagnostics/chat-mcp.md').read_text(), '# Chat MCP')
 
+    def test_saved_glb_inspection_through_real_mcp(self):
+        import base64
+        import struct
+        from database import select_database
+        from chats import create_chat
+        from model_assets import attach_model, model_path
+        select_database(self.root, str(self.base / 'data'))
+        cid = create_chat(self.root, 'GLB MCP fixture')['id']
+        document = json.dumps({'asset': {'version': '2.0'}, 'nodes': [], 'meshes': [], 'animations': []}).encode()
+        document += b' ' * (-len(document) % 4)
+        raw = struct.pack('<4sIIII', b'glTF', 2, len(document) + 20, len(document), 0x4e4f534a) + document
+        asset = attach_model(self.root, {'conversation_id': cid, 'filename': 'fixture.glb', 'base64': base64.b64encode(raw).decode()})
+        session = ToolSession(self.root, {'model_ids': [asset['id']], 'transport': 'mcp'}, cid)
+        result = session.execute({'function': {'name': 'inspect_model_attachment', 'arguments': {'attachment_id': asset['id']}}})
+        self.assertEqual(result['status'], 'model_inspected')
+        self.assertEqual(result['animations'], 0)
+        self.assertEqual(result['animation_clips'], [])
+        self.assertTrue(Path(result['mcp_audit_path']).is_file())
+        self.assertEqual(model_path(self.root, asset['id']).read_bytes(), raw)
+
     def test_generic_server_discovery_selection_and_chat_dispatch(self):
         fixture = self.base / 'fixture_server.py'
         fixture.write_text('''import json,sys
