@@ -40,7 +40,7 @@ from rea_connection import package_status as rea_package_status
 from chat_jobs import JOBS
 from skill_runtime import initialize as initialize_skills, monitor as skill_monitor, tools_status
 from runtime_settings import load_runtime, save_runtime
-from model_assets import attach_model, model_path, viewer_bundle, viewer_status
+from model_assets import rename_animation, attach_model, model_path, viewer_bundle, viewer_status
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -89,7 +89,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 .chat-dialog{background:#132237;color:#e7edfa;border:1px solid #597a9d;border-radius:14px;width:min(420px,calc(100vw - 60px));padding:24px}.chat-dialog::backdrop{background:#030a14b8}.chat-dialog h2{font-size:20px;margin-top:0}.chat-dialog label{display:block;font-size:13px}.chat-dialog input{box-sizing:border-box;width:100%;margin-top:9px;padding:12px;border:1px solid #597a9d;background:#0b111d;color:#e7edfa;border-radius:7px;font:inherit}.dialog-actions{display:flex;justify-content:flex-end;gap:10px}.dialog-error{min-height:20px;color:#ffadad;font-size:13px}
 
 .message-label{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.copy-button{background:#263f59;color:#cde3fa;padding:5px 9px;font-size:11px;border:1px solid #47617b;white-space:nowrap}.formatted-message{white-space:normal}.formatted-message p{color:inherit;white-space:pre-wrap;margin:9px 0}.formatted-message h3,.formatted-message h4,.formatted-message h5,.formatted-message h6{color:#eff6ff;margin:16px 0 8px}.formatted-message ul,.formatted-message ol{padding-left:24px;margin:9px 0}.formatted-message li{margin:5px 0;white-space:pre-wrap}.formatted-message blockquote{border-left:3px solid #638bac;padding-left:12px;margin:10px 0;color:#b6cce3}.formatted-message :not(pre)>code{background:#0b1624;border-radius:4px;padding:2px 5px;font-size:.9em;overflow-wrap:anywhere}.code-block{border:1px solid #3b526d;border-radius:8px;overflow:hidden;margin:12px 0;background:#09121f;min-width:0}.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1c2c40;padding:6px 10px;font:12px system-ui;color:#bcd2e7}.code-block pre{margin:0;padding:14px;overflow-x:auto;max-width:100%;white-space:pre;tab-size:4;font:12px/1.65 ui-monospace,monospace}.code-block pre code{background:none;padding:0;overflow-wrap:normal}.message-assistant{max-width:95%;width:fit-content}
-.model-card{border:1px solid #526e8b;border-radius:10px;padding:14px;margin-top:12px;min-width:0}.model-card h3{margin:0 0 8px;font-size:16px}.model-card p{font-size:12px;overflow-wrap:anywhere}.model-card button{font-size:12px;padding:8px;margin:4px}.model-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font-size:11px}.model-stage{width:100%;min-width:0}.message:has(.model-card){width:95%;max-width:95%}
+.model-card{border:1px solid #526e8b;border-radius:10px;padding:14px;margin-top:12px;min-width:0}.model-card h3{margin:0 0 8px;font-size:16px}.model-card p{font-size:12px;overflow-wrap:anywhere}.model-card button{font-size:12px;padding:8px;margin:4px}.model-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font-size:11px}.animation-panel{margin-top:14px;padding-top:12px;border-top:1px solid #526e8b}.animation-panel h4{margin:0 0 8px}.animation-panel select,.animation-panel input:not([type=range]){box-sizing:border-box;max-width:100%;width:100%;padding:9px;margin:5px 0;background:#0b111d;color:#e7edfa;border:1px solid #597a9d;border-radius:6px}.animation-panel input[type=range]{width:75%;vertical-align:middle}.model-stage{width:100%;min-width:0}.message:has(.model-card){width:95%;max-width:95%}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -122,7 +122,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/turntable.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
+<script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -510,6 +510,8 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if route == '/assets/chat-renderer.js':
                 return self.reply(200, Path(__file__).with_name('chat_renderer.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/model-animations.js':
+                return self.reply(200, Path(__file__).with_name('model_animations.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/model-preview.js':
                 return self.reply(200, Path(__file__).with_name('model_preview.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/turntable.js':
@@ -646,7 +648,7 @@ def handler(token: str):
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
                 if route == "/api/models":
-                    return self.reply(200, attach_model(ROOT, data))
+                    return self.reply(200, rename_animation(ROOT, data) if data.get('action') == 'rename_animation' else attach_model(ROOT, data))
                 if route == "/api/skills/collection-preview":
                     urls = data.get("urls")
                     if not isinstance(urls, list) or not 1 <= len(urls) <= 40:

@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 from chats import create_chat, read_chat, delete_chat
 from database import select_database
-from model_assets import inspect_glb, attach_model, model_path
+from model_assets import inspect_glb, attach_model, model_path, rename_animation
 
 
 def glb(document):
@@ -60,3 +60,15 @@ class ModelAssetTests(unittest.TestCase):
     def test_opaque_ids_only(self):
         with self.assertRaises(ValueError):
             model_path(self.root, '../../fixture')
+
+    def test_animation_labels_persist_without_changing_glb(self):
+        raw = glb({'asset': {'version': '2.0'}, 'animations': [{'name': 'Action_01'}, {}]})
+        asset = attach_model(self.root, {'conversation_id': self.cid, 'filename': 'clips.glb', 'base64': base64.b64encode(raw).decode()})
+        self.assertEqual(asset['animation_clips'][0]['source_name'], 'Action_01')
+        result = rename_animation(self.root, {'id': asset['id'], 'index': 0, 'label': 'Walk forward'})
+        self.assertEqual(result['animation_labels']['0'], 'Walk forward')
+        self.assertEqual(read_chat(self.root, self.cid)['messages'][0]['model_attachment']['animation_labels']['0'], 'Walk forward')
+        self.assertEqual(model_path(self.root, asset['id']).read_bytes(), raw)
+        for index, label in [(True, 'Walk'), (-1, 'Walk'), (2, 'Walk'), (0, ''), (0, 'a\nB'), (0, 'x' * 121)]:
+            with self.subTest(index=index, label=label), self.assertRaises(ValueError):
+                rename_animation(self.root, {'id': asset['id'], 'index': index, 'label': label})

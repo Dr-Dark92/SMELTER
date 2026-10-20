@@ -67,6 +67,10 @@ def inspect_glb(raw):
         if not isinstance(values, list) or len(values) > 10000:
             raise ValueError('Invalid or excessive ' + key)
         summary[key] = len(values)
+    clips = document.get('animations', [])
+    if any(not isinstance(clip, dict) or not isinstance(clip.get('name', ''), str) for clip in clips):
+        raise ValueError('Invalid animation names')
+    summary['animation_clips'] = [{'index': i, 'source_name': clip.get('name')} for i, clip in enumerate(clips)]
     accessors = document.get('accessors', [])
     if not isinstance(accessors, list) or any(not isinstance(x, dict) or type(x.get('count', 0)) is not int or not 0 <= x.get('count', 0) <= 10000000 for x in accessors):
         raise ValueError('Invalid or excessive accessor count')
@@ -145,3 +149,25 @@ def model_path(root, aid):
     if not path.is_file() or path.stat().st_size > MAX_BYTES:
         raise ValueError('Model asset is missing or exceeds size limit')
     return path
+
+
+def rename_animation(root, data):
+    aid = _id(data.get('id'))
+    index, label = data.get('index'), data.get('label')
+    if type(index) is not int or index < 0:
+        raise ValueError('Choose a valid animation index')
+    if not isinstance(label, str) or not label.strip() or len(label) > 120 or any(ord(c) < 32 or ord(c) == 127 for c in label):
+        raise ValueError('Animation label must be 1-120 characters without control characters')
+    clips = inspect_glb(model_path(root, aid).read_bytes())['animation_clips']
+    if index >= len(clips):
+        raise ValueError('Animation index does not exist')
+    with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT filename,metadata FROM model_attachments WHERE id=?', (aid,)).fetchone()
+        if not row:
+            raise ValueError('Model attachment not found')
+        metadata = json.loads(row[1])
+        metadata['animation_clips'] = clips
+        metadata.setdefault('animation_labels', {})[str(index)] = label.strip()
+        conn.execute('UPDATE model_attachments SET metadata=? WHERE id=?', (json.dumps(metadata), aid))
+    return {'id': aid, 'filename': row[0], **metadata}
