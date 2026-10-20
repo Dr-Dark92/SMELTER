@@ -38,7 +38,9 @@ def build_skill_context(root, selected):
             raise ValueError("Unsafe skill path")
         if manifest.stat().st_size > MAX_MANIFEST_BYTES:
             raise ValueError("Skill manifest too large")
-        text = manifest.read_text(encoding="utf-8")
+        from skill_runtime import runtime_manifest
+        snapshot = runtime_manifest(root, name)
+        text = snapshot if snapshot is not None else manifest.read_text(encoding="utf-8")
         pieces.append("Skill: " + name + "\n" + text)
     context = "\n\n---\n\n".join(pieces)
     if len(context) > MAX_CONTEXT_CHARS:

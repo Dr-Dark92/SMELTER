@@ -207,3 +207,47 @@ The legacy reply/content strings still include controller receipts for API
 compatibility. The current GUI displays the separately retained model text
 and renders the actual controller events as cards. Model text cannot create
 these cards by imitating a receipt header or path.
+
+
+### Skills & Tools view and manifest discovery
+
+Open Tools & Integrations → Skills & Tools for a full workspace view. Search
+by name, ID or purpose, filter activation status, review manifests and
+fingerprints, and enable/disable through the existing approved settings API.
+The tool overview lists actual implemented connections; an installed skill
+does not imply a tool is connected or that an executable has been verified.
+
+The dashboard snapshots skill instructions at process startup. Every 15
+seconds while the page is visible it checks supported skill folders beneath
+skills/ and .smelter/managed-skills/ (including collections/group/skill/).
+Changes to SKILL.md or optional smelter.json produce a dismissible notification
+and restart-required indicator. The rescan button checks immediately. The
+existing catalog bounds and supported folder layout apply; this is not an
+unbounded recursive filesystem watcher. Supporting scripts are not monitored
+or executed in this version. The browser must be open to receive notifications.
+
+New or modified manifests cannot enter chat context until the server restarts;
+automatic routing also excludes them. Restart by stopping with Ctrl+C and
+relaunching the dashboard. There is no automatic restart or dependency install.
+Reviewing a manifest does not activate it. Enable/disable settings take effect
+immediately for unchanged startup snapshots; new/changed instructions also
+require restart. Deleted skills are no longer eligible. At restart the normal
+existing skill enabled-state rules apply; review/disable any unwanted changes
+before restarting. This is not a cryptographic approval or quarantine system.
+
+Optional dependency declaration placed beside SKILL.md:
+
+```json
+{"schema_version": 1, "requires": ["node", "blender"]}
+```
+
+Only these keys are accepted. Up to 20 simple executable names are checked
+with PATH lookup; paths, command arguments and executable code are rejected.
+Missing declarations display unknown, rather than guessing dependencies from
+prose. A found executable is not runtime verification. Declarations neither
+register tools nor grant execution permissions. The displayed fingerprint
+combines SKILL.md and smelter.json bytes; it is not the SKILL.md-only hash.
+
+A universal execution registry, automated adapter development, dependency
+installation, and supporting-script execution remain future work. This change
+provides discovery visibility and activation gating, not those capabilities.

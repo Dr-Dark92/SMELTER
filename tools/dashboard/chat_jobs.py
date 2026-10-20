@@ -46,6 +46,7 @@ class Control:
         self.update('Waiting for model')
         deadline = time.monotonic() + timeout
         connection = http.client.HTTPConnection('127.0.0.1', 11434, timeout=timeout)
+        response = None
         body = {**body, 'stream': True}
         try:
             connection.connect()
@@ -98,6 +99,8 @@ class Control:
         finally:
             with self.lock:
                 self.sock = None
+            if response is not None:
+                response.close()
             connection.close()
 
 

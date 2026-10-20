@@ -8,7 +8,7 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, unquote
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "setup"))
@@ -38,6 +38,7 @@ from skill_collections import install_collection
 from aero_classifier import classify_task
 from rea_connection import package_status as rea_package_status
 from chat_jobs import JOBS
+from skill_runtime import initialize as initialize_skills, monitor as skill_monitor, tools_status
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -77,6 +78,9 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 .execution-card{border-left:3px solid #69c6a3;background:#132c34;margin:10px 0;padding:12px;border-radius:6px;font-size:13px}
 .execution-error{border-left-color:#ee9b9b;background:#34232c}.execution-path{font-family:monospace;overflow-wrap:anywhere}
 .execution-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto;font-size:11px}.execution-card summary{cursor:pointer;color:#b6d5e0}
+
+#skillsOverview{overflow-y:auto;min-height:0;flex:1;padding:4px 8px}#skillsOverview h2{font-size:24px}#skillNotice{background:#25364b;border-bottom:1px solid #708dae;padding:10px 18px;flex-shrink:0;font-size:13px}#skillNotice button{margin-left:8px;padding:6px 10px}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}.skill-card{border:1px solid #37506c;background:#142237;border-radius:12px;padding:16px;min-width:0}.skill-card h3{margin-top:0;font-size:16px}.skill-card p{font-size:13px;overflow-wrap:anywhere}.skill-card small{overflow-wrap:anywhere}.skill-card button{margin:4px 6px 0 0;padding:8px 10px;font-size:12px}.skill-badge{color:#8fd8c2!important}.skill-search{padding:10px;width:min(100%,340px);box-sizing:border-box;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:7px}.skill-restart{padding:12px;background:#223048;border-radius:8px}.skill-preview{border:1px solid #58718f;border-radius:10px;padding:16px;margin-top:16px}.skill-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -194,6 +198,40 @@ function initShell(){
  folders[0] && (right.querySelector('details').open=true);
  if(nav.length)nav[0].click();
  shell.append(left,center,right);
+ const skillNotice=document.createElement('div');skillNotice.id='skillNotice';skillNotice.hidden=true;skillNotice.setAttribute('role','status');
+ const skillNoticeText=document.createElement('span');const skillReview=document.createElement('button');skillReview.textContent='Review skills';const dismissNotice=document.createElement('button');dismissNotice.textContent='Dismiss';skillNotice.append(skillNoticeText,skillReview,dismissNotice);main.prepend(skillNotice);
+ const skillView=document.createElement('section');skillView.id='skillsOverview';skillView.hidden=true;center.append(skillView);
+ const chatElements=[title,log,permissionsBox,requestStatus,composer];
+ window.showChatWorkspace=()=>{skillView.hidden=true;chatElements.forEach(x=>x.hidden=false)};
+ const showSkills=()=>{if(send.disabled){alert('Finish or stop the current chat request first');return}chatElements.forEach(x=>x.hidden=true);skillView.hidden=false;loadSkillsOverview()};
+ const overviewButton=document.createElement('button');overviewButton.textContent='Skills & Tools';overviewButton.className='navbtn';overviewButton.onclick=showSkills;
+ const integrations=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));if(integrations)integrations.querySelector('.config-folder-items').prepend(overviewButton);
+ skillReview.onclick=showSkills;
+ let dismissedRevision=null,lastSkillsData=null,skillsPolling=false;
+ dismissNotice.onclick=()=>{dismissedRevision=lastSkillsData?.revision;skillNotice.hidden=true};
+ const refreshSkillNotice=async()=>{if(skillsPolling||document.hidden)return;skillsPolling=true;try{const data=await api('/api/skills/status');lastSkillsData=data;skillNoticeText.textContent=data.changes.length+' skill changes detected · review before restart. ';skillNotice.hidden=!data.changes.length||dismissedRevision===data.revision;}catch(e){overviewButton.title='Skill discovery unavailable: '+e.message}finally{skillsPolling=false}};
+ const loadSkillsOverview=async()=>{skillView.replaceChildren();const heading=document.createElement('h2');heading.textContent='Skills & Tools';const back=document.createElement('button');back.textContent='Back to chat';back.onclick=window.showChatWorkspace;skillView.append(heading,back);
+ try{const data=await api('/api/skills/status');lastSkillsData=data;
+ const explanation=document.createElement('p');explanation.textContent='Drop skills into the watched folders. Review new or changed manifests, enable as needed, then restart the dashboard. Instructions never grant execution access.';
+ const watched=document.createElement('p');watched.className='execution-path';watched.textContent='Watching: '+data.watched.join(' · ');
+ const restart=document.createElement('p');restart.className='skill-restart';restart.textContent=data.restart_required?'Restart required: '+data.changes.map(c=>c.id+' ('+c.change+')').join(', ')+'. Stop the dashboard with Ctrl+C, then relaunch it.':'No manifest changes pending restart.';
+ const search=document.createElement('input');search.placeholder='Search skill name, purpose or ID';search.setAttribute('aria-label','Search skills');search.className='skill-search';
+ const filter=document.createElement('select');filter.setAttribute('aria-label','Filter activation');for(const [value,label] of [['','All skills'],['enabled','Enabled'],['disabled','Disabled'],['restart_required','Restart required'],['invalid','Invalid']]){const option=document.createElement('option');option.value=value;option.textContent=label;filter.append(option)}
+ const count=document.createElement('p');const list=document.createElement('div');list.className='skill-grid';
+ const preview=document.createElement('section');preview.className='skill-preview';preview.hidden=true;
+ const render=()=>{list.replaceChildren();const query=search.value.toLowerCase();const matches=data.skills.filter(x=>(!filter.value||x.activation===filter.value)&&[x.name,x.id,x.description].join(' ').toLowerCase().includes(query));count.textContent=matches.length+' of '+data.count+' skills';
+ for(const skill of matches){const card=document.createElement('article');card.className='skill-card';const name=document.createElement('h3');name.textContent=skill.name||skill.id;const identifier=document.createElement('small');identifier.textContent=skill.id;const status=document.createElement('p');status.className='skill-badge';status.textContent=skill.activation.replaceAll('_',' ')+' · '+skill.source;const description=document.createElement('p');description.textContent=skill.description||'No purpose declared.';
+ const dependencies=document.createElement('p');dependencies.textContent=skill.dependencies===null?'Dependencies: unknown (no declaration)':skill.dependencies.length?'Dependencies: '+skill.dependencies.map(d=>d.name+' — '+d.status).join(', '):'Dependencies: none declared';
+ const review=document.createElement('button');review.textContent='Review manifest';review.onclick=async()=>{preview.hidden=false;preview.replaceChildren();try{const result=await api('/api/skills/review/'+encodeURIComponent(skill.id));const label=document.createElement('h3');label.textContent=skill.id;const location=document.createElement('p');location.className='execution-path';location.textContent=result.manifest+' · Manifest/config fingerprint: '+result.fingerprint;const source=document.createElement('pre');source.textContent=result.text;const close=document.createElement('button');close.textContent='Close preview';close.onclick=()=>preview.hidden=true;preview.append(label,location,close,source);preview.scrollIntoView({block:'nearest'})}catch(e){preview.textContent=e.message}};
+ const toggle=document.createElement('button');toggle.textContent=skill.enabled?'Disable':'Enable';toggle.disabled=skill.status!=='ready'||skill.activation==='invalid';toggle.onclick=async()=>{if(!confirm((skill.enabled?'Disable ':'Enable ')+skill.id+'? This grants no execution permission.'))return;try{await api('/api/skills/manage','POST',{action:'enable',id:skill.id,enabled:!skill.enabled,approval:true});await loadSkillsOverview();await refreshSkillNotice()}catch(e){alert(e.message)}};
+ card.append(name,identifier,status,description,dependencies,review,toggle);if(skill.error){const error=document.createElement('p');error.textContent=skill.error;card.append(error)}list.append(card)}};
+ search.oninput=filter.onchange=render;
+ const refresh=document.createElement('button');refresh.textContent='Rescan folders';refresh.onclick=async()=>{await loadSkillsOverview();await refreshSkillNotice()};
+ skillView.append(explanation,watched,restart,search,filter,refresh,count,list,preview);
+ const toolHeading=document.createElement('h3');toolHeading.textContent='Connected tools';skillView.append(toolHeading);for(const tool of data.tools){const row=document.createElement('p');row.textContent=tool.name+' · '+tool.status+' · '+tool.detail;skillView.append(row)}
+ const scope=document.createElement('small');scope.textContent=data.scope+'. Dependency presence is not runtime verification. Enablement does not load a skill into every message.';skillView.append(scope);render();
+ }catch(e){const error=document.createElement('p');error.textContent='Could not inspect skills: '+e.message;skillView.append(error)}};
+ setInterval(refreshSkillNotice,15000);refreshSkillNotice();
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
  const aeroPanel=document.createElement('div');aeroPanel.className='panel';aeroPanel.id='aeroPanel';
@@ -236,14 +274,14 @@ function initShell(){
      const item=document.createElement('div');item.style.margin='12px 0';item.style.padding='10px';item.style.border='1px solid #7775';item.style.borderRadius='8px';
      const label=document.createElement('label');label.style.display='block';
      const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.skillId=s.id;
-     checkbox.disabled=s.status!=='ready'||!s.enabled;checkbox.checked=s.enabled&&selectedSkills.includes(s.id);
+     checkbox.disabled=s.status!=='ready'||!s.enabled||!s.active_snapshot||s.activation==='invalid';checkbox.checked=s.enabled&&selectedSkills.includes(s.id);
      checkbox.onchange=()=>{
       if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three manually selected skills');return}selectedSkills.push(s.id)}
       else selectedSkills=selectedSkills.filter(x=>x!==s.id);
       updateSummary();
      };
      label.append(checkbox,document.createTextNode(' '+(s.name||s.id)));
-     const status=document.createElement('p');status.textContent='Status: '+s.status+' · '+(s.enabled?'Enabled':'Disabled')+' · '+s.source+' · '+(s.bytes||0)+' bytes · No execution rights';
+     const status=document.createElement('p');status.textContent='Status: '+s.activation.replaceAll('_',' ')+' · '+(s.enabled?'Enabled':'Disabled')+' · '+s.source+' · '+(s.bytes||0)+' bytes · No execution rights';
      const toggle=document.createElement('button');toggle.textContent=s.enabled?'Disable':'Enable';toggle.disabled=!s.enabled&&s.status!=='ready';
      toggle.onclick=async()=>{if(!confirm((s.enabled?'Disable ':'Enable ')+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'enable',id:s.id,enabled:!s.enabled,approval:true});if(s.enabled)selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
      const remove=document.createElement('button');remove.textContent='Remove';remove.disabled=!s.removable;remove.title=s.removable?'Delete user-added skill':'Bundled skills cannot be deleted';
@@ -365,7 +403,7 @@ function executionCards(execution){
  const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
 }
 async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
  for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+msg.created_at;const body=document.createElement('div');body.className='message-content';body.textContent=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;bubble.append(label,body);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
@@ -436,9 +474,19 @@ def handler(token: str):
                     return self.reply(400, {"error": str(e)})
             if route == "/api/skills":
                 try:
-                    return self.reply(200, catalog_skills(ROOT))
+                    return self.reply(200, skill_monitor(ROOT).status())
                 except (OSError, ValueError) as e:
                     return self.reply(400, {"error": str(e)})
+            if route == "/api/skills/status":
+                try:
+                    return self.reply(200, {**skill_monitor(ROOT).status(), 'tools': tools_status(ROOT)})
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {"error": str(e)})
+            if route.startswith('/api/skills/review/'):
+                try:
+                    return self.reply(200, skill_monitor(ROOT).review(unquote(route.removeprefix('/api/skills/review/'))))
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {'error': str(e)})
             if route == "/api/rea/status":
                 return self.reply(200, rea_package_status(ROOT))
             if route == "/api/system/status":
@@ -648,6 +696,7 @@ def main():
     parser.add_argument("--port", type=int, default=8768)
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
+    initialize_skills(ROOT)
     token = secrets.token_urlsafe(32)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), handler(token))
     url = f"http://127.0.0.1:{server.server_port}/#token={token}"
