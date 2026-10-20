@@ -1,5 +1,6 @@
 """Bounded in-memory chat jobs and cancellable local inference transport."""
 import http.client
+import io
 import json
 import socket
 import threading
@@ -9,6 +10,43 @@ from uuid import uuid4
 
 class ChatCancelled(ValueError):
     pass
+
+
+class _CancellableReader(io.RawIOBase):
+    """Retry raw socket timeouts without poisoning a buffered HTTP reader."""
+    def __init__(self, sock, control, deadline):
+        super().__init__()
+        self.sock, self.control, self.deadline = sock, control, deadline
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        while True:
+            self.control.check()
+            remaining = self.deadline - time.monotonic()
+            if remaining <= 0:
+                raise ValueError('Chat turn time limit reached')
+            self.sock.settimeout(min(0.2, remaining))
+            try:
+                count = self.sock.recv_into(buffer)
+            except socket.timeout:
+                continue
+            except OSError:
+                self.control.check()
+                raise
+            self.control.check()
+            return count
+
+
+class _ResponseSocket:
+    def __init__(self, sock, control, deadline):
+        self.sock, self.control, self.deadline = sock, control, deadline
+
+    def makefile(self, mode):
+        if mode != 'rb':
+            raise ValueError('Only binary HTTP response reads are supported')
+        return io.BufferedReader(_CancellableReader(self.sock, self.control, self.deadline))
 
 
 class Control:
@@ -59,6 +97,10 @@ class Control:
                 cancel_socket = connection.sock.dup()
                 self.sock = cancel_socket
             connection.request('POST', '/api/chat', json.dumps(body), {'Content-Type': 'application/json'})
+            # HTTPResponse retains its normal header, chunked-transfer and line
+            # parsing, but every raw read checks Stop at most 200 ms apart.
+            connection.response_class = lambda sock, **kwargs: http.client.HTTPResponse(
+                _ResponseSocket(cancel_socket, self, deadline), **kwargs)
             response = connection.getresponse()
             if response.status != 200:
                 raise ValueError('Local Ollama HTTP error: ' + str(response.status))
@@ -67,8 +109,6 @@ class Control:
                 self.check()
                 if time.monotonic() >= deadline:
                     raise ValueError('Chat turn time limit reached')
-                if self.sock:
-                    self.sock.settimeout(max(0.1, deadline - time.monotonic()))
                 line = response.readline(maximum + 1)
                 self.check()
                 if not line:

@@ -6,7 +6,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
-from chat_jobs import Control, Jobs, ChatCancelled
+from chat_jobs import Control, Jobs, ChatCancelled, _ResponseSocket
 from chat_inference import ask
 from chats import create_chat, read_chat
 from database import select_database
@@ -71,8 +71,11 @@ class ChatJobsTests(unittest.TestCase):
             # original socket for this HTTP/1.0 connection-close response.
             self.assertIsNot(control.sock, sockets[0])
             self.assertGreaterEqual(control.sock.fileno(), 0)
-            control.cancel()
-            self.assertTrue(finished.wait(2), 'Stop must unblock the active socket read')
+            # Windows may leave a timed read waiting after shutdown. Reproduce
+            # that condition on every platform: cancellation must poll itself.
+            with patch('chat_jobs.socket.socket.shutdown', return_value=None):
+                control.cancel()
+                self.assertTrue(finished.wait(2), 'Stop must unblock the active socket read')
             release.set()
             thread.join(2)
             self.assertTrue(errors)
@@ -130,3 +133,46 @@ class ChatJobsTests(unittest.TestCase):
         with patch.dict('os.environ', {'SMELTER_CONTEXT_LENGTH': '16384'}), patch.object(control, 'infer', return_value=b'{"message":{"content":"fixture"}}') as infer:
             ask(self.root, self.cid, 'fixture', tool_permissions={'write_diagnostics': True}, control=control)
         self.assertEqual(infer.call_args.args[0]['options']['num_ctx'], 16384)
+
+    def test_fragmented_chunked_response_survives_idle_read_intervals(self):
+        import http.client
+        import socket
+        import time
+        reader, writer = socket.socketpair()
+        self.addCleanup(reader.close)
+        self.addCleanup(writer.close)
+        payload = '{"message":{"content":"Hello 🌍"},"done":true}\n'.encode()
+        wire = b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n' + format(len(payload), 'x').encode() + b'\r\n' + payload + b'\r\n0\r\n\r\n'
+        def send():
+            try:
+                # Delays exceed the raw-read polling interval, including in a
+                # partial status line and in the middle of a UTF-8 character.
+                split = wire.index('🌍'.encode()) + 1
+                for part in (wire[:10], wire[10:split], wire[split:]):
+                    writer.sendall(part)
+                    time.sleep(0.3)
+            except OSError:
+                pass
+        thread = threading.Thread(target=send, daemon=True)
+        thread.start()
+        response = http.client.HTTPResponse(_ResponseSocket(reader, Control(), time.monotonic() + 3))
+        self.addCleanup(response.close)
+        response.begin()
+        self.assertEqual(response.read(), payload)
+        thread.join(2)
+
+    def test_response_headers_can_be_cancelled_without_socket_shutdown(self):
+        import http.client
+        import socket
+        import time
+        reader, writer = socket.socketpair()
+        self.addCleanup(reader.close)
+        self.addCleanup(writer.close)
+        control = Control()
+        response = http.client.HTTPResponse(_ResponseSocket(reader, control, time.monotonic() + 3))
+        self.addCleanup(response.close)
+        timer = threading.Timer(0.1, control.cancel)
+        self.addCleanup(timer.cancel)
+        timer.start()
+        with self.assertRaises(ChatCancelled):
+            response.begin()
