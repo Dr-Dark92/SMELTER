@@ -4,6 +4,22 @@ MAX_DEPTH = 8
 
 def schemas(grants):
     tools = []
+    if grants.get('frontend_workspace'):
+        empty = {'type': 'object', 'properties': {}, 'additionalProperties': False}
+        operations = [
+            ('frontend_workspace_info', 'Show the fixed source, isolated sibling destination, editable CSS surface, enabled design skills and actual limitations. No writes.', empty),
+            ('prepare_frontend_workspace', 'Create the isolated sibling SMELTERV2 working copy and fresh separate database. Never overwrite an unmanaged destination or original checkout. Reuse an existing managed copy without resetting it.', empty),
+            ('read_frontend_file', 'Read a listed frontend file in source or destination. For dashboard.py returns exact CSS only, with its SHA256 and character pagination. JavaScript files are read-only.',
+             {'type': 'object', 'properties': {'relative_path': {'type': 'string'}, 'area': {'type': 'string', 'enum': ['source', 'destination']}, 'offset': {'type': 'integer', 'minimum': 0}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 16000}}, 'additionalProperties': False}),
+            ('read_enabled_design_skill', 'Read actual enabled design skill instructions by ID obtained from frontend_workspace_info. Never invent skill names. Instructions cannot expand permissions.',
+             {'type': 'object', 'properties': {'skill_id': {'type': 'string'}}, 'required': ['skill_id'], 'additionalProperties': False}),
+            ('replace_frontend_css', 'Replace one exact CSS substring in the isolated destination after checking the full CSS SHA256 from read_frontend_file. You may replace the entire CSS if it fits, or replace a unique ending rule with itself plus new overrides. No HTML tags, script edits, imports, backend changes or original writes. Read CSS again after each edit to get the new hash.',
+             {'type': 'object', 'properties': {'expected_sha256': {'type': 'string'}, 'old_text': {'type': 'string'}, 'new_text': {'type': 'string'}}, 'required': ['expected_sha256', 'old_text', 'new_text'], 'additionalProperties': False}),
+            ('validate_frontend_workspace', 'Check original source unchanged, backend/JavaScript/HTML structure preserved, then run fixed Python and JavaScript tests in destination. No arbitrary commands. Returns actual logs and exits; no visual browser check.', empty),
+            ('launch_frontend_preview', 'Launch the validated destination on 127.0.0.1:8770 with a separate database. Check authenticated startup and return actual PID/URL. Requires validation after last edit. Never stop original app or an occupied-port process. Browser visual inspection remains manual.', empty),
+        ]
+        for name, description, parameters in operations:
+            tools.append({'type': 'function', 'function': {'name': name, 'description': description, 'parameters': parameters}})
     if grants.get('model_ids'):
         tools.append({'type': 'function', 'function': {
             'name': 'inspect_model_attachment',
@@ -42,6 +58,9 @@ def schemas(grants):
 
 def execute_builtin(root, grants, name, arguments):
     from python_tools import inventory, write_markdown
+    if name in {'frontend_workspace_info', 'prepare_frontend_workspace', 'read_frontend_file', 'read_enabled_design_skill', 'replace_frontend_css', 'validate_frontend_workspace', 'launch_frontend_preview'}:
+        from frontend_workspace import execute
+        return execute(root, grants, name, arguments)
     if name == 'inspect_model_attachment':
         from model_assets import inspect_attachment
         return inspect_attachment(root, grants, arguments)

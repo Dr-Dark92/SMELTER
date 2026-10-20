@@ -131,3 +131,65 @@ The connection panel now separates SDK availability, the timestamped last
 **discovery snapshot**, and current next-message selections. Changing/resetting
 permissions marks built-in discovery results as historical instead of leaving a
 misleading current “No tools exposed” claim.
+
+## Isolated frontend development tools
+
+Check **Allow isolated frontend workspace** and MCP routing for the next message.
+The original checkout is the source. The fixed sibling destination is the source
+folder name plus `V2`: `C:\SMELTER` becomes `C:\SMELTERV2`. Model arguments cannot
+choose another source, destination, port, shell command or executable.
+
+The tools are:
+
+- `frontend_workspace_info`: actual paths, capabilities and enabled design skills.
+- `read_enabled_design_skill`: an actual enabled skill manifest, selected by ID.
+- `prepare_frontend_workspace`: create a new isolated copy, or preserve/reuse an
+  existing managed copy. An unmanaged destination is never overwritten.
+- `read_frontend_file`: bounded CSS/JavaScript reading from a fixed file allowlist.
+- `replace_frontend_css`: exact substring replacement with the full CSS SHA-256.
+- `validate_frontend_workspace`: original-source hash checks, backend AST checks,
+  identical non-CSS HTML and JavaScript, then fixed Python/JavaScript tests.
+- `launch_frontend_preview`: launch only the validated copy on port 8770 and verify
+  its authenticated startup response before reporting a URL and process ID.
+
+This version supports **CSS redesign**, not arbitrary code editing. It can change
+layout, typography, colors, spacing and component presentation while preserving
+all JavaScript, markup outside the style block, Python backend, routes, methods,
+request/response contracts and database schemas. Attempts to change those surfaces
+block validation/launch. Browser visual inspection is still manual and must not
+be reported as an automated pass.
+
+The copy includes code, skill references, local viewer/REA dependencies, and selected
+non-secret legacy configuration. It excludes projects, Git metadata, databases,
+model weights, runtime logs and agent configuration. Symlinks/junctions are not
+copied. The copy is bounded to 20,000 files and 1 GiB. It uses a **fresh independent**
+database in `C:\SMELTERV2-Data`; original chat history and assets are not migrated.
+Preparation failure may leave that newly initialized data directory for review;
+existing directories are never deleted to force a retry.
+
+Workspace permission raises only that message's aggregate tool budget to 24 calls,
+with at least a 900-second model-turn timeout and up to 4096 response tokens
+(capped at half the configured context). These temporary values do not alter
+saved runtime settings or ordinary chat limits. Fixed validation is bounded to
+90 seconds total. Stop prevents subsequent calls; an active copy/validation may
+finish first. Repeated reads and validations stay fresh after edits.
+
+The preview is a separate process and does not stop the original application.
+Open its returned URL manually. To stop that preview on Windows, use
+`Stop-Process -Id <the returned preview PID>` after verifying the PID in the
+receipt. An occupied port blocks launch; tools do not kill an existing listener.
+Launch URLs contain a session token and are recorded in local tool receipts/logs.
+
+Suggested prompt (with the workspace permission checked):
+
+```
+Use the frontend workspace tools to redesign SMELTER's presentation in its isolated
+V2 copy. Call frontend_workspace_info, read up to three actual enabled design
+skills, prepare the workspace, and inspect its CSS. Use a coherent design that
+improves chat readability, navigation, typography, forms and status visibility.
+Apply real hash-checked CSS edits. Preserve all backend, API and JavaScript
+behavior. Run validation; launch the validated preview on port 8770. Report only
+actual tool results, the skills used and the returned URL. Mark visual inspection
+as manual. Do not invent skills or claim completion without saved changes and
+successful validation.
+```

@@ -51,6 +51,9 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         user_message["images"] = [validate_image(image)]
     messages.append(user_message)
     settings = load_runtime(root)['settings']
+    if session.grants.get('frontend_workspace'):
+        settings = {**settings, 'timeout_seconds': max(settings['timeout_seconds'], 900),
+                    'max_output_tokens': min(max(settings['max_output_tokens'], 4096), settings['context_tokens'] // 2)}
     deadline = time.monotonic() + settings['timeout_seconds']
 
     def checkpoint(phase=None):
@@ -108,7 +111,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             if not session.tools:
                 answer = "No Python tools were approved for this message. No requested action was executed."
                 break
-            if len(session.events) + len(calls) > MAX_CALLS:
+            if len(session.events) + len(calls) > session.call_limit:
                 answer = "Python tool call limit reached. Further requested actions were not executed."
                 break
             messages.append({**message, "role": "assistant"})
@@ -121,7 +124,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
                 name = name if isinstance(name, str) else "unknown"
                 messages.append({"role": "tool", "tool_name": name,
                                  "content": json.dumps(result, ensure_ascii=True)})
-            available = session.tools if len(session.events) < MAX_CALLS else None
+            available = session.tools if len(session.events) < session.call_limit else None
             answer, reason, calls, message = infer(False, available)
             if calls and not available:
                 answer = "Python tool call limit reached. Further requested actions were not executed."

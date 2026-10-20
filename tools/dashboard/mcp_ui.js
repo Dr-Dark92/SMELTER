@@ -27,6 +27,7 @@ const SmelterMcp = (() => {
       if(grants.inventory_root)names.push('inventory_directory');
       if(grants.write_diagnostics)names.push('write_diagnostic_markdown');
       if(grants.rea_analysis)names.push('rea_capabilities','rea_inspect_pe_resources');
+      if(grants.frontend_workspace)names.push('frontend workspace tools (CSS, fixed tests, preview launch)');
       if(grants.model_ids?.length)names.push('inspect_model_attachment ('+grants.model_ids.length+' attachments)');
       const extra=selected.filter(x=>x.checkbox.checked).map(x=>x.server+'/'+x.name);
       approvals.textContent='Next-message built-in selection: '+(names.join(', ')||'none')+' · transport: '+(transport.checked?'MCP':'direct Python')+' · external MCP selection: '+(extra.join(', ')||'none');

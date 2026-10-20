@@ -152,6 +152,26 @@ class McpIntegrationTests(McpFixture, unittest.TestCase):
         self.assertTrue(Path(result['mcp_audit_path']).is_file())
         self.assertEqual(model_path(self.root, asset['id']).read_bytes(), raw)
 
+    def test_workspace_creation_read_and_edit_over_real_mcp(self):
+        from frontend_workspace import target_path
+        code = self.root / 'tools/dashboard/dashboard.py'
+        code.parent.mkdir(parents=True)
+        original = 'HTML = "<style>body{color:red}</style><script>const keep=true;</script>"\n'
+        code.write_text(original)
+        session = ToolSession(self.root, {'frontend_workspace': True, 'transport': 'mcp'})
+        def run(name, arguments):
+            result = session.execute({'function': {'name': name, 'arguments': arguments}})
+            self.assertNotEqual(result['status'], 'error', result)
+            return result
+        run('prepare_frontend_workspace', {})
+        css = run('read_frontend_file', {})
+        run('replace_frontend_css', {'expected_sha256': css['sha256'], 'old_text': 'color:red', 'new_text': 'color:blue'})
+        current = run('read_frontend_file', {})
+        self.assertIn('color:blue', current['text'])
+        self.assertEqual(code.read_text(), original)
+        self.assertTrue((target_path(self.root) / 'tools/dashboard/dashboard.py').is_file())
+        self.assertEqual(session.call_limit, 24)
+
     def test_generic_server_discovery_selection_and_chat_dispatch(self):
         fixture = self.base / 'fixture_server.py'
         fixture.write_text('''import json,sys
