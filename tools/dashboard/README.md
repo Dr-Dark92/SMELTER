@@ -365,3 +365,31 @@ a headless browser: titled chat creation, upload, embedded texture rendering,
 PNG download, reload/reopen, auto-rotation/pause and viewer release. The test
 used software rendering in the development environment, not the user's UHD
 770. The application reported no page errors after fixes.
+
+
+### Turntable video export
+
+A loaded GLB card now offers Export turntable (WebM). It renders 72 evenly
+spaced camera views, then records them at a 12 fps target into a 960×600
+WebM with a solid background. Rendering time depends on the browser/GPU;
+encoding aims for a six-second movie independently of slow frame rendering.
+Very slow encoding can still affect timing because MediaRecorder uses the
+browser clock. No server encoder, Qwen or additional npm dependency is used.
+
+The browser must support MediaRecorder, WebM, canvas.captureStream and manual
+video frame capture. Unsupported browsers keep PNG capture available. The
+button is disabled when initial feature detection fails; runtime codec/frame
+errors are displayed. Export requires a visible browser tab.
+
+Rendering frames and Encoding video have separate progress indicators. Cancel
+export stops without downloading a partial video. Releasing the preview or
+switching conversations also cancels. The original camera angle, controls and
+auto-rotate state are restored after export/failure/cancel when the viewer is
+still attached. The frame cache is limited to 128 MiB, bitmaps are closed after
+use, and capture tracks are stopped during cleanup.
+
+The actual Tabern sample was browser-tested for download, nonempty VP8 output,
+camera restoration, cancellation without download, and release during export.
+The revised sample measured approximately six seconds at 960×600 using
+ffprobe; rendering was verified from extracted video frames. These are
+development software-renderer results, not a benchmark of the user's GPU.

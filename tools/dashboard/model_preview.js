@@ -6,6 +6,7 @@ const SmelterModels = (() => {
   function clear() {
     epoch++;
     if (!active) return;
+    active.recording?.abort(); active.video.disabled = true; active.cancel.hidden = true;
     active.viewer.remove(); URL.revokeObjectURL(active.url);
     active.button.disabled = false; active.capture.disabled = true;
     active.spin.disabled = true; active.status.textContent = 'Preview released. Load again to inspect.';
@@ -23,6 +24,8 @@ const SmelterModels = (() => {
     const load = document.createElement('button'); load.textContent = 'Load 3D preview';
     const capture = document.createElement('button'); capture.textContent = 'Save PNG'; capture.disabled = true;
     const spin = document.createElement('button'); spin.textContent = 'Auto-rotate'; spin.disabled = true;
+    const video=document.createElement('button');video.textContent='Export turntable (WebM)';video.disabled=true;
+    const cancel=document.createElement('button');cancel.textContent='Cancel export';cancel.hidden=true;
     const release = document.createElement('button'); release.textContent = 'Release preview'; release.onclick = clear;
     load.onclick = async () => {
       clear(); load.disabled = true; status.textContent = 'Loading local viewer…';
@@ -43,11 +46,20 @@ const SmelterModels = (() => {
         viewer.setAttribute('shadow-intensity', '1'); viewer.setAttribute('exposure', '1');
         viewer.setAttribute('interaction-prompt', 'none'); viewer.setAttribute('alt', asset.filename + ' 3D preview');
         viewer.style.cssText = 'width:100%;height:420px;background:#26313e';
-        viewer.addEventListener('load', () => { capture.disabled = spin.disabled = false; status.textContent = 'Ready · drag to orbit · scroll to zoom · PNG captures this view'; });
-        viewer.addEventListener('error', () => { status.textContent = 'The browser could not render this model. Check WebGL support or model compatibility.'; capture.disabled = spin.disabled = true; load.disabled = false; });
-        stage.replaceChildren(viewer); active = {viewer, url, button: load, capture, spin, status};
+        viewer.addEventListener('load', () => { capture.disabled = spin.disabled = false; video.disabled=!SmelterTurntable.supported();video.title=video.disabled?'WebM recording unavailable in this browser':'72 frames · 960×600 · target six seconds; keep this tab visible'; status.textContent = 'Ready · drag to orbit · scroll to zoom · PNG captures this view'; });
+        viewer.addEventListener('error', () => { status.textContent = 'The browser could not render this model. Check WebGL support or model compatibility.'; capture.disabled = spin.disabled = video.disabled = true; load.disabled = false; });
+        stage.replaceChildren(viewer); active = {viewer, url, button: load, capture, spin, video, cancel, status};
         spin.textContent = 'Auto-rotate'; viewer.src = url;
         spin.onclick = () => { viewer.autoRotate = !viewer.autoRotate; spin.textContent = viewer.autoRotate ? 'Pause rotation' : 'Auto-rotate'; };
+        video.onclick = async () => {
+          if(!active||active.viewer!==viewer||active.recording)return;
+          const entry=active;entry.recording=new AbortController();video.disabled=capture.disabled=spin.disabled=true;cancel.hidden=false;
+          cancel.onclick=()=>{entry.recording?.abort();cancel.disabled=true;status.textContent='Cancelling video export…'};
+          try{const blob=await SmelterTurntable.record(viewer,entry.recording.signal,(percent,phase)=>{status.textContent=phase+': '+percent+'% · keep this tab visible'});
+            const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=asset.filename.replace(/\.glb$/i,'')+'-turntable.webm';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='Turntable WebM download requested. Viewing angle restored.';
+          }catch(error){status.textContent=error.name==='AbortError'?'Turntable export cancelled; no video downloaded.':'Video export failed: '+error.message;}
+          finally{entry.recording=null;cancel.hidden=true;cancel.disabled=false;if(active===entry){video.disabled=capture.disabled=spin.disabled=false;spin.textContent=viewer.autoRotate?'Pause rotation':'Auto-rotate'}}
+        };
         capture.onclick = async () => {
           capture.disabled = true;
           try {
@@ -65,7 +77,7 @@ const SmelterModels = (() => {
         load.disabled = false; status.textContent = error.message;
       }
     };
-    card.append(title, metadata, stage, load, spin, capture, release, status, evidence); parent.append(card);
+    card.append(title, metadata, stage, load, spin, capture, video, cancel, release, status, evidence); parent.append(card);
   }
   return {mount, clear};
 })();

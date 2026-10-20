@@ -122,7 +122,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
+<script src="/assets/turntable.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -512,6 +512,8 @@ def handler(token: str):
                 return self.reply(200, Path(__file__).with_name('chat_renderer.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/model-preview.js':
                 return self.reply(200, Path(__file__).with_name('model_preview.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/turntable.js':
+                return self.reply(200, Path(__file__).with_name('turntable.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/model-viewer.min.js':
                 try:
                     return self.reply(200, viewer_bundle(ROOT).read_bytes(), 'application/javascript')
