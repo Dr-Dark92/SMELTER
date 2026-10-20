@@ -34,7 +34,9 @@ class McpConfigurationTests(McpFixture, unittest.TestCase):
                 patch('tool_registry.execute_builtin', return_value=expected) as local:
             result = session.execute({'function':{'name':'launch_frontend_preview','arguments':{}}})
         self.assertEqual(result, expected)
-        local.assert_called_once_with(self.root, session.grants, 'launch_frontend_preview', {})
+        # Windows temp directories may use an 8.3 alias. ToolSession resolves
+        # its root, so compare the resolved path actually owned by the session.
+        local.assert_called_once_with(self.root.resolve(), session.grants, 'launch_frontend_preview', {})
         self.assertEqual(session.events[-1]['transport'], 'python')
         self.assertEqual(session.events[-1]['process_owner'], 'dashboard')
 
