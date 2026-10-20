@@ -320,3 +320,48 @@ node --test tools/dashboard/test_chat_renderer.js
 These tests cover code preservation and inert HTML/link content using an
 inert DOM fixture; they do not verify native browser clipboard behavior or
 visual layout.
+
+
+### GLB attachments, interactive preview and PNG capture
+
+Install the pinned local browser viewer once, from the checkout (Fish or
+PowerShell):
+
+```text
+npm install --prefix .smelter/tooling/model-viewer --save-exact --ignore-scripts @google/model-viewer@4.1.0
+```
+
+Create/select a chat, click Attach GLB, choose a file, then click Load 3D
+preview on its attachment card. Drag to orbit, scroll to zoom, use Auto-rotate
+to spin/pause, and Save PNG to download the current view. The PNG may have a
+transparent background. Release preview removes the active viewer. One
+preview is retained at a time; switching conversations releases it. Loading
+a preview requires browser WebGL support. Animated turntable export/GIF is
+not implemented; auto-rotation is interactive playback.
+
+GLB upload and rendering do not call Qwen, Blender or OpenCode. Only the
+filename marker enters subsequent AI history; the model does not receive GLB
+bytes or the rendered PNG automatically. The viewer bundle is served locally
+from its isolated installation, with no runtime CDN. CSP permits embedded
+images/blob resources and WebAssembly needed by the bundled viewer, while
+external model resource URIs and compressed-decoder extensions are rejected.
+
+Uploads are limited to 25 MiB, glTF 2.0 containers, bounded JSON metadata and
+embedded buffer/image resources. These are container/resource-policy checks,
+not a full geometry validator. Invalid renderable content may still fail in
+the browser; a failed load displays an error. Uploaded models are user data
+parsed by the browser, never executed as programs.
+
+Files are retained under .smelter/model-assets/<UUID>.glb; filename, hashes and
+metadata are stored against their chat message in an additive database table.
+Reloading/reopening the conversation restores the attachment card. Deleting
+the conversation removes its attachment records/access but preserves the
+original uploaded files on disk; no automatic cleanup is performed. Asset
+bytes require the dashboard authentication token. No uploaded sample model
+is bundled in the repository.
+
+The Tabern.glb user sample was exercised through the actual local web API and
+a headless browser: titled chat creation, upload, embedded texture rendering,
+PNG download, reload/reopen, auto-rotation/pause and viewer release. The test
+used software rendering in the development environment, not the user's UHD
+770. The application reported no page errors after fixes.

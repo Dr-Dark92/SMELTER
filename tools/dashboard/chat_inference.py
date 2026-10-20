@@ -24,7 +24,8 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         raise ValueError("Prompt must be 1–1800 characters")
     chat = read_chat(root, conversation_id)
     session = ToolSession(root, tool_permissions, conversation_id)
-    messages = [{"role":"system","content":"You are SMELTER's local assistant. " + session.context()}]
+    messages = [{"role":"system","content":"You are SMELTER's local assistant. " + session.context() +
+                 " 3D attachment markers in history are filenames only. GLB bytes are not sent to you; do not claim to inspect their geometry or rendered images."}]
     if not isinstance(auto_skills, bool):
         raise ValueError("Invalid automatic skill setting")
     active_skills = route_skills(root, prompt) if auto_skills and not skills else skills

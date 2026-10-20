@@ -40,6 +40,7 @@ from rea_connection import package_status as rea_package_status
 from chat_jobs import JOBS
 from skill_runtime import initialize as initialize_skills, monitor as skill_monitor, tools_status
 from runtime_settings import load_runtime, save_runtime
+from model_assets import attach_model, model_path, viewer_bundle, viewer_status
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -88,6 +89,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 .chat-dialog{background:#132237;color:#e7edfa;border:1px solid #597a9d;border-radius:14px;width:min(420px,calc(100vw - 60px));padding:24px}.chat-dialog::backdrop{background:#030a14b8}.chat-dialog h2{font-size:20px;margin-top:0}.chat-dialog label{display:block;font-size:13px}.chat-dialog input{box-sizing:border-box;width:100%;margin-top:9px;padding:12px;border:1px solid #597a9d;background:#0b111d;color:#e7edfa;border-radius:7px;font:inherit}.dialog-actions{display:flex;justify-content:flex-end;gap:10px}.dialog-error{min-height:20px;color:#ffadad;font-size:13px}
 
 .message-label{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.copy-button{background:#263f59;color:#cde3fa;padding:5px 9px;font-size:11px;border:1px solid #47617b;white-space:nowrap}.formatted-message{white-space:normal}.formatted-message p{color:inherit;white-space:pre-wrap;margin:9px 0}.formatted-message h3,.formatted-message h4,.formatted-message h5,.formatted-message h6{color:#eff6ff;margin:16px 0 8px}.formatted-message ul,.formatted-message ol{padding-left:24px;margin:9px 0}.formatted-message li{margin:5px 0;white-space:pre-wrap}.formatted-message blockquote{border-left:3px solid #638bac;padding-left:12px;margin:10px 0;color:#b6cce3}.formatted-message :not(pre)>code{background:#0b1624;border-radius:4px;padding:2px 5px;font-size:.9em;overflow-wrap:anywhere}.code-block{border:1px solid #3b526d;border-radius:8px;overflow:hidden;margin:12px 0;background:#09121f;min-width:0}.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1c2c40;padding:6px 10px;font:12px system-ui;color:#bcd2e7}.code-block pre{margin:0;padding:14px;overflow-x:auto;max-width:100%;white-space:pre;tab-size:4;font:12px/1.65 ui-monospace,monospace}.code-block pre code{background:none;padding:0;overflow-wrap:normal}.message-assistant{max-width:95%;width:fit-content}
+.model-card{border:1px solid #526e8b;border-radius:10px;padding:14px;margin-top:12px;min-width:0}.model-card h3{margin:0 0 8px;font-size:16px}.model-card p{font-size:12px;overflow-wrap:anywhere}.model-card button{font-size:12px;padding:8px;margin:4px}.model-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font-size:11px}.model-stage{width:100%;min-width:0}.message:has(.model-card){width:95%;max-width:95%}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -120,7 +122,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/chat-renderer.js"></script><script>
+<script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -181,7 +183,10 @@ function initShell(){
  finally{currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false}};
  window.resumeChatJob=resumeJob;
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
- composer.append(input,imageInput,send,stop);center.append(title,log,permissionsBox,requestStatus,composer);
+ const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
+ const attachModel=document.createElement('button');attachModel.type='button';attachModel.textContent='Attach GLB';attachModel.onclick=()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;modelFile.click()};
+ modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
+ composer.append(input,imageInput,modelFile,attachModel,send,stop);center.append(title,log,permissionsBox,requestStatus,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
@@ -196,7 +201,7 @@ function initShell(){
   const contents=document.createElement('div');contents.className='config-folder-items';
   for(const [i,label] of folder.items){
    const b=document.createElement('button');b.className='navbtn';b.textContent=label;
-   b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));nav.forEach(x=>x.classList.remove('active'));sectionFocus(section=i,button=b)};
+   b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));nav.forEach(x=>x.classList.remove('active'));sectionFocus(section,b)};
    const section=sections[i];
    contents.append(b,section);nav.push(b);
   }
@@ -212,7 +217,7 @@ function initShell(){
  const skillView=document.createElement('section');skillView.id='skillsOverview';skillView.hidden=true;center.append(skillView);
  const chatElements=[title,log,permissionsBox,requestStatus,composer];
  window.showChatWorkspace=()=>{skillView.hidden=true;chatElements.forEach(x=>x.hidden=false)};
- const showSkills=()=>{if(send.disabled){alert('Finish or stop the current chat request first');return}chatElements.forEach(x=>x.hidden=true);skillView.hidden=false;loadSkillsOverview()};
+ const showSkills=()=>{if(send.disabled){alert('Finish or stop the current chat request first');return}SmelterModels.clear();chatElements.forEach(x=>x.hidden=true);skillView.hidden=false;loadSkillsOverview()};
  const overviewButton=document.createElement('button');overviewButton.textContent='Skills & Tools';overviewButton.className='navbtn';overviewButton.onclick=showSkills;
  const integrations=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));if(integrations)integrations.querySelector('.config-folder-items').prepend(overviewButton);
  skillReview.onclick=showSkills;
@@ -422,7 +427,7 @@ function renderChatHistory(){
  for(const chat of matches){const row=document.createElement('div');row.className='history-row';row.dataset.chatId=chat.id;
  const open=document.createElement('button');open.className='chat-open';open.title=chat.title;const title=document.createElement('span');title.className='history-title';title.textContent=chat.title;const date=document.createElement('small');date.textContent=localTimestamp(chat.created_at);open.append(title,date);open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
  const rename=document.createElement('button');rename.className='chat-action';rename.textContent='✎';rename.title='Rename';rename.setAttribute('aria-label','Rename '+chat.title);rename.onclick=()=>editConversationTitle(chat);
- const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'” and its messages? Diagnostic files and audit logs remain on disk.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
+ const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'” and its messages? Diagnostic files, 3D uploads and audit logs remain on disk.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
  row.append(open,rename,del);history.append(row)}highlightChat();
 }
 async function refreshChats(){const data=await api('/api/chats');conversationHistory=data.conversations;renderChatHistory()}
@@ -441,8 +446,8 @@ function executionCards(execution){
  const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
 }
 async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
- for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);log.append(bubble);
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));SmelterModels.clear();if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+ for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
  }catch(e){alert(e.message)}
@@ -486,12 +491,12 @@ el('refresh').onclick=refresh;startup();
 def handler(token: str):
     class Handler(BaseHTTPRequestHandler):
         def reply(self, status, data, content_type="application/json"):
-            body = data.encode() if isinstance(data, str) else json.dumps(data).encode()
+            body = data if isinstance(data, bytes) else data.encode() if isinstance(data, str) else json.dumps(data).encode()
             self.send_response(status)
             self.send_header("Content-Type", content_type + "; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'")
+            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'unsafe-inline'; connect-src 'self' blob: data:; img-src 'self' blob: data:; worker-src 'self' blob:")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -505,8 +510,22 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if route == '/assets/chat-renderer.js':
                 return self.reply(200, Path(__file__).with_name('chat_renderer.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/model-preview.js':
+                return self.reply(200, Path(__file__).with_name('model_preview.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/model-viewer.min.js':
+                try:
+                    return self.reply(200, viewer_bundle(ROOT).read_bytes(), 'application/javascript')
+                except (OSError, ValueError) as e:
+                    return self.reply(404, {'error': str(e)})
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == '/api/models/status':
+                return self.reply(200, viewer_status(ROOT))
+            if route.startswith('/api/models/'):
+                try:
+                    return self.reply(200, model_path(ROOT, route.removeprefix('/api/models/')).read_bytes(), 'model/gltf-binary')
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {'error': str(e)})
             if route.startswith("/api/chat-jobs/"):
                 try:
                     return self.reply(200, JOBS.status(route.removeprefix("/api/chat-jobs/")))
@@ -615,15 +634,17 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
+            if route not in ("/api/models", "/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= (3 * 1024 * 1024 if route == "/api/chats" else 16384):
+                if not 0 < length <= (36 * 1024 * 1024 if route == "/api/models" else 3 * 1024 * 1024 if route == "/api/chats" else 16384):
                     raise ValueError("Invalid request size")
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == "/api/models":
+                    return self.reply(200, attach_model(ROOT, data))
                 if route == "/api/skills/collection-preview":
                     urls = data.get("urls")
                     if not isinstance(urls, list) or not 1 <= len(urls) <= 40:

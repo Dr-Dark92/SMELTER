@@ -48,9 +48,12 @@ def read_chat(root: Path, cid: str) -> dict:
         messages = conn.execute("SELECT id,role,content,created_at FROM messages WHERE conversation_id=? ORDER BY id LIMIT 1000", (cid,)).fetchall()
         has_execution = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone()
         evidence = dict(conn.execute("SELECT e.message_id,e.payload FROM message_execution e JOIN messages m ON m.id=e.message_id WHERE m.conversation_id=?", (cid,))) if has_execution else {}
+        has_models = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_attachments'").fetchone()
+        models = {mid: {'id': aid, 'filename': filename, **json.loads(metadata)} for mid, aid, filename, metadata in conn.execute('SELECT a.message_id,a.id,a.filename,a.metadata FROM model_attachments a JOIN messages m ON m.id=a.message_id WHERE m.conversation_id=?', (cid,))} if has_models else {}
     return {"id": cid, "title": row[0], "messages": [
         {"role": r, "content": c, "created_at": d,
-         "execution": json.loads(evidence[mid]) if mid in evidence else None}
+         "execution": json.loads(evidence[mid]) if mid in evidence else None,
+         "model_attachment": models.get(mid)}
         for mid,r,c,d in messages]}
 
 def add_note(root: Path, cid: str, content: str) -> dict:
@@ -76,6 +79,8 @@ def rename_chat(root: Path, cid: str, title: str) -> dict:
 def delete_chat(root: Path, cid: str) -> dict:
     cid = _id(cid)
     with closing(sqlite3.connect(_db(root))) as conn, conn:
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_attachments'").fetchone():
+            conn.execute('DELETE FROM model_attachments WHERE message_id IN (SELECT id FROM messages WHERE conversation_id=?)', (cid,))
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone():
             conn.execute("DELETE FROM message_execution WHERE message_id IN (SELECT id FROM messages WHERE conversation_id=?)", (cid,))
         conn.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
