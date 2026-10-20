@@ -26,7 +26,7 @@ def list_chats(root: Path) -> dict:
         rows = conn.execute("SELECT id,title,created_at FROM conversations ORDER BY created_at DESC, rowid DESC LIMIT 200").fetchall()
     return {"conversations": [{"id": i, "title": t, "created_at": d} for i,t,d in rows]}
 
-def create_chat(root: Path, title: str = "New chat") -> dict:
+def create_chat(root: Path, title: str = None) -> dict:
     if not isinstance(title, str) or not title.strip() or len(title) > 120:
         raise ValueError("Invalid title")
     cid = str(uuid.uuid4())
@@ -70,3 +70,4 @@ def delete_chat(root: Path, cid: str) -> dict:
         if not conn.execute("DELETE FROM conversations WHERE id=?", (cid,)).rowcount:
             raise ValueError("Conversation not found")
     return {"deleted": True}
+

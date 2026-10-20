@@ -20,10 +20,12 @@ class SystemStatusTests(unittest.TestCase):
         result = system_status(self.root)
         self.assertEqual(result["database"]["status"], "ready")
         self.assertTrue(result["database"]["path"].endswith("smelter.sqlite3"))
-    def test_no_fake_telemetry(self):
+    def test_telemetry_states_are_explicit(self):
         result = system_status(self.root)
         for field in ("cpu", "memory", "gpu"):
-            self.assertEqual(result[field]["status"], "not_instrumented")
+            self.assertIn(result[field]["status"], ("ready", "sampling", "unavailable"))
+        self.assertIsNone(result['gpu']['utilization_percent'])
 
 if __name__ == "__main__":
     unittest.main()
+

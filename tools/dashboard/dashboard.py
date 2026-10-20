@@ -61,7 +61,16 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 #sysfooter{flex:0 0 auto;box-sizing:border-box;max-height:76px;overflow:auto;overscroll-behavior:contain;flex-wrap:nowrap;white-space:nowrap;scrollbar-width:thin;background:#0b111d;position:relative;z-index:2}
 #bootstrap{overflow-y:auto;min-height:0}
 @media(max-width:850px){html,body{overflow:auto;height:auto}main{height:auto;min-height:100dvh;overflow:visible}#shell{display:flex;flex-direction:column;overflow:visible}#leftbar,#workspace,#rightbar{height:auto;max-height:45dvh;min-height:180px;overflow-y:auto}#workspace{min-height:360px;max-height:65dvh}#sysfooter{max-height:76px}}
-.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
+.config-folder{border:1px solid #30445e;border-radius:9px;margin:9px 0;background:#111b2b}.config-folder>summary{cursor:pointer;padding:12px;font-weight:650;user-select:none;list-style-position:inside}.config-folder[open]>summary{border-bottom:1px solid #30445e}.config-folder-items{padding:7px}.config-folder-items .navbtn{font-size:13px;padding:9px 11px}.config-folder-items .panel{margin:8px 0}.config-folder-items .navbtn:disabled{opacity:.5;cursor:not-allowed}
+#chatlog{display:flex;flex-direction:column;gap:16px;padding:12px 6px;margin-bottom:12px;white-space:normal}
+.message{box-sizing:border-box;max-width:90%;padding:14px 18px;border:1px solid #30445e;border-radius:16px;background:#18263b;flex-shrink:0;min-width:0;color:#e7edfa}
+.message-user{align-self:flex-end;background:#173c65;border-color:#4075a5;border-bottom-right-radius:4px}
+.message-assistant{align-self:flex-start;border-bottom-left-radius:4px}
+.message-label{font-size:12px;font-weight:700;color:#adcaec;margin-bottom:9px}
+.message-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
+#composer{flex-shrink:0}#pythonTools{flex-shrink:0;max-height:35%;overflow:auto}
+@media(max-width:850px){.message{max-width:97%}}
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -104,10 +113,10 @@ function initShell(){
  const center=document.createElement('section');center.id='workspace';
  const right=document.createElement('aside');right.id='rightbar';
  left.innerHTML='<h2>Chat history</h2>';
- const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=async()=>{try{const chat=await api('/api/chats','POST',{action:'create'});activeChat=chat.id;await refreshChats();await openChat(chat.id)}catch(e){alert(e.message)}};
+ const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=async()=>{const title=prompt('Conversation title (required, up to 120 characters)');if(title===null)return;if(!title.trim()||title.length>120){alert('Enter a title between 1 and 120 characters');return}try{const chat=await api('/api/chats','POST',{action:'create',title:title.trim()});activeChat=chat.id;await refreshChats();await openChat(chat.id)}catch(e){alert(e.message)}};
  const history=document.createElement('div');history.id='chatHistory';left.append(newChat,history);
- const title=document.createElement('h2');title.textContent='SMELTER · Local chat';
- const log=document.createElement('div');log.id='chatlog';log.style.whiteSpace='pre-wrap';log.style.overflowWrap='anywhere';log.textContent='Select New chat. Python tools require permission for each message.';
+ const title=document.createElement('h2');title.id='chatTitle';title.textContent='SMELTER · Local chat';
+ const log=document.createElement('div');log.id='chatlog';log.setAttribute('role','log');log.setAttribute('aria-label','Conversation messages');log.textContent='Select New chat. Python tools require permission for each message.';
  const permissionsBox=document.createElement('details');permissionsBox.id='pythonTools';
  const permissionsTitle=document.createElement('summary');permissionsTitle.textContent='Python tools for the next message';
  const readFolder=document.createElement('input');readFolder.id='inventoryRoot';readFolder.placeholder='Absolute folder to inventory';readFolder.style.width='95%';
@@ -289,12 +298,21 @@ function initShell(){
  const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
  if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
 }
+let systemStatusBusy=false;
 async function refreshSystem(){
+ if(systemStatusBusy||document.hidden)return;systemStatusBusy=true;
  try{const s=await api('/api/system/status');const gb=n=>(n/1073741824).toFixed(1)+' GiB';
-  document.getElementById('sysfooter').textContent='CPU: pending · RAM: pending · GPU: pending · Disk free: '+gb(s.storage.free_bytes)+' / '+gb(s.storage.total_bytes)+' · DB: '+s.database.status;
-  document.getElementById('systemStatusPanel').textContent='Database: '+s.database.status+'\\nLocation: '+(s.database.path||'not selected')+'\\nDisk: '+gb(s.storage.free_bytes)+' free / '+gb(s.storage.total_bytes)+' total\\nDashboard: running\\nOllama: inspect via AI & Models\\nOpenCode: not started\\nCPU/RAM/GPU: instrumentation pending';
+  const cpu=s.cpu.status==='ready'?s.cpu.percent+'%':s.cpu.status;
+  const ram=s.memory.status==='ready'?gb(s.memory.used_bytes)+' / '+gb(s.memory.total_bytes)+' ('+gb(s.memory.available_bytes)+' available)':s.memory.status;
+  const gpu=s.gpu.status==='ready'?gb(s.gpu.allocated_bytes)+' model allocation':'unavailable';
+  const models=s.models.status==='ready'?(s.models.models.map(m=>m.name).join(', ')||'no model loaded'):'Ollama unavailable';
+  const summary='CPU: '+cpu+' · RAM: '+ram+' · GPU: '+gpu+' · AI: '+models+' · Disk free: '+gb(s.storage.free_bytes)+' · DB: '+s.database.status;
+  const footer=document.getElementById('sysfooter');footer.textContent=summary;footer.title='Live host metrics. GPU means Ollama-reported model allocation, not utilization; iGPU memory is shared with RAM. Updated '+new Date(s.timestamp*1000).toLocaleTimeString();
+  document.getElementById('systemStatusPanel').textContent=summary+' · Database: '+(s.database.path||'not selected');
  }catch(e){document.getElementById('sysfooter').textContent='System status unavailable: '+e.message}
+ finally{systemStatusBusy=false}
 }
+setInterval(()=>{if(document.getElementById('sysfooter')&&!document.getElementById('sysfooter').hidden)refreshSystem()},5000);
 async function refreshChats(){
  const data=await api('/api/chats');const history=document.getElementById('chatHistory');history.replaceChildren();
  for(const chat of data.conversations){
@@ -306,7 +324,7 @@ async function refreshChats(){
  }
 }
 async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();for(const msg of chat.messages){const p=document.createElement('p');p.textContent=msg.content;log.append(p)}if(!chat.messages.length)log.textContent='No notes yet.'}catch(e){alert(e.message)}
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER':'System';label.textContent=speaker+' · '+msg.created_at;const body=document.createElement('div');body.className='message-content';body.textContent=msg.content;bubble.append(label,body);log.append(bubble)}if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight}catch(e){alert(e.message)}
 }
 initShell();
 const token=new URLSearchParams(location.hash.slice(1)).get('token');
@@ -497,7 +515,7 @@ def handler(token: str):
                         if action == "ask":
                             result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"), skills=data.get("skills"), auto_skills=data.get("auto_skills", False), tool_permissions=data.get("tool_permissions"))
                         elif action == "create":
-                            result = create_chat(ROOT, data.get("title", "New chat"))
+                            result = create_chat(ROOT, data.get("title"))
                         elif action == "note":
                             result = add_note(ROOT, data.get("id"), data.get("content"))
                         elif action == "rename":

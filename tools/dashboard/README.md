@@ -126,3 +126,25 @@ local runtime/cache files. No providers are installed or configured by chat.
 This adapter does not expose native decompilers, arbitrary REA commands,
 `.oppc` extraction, or Blender. Those need separately verified adapters and
 dependencies. Installed skill instructions alone do not supply these tools.
+
+
+### Chat layout and live footer
+
+New conversations require a nonblank title of at most 120 characters, enforced
+in the UI and create API. Existing conversations remain available. User and
+assistant messages have distinct alignment, backgrounds, speaker labels and
+stored timestamps; content is inserted as text rather than HTML. The message
+list scrolls independently inside the workspace.
+
+The footer polls every five seconds while the page is visible, without
+overlapping requests. CPU percentage is sampled from host counter differences;
+the first sample says sampling. RAM displays total minus available and shows
+available bytes, rather than treating cache as permanently occupied. Linux
+uses /proc; Windows uses native system APIs. Other unsupported hosts display
+unavailable. Disk free space refers to the checkout filesystem.
+
+GPU means model allocation reported by local Ollama /api/ps, not GPU activity
+or all applications' graphics memory. Integrated GPU allocation shares RAM.
+An absent Ollama service displays unavailable; an empty model list means no
+model loaded. Status polling never loads a model or starts a process. These
+figures describe the host and Ollama, not per-process SMELTER resource usage.

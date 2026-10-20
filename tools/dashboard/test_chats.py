@@ -28,9 +28,16 @@ class ChatPersistenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             add_note(self.root, "11111111-1111-4111-8111-111111111111", "hi")
     def test_note_size_limit(self):
-        cid = create_chat(self.root)["id"]
+        cid = create_chat(self.root, "Size test")["id"]
         with self.assertRaises(ValueError):
             add_note(self.root, cid, "x"*1801)
 
+    def test_title_required(self):
+        for title in (None, '', '   ', 'x' * 121):
+            with self.assertRaises(ValueError):
+                create_chat(self.root, title)
+        self.assertEqual(list_chats(self.root)['conversations'], [])
+
 if __name__ == "__main__":
     unittest.main()
+
