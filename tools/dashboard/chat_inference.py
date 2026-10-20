@@ -10,13 +10,16 @@ from skill_router import route_skills
 from contextlib import closing
 import sqlite3
 import time
+import os
+from contextlib import nullcontext
+from chat_jobs import ChatCancelled
 from python_tools import ToolSession, MAX_CALLS, REA_SKILL_ID
 
 ENDPOINT = "http://127.0.0.1:11434/api/chat"
 MODEL = "qwen3.5:9b"
 MAX_RESPONSE = 128 * 1024
 
-def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, auto_skills=False, tool_permissions=None):
+def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, auto_skills=False, tool_permissions=None, control=None):
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
         raise ValueError("Prompt must be 1–1800 characters")
     chat = read_chat(root, conversation_id)
@@ -48,14 +51,21 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     messages.append(user_message)
     deadline = time.monotonic() + 180
 
+    def checkpoint(phase=None):
+        if control:
+            control.update(phase) if phase else control.check()
+
     def infer(thinking, available_tools=None):
+        checkpoint("Waiting for model")
         request_messages = [dict(message) for message in messages]
         if not thinking:
             request_messages[0]["content"] += " Respond directly and concisely."
         body = {"model": MODEL, "messages": request_messages, "stream": False,
                 "think": thinking, "options": {"num_predict": 2048}}
         if skill_text or session.tools:
-            body["options"]["num_ctx"] = 32768
+            body["options"]["num_ctx"] = int(os.environ.get("SMELTER_CONTEXT_LENGTH", "32768"))
+            if not 2048 <= body["options"]["num_ctx"] <= 131072:
+                raise ValueError("SMELTER_CONTEXT_LENGTH must be between 2048 and 131072")
         if available_tools:
             body["tools"] = available_tools
         payload = json.dumps(body).encode()
@@ -65,8 +75,12 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise ValueError("Chat turn time limit reached")
-            with opener(request, timeout=max(1, min(180, remaining))) as response:
-                raw = response.read(MAX_RESPONSE + 1)
+            if control:
+                raw = control.infer(body, max(1, min(180, remaining)), 2 * 1024 * 1024)
+            else:
+                with opener(request, timeout=max(1, min(180, remaining))) as response:
+                    raw = response.read(MAX_RESPONSE + 1)
+            checkpoint()
         except (URLError, HTTPError, TimeoutError, OSError) as exc:
             raise ValueError("Local Ollama unavailable: " + type(exc).__name__) from exc
         if len(raw) > MAX_RESPONSE:
@@ -100,7 +114,9 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
                 break
             messages.append({**message, "role": "assistant"})
             for call in calls:
+                checkpoint("Running tool; Stop prevents subsequent actions")
                 result = session.execute(call)
+                checkpoint()
                 function = call.get("function") if isinstance(call, dict) else None
                 name = function.get("name") if isinstance(function, dict) else None
                 name = name if isinstance(name, str) else "unknown"
@@ -117,24 +133,34 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
                 answer = "No final answer was produced; additional tool calls were not executed."
             elif not answer.strip():
                 raise ValueError("Qwen returned no final answer (first: %s; retry: %s). Check Ollama logs and model memory." % (reason, retry_reason))
+    except ChatCancelled:
+        answer = "Request stopped. Completed tool actions remain recorded below."
     except (ValueError, OSError) as exc:
-        if not session.events:
+        if control and control.cancelled.is_set():
+            answer = "Request stopped. Completed tool actions remain recorded below."
+        elif not session.events:
             raise
         # Keep durable receipts visible even when model follow-up fails after a write.
-        answer = "Model follow-up failed: " + str(exc) + ". See the actual tool receipts below."
+        else:
+            answer = "Model follow-up failed: " + str(exc) + ". See the actual tool receipts below."
     receipt = session.receipt()
     if receipt and len(answer) + len(receipt) > 64000:
         answer = answer[:max(0, 64000 - len(receipt) - 32)] + "\n[Model response truncated]"
     answer += receipt
     if len(answer) > 64000:
         raise ValueError("Model answer exceeds 64000 characters")
-    # Store the prompt and answer atomically, only after inference succeeds.
-    with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
-        conn.execute("PRAGMA foreign_keys=ON")
-        if conn.execute("SELECT 1 FROM conversations WHERE id=?", (conversation_id,)).fetchone() is None:
-            raise ValueError("Conversation no longer exists")
-        conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
-        conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer))
+    # Serialize cancellation against final persistence. Preserve tool receipts.
+    with control.lock if control else nullcontext():
+        if control and control.cancelled.is_set():
+            answer = "Request stopped. Completed tool actions remain recorded below." + receipt
+        with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
+            conn.execute("PRAGMA foreign_keys=ON")
+            if conn.execute("SELECT 1 FROM conversations WHERE id=?", (conversation_id,)).fetchone() is None:
+                raise ValueError("Conversation no longer exists")
+            conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
+            conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer))
+        if control:
+            control.completed = True
     return {"reply":answer,"model":MODEL,"stored":True,
             "tools_executed":any(event["executed"] for event in session.events),
             "tool_events":session.events,"tool_audit_path":str(session.audit_path) if session.audit_path else None,

@@ -148,3 +148,40 @@ or all applications' graphics memory. Integrated GPU allocation shares RAM.
 An absent Ollama service displays unavailable; an empty model list means no
 model loaded. Status polling never loads a model or starts a process. These
 figures describe the host and Ollama, not per-process SMELTER resource usage.
+
+
+### Composer, request jobs and Stop
+
+The multiline composer sends on Enter, inserts a newline on Shift+Enter, and
+respects input-method composition. Submitted user text appears immediately.
+The controller reports waiting, thinking, generating, or running a tool, with
+elapsed time. These are backend states; model prose cannot set them. Replies
+are still displayed after completion, rather than token-by-token in the chat.
+
+The web interface submits a background chat job and polls its status once per
+second. One job runs at a time. Normal resource/status requests no longer wait
+for the chat's shared configuration lock. Duplicate sends and conversation
+switch/delete actions are disabled in the sending tab while it is running.
+The current job ID is retained in sessionStorage so a reload can reconnect.
+Job metadata is bounded to 50 records and is not persisted across server
+restarts. A network status failure offers Stop/reload guidance rather than
+claiming that the inference stopped.
+
+Stop closes that request's local Ollama TCP connection and checks cancellation
+before each later inference/tool action. It does not unload the model or stop
+other Ollama clients. A tool operation already underway is allowed to finish;
+its actual audit/receipt is preserved, and subsequent tools are skipped.
+Cancelled turns retain the prompt and a stopped message with any tool receipts.
+This mechanism was tested against a local streaming HTTP fixture, not live
+Qwen. Windows and actual Ollama cancellation still need workstation validation.
+
+For a smaller office context, launch from Fish with:
+
+```fish
+env SMELTER_CONTEXT_LENGTH=16384 python tools/dashboard/dashboard.py
+```
+
+The setting applies to skill/tool chats, defaults to 32768, and accepts values
+from 2048 through 131072. It is local to the launched process and does not
+change the home workstation's configuration. Existing synchronous ask clients
+remain compatible; the web interface uses the new start/status/stop API.

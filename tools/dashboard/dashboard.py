@@ -37,6 +37,7 @@ from github_skill_discovery import discover_github_skill, discover_github_reposi
 from skill_collections import install_collection
 from aero_classifier import classify_task
 from rea_connection import package_status as rea_package_status
+from chat_jobs import JOBS
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -68,7 +69,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 .message-assistant{align-self:flex-start;border-bottom-left-radius:4px}
 .message-label{font-size:12px;font-weight:700;color:#adcaec;margin-bottom:9px}
 .message-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
-#composer{flex-shrink:0}#pythonTools{flex-shrink:0;max-height:35%;overflow:auto}
+#chatinput{resize:vertical;min-height:64px;max-height:180px;font:inherit;box-sizing:border-box}#requestStatus{flex-shrink:0;font-size:12px;margin:6px 0;min-height:18px}#composer{flex-shrink:0;align-items:flex-end;flex-wrap:wrap}#pythonTools{flex-shrink:0;max-height:35%;overflow:auto}
 @media(max-width:850px){.message{max-width:97%}}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
@@ -132,16 +133,36 @@ function initShell(){
  const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. No scripts, shell commands or extraction. Tool results are logged locally.';
  permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
- const input=document.createElement('input');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
+ const input=document.createElement('textarea');input.rows=3;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  const send=document.createElement('button');send.textContent='Send to Qwen';
- send.onclick=async()=>{if(!activeChat){alert('Create or select a conversation first');return}if(send.disabled)return;send.disabled=true;
+ const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · Enter to send · Shift+Enter for a new line';
+ const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;
+ let currentJob=null;
+ const renderPending=(content)=>{const bubble=document.createElement('article');bubble.className='message message-user';const header=document.createElement('header');header.className='message-label';header.textContent='You · submitting';const body=document.createElement('div');body.className='message-content';body.textContent=content;bubble.append(header,body);log.append(bubble);log.scrollTop=log.scrollHeight;return header};
+ stop.onclick=async()=>{if(!currentJob)return;stop.disabled=true;try{const job=await api('/api/chats','POST',{action:'stop',job_id:currentJob});requestStatus.textContent=job.phase}catch(e){requestStatus.textContent='Could not stop: '+e.message;stop.disabled=false}};
+ input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
+ send.onclick=async()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
+ const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
  const toolPermissions={inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
  readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;
+ requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- await api('/api/chats','POST',{action:'ask',id:activeChat,content:input.value,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});input.value='';imageInput.value='';await openChat(activeChat)}catch(e){alert(e.message)}finally{send.disabled=false}};
+ let job=await api('/api/chats','POST',{action:'start',id:conversation,content,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;pending.textContent='You · sent';input.value='';imageInput.value='';
+ try{sessionStorage.setItem('smelterActiveJob',JSON.stringify({id:job.id,conversation}))}catch(e){}
+ while(job.state==='running'){requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}
+ currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}
+ requestStatus.textContent=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':'Request failed: '+job.error;
+ if(activeChat===conversation)await openChat(conversation);await refreshChats();
+ }catch(e){pending.textContent='You · submission/status error';requestStatus.textContent=e.message+(currentJob?' · Request may still be running. Use Stop or reload to reconnect.':'');}
+ finally{if(!currentJob){stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;input.focus()}}};
+ const resumeJob=async()=>{let saved;try{saved=JSON.parse(sessionStorage.getItem('smelterActiveJob')||'null')}catch(e){return}if(!saved)return;currentJob=saved.id;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;stop.disabled=false;
+ try{let job;do{job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob));requestStatus.textContent=job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':job.state==='error'?'Request failed: '+job.error:job.state;if(job.state==='running')await new Promise(resolve=>setTimeout(resolve,1000))}while(job.state==='running');await openChat(saved.conversation);await refreshChats();}
+ catch(e){requestStatus.textContent=e.message}
+ finally{currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false}};
+ window.resumeChatJob=resumeJob;
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
- composer.append(input,imageInput,send);center.append(title,log,permissionsBox,composer);
+ composer.append(input,imageInput,send,stop);center.append(title,log,permissionsBox,requestStatus,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
@@ -317,9 +338,9 @@ async function refreshChats(){
  const data=await api('/api/chats');const history=document.getElementById('chatHistory');history.replaceChildren();
  for(const chat of data.conversations){
   const row=document.createElement('div');row.className='ext';
-  const open=document.createElement('button');open.textContent=chat.title;open.onclick=()=>openChat(chat.id);
+  const open=document.createElement('button');open.textContent=chat.title;open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
   const rename=document.createElement('button');rename.textContent='✎';rename.title='Rename';rename.onclick=async()=>{const title=prompt('Rename conversation',chat.title);if(title===null)return;try{await api('/api/chats','POST',{action:'rename',id:chat.id,title});await refreshChats()}catch(e){alert(e.message)}};
-  const del=document.createElement('button');del.textContent='×';del.title='Delete';del.onclick=async()=>{if(!confirm('Delete this conversation and its notes?'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatlog').textContent='Conversation deleted'}await refreshChats()}catch(e){alert(e.message)}};
+  const del=document.createElement('button');del.textContent='×';del.title='Delete';del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete this conversation and its notes?'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatlog').textContent='Conversation deleted'}await refreshChats()}catch(e){alert(e.message)}};
   row.append(open,rename,del);history.append(row);
  }
 }
@@ -351,7 +372,7 @@ async function startup(){
  try{
   const db=await api('/api/startup');
   el('dbstatus').textContent=JSON.stringify(db,null,2);
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem()}
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem();if(window.resumeChatJob)window.resumeChatJob()}
  }catch(e){el('dbstatus').textContent=e.message}
 }
 el('dbselect').onclick=async()=>{
@@ -384,6 +405,11 @@ def handler(token: str):
                 return self.reply(200, HTML, "text/html")
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route.startswith("/api/chat-jobs/"):
+                try:
+                    return self.reply(200, JOBS.status(route.removeprefix("/api/chat-jobs/")))
+                except ValueError as e:
+                    return self.reply(400, {"error": str(e)})
             if route == "/api/skills":
                 try:
                     return self.reply(200, catalog_skills(ROOT))
@@ -510,6 +536,10 @@ def handler(token: str):
                 if route == "/api/aero/classify":
                     return self.reply(200, classify_task(data.get("task")))
                 if route == "/api/chats":
+                    if data.get("action") == "start":
+                        return self.reply(202, JOBS.start(ROOT, data))
+                    if data.get("action") == "stop":
+                        return self.reply(200, JOBS.cancel(data.get("job_id")))
                     with STATE_LOCK:
                         action = data.get("action")
                         if action == "ask":
