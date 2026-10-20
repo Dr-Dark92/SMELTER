@@ -294,3 +294,29 @@ explains that diagnostic files and audit logs remain on disk.
 Message and history timestamps are displayed in the browser's local timezone.
 SQLite timestamps remain unchanged. Dialog focus is initially placed in the
 title field; the browser provides modal keyboard focus containment.
+
+
+### Technical response formatting
+
+Assistant responses support a deliberately small Markdown subset: fenced code
+blocks (backticks or tildes), headings, flat ordered/unordered lists, quotes,
+bold text and inline code. Code blocks retain indentation and scroll
+horizontally. Each block has Copy code; the response header has Copy response,
+which copies the model text rather than controller cards. Clipboard permission
+failures show manual-copy guidance.
+
+The renderer creates only fixed DOM elements and text nodes. Raw HTML and
+Markdown links remain literal text, with no images, external requests, link
+activation, syntax highlighter or HTML interpretation. It is not a complete
+Markdown implementation; tables and nested formatting are currently literal.
+The browser loads the fixed local /assets/chat-renderer.js script.
+
+Renderer tests require no npm dependencies:
+
+```fish
+node --test tools/dashboard/test_chat_renderer.js
+```
+
+These tests cover code preservation and inert HTML/link content using an
+inert DOM fixture; they do not verify native browser clipboard behavior or
+visual layout.

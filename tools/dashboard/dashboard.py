@@ -86,6 +86,8 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 #chatSearch{box-sizing:border-box;width:100%;padding:10px;margin-top:10px;background:#0b111d;border:1px solid #49607d;border-radius:7px;color:#e7edfa}.history-count{font-size:11px;margin:10px 0}
 .history-row{display:grid;grid-template-columns:minmax(0,1fr) 28px 28px;align-items:center;gap:3px;border:1px solid transparent;border-radius:9px;padding:4px;margin:5px 0}.history-row.selected{border-color:#5d8ec4;background:#1a3550}#leftbar .history-row .chat-open{min-width:0;width:100%;padding:9px 5px;background:transparent;margin:0}.history-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.chat-open small{display:block;font-size:10px;margin-top:5px;color:#aabbd4}#leftbar .history-row .chat-action{width:28px;height:30px;padding:3px;margin:0;text-align:center;background:#203249}
 .chat-dialog{background:#132237;color:#e7edfa;border:1px solid #597a9d;border-radius:14px;width:min(420px,calc(100vw - 60px));padding:24px}.chat-dialog::backdrop{background:#030a14b8}.chat-dialog h2{font-size:20px;margin-top:0}.chat-dialog label{display:block;font-size:13px}.chat-dialog input{box-sizing:border-box;width:100%;margin-top:9px;padding:12px;border:1px solid #597a9d;background:#0b111d;color:#e7edfa;border-radius:7px;font:inherit}.dialog-actions{display:flex;justify-content:flex-end;gap:10px}.dialog-error{min-height:20px;color:#ffadad;font-size:13px}
+
+.message-label{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.copy-button{background:#263f59;color:#cde3fa;padding:5px 9px;font-size:11px;border:1px solid #47617b;white-space:nowrap}.formatted-message{white-space:normal}.formatted-message p{color:inherit;white-space:pre-wrap;margin:9px 0}.formatted-message h3,.formatted-message h4,.formatted-message h5,.formatted-message h6{color:#eff6ff;margin:16px 0 8px}.formatted-message ul,.formatted-message ol{padding-left:24px;margin:9px 0}.formatted-message li{margin:5px 0;white-space:pre-wrap}.formatted-message blockquote{border-left:3px solid #638bac;padding-left:12px;margin:10px 0;color:#b6cce3}.formatted-message :not(pre)>code{background:#0b1624;border-radius:4px;padding:2px 5px;font-size:.9em;overflow-wrap:anywhere}.code-block{border:1px solid #3b526d;border-radius:8px;overflow:hidden;margin:12px 0;background:#09121f;min-width:0}.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1c2c40;padding:6px 10px;font:12px system-ui;color:#bcd2e7}.code-block pre{margin:0;padding:14px;overflow-x:auto;max-width:100%;white-space:pre;tab-size:4;font:12px/1.65 ui-monospace,monospace}.code-block pre code{background:none;padding:0;overflow-wrap:normal}.message-assistant{max-width:95%;width:fit-content}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -118,7 +120,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script>
+<script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -440,7 +442,7 @@ function executionCards(execution){
 }
 async function openChat(id){
  try{const chat=await api('/api/chats/'+encodeURIComponent(id));if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
- for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';body.textContent=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;bubble.append(label,body);log.append(bubble);
+ for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
  }catch(e){alert(e.message)}
@@ -489,7 +491,7 @@ def handler(token: str):
             self.send_header("Content-Type", content_type + "; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'")
+            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -501,6 +503,8 @@ def handler(token: str):
             route = urlsplit(self.path).path
             if route == "/":
                 return self.reply(200, HTML, "text/html")
+            if route == '/assets/chat-renderer.js':
+                return self.reply(200, Path(__file__).with_name('chat_renderer.js').read_text(encoding='utf-8'), 'application/javascript')
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             if route.startswith("/api/chat-jobs/"):
