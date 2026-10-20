@@ -262,6 +262,8 @@ class ToolSession:
             if sdk_status()['status'] != 'installed':
                 raise ValueError('Optional MCP dependency is missing or incompatible; check MCP Connections')
         self.events = []
+        from file_activity import FileActivity
+        self.file_activity = FileActivity(self.root, self.grants.get('frontend_workspace') is True)
         self.cache = {}
         self.run_id = str(uuid4())
         self.conversation_id = conversation_id
@@ -336,6 +338,7 @@ class ToolSession:
                 raise ValueError("Tool not approved for this message")
             if not isinstance(arguments, dict):
                 raise ValueError("Tool arguments must be a JSON object")
+            self.file_activity.begin(call)
             key = json.dumps([name, arguments], sort_keys=True)
             cacheable = name not in {'frontend_workspace_info', 'read_frontend_file', 'validate_frontend_workspace'}
             if cacheable and key in self.cache:
@@ -355,6 +358,7 @@ class ToolSession:
         except (ValueError, OSError, UnicodeError) as exc:
             result = {"status": "error", "error": str(exc)}
         event["result"] = result
+        self.file_activity.finish(call, result)
         self.events.append(event)
         with audit.open("a", encoding="utf-8", newline="\n") as out:
             out.write(json.dumps({**event, "phase": "result"}, ensure_ascii=True) + "\n")

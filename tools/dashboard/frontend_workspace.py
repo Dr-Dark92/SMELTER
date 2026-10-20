@@ -290,7 +290,7 @@ def validate(root, arguments):
     commands = [[sys.executable, '-m', 'unittest', 'discover', '-s', 'tools/dashboard', '-p', 'test_*.py']]
     node = shutil.which('node')
     if node:
-        commands.append([node, '--test', 'tools/dashboard/test_chat_renderer.js', 'tools/dashboard/test_session_auth.js'])
+        commands.append([node, '--test', 'tools/dashboard/test_chat_renderer.js', 'tools/dashboard/test_session_auth.js', 'tools/dashboard/test_file_activity.js'])
     checks = []
     folder = _plain_path(target / '.smelter/frontend-validation')
     folder.mkdir(exist_ok=True)

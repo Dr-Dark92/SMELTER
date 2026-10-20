@@ -24,6 +24,8 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         raise ValueError("Prompt must be 1–1800 characters")
     chat = read_chat(root, conversation_id)
     session = ToolSession(root, tool_permissions, conversation_id)
+    if control:
+        control.file_activity = session.file_activity
     messages = [{"role":"system","content":"You are SMELTER's local assistant. " + session.context() +
                  " 3D attachment markers in history are filenames only. GLB bytes and rendered images are not sent to you. Only an actual approved inspect_model_attachment tool result establishes GLB metadata; do not claim visual inspection."}]
     if not isinstance(auto_skills, bool):
@@ -146,6 +148,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         else:
             answer = "Model follow-up failed: " + str(exc) + ". See the actual tool receipts below."
     receipt = session.receipt()
+    session.file_activity.settle(bool(control and control.cancelled.is_set()))
     if receipt and len(answer) + len(receipt) > 64000:
         answer = answer[:max(0, 64000 - len(receipt) - 32)] + "\n[Model response truncated]"
     answer += receipt
@@ -164,6 +167,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             conn.execute(EXECUTION_SCHEMA)
             execution = {'source': 'controller', 'permissions': {**session.grants, 'transport': session.transport, 'mcp_tools': list(session.external_tools)},
                          'events': session.events, 'audit_path': str(session.audit_path) if session.audit_path else None,
+                         'files': session.file_activity.snapshot(),
                          'cancelled': bool(control and control.cancelled.is_set()),
                          'model_text': answer[:-len(receipt)] if receipt else answer}
             conn.execute("INSERT INTO message_execution(message_id,payload) VALUES(?,?)", (message_id,json.dumps(execution)))

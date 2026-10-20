@@ -56,6 +56,7 @@ class Control:
         self.sock = None
         self.phase = 'Waiting for model'
         self.completed = False
+        self.file_activity = None
 
     def check(self):
         if self.cancelled.is_set():
@@ -133,6 +134,9 @@ class Control:
                 if not isinstance(new_calls, list):
                     raise ValueError('Invalid Ollama tool calls')
                 calls.extend(new_calls)
+                if self.file_activity is not None:
+                    for call in new_calls:
+                        self.file_activity.propose(call)
                 if len(calls) > 4:
                     raise ValueError('Excessive Ollama tool calls')
                 if part.get('done'):
@@ -185,6 +189,8 @@ class Jobs:
             state, error = 'cancelled', None
         except Exception as exc:
             state, error = ('cancelled', None) if control.cancelled.is_set() else ('error', str(exc)[:1000])
+        if control.file_activity is not None:
+            control.file_activity.settle(state == 'cancelled')
         with self.lock:
             job.update(state=state, error=error, ended=time.monotonic())
 
@@ -195,6 +201,7 @@ class Jobs:
             job = self.jobs[jid]
             return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error')} | {
                 'phase': job['control'].phase,
+                'files': job['control'].file_activity.snapshot() if job['control'].file_activity is not None else [],
                 'elapsed_seconds': round(job.get('ended', time.monotonic()) - job['started'], 1)}
 
     def cancel(self, jid):
