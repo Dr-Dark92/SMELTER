@@ -347,7 +347,15 @@ class ToolSession:
             else:
                 event['transport'] = 'mcp' if name in self.external_tools else self.transport
                 event['executed'] = True
-                if name in self.external_tools or self.transport == 'mcp':
+                if name == 'launch_frontend_preview' and name not in self.external_tools:
+                    # A preview must outlive the per-call MCP server. Windows
+                    # MCP cleanup terminates that server's entire process tree.
+                    # Launch from the dashboard owner and record the true route.
+                    event['transport'] = 'python'
+                    event['process_owner'] = 'dashboard'
+                    from tool_registry import execute_builtin
+                    result = execute_builtin(self.root, self.grants, name, arguments)
+                elif name in self.external_tools or self.transport == 'mcp':
                     from mcp_connections import call as mcp_call
                     result = mcp_call(self.root, self.grants, name, arguments, self.external_tools.get(name))
                 else:

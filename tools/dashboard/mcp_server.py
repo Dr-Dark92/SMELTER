@@ -13,6 +13,11 @@ async def serve(root, grants):
     from mcp.server.models import InitializationOptions
     from mcp.server.stdio import stdio_server
     session = ToolSession(root, grants)
+    # Persistent children cannot belong to this short-lived stdio process.
+    # The dashboard handles the preview lifecycle locally, including when
+    # all other workspace operations use MCP.
+    session.tools = [item for item in session.tools
+                     if item['function']['name'] != 'launch_frontend_preview']
     server = Server('smelter-python-tools')
 
     @server.list_tools()

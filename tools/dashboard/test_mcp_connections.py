@@ -26,6 +26,18 @@ class McpFixture:
 
 
 class McpConfigurationTests(McpFixture, unittest.TestCase):
+    def test_preview_launch_uses_dashboard_owner_even_in_mcp_mode(self):
+        with patch('mcp_connections.sdk_status', return_value={'status':'installed'}):
+            session = ToolSession(self.root, {'frontend_workspace':True, 'transport':'mcp'})
+        expected = {'status':'workspace_launched','pid':12345,'url':'http://127.0.0.1:8770/#token=fixture'}
+        with patch('mcp_connections.call', side_effect=AssertionError('must not launch in transient MCP server')), \
+                patch('tool_registry.execute_builtin', return_value=expected) as local:
+            result = session.execute({'function':{'name':'launch_frontend_preview','arguments':{}}})
+        self.assertEqual(result, expected)
+        local.assert_called_once_with(self.root, session.grants, 'launch_frontend_preview', {})
+        self.assertEqual(session.events[-1]['transport'], 'python')
+        self.assertEqual(session.events[-1]['process_owner'], 'dashboard')
+
     def test_status_and_save_do_not_start_processes(self):
         with patch('mcp_connections._exchange') as run:
             self.assertEqual(status(self.root)['config']['servers'], [])
@@ -89,6 +101,13 @@ class McpConfigurationTests(McpFixture, unittest.TestCase):
 
 @unittest.skipUnless(sdk_status()['status'] == 'installed', 'Optional pinned MCP SDK is not installed')
 class McpIntegrationTests(McpFixture, unittest.TestCase):
+    def test_transient_mcp_server_does_not_offer_persistent_preview_launch(self):
+        found = exchange(self.root, grants={'frontend_workspace':True}, timeout=15)
+        self.assertNotIn('launch_frontend_preview', [item['name'] for item in found['tools']])
+        self.assertIn('validate_frontend_workspace', [item['name'] for item in found['tools']])
+        with self.assertRaisesRegex(ValueError, 'missing or not in the operator allowlist'):
+            exchange(self.root, grants={'frontend_workspace':True}, name='launch_frontend_preview', arguments={}, timeout=15)
+
     def test_real_stdio_discovery_and_tool_execution(self):
         (self.folder / 'fixture.txt').write_text('fixture')
         grants = {'inventory_root': str(self.folder), 'write_diagnostics': True}

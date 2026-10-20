@@ -175,6 +175,11 @@ saved runtime settings or ordinary chat limits. Fixed validation is bounded to
 finish first. Repeated reads and validations stay fresh after edits.
 
 The preview is a separate process and does not stop the original application.
+The dashboard owns preview creation, even when workspace operations use MCP.
+Its receipt records `transport: python` and `process_owner: dashboard`. The
+short-lived stdio server exposes six workspace operations and deliberately
+omits preview launch: Windows MCP cleanup can terminate the server's children.
+The chat controller still offers the seventh, dashboard-owned launch operation.
 Open its returned URL manually. To stop that preview on Windows, use
 `Stop-Process -Id <the returned preview PID>` after verifying the PID in the
 receipt. An occupied port blocks launch; tools do not kill an existing listener.
