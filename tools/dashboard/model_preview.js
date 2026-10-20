@@ -38,7 +38,7 @@ const SmelterModels = (() => {
         if (!library) library = import('/assets/model-viewer.min.js').catch(error => { library = null; throw error; });
         await library;
         if (generation !== epoch) throw Error('Preview load superseded by navigation or another preview');
-        const response = await fetch('/api/models/' + encodeURIComponent(asset.id), {headers: {'X-Smelter-Token': token || ''}});
+        const response = await fetch('/api/models/' + encodeURIComponent(asset.id), {headers: {'X-Smelter-Token': SmelterAuth.token()}});
         if (!response.ok) throw Error('Could not read the saved model attachment');
         url = URL.createObjectURL(await response.blob());
         if (generation !== epoch) throw Error('Preview load superseded by navigation or another preview');

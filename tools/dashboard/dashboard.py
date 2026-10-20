@@ -123,8 +123,8 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <button id="providerdeploy">Deploy isolated config (create only)</button> <button id="providervalidate">Validate staged config</button>
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
-<section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
+<section id="bootstrap" class="panel" hidden><h2 id="startupHeading">SMELTER startup</h2><div id="databaseSetup"><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button></div><div id="authRecovery" hidden><p>This page is not authorized for the running dashboard. Use the current launch URL printed in its terminal. Restarting the server changes the token; database initialization will not fix authorization.</p><label>Current launch URL or token<input id="sessionToken" type="password" autocomplete="off" spellcheck="false" aria-label="Current launch URL or token"></label><button id="sessionReconnect">Reconnect session</button></div><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
+<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -459,9 +459,8 @@ async function openChat(id){
  }catch(e){alert(e.message)}
 }
 initShell();
-const token=new URLSearchParams(location.hash.slice(1)).get('token');
 const el=id=>document.getElementById(id);
-async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.error||r.status);return v}
+async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
 async function loadWorkflows(){try{const data=await api('/api/workflows');for(const w of data.workflows){const opt=document.createElement('option');opt.value=w.id;opt.textContent=w.label+' — '+w.description;el('workflow').append(opt)}}catch(e){el('error').textContent=e.message}}
 async function history(){try{const data=await api('/api/workflows/reports');el('historyout').textContent='Recent reports:\\n'+data.reports.map(r=>r.timestamp_utc+' | '+r.workflow_id+' | '+r.status+' | '+r.run_id).join('\\n')}catch(e){el('historyout').textContent=e.message}}
@@ -479,13 +478,15 @@ el('providerdeploy').onclick=async()=>{const out=el('deployout');if(!el('deploya
 el('providervalidate').onclick=async()=>{try{const data=await api('/api/opencode/validate');el('validateout').textContent=JSON.stringify(data,null,2)}catch(e){el('validateout').textContent=e.message}};
 async function startup(){
  const boot=el('bootstrap'),shell=el('shell'),footer=el('sysfooter');
- boot.hidden=false;shell.hidden=true;footer.hidden=true;
+ boot.hidden=false;shell.hidden=true;footer.hidden=true;el('databaseSetup').hidden=true;el('authRecovery').hidden=true;el('startupHeading').textContent='SMELTER startup';el('dbstatus').textContent='Checking session and database…';
  try{
   const db=await api('/api/startup');
-  el('dbstatus').textContent=JSON.stringify(db,null,2);
+  el('databaseSetup').hidden=db.ready;el('dbstatus').textContent=JSON.stringify(db,null,2);
   if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem();if(window.resumeChatJob)window.resumeChatJob()}
- }catch(e){el('dbstatus').textContent=e.message}
+ }catch(e){const unauthorized=e.status===401||e.status===403;el('authRecovery').hidden=!unauthorized;el('startupHeading').textContent=unauthorized?'Session authorization required':'SMELTER startup check failed';el('dbstatus').textContent=unauthorized?'The session token is missing, expired, or rejected. Existing database files have not been reinitialized.':e.message}
 }
+el('sessionReconnect').onclick=()=>{try{const previous=location.hash;SmelterAuth.apply(el('sessionToken').value);el('sessionToken').value='';if(previous===location.hash)startup()}catch(error){el('dbstatus').textContent=error.message}};
+window.addEventListener('hashchange',()=>startup());
 el('dbselect').onclick=async()=>{
  try{el('dbstatus').textContent='Initializing database...';await api('/api/database/select','POST',{directory:el('dbdirectory').value});await startup()}
  catch(e){el('dbstatus').textContent=e.message}
@@ -509,11 +510,14 @@ def handler(token: str):
         def authorized(self):
             origin = self.headers.get("Origin")
             expected = "http://127.0.0.1:" + str(self.server.server_port)
-            return secrets.compare_digest(self.headers.get("X-Smelter-Token", ""), token) and (not origin or origin == expected)
+            supplied = self.headers.get("X-Smelter-Token", "")
+            return supplied.isascii() and secrets.compare_digest(supplied, token) and (not origin or origin == expected)
         def do_GET(self):
             route = urlsplit(self.path).path
             if route == "/":
                 return self.reply(200, HTML, "text/html")
+            if route == '/assets/session-auth.js':
+                return self.reply(200, Path(__file__).with_name('session_auth.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/mcp-ui.js':
                 return self.reply(200, Path(__file__).with_name('mcp_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/chat-renderer.js':

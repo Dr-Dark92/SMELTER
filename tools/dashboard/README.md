@@ -393,3 +393,17 @@ camera restoration, cancellation without download, and release during export.
 The revised sample measured approximately six seconds at 960×600 using
 ffprobe; rendering was verified from extracted video frames. These are
 development software-renderer results, not a benchmark of the user's GPU.
+
+## Session authorization after a restart
+
+Every dashboard launch creates a new token in its printed `#token=...` URL.
+Refreshing an old launch URL does not make an expired token valid. Open the
+complete current URL from the running terminal, or use **Reconnect session**
+with that URL/token. The client reads the current fragment for every API/model
+request and retries startup when the fragment changes. Tokens are not persisted
+or supplied by an unauthenticated API.
+
+Authorization failures show a session-recovery panel, not database setup. They
+must not prompt database initialization. If another instance/tab may be using
+port 8768, launch `python tools/dashboard/dashboard.py --port 8769` and use that
+instance's printed URL. URLs for another address/port must be opened directly.
