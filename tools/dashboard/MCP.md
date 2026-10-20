@@ -1,3 +1,5 @@
+> Current restriction: GUI discovery and execution of arbitrary external MCP servers are blocked pending process confinement. Built-in SMELTER MCP is supported. External-server configuration/protocol examples below describe low-level operator capabilities, not permission to run them from the GUI. See [current system documentation](../../docs/SYSTEM_DOCUMENTATION.md).
+
 # SMELTER MCP layer (stdio, version 1)
 
 SMELTER now acts as an MCP host/client and ships a local Python MCP server.

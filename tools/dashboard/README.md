@@ -1,3 +1,5 @@
+> Current architecture and operations: [root README](../../README.md), [system documentation](../../docs/SYSTEM_DOCUMENTATION.md), [remaining review findings](../../docs/DEEP_CODE_REVIEW.md). This guide contains chronological implementation notes; current access-policy and engine limits in those documents take precedence.
+
 # SMELTER Vanilla V1.3.1 dashboard
 
 Launch on Windows from the repository root:

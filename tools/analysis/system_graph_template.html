@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMELTER · Source relationship explorer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b111b;color:#dbe7f5;font:14px system-ui}header{padding:16px 20px;border-bottom:1px solid #344257}h1{font-size:23px;margin:0 0 7px}p{line-height:1.5}.muted{color:#9fb2c9}main{display:grid;grid-template-columns:340px minmax(0,1fr);height:calc(100dvh - 132px)}aside{padding:16px;overflow:auto;border-right:1px solid #344257}.stage{position:relative;min-height:400px;overflow:hidden}canvas{width:100%;height:100%;touch-action:none}input,select,button{font:inherit;padding:9px;background:#152234;color:#dbe7f5;border:1px solid #48617c;border-radius:6px}input[type=search],select{width:100%;margin:7px 0}button{cursor:pointer;margin:3px}button:hover{border-color:#55d9bc}.result{width:100%;text-align:left;font-size:12px;overflow-wrap:anywhere}.pill{display:inline-block;font-size:12px;padding:3px 8px;border-radius:12px;background:#24354d;margin:3px}#details{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#63d9c5}#legend{position:absolute;bottom:12px;left:12px;background:#0b111be8;padding:8px;border-radius:8px;font-size:12px;pointer-events:none}label{display:block;margin:8px 0}@media(max-width:760px){main{display:flex;flex-direction:column;height:auto}aside{max-height:50dvh;border-right:0;border-bottom:1px solid #344257}.stage{height:60dvh}}
+</style>
+<header><h1>SMELTER · Source relationship explorer</h1><div id="status" class="muted">Loading embedded graph…</div><div class="muted">Static call candidates, references and imports. Missing incoming edges do not prove dead code. Drag to pan, scroll to zoom, click a node to inspect.</div></header>
+<main><aside><label>Find file or function<input id="search" type="search" placeholder="e.g. ToolSession, ask, model_assets"></label><label>View<select id="mode"><option value="files">File dependencies</option><option value="functions">Function neighborhood</option></select></label><label><input id="tests" type="checkbox"> Include test files</label><label>Relationships<select id="edgeType"><option value="all">All recorded relationships</option><option value="calls">Calls only</option><option value="references">References only</option><option value="imports">Imports only</option><option value="runtime">Reviewed runtime links</option></select></label><button id="reset">Reset view</button><button id="download">Download graph JSON</button><p id="counts" class="muted"></p><div id="results"></div><h2 style="font-size:17px">Selected node</h2><div id="details">Select a file or function.</div><p><a id="source" target="_blank" rel="noopener" hidden>Open pinned source on GitHub</a></p></aside><div class="stage"><canvas id="canvas" aria-label="Interactive file and function graph"></canvas><div id="legend">Teal: dashboard · blue: setup · amber: core · purple: bootstraps · gray: other<br>Solid: calls/references · faint: imports · dashed: reviewed runtime links</div></div></main>
+<script id="graph-data" type="application/octet-stream">__GRAPH_BASE64__</script><script>
+(async()=>{
+ const packed=Uint8Array.from(atob(document.getElementById('graph-data').textContent.trim()),c=>c.charCodeAt(0));
+ const decoded=new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'));
+ const graphText=await new Response(decoded).text();const graph=JSON.parse(graphText);window.smelterGraph=graph;graph.edges=[...graph.edges,...(graph.runtime_links||[])];
+ const el=id=>document.getElementById(id),canvas=el('canvas'),ctx=canvas.getContext('2d'),symbols=new Map(graph.symbols.map(x=>[x.id,x]));
+ const fileOf=id=>id.split('::')[0].split(' [inline')[0],all=new Map([...graph.files,...graph.symbols].map(n=>[n.id,n]));
+ let selected=null,nodes=[],edges=[],zoom=1,pan={x:0,y:0},drag=null,moved=false;
+ const sourceBase='https://github.com/Dr-Dark92/SMELTER/blob/'+graph.revision+'/';
+ el('status').textContent=graph.revision.slice(0,12)+' · '+graph.counts.files+' source files · '+graph.counts.symbols+' symbols · '+graph.counts.relationships+' static relationships + '+(graph.runtime_links||[]).length+' reviewed runtime links';
+ const color=n=>n.path.includes('/dashboard/')?'#51d9b7':n.path.includes('/setup/')?'#6faeff':n.path.includes('/core/')?'#e9ae59':n.path.includes('/bootstraps/')?'#bd99ed':'#9babc0';
+ function inspect(id){selected=id;const n=all.get(id);if(!n)return;const unresolved=graph.unresolved_calls.filter(x=>x.source===id);
+  el('details').textContent=(n.symbol||n.path)+'\n'+(n.purpose||'')+'\n\n'+(n.kind==='function'?'Lines: '+n.line+'–'+(n.end_line||'?')+'\nBranch estimate: '+(n.complexity_estimate??'not computed')+'\nResolved callers: '+(n.static_callers||[]).length+'\nStatic references: '+(n.static_references||[]).length+'\nUnresolved calls: '+unresolved.length+'\n\n'+unresolved.slice(0,12).map(x=>x.expression+' @ '+x.line).join('\n'):'Source lines: '+n.lines+'\nSHA-256: '+n.sha256);
+  el('source').hidden=false;el('source').href=sourceBase+fileOf(id)+(n.line?'#L'+n.line:'');
+ }
+ function rebuild(){const query=el('search').value.toLowerCase(),includeTests=el('tests').checked,mode=el('mode').value,kind=el('edgeType').value;
+  const matches=[...graph.files,...graph.symbols].filter(n=>(includeTests||!n.test)&&(!query||(n.path+' '+(n.symbol||'')).toLowerCase().includes(query)));
+  const results=el('results');results.replaceChildren();for(const n of matches.slice(0,35)){const b=document.createElement('button');b.className='result';b.textContent=n.symbol?n.symbol+' · '+n.path:n.path;b.onclick=()=>{inspect(n.id);if(n.kind==='function')el('mode').value='functions';rebuild()};results.append(b)}
+  let visibleEdges=graph.edges.filter(e=>kind==='all'||e.type===kind);
+  if(mode==='functions'){
+   const focus=selected&&symbols.has(selected)?selected:matches.find(n=>n.kind==='function')?.id;
+   if(focus&&!symbols.has(selected)){inspect(focus)}
+   const ids=new Set([focus]);for(const e of visibleEdges)if(e.source===focus||e.target===focus){ids.add(e.source);ids.add(e.target)}
+   nodes=[...ids].map(id=>all.get(id)).filter(n=>n&&(includeTests||!n.test));
+   edges=visibleEdges.filter(e=>ids.has(e.source)&&ids.has(e.target));
+  }else{
+   nodes=graph.files.filter(n=>(includeTests||!n.test)&&(!query||matches.some(m=>fileOf(m.id)===n.id)));
+   const seen=new Set();edges=[];for(const e of visibleEdges){const a=fileOf(e.source),b=fileOf(e.target),key=a+'|'+b+'|'+e.type;if(a!==b&&!seen.has(key)){seen.add(key);edges.push({...e,source:a,target:b})}}
+  }
+  const ids=new Set(nodes.map(n=>n.id));edges=edges.filter(e=>ids.has(e.source)&&ids.has(e.target));
+  // Deterministic cluster layout; no external physics library or CDN.
+  const groups=new Map();for(const n of nodes){const group=color(n);if(!groups.has(group))groups.set(group,[]);groups.get(group).push(n)}
+  let gi=0;for(const group of groups.values()){const angle=gi++*Math.PI*2/groups.size,cx=groups.size===1?0:Math.cos(angle)*300,cy=groups.size===1?0:Math.sin(angle)*240;group.forEach((n,i)=>{const a=i*2.39996,r=35*Math.sqrt(i);n.x=cx+Math.cos(a)*r;n.y=cy+Math.sin(a)*r})}
+  el('counts').textContent=matches.length+' search matches · showing '+nodes.length+' nodes / '+edges.length+' edges. Results list capped at 35; refine search.';draw();
+ }
+ function draw(){const rect=canvas.getBoundingClientRect(),ratio=devicePixelRatio||1;canvas.width=rect.width*ratio;canvas.height=rect.height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,rect.width,rect.height);ctx.translate(rect.width/2+pan.x,rect.height/2+pan.y);ctx.scale(zoom,zoom);const map=new Map(nodes.map(n=>[n.id,n]));
+  for(const e of edges){const a=map.get(e.source),b=map.get(e.target);if(!a||!b)continue;const highlighted=e.source===selected||e.target===selected;ctx.strokeStyle=highlighted?'#85ecd7':e.type==='imports'?'#354056':'#536980';ctx.globalAlpha=highlighted?1:.5;ctx.lineWidth=highlighted?1.8:1;ctx.setLineDash(e.type==='runtime'?[5,4]:[]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();if(highlighted){const a1=Math.atan2(b.y-a.y,b.x-a.x);ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-10*Math.cos(a1-.4),b.y-10*Math.sin(a1-.4));ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-10*Math.cos(a1+.4),b.y-10*Math.sin(a1+.4));ctx.stroke()}}
+  ctx.setLineDash([]);ctx.globalAlpha=1;for(const n of nodes){ctx.fillStyle=color(n);ctx.beginPath();ctx.arc(n.x,n.y,n.id===selected?8:5,0,Math.PI*2);ctx.fill();if(nodes.length<70||zoom>1.4||n.id===selected){ctx.font='11px system-ui';ctx.fillStyle='#dbe7f5';ctx.fillText((n.symbol||n.path.split('/').pop()).slice(0,54),n.x+10,n.y+4)}}
+ }
+ canvas.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,pan:{...pan}};moved=false;canvas.setPointerCapture(e.pointerId)};
+ canvas.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;pan={x:drag.pan.x+dx,y:drag.pan.y+dy};draw()};
+ canvas.onpointerup=e=>{if(!moved){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2-pan.x)/zoom,y=(e.clientY-r.top-r.height/2-pan.y)/zoom;const hit=nodes.find(n=>Math.hypot(n.x-x,n.y-y)<14/zoom);if(hit){inspect(hit.id);draw()}}drag=null};
+ canvas.onwheel=e=>{e.preventDefault();zoom=Math.max(.15,Math.min(5,zoom*Math.exp(-e.deltaY*.001)));draw()};
+ el('reset').onclick=()=>{zoom=1;pan={x:0,y:0};el('search').value='';el('mode').value='files';selected=null;rebuild()};
+ el('search').oninput=rebuild;el('mode').onchange=rebuild;el('tests').onchange=rebuild;el('edgeType').onchange=rebuild;
+ el('download').onclick=()=>{const link=document.createElement('a'),url=URL.createObjectURL(new Blob([graphText],{type:'application/json'}));link.href=url;link.download='smelter-system-graph.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ new ResizeObserver(draw).observe(canvas.parentElement);rebuild();
+})().catch(error=>{document.getElementById('status').textContent='Unable to load graph: '+error.message+'. Use system-graph.json directly; a browser with DecompressionStream is required.'});
+</script></html>

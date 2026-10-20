@@ -1,0 +1,16 @@
+{
+  "source_revision": "c9e541e9e0d53fcaba109170f8e5a201b500340d",
+  "glb_lifecycle": {
+    "chat_deleted": true,
+    "asset_file_still_exists": true
+  },
+  "opencode_completion_cancel_race": {
+    "control_cancelled": true,
+    "worker_status": "completed",
+    "stored_cancelled": false
+  },
+  "frontend_runtime_override": {
+    "saved_output_tokens": 128,
+    "actual_num_predict": 4096
+  }
+}

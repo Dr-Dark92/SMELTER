@@ -1,0 +1,177 @@
+[
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/chat_jobs.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "POST /api/chats ask/start calls JOBS.start"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/chat_inference.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Jobs._run chooses the default direct worker"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/opencode_runtime.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Jobs.start chooses the read-only external worker"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "ask creates ToolSession and dispatches approved calls"
+  },
+  {
+    "source": "tools/dashboard/python_tools.py",
+    "target": "tools/dashboard/tool_registry.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "ToolSession._execute dispatches fixed local built-ins"
+  },
+  {
+    "source": "tools/dashboard/python_tools.py",
+    "target": "tools/dashboard/mcp_connections.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "ToolSession._execute routes built-in MCP calls"
+  },
+  {
+    "source": "tools/dashboard/mcp_connections.py",
+    "target": "tools/dashboard/mcp_server.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "_server constructs stdio launcher argv/environment"
+  },
+  {
+    "source": "tools/dashboard/mcp_server.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "serve creates inherited-policy child ToolSession"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/frontend_workspace.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "execute_builtin dispatches the CSS workbench"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/rea_connection.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "execute_builtin dispatches fixed REA operations"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/model_assets.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "execute_builtin dispatches approved attachment inspection"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/access_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "asset route and script initialization mount Settings/access UI"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/chat_renderer.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "script initialization and message rendering"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/model_preview.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "script initialization and GLB preview controls"
+  },
+  {
+    "source": "tools/dashboard/model_preview.js",
+    "target": "tools/dashboard/model_animations.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "animation selector integration"
+  },
+  {
+    "source": "tools/dashboard/model_preview.js",
+    "target": "tools/dashboard/turntable.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "turntable/frame export integration"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/mcp_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "MCP Settings mount and APIs"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/opencode_agent_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "OpenCode check controls mount"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/session_auth.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "session token recovery helper"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/file_activity.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "file activity card rendering"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/chats.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "read transcript and use execution/table helpers"
+  },
+  {
+    "source": "tools/dashboard/opencode_runtime.py",
+    "target": "tools/dashboard/chats.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "bounded prior text and transcript persistence"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/resource_metrics.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "system status footer via system_status.resource_status"
+  },
+  {
+    "source": "tools/dashboard/access_policy.py",
+    "target": "tools/dashboard/config_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "load/save authoritative policy snapshot"
+  },
+  {
+    "source": "tools/dashboard/skill_runtime.py",
+    "target": "tools/dashboard/skills_catalog.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "scan current manifests against startup baseline"
+  }
+]
