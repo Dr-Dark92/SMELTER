@@ -334,7 +334,7 @@ def launch(root, arguments):
         except OSError as exc:
             raise ValueError('Preview port 8770 is occupied; no process was stopped') from exc
     log = _plain_path(target / '.smelter/frontend-preview.log')
-    options = {'creationflags': subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
+    options = {'creationflags': subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
     environment = dict(os.environ)
     environment['PYTHONUNBUFFERED'] = '1'
     with log.open('wb') as output:
@@ -342,20 +342,25 @@ def launch(root, arguments):
             cwd=target, env=environment, stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT,
             close_fds=True, shell=False, **options)
     url = None
-    for _ in range(100):
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
         text = log.read_text(encoding='utf-8', errors='replace')
         found = re.search(r'http://127\.0\.0\.1:8770/#token=([A-Za-z0-9_-]+)', text)
         if found:
             url = found.group(0)
             try:
-                request = Request('http://127.0.0.1:8770/api/startup', headers={'X-Smelter-Token': found.group(1)})
-                with urlopen(request, timeout=2) as response:
+                # Startup performs external version probes. Polling it with a
+                # short timeout leaves scanners running in abandoned HTTP
+                # threads. This existing endpoint checks auth and the fresh
+                # database without launching any tool or model processes.
+                request = Request('http://127.0.0.1:8770/api/chats', headers={'X-Smelter-Token': found.group(1)})
+                with urlopen(request, timeout=max(0.1, min(2, deadline - time.monotonic()))) as response:
                     report = json.load(response)
-                if report.get('ready'):
+                if isinstance(report.get('conversations'), list):
                     return {'status': 'workspace_launched', 'pid': process.pid, 'url': url,
                             'log_path': str(log), 'data_directory': marker['data_directory'],
                             'visual_inspection': 'not performed',
-                            'message': 'Authenticated startup check passed. Open the URL to inspect the design. Original app was not stopped.'}
+                            'message': 'Authenticated chat database check passed; startup tool scans were not run. Open the URL to inspect the design. Original app was not stopped.'}
             except (OSError, ValueError):
                 pass
         if process.poll() is not None:

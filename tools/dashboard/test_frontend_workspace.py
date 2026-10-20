@@ -1,10 +1,11 @@
 import ast
 import json
+import io
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import frontend_workspace as workspace
 from python_tools import ToolSession
 
@@ -147,3 +148,40 @@ class FrontendWorkspaceTests(unittest.TestCase):
         self.assertFalse(record.exists())
         with self.assertRaisesRegex(ValueError, 'validation'):
             workspace.launch(self.root, {})
+
+    def test_preview_checks_chat_database_without_startup_scans(self):
+        self._exercise_preview_launch(False)
+
+    def test_preview_deadline_stops_only_its_new_process(self):
+        self._exercise_preview_launch(True)
+
+    def _exercise_preview_launch(self, timeout):
+        self.prepare()
+        folder = workspace.target_path(self.root) / '.smelter/frontend-validation'
+        folder.mkdir()
+        (folder / 'passed.json').write_text(json.dumps({'dashboard_sha256': workspace._digest(self.original)}))
+        process = Mock(pid=12345)
+        process.poll.return_value = None
+        def spawn(command, **kwargs):
+            kwargs['stdout'].write(b'SMELTER dashboard: http://127.0.0.1:8770/#token=fixture-token\n')
+            kwargs['stdout'].flush()
+            return process
+        clock = [0, 0, 0, 11] if timeout else [0, 0, 0]
+        with patch.object(workspace.socket, 'socket', return_value=Mock()), \
+                patch.object(workspace.subprocess, 'Popen', side_effect=spawn) as popen, \
+                patch.object(workspace, 'urlopen', side_effect=OSError('slow response') if timeout else None,
+                             return_value=io.StringIO('{"conversations":[]}')) as opener, \
+                patch.object(workspace.time, 'monotonic', side_effect=clock), \
+                patch.object(workspace.time, 'sleep'):
+            if timeout:
+                with self.assertRaisesRegex(ValueError, 'readiness'):
+                    workspace.launch(self.root, {})
+                process.terminate.assert_called_once()
+            else:
+                self.assertEqual(workspace.launch(self.root, {})['status'], 'workspace_launched')
+                process.terminate.assert_not_called()
+        popen.assert_called_once()
+        opener.assert_called_once()
+        request = opener.call_args.args[0]
+        self.assertEqual(request.full_url, 'http://127.0.0.1:8770/api/chats')
+        self.assertEqual(request.get_header('X-smelter-token'), 'fixture-token')
