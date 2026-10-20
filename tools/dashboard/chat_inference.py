@@ -10,7 +10,7 @@ from skill_router import route_skills
 from contextlib import closing
 import sqlite3
 import time
-import os
+from runtime_settings import load_runtime
 from contextlib import nullcontext
 from chat_jobs import ChatCancelled
 from python_tools import ToolSession, MAX_CALLS, REA_SKILL_ID
@@ -49,7 +49,8 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     if image is not None:
         user_message["images"] = [validate_image(image)]
     messages.append(user_message)
-    deadline = time.monotonic() + 180
+    settings = load_runtime(root)['settings']
+    deadline = time.monotonic() + settings['timeout_seconds']
 
     def checkpoint(phase=None):
         if control:
@@ -61,11 +62,8 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         if not thinking:
             request_messages[0]["content"] += " Respond directly and concisely."
         body = {"model": MODEL, "messages": request_messages, "stream": False,
-                "think": thinking, "options": {"num_predict": 2048}}
-        if skill_text or session.tools:
-            body["options"]["num_ctx"] = int(os.environ.get("SMELTER_CONTEXT_LENGTH", "32768"))
-            if not 2048 <= body["options"]["num_ctx"] <= 131072:
-                raise ValueError("SMELTER_CONTEXT_LENGTH must be between 2048 and 131072")
+                "think": thinking, "options": {"num_predict": settings['max_output_tokens'],
+                                               'num_ctx': settings['context_tokens']}}
         if available_tools:
             body["tools"] = available_tools
         payload = json.dumps(body).encode()
@@ -76,9 +74,9 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             if remaining <= 0:
                 raise ValueError("Chat turn time limit reached")
             if control:
-                raw = control.infer(body, max(1, min(180, remaining)), 2 * 1024 * 1024)
+                raw = control.infer(body, max(1, remaining), 2 * 1024 * 1024)
             else:
-                with opener(request, timeout=max(1, min(180, remaining))) as response:
+                with opener(request, timeout=max(1, remaining)) as response:
                     raw = response.read(MAX_RESPONSE + 1)
             checkpoint()
         except (URLError, HTTPError, TimeoutError, OSError) as exc:
@@ -103,7 +101,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     # The installed Qwen 3.5 model defaults to thinking. Vision requests can
     # exhaust their output budget before emitting a final content message.
     try:
-        answer, reason, calls, message = infer(False if image is not None or session.tools else True, session.tools)
+        answer, reason, calls, message = infer(False if image is not None or session.tools else settings['thinking'], session.tools)
         while calls:
             # No supplied schema means no action, even if a model invents a tool call.
             if not session.tools:

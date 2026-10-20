@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from database import chosen_database, inspect_database
 
-ALLOWED = {"extensions.json", "model_preferences.json"}
+ALLOWED = {"extensions.json", "model_preferences.json", "runtime_settings.json"}
 
 def _db(root: Path) -> Path:
     status = inspect_database(root)
@@ -20,6 +20,8 @@ def load_config(root: Path, name: str) -> dict:
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn:
         row = conn.execute("SELECT payload FROM config_snapshots WHERE name=?", (name,)).fetchone()
     if row is None:
+        if name == 'runtime_settings.json':
+            return {'schema_version': 1, 'settings': {}}
         return {"schema_version": 1, "enabled": []} if name == "extensions.json" else {"schema_version": 1, "models": {}}
     result = json.loads(row[0])
     _validate(name, result)
@@ -33,6 +35,9 @@ def _validate(name: str, value: dict) -> None:
         enabled = value.get("enabled")
         if not isinstance(enabled, list) or len(set(enabled)) != len(enabled) or any(not isinstance(x, str) or x not in EXTENSIONS for x in enabled):
             raise ValueError("Invalid extension configuration")
+    elif name == 'runtime_settings.json':
+        from runtime_settings import validate
+        validate(value.get('settings'))
     else:
         from model_preferences import ROLES
         models = value.get("models")
@@ -46,3 +51,4 @@ def save_config(root: Path, name: str, value: dict) -> None:
     payload = json.dumps(value, ensure_ascii=False)
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
         conn.execute("INSERT INTO config_snapshots(name,payload,imported_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(name) DO UPDATE SET payload=excluded.payload,imported_at=CURRENT_TIMESTAMP", (name,payload))
+

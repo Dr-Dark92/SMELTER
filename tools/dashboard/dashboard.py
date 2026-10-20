@@ -39,6 +39,7 @@ from aero_classifier import classify_task
 from rea_connection import package_status as rea_package_status
 from chat_jobs import JOBS
 from skill_runtime import initialize as initialize_skills, monitor as skill_monitor, tools_status
+from runtime_settings import load_runtime, save_runtime
 
 STATE = ROOT / ".smelter" / "extensions.json"
 STATE_LOCK = threading.Lock()
@@ -81,7 +82,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 
 #skillsOverview{overflow-y:auto;min-height:0;flex:1;padding:4px 8px}#skillsOverview h2{font-size:24px}#skillNotice{background:#25364b;border-bottom:1px solid #708dae;padding:10px 18px;flex-shrink:0;font-size:13px}#skillNotice button{margin-left:8px;padding:6px 10px}
 .skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}.skill-card{border:1px solid #37506c;background:#142237;border-radius:12px;padding:16px;min-width:0}.skill-card h3{margin-top:0;font-size:16px}.skill-card p{font-size:13px;overflow-wrap:anywhere}.skill-card small{overflow-wrap:anywhere}.skill-card button{margin:4px 6px 0 0;padding:8px 10px;font-size:12px}.skill-badge{color:#8fd8c2!important}.skill-search{padding:10px;width:min(100%,340px);box-sizing:border-box;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:7px}.skill-restart{padding:12px;background:#223048;border-radius:8px}.skill-preview{border:1px solid #58718f;border-radius:10px;padding:16px;margin-top:16px}.skill-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}
-</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
+.runtime-field{display:block;margin:12px 0;font-size:13px}.runtime-field input[type=number]{box-sizing:border-box;width:100%;margin-top:5px;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:5px;padding:8px}#runtimePanel p{font-size:12px;overflow-wrap:anywhere}#runtimePanel select{max-width:100%;margin-right:6px}</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -232,6 +233,21 @@ function initShell(){
  const scope=document.createElement('small');scope.textContent=data.scope+'. Dependency presence is not runtime verification. Enablement does not load a skill into every message.';skillView.append(scope);render();
  }catch(e){const error=document.createElement('p');error.textContent='Could not inspect skills: '+e.message;skillView.append(error)}};
  setInterval(refreshSkillNotice,15000);refreshSkillNotice();
+ const runtimePanel=document.createElement('section');runtimePanel.className='panel';runtimePanel.id='runtimePanel';
+ const runtimeButton=document.createElement('button');runtimeButton.className='navbtn';runtimeButton.textContent='Chat runtime settings';
+ const aiFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('AI & Models'));
+ runtimeButton.onclick=async()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));runtimePanel.classList.add('active');runtimeButton.classList.add('active');runtimePanel.textContent='Loading runtime settings…';
+ try{const data=await api('/api/runtime');runtimePanel.replaceChildren();const heading=document.createElement('h3');heading.textContent='Chat runtime';const description=document.createElement('p');description.textContent='Applies to new SMELTER requests. Saving starts no model and does not change OpenCode.';const presets=document.createElement('select');presets.setAttribute('aria-label','Runtime preset');for(const [key,label] of [['office','Office · 16K · direct'],['home','Home · 32K']]){const option=document.createElement('option');option.value=key;option.textContent=label;presets.append(option)}const apply=document.createElement('button');apply.textContent='Use preset';
+ const inputs={};const definitions=[['context_tokens','Context tokens',2048,131072],['max_output_tokens','Maximum response tokens',128,8192],['timeout_seconds','Request timeout (seconds)',30,1800]];
+ runtimePanel.append(heading,description,presets,apply);
+ for(const [key,label,min,max] of definitions){const row=document.createElement('label');row.className='runtime-field';const input=document.createElement('input');input.type='number';input.min=min;input.max=max;input.step=1;input.value=data.settings[key];inputs[key]=input;row.append(document.createTextNode(label+' '),input);runtimePanel.append(row)}
+ const thinking=document.createElement('input');thinking.type='checkbox';thinking.checked=data.settings.thinking;const thinkingLabel=document.createElement('label');thinkingLabel.className='runtime-field';thinkingLabel.append(thinking,document.createTextNode(' Allow thinking in plain text chats'));runtimePanel.append(thinkingLabel);
+ const note=document.createElement('p');note.textContent='Tool/image requests use direct responses. Larger context increases memory use. The timeout covers the whole model turn; active tool operations have their own bounds.';runtimePanel.append(note);
+ const result=document.createElement('p');result.setAttribute('role','status');result.textContent='Sources: '+Object.entries(data.sources).map(([key,value])=>key+'='+value).join(', ');
+ apply.onclick=()=>{const preset=data.profiles[presets.value];for(const key of Object.keys(inputs))inputs[key].value=preset[key];thinking.checked=preset.thinking;result.textContent='Preset selected. Click Save to apply.'};
+ const save=document.createElement('button');save.textContent='Save runtime settings';save.onclick=async()=>{const settings={thinking:thinking.checked};for(const [key,input] of Object.entries(inputs)){if(!input.checkValidity()||!input.value){result.textContent='Enter a valid value for '+key;return}settings[key]=input.valueAsNumber}save.disabled=true;try{await api('/api/chats','POST',{action:'runtime_settings',settings});result.textContent='Saved locally. Applies to the next request; active generation is unchanged.'}catch(e){result.textContent=e.message}finally{save.disabled=false}};runtimePanel.append(save,result);
+ }catch(e){runtimePanel.textContent='Runtime settings unavailable: '+e.message}};
+ if(aiFolder)aiFolder.querySelector('.config-folder-items').prepend(runtimeButton,runtimePanel);
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
  const aeroPanel=document.createElement('div');aeroPanel.className='panel';aeroPanel.id='aeroPanel';
@@ -489,6 +505,11 @@ def handler(token: str):
                     return self.reply(400, {'error': str(e)})
             if route == "/api/rea/status":
                 return self.reply(200, rea_package_status(ROOT))
+            if route == '/api/runtime':
+                try:
+                    return self.reply(200, load_runtime(ROOT))
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {'error': str(e)})
             if route == "/api/system/status":
                 try:
                     return self.reply(200, system_status(ROOT))
@@ -607,6 +628,8 @@ def handler(token: str):
                     return self.reply(200, result)
                 if route == "/api/aero/classify":
                     return self.reply(200, classify_task(data.get("task")))
+                if route == '/api/chats' and data.get('action') == 'runtime_settings':
+                    return self.reply(200, save_runtime(ROOT, data.get('settings')))
                 if route == "/api/chats":
                     if data.get("action") == "start":
                         return self.reply(202, JOBS.start(ROOT, data))

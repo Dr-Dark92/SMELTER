@@ -251,3 +251,29 @@ combines SKILL.md and smelter.json bytes; it is not the SKILL.md-only hash.
 A universal execution registry, automated adapter development, dependency
 installation, and supporting-script execution remain future work. This change
 provides discovery visibility and activation gating, not those capabilities.
+
+
+### Chat runtime settings in the GUI
+
+AI & Models → Chat runtime settings provides context length, maximum response
+tokens, total model-turn timeout, and a plain-text thinking toggle. Office
+and Home presets populate the form; Save applies it. Saving never loads a
+model or starts a request. Profiles are starting points, not hardware capacity
+checks or performance guarantees.
+
+Office: 16384 context, 1024 output, 900 seconds, thinking off. Home: 32768
+context, 2048 output, 180 seconds, thinking on. Tool/image requests continue
+to request direct responses. Supported context range is 2048–131072, output
+128–8192, and timeout 30–1800 seconds; output must be smaller than context.
+
+Settings persist in the selected local database's runtime_settings.json
+configuration row. Saved context takes precedence over SMELTER_CONTEXT_LENGTH;
+that environment variable remains a fallback until context has been saved.
+The GUI displays each setting's source. A turn snapshots settings once, so
+changes during generation apply only to later requests. Context and output
+limits now apply explicitly to plain chat as well as skill/tool chat.
+
+These settings do not alter OpenCode or Ollama's service defaults, and saving
+them does not require restarting the dashboard. The timeout covers model
+requests within the turn; an already-running tool retains its own execution
+bounds and cannot be undone by a timeout or Stop.
