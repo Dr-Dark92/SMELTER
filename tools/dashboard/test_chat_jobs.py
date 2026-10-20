@@ -23,6 +23,7 @@ class ChatJobsTests(unittest.TestCase):
 
     def test_stream_assembly_and_actual_socket_cancellation(self):
         ready, release = threading.Event(), threading.Event()
+        headers_read, sockets = threading.Event(), []
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
                 pass
@@ -44,7 +45,14 @@ class ChatJobsTests(unittest.TestCase):
         self.addCleanup(server.shutdown)
         import http.client
         real_connection = http.client.HTTPConnection
-        connect = lambda *a, **kw: real_connection('127.0.0.1', server.server_port, timeout=3)
+        class Connection(real_connection):
+            def getresponse(self):
+                original = self.sock
+                response = super().getresponse()
+                sockets.append(original)
+                headers_read.set()
+                return response
+        connect = lambda *a, **kw: Connection('127.0.0.1', server.server_port, timeout=3)
         control, finished, errors = Control(), threading.Event(), []
         def run():
             try:
@@ -56,7 +64,13 @@ class ChatJobsTests(unittest.TestCase):
         with patch('chat_jobs.http.client.HTTPConnection', side_effect=connect):
             thread = threading.Thread(target=run, daemon=True)
             thread.start()
+            self.addCleanup(release.set)
             self.assertTrue(ready.wait(2))
+            self.assertTrue(headers_read.wait(2))
+            # The cancellation handle must survive HTTPConnection releasing its
+            # original socket for this HTTP/1.0 connection-close response.
+            self.assertIsNot(control.sock, sockets[0])
+            self.assertGreaterEqual(control.sock.fileno(), 0)
             control.cancel()
             self.assertTrue(finished.wait(2), 'Stop must unblock the active socket read')
             release.set()

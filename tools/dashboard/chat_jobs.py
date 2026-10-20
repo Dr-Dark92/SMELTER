@@ -47,12 +47,17 @@ class Control:
         deadline = time.monotonic() + timeout
         connection = http.client.HTTPConnection('127.0.0.1', 11434, timeout=timeout)
         response = None
+        cancel_socket = None
         body = {**body, 'stream': True}
         try:
             connection.connect()
             with self.lock:
                 self.check()
-                self.sock = connection.sock
+                # HTTPConnection can close its socket object after handing a
+                # connection-close response to HTTPResponse. Keep an independently
+                # owned handle for shutdown while the response reader is active.
+                cancel_socket = connection.sock.dup()
+                self.sock = cancel_socket
             connection.request('POST', '/api/chat', json.dumps(body), {'Content-Type': 'application/json'})
             response = connection.getresponse()
             if response.status != 200:
@@ -99,6 +104,8 @@ class Control:
         finally:
             with self.lock:
                 self.sock = None
+            if cancel_socket is not None:
+                cancel_socket.close()
             if response is not None:
                 response.close()
             connection.close()
