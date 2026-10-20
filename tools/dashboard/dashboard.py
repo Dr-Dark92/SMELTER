@@ -40,6 +40,8 @@ from rea_connection import package_status as rea_package_status
 from chat_jobs import JOBS
 from skill_runtime import initialize as initialize_skills, monitor as skill_monitor, tools_status
 from runtime_settings import load_runtime, save_runtime
+from mcp_connections import status as mcp_status, save_config as save_mcp_config, exchange as mcp_exchange
+from python_tools import permissions as validate_tool_permissions
 from model_assets import rename_animation, attach_model, model_path, viewer_bundle, viewer_status
 
 STATE = ROOT / ".smelter" / "extensions.json"
@@ -122,7 +124,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2>SMELTER startup</h2><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
+<script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -140,7 +142,7 @@ function initShell(){
  const title=document.createElement('h2');title.id='chatTitle';title.textContent='SMELTER · Local chat';
  const log=document.createElement('div');log.id='chatlog';log.setAttribute('role','log');log.setAttribute('aria-label','Conversation messages');log.textContent='Select New chat. Python tools require permission for each message.';
  const permissionsBox=document.createElement('details');permissionsBox.id='pythonTools';
- const permissionsTitle=document.createElement('summary');permissionsTitle.textContent='Python tools for the next message';
+ const permissionsTitle=document.createElement('summary');permissionsTitle.textContent='Tool permissions for the next message';
  const readFolder=document.createElement('input');readFolder.id='inventoryRoot';readFolder.placeholder='Absolute folder to inventory';readFolder.style.width='95%';
  const readGrant=document.createElement('input');readGrant.type='checkbox';readGrant.id='approveInventory';
  const readLabel=document.createElement('label');readLabel.append(readGrant,document.createTextNode(' Allow read-only inventory of this folder'));
@@ -151,7 +153,7 @@ function initShell(){
  const reaCheck=document.createElement('button');reaCheck.type='button';reaCheck.textContent='Check REA connection';
  const reaStatus=document.createElement('p');reaStatus.id='reaStatus';
  reaCheck.onclick=async()=>{try{const s=await api('/api/rea/status');reaStatus.textContent='REA: '+s.status+' | version: '+(s.installed_version||'not installed')+' | '+s.reason}catch(e){reaStatus.textContent=e.message}};
- const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. No scripts, shell commands or extraction. Tool results are logged locally.';
+ const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. Built-in scopes do not sandbox external MCP servers. Tool results are logged locally.';
  permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('textarea');input.rows=3;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
@@ -164,7 +166,7 @@ function initShell(){
  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
  send.onclick=async()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
- const toolPermissions={inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
+ const toolPermissions={...mcpControls.collect(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
  readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
@@ -220,6 +222,7 @@ function initShell(){
  const showSkills=()=>{if(send.disabled){alert('Finish or stop the current chat request first');return}SmelterModels.clear();chatElements.forEach(x=>x.hidden=true);skillView.hidden=false;loadSkillsOverview()};
  const overviewButton=document.createElement('button');overviewButton.textContent='Skills & Tools';overviewButton.className='navbtn';overviewButton.onclick=showSkills;
  const integrations=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));if(integrations)integrations.querySelector('.config-folder-items').prepend(overviewButton);
+ const mcpControls=SmelterMcp.mount(right,integrations,permissionsBox,api,()=>({inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null}));
  skillReview.onclick=showSkills;
  let dismissedRevision=null,lastSkillsData=null,skillsPolling=false;
  dismissNotice.onclick=()=>{dismissedRevision=lastSkillsData?.revision;skillNotice.hidden=true};
@@ -435,10 +438,10 @@ function executionCards(execution){
  const section=document.createElement('section');section.className='execution-cards';section.setAttribute('aria-label','Backend tool execution');
  const heading=document.createElement('h3');heading.textContent='Tool execution · Controller record';section.append(heading);
  const events=execution.events||[];
- if(!events.length){const note=document.createElement('p');const grants=execution.permissions||{};note.textContent=execution.cancelled?'Request stopped; no tool result recorded.':grants.inventory_root||grants.write_diagnostics||grants.rea_analysis?'Tools were approved, but no tool calls were received.':'No tools were approved for this message.';section.append(note)}
- for(const event of events){const result=event.result||{};const failed=result.status==='error'||result.status==='rea_failed';const card=document.createElement('article');card.className='execution-card '+(failed?'execution-error':'execution-success');
- const title=document.createElement('strong');title.textContent=(event.tool||'Unknown tool')+' · '+(event.reused?'Reused previous result':failed?(event.executed?'Failed':'Rejected'):result.status||'Unknown');card.append(title);
- const details=document.createElement('p');details.textContent=failed?(result.error||result.stderr||'Operation returned failure'):result.status==='written'?'Saved: '+result.path+' · '+result.bytes+' bytes':result.status==='inventoried'?result.files_observed+' files observed · Scan complete: '+result.scan_complete+' · Listed '+result.returned_entries+'/'+result.observed_entries:result.operation?'Operation: '+result.operation+' · Exit: '+result.exit_code:'Result recorded';card.append(details);
+ if(!events.length){const note=document.createElement('p');const grants=execution.permissions||{};note.textContent=execution.cancelled?'Request stopped; no tool result recorded.':grants.inventory_root||grants.write_diagnostics||grants.rea_analysis||grants.mcp_tools?.length?'Tools were approved, but no tool calls were received.':'No tools were approved for this message.';section.append(note)}
+ for(const event of events){const result=event.result||{};const failed=result.status==='error'||result.status==='rea_failed'||result.status==='mcp_failed';const card=document.createElement('article');card.className='execution-card '+(failed?'execution-error':'execution-success');
+ const title=document.createElement('strong');title.textContent=(event.tool||'Unknown tool')+(event.transport==='mcp'?' [MCP]':'')+' · '+(event.reused?'Reused previous result':failed?(event.executed?'Failed':'Rejected'):result.status||'Unknown');card.append(title);
+ const details=document.createElement('p');details.textContent=failed?(result.error||result.stderr||'Operation returned failure'):result.status==='written'?'Saved: '+result.path+' · '+result.bytes+' bytes':result.status==='inventoried'?result.files_observed+' files observed · Scan complete: '+result.scan_complete+' · Listed '+result.returned_entries+'/'+result.observed_entries:result.operation?'Operation: '+result.operation+' · Exit: '+result.exit_code:result.server?'MCP server: '+result.server+' · Tool: '+result.tool:'Result recorded';card.append(details);
  const hash=result.sha256||result.evidence_sha256;if(hash){const checksum=document.createElement('p');checksum.className='execution-path';checksum.textContent='SHA-256: '+hash;card.append(checksum)}
  if(result.evidence_path){const path=document.createElement('p');path.className='execution-path';path.textContent='Evidence: '+result.evidence_path;card.append(path)}
  const disclosure=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Recorded result';const raw=document.createElement('pre');raw.textContent=JSON.stringify(event,null,2);disclosure.append(summary,raw);card.append(disclosure);section.append(card)}
@@ -508,6 +511,8 @@ def handler(token: str):
             route = urlsplit(self.path).path
             if route == "/":
                 return self.reply(200, HTML, "text/html")
+            if route == '/assets/mcp-ui.js':
+                return self.reply(200, Path(__file__).with_name('mcp_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/chat-renderer.js':
                 return self.reply(200, Path(__file__).with_name('chat_renderer.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/model-animations.js':
@@ -523,6 +528,11 @@ def handler(token: str):
                     return self.reply(404, {'error': str(e)})
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == '/api/mcp/status':
+                try:
+                    return self.reply(200, mcp_status(ROOT))
+                except (OSError, ValueError) as e:
+                    return self.reply(400, {'error': str(e)})
             if route == '/api/models/status':
                 return self.reply(200, viewer_status(ROOT))
             if route.startswith('/api/models/'):
@@ -638,15 +648,26 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/models", "/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
+            if route not in ("/api/mcp", "/api/models", "/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= (36 * 1024 * 1024 if route == "/api/models" else 3 * 1024 * 1024 if route == "/api/chats" else 16384):
+                if not 0 < length <= (36 * 1024 * 1024 if route == "/api/models" else 65536 if route == "/api/mcp" else 3 * 1024 * 1024 if route == "/api/chats" else 16384):
                     raise ValueError("Invalid request size")
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == '/api/mcp':
+                    if data.get('action') == 'save':
+                        with STATE_LOCK:
+                            return self.reply(200, save_mcp_config(ROOT, data.get('config')))
+                    if data.get('action') == 'probe':
+                        sid = data.get('server')
+                        if not isinstance(sid, str):
+                            raise ValueError('Choose an MCP server')
+                        grants = validate_tool_permissions(ROOT, data.get('permissions')) if sid == 'smelter' else {}
+                        return self.reply(200, mcp_exchange(ROOT, sid, grants, timeout=20))
+                    raise ValueError('Unknown MCP action')
                 if route == "/api/models":
                     return self.reply(200, rename_animation(ROOT, data) if data.get('action') == 'rename_animation' else attach_model(ROOT, data))
                 if route == "/api/skills/collection-preview":

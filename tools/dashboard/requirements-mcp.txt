@@ -1,0 +1,2 @@
+# Optional MCP v1 compatibility layer; install into the dashboard's interpreter.
+mcp==1.30.0

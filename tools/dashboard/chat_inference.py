@@ -159,7 +159,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
             message_id = conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer)).lastrowid
             conn.execute(EXECUTION_SCHEMA)
-            execution = {'source': 'controller', 'permissions': session.grants,
+            execution = {'source': 'controller', 'permissions': {**session.grants, 'transport': session.transport, 'mcp_tools': list(session.external_tools)},
                          'events': session.events, 'audit_path': str(session.audit_path) if session.audit_path else None,
                          'cancelled': bool(control and control.cancelled.is_set()),
                          'model_text': answer[:-len(receipt)] if receipt else answer}
