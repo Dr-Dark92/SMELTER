@@ -57,6 +57,7 @@ class Control:
         self.phase = 'Waiting for model'
         self.completed = False
         self.file_activity = None
+        self.tool_call_limit = 4
 
     def check(self):
         if self.cancelled.is_set():
@@ -137,7 +138,7 @@ class Control:
                 if self.file_activity is not None:
                     for call in new_calls:
                         self.file_activity.propose(call)
-                if len(calls) > 4:
+                if len(calls) > self.tool_call_limit:
                     raise ValueError('Excessive Ollama tool calls')
                 if part.get('done'):
                     return json.dumps({'message': {'role': 'assistant', 'content': ''.join(content),

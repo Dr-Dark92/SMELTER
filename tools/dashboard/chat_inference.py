@@ -64,6 +64,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
 
     def infer(thinking, available_tools=None):
         checkpoint("Waiting for model")
+        batch_limit = session.call_limit - len(session.events) if available_tools else MAX_CALLS
         request_messages = [dict(message) for message in messages]
         if not thinking:
             request_messages[0]["content"] += " Respond directly and concisely."
@@ -80,6 +81,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             if remaining <= 0:
                 raise ValueError("Chat turn time limit reached")
             if control:
+                control.tool_call_limit = batch_limit
                 raw = control.infer(body, max(1, remaining), 2 * 1024 * 1024)
             else:
                 with opener(request, timeout=max(1, remaining)) as response:
@@ -100,7 +102,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         if not isinstance(answer, str):
             raise ValueError("Invalid Ollama response content")
         calls = message.get("tool_calls", [])
-        if not isinstance(calls, list) or len(calls) > MAX_CALLS:
+        if not isinstance(calls, list) or len(calls) > batch_limit:
             raise ValueError("Invalid or excessive Ollama tool calls")
         return answer, result.get("done_reason", "unknown"), calls, message
 

@@ -176,3 +176,37 @@ class ChatJobsTests(unittest.TestCase):
         timer.start()
         with self.assertRaises(ChatCancelled):
             response.begin()
+
+    def test_stream_tool_batch_uses_controller_budget_and_rejects_excess(self):
+        import http.client
+        count = [6]
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+            def do_POST(self):
+                self.rfile.read(int(self.headers['Content-Length']))
+                self.send_response(200)
+                self.end_headers()
+                # Calls arrive across multiple stream messages; the limit must
+                # apply to the accumulated batch, not to each individual line.
+                for _ in range(count[0]):
+                    self.wfile.write(b'{"message":{"tool_calls":[{"function":{"name":"read_frontend_file","arguments":{}}}]},"done":false}\n')
+                self.wfile.write(b'{"message":{},"done":true}\n')
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        real_connection = http.client.HTTPConnection
+        connect = lambda *a, **kw: real_connection('127.0.0.1', server.server_port, timeout=3)
+        with patch('chat_jobs.http.client.HTTPConnection', side_effect=connect):
+            for limit, amount, allowed in ((4,6,False),(24,6,True),(5,6,False),(24,25,False)):
+                with self.subTest(limit=limit, amount=amount):
+                    count[0] = amount
+                    control = Control()
+                    control.tool_call_limit = limit
+                    if allowed:
+                        result = json.loads(control.infer({'model':'fixture'}, 3, 20000))
+                        self.assertEqual(len(result['message']['tool_calls']), amount)
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'Excessive'):
+                            control.infer({'model':'fixture'}, 3, 20000)

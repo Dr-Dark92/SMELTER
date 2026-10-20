@@ -101,3 +101,25 @@ class FileActivityTests(unittest.TestCase):
         self.assertEqual(record[0]['status'], 'saved')
         self.assertIn('color:red', record[0]['before'])
         self.assertIn('color:blue', record[0]['after'])
+
+    def test_six_file_model_batch_runs_and_updates_remaining_budget(self):
+        from chat_jobs import Control
+        from chat_inference import ask
+        from chats import create_chat, read_chat
+        from database import select_database
+        select_database(self.root, str(self.root.parent / 'source-data'))
+        cid = create_chat(self.root, 'Six-file model batch')['id']
+        control, budgets = Control(), []
+        replies = iter([
+            {'content':'', 'tool_calls':[call('read_frontend_file', relative_path=p) for p in READABLE]},
+            {'content':'Six files read.'}])
+        def infer(*args):
+            budgets.append(control.tool_call_limit)
+            return json.dumps({'message':next(replies)}).encode()
+        with patch.object(control, 'infer', side_effect=infer):
+            ask(self.root, cid, 'Read all six files', tool_permissions={'frontend_workspace':True}, control=control)
+        self.assertEqual(budgets, [24,18])
+        execution = read_chat(self.root, cid)['messages'][-1]['execution']
+        self.assertEqual(len(execution['files']), 6)
+        self.assertEqual(len(execution['events']), 6)
+        self.assertTrue(all(e['result']['status']=='workspace_read' for e in execution['events']))
