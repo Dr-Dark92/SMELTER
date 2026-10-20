@@ -189,9 +189,14 @@ class ChatJobsTests(unittest.TestCase):
                 self.end_headers()
                 # Calls arrive across multiple stream messages; the limit must
                 # apply to the accumulated batch, not to each individual line.
-                for _ in range(count[0]):
-                    self.wfile.write(b'{"message":{"tool_calls":[{"function":{"name":"read_frontend_file","arguments":{}}}]},"done":false}\n')
-                self.wfile.write(b'{"message":{},"done":true}\n')
+                try:
+                    for _ in range(count[0]):
+                        self.wfile.write(b'{"message":{"tool_calls":[{"function":{"name":"read_frontend_file","arguments":{}}}]},"done":false}\n')
+                    self.wfile.write(b'{"message":{},"done":true}\n')
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                    # Oversized batches are deliberately rejected by the
+                    # client before this fixture finishes sending its stream.
+                    pass
         server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.server_close)
