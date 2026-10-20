@@ -112,9 +112,10 @@ class FrontendWorkspaceTests(unittest.TestCase):
         def runner(command, **kwargs):
             self.assertEqual(kwargs['cwd'], workspace.target_path(self.root))
             self.assertFalse(kwargs['shell'])
+            self.assertEqual(kwargs['creationflags'], 0x08000000)
             kwargs['stdout'].write(b'fixture checks passed')
             return subprocess.CompletedProcess(command, 0)
-        with patch('frontend_workspace.subprocess.run', side_effect=runner), patch('frontend_workspace.shutil.which', return_value=None):
+        with patch('frontend_workspace.subprocess.run', side_effect=runner), patch('frontend_workspace.shutil.which', return_value=None), patch.object(subprocess, 'CREATE_NO_WINDOW', 0x08000000, create=True):
             result = workspace.validate(self.root, {})
         self.assertEqual(result['status'], 'workspace_validated')
         self.assertEqual(result['checks'][0]['command'][1:4], ['-m', 'unittest', 'discover'])

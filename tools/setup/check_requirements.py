@@ -100,7 +100,8 @@ def probe(name: str, argv: list[str], policy: str) -> dict:
                 return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
             command = [node, str(cli), "--version"]
         run = subprocess.run(command, capture_output=True, text=True, errors="replace",
-                             timeout=5, check=False, stdin=subprocess.DEVNULL)
+                             timeout=5, check=False, stdin=subprocess.DEVNULL, shell=False,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         output = (run.stdout or run.stderr).strip()
         first = next((line.strip() for line in output.splitlines() if line.strip()), "")
         first = re.sub(r"[\x00-\x1f\x7f]", "", first)[:160]
@@ -149,3 +150,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

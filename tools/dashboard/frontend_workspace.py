@@ -301,7 +301,8 @@ def validate(root, arguments):
         try:
             with log.open('wb') as output:
                 completed = subprocess.run(command, cwd=target, stdin=subprocess.DEVNULL,
-                    stdout=output, stderr=subprocess.STDOUT, timeout=max(0.1, deadline - time.monotonic()), shell=False)
+                    stdout=output, stderr=subprocess.STDOUT, timeout=max(0.1, deadline - time.monotonic()), shell=False,
+                    creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
             code = completed.returncode
         except subprocess.TimeoutExpired:
             code = None
