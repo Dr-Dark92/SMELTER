@@ -82,7 +82,11 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 
 #skillsOverview{overflow-y:auto;min-height:0;flex:1;padding:4px 8px}#skillsOverview h2{font-size:24px}#skillNotice{background:#25364b;border-bottom:1px solid #708dae;padding:10px 18px;flex-shrink:0;font-size:13px}#skillNotice button{margin-left:8px;padding:6px 10px}
 .skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}.skill-card{border:1px solid #37506c;background:#142237;border-radius:12px;padding:16px;min-width:0}.skill-card h3{margin-top:0;font-size:16px}.skill-card p{font-size:13px;overflow-wrap:anywhere}.skill-card small{overflow-wrap:anywhere}.skill-card button{margin:4px 6px 0 0;padding:8px 10px;font-size:12px}.skill-badge{color:#8fd8c2!important}.skill-search{padding:10px;width:min(100%,340px);box-sizing:border-box;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:7px}.skill-restart{padding:12px;background:#223048;border-radius:8px}.skill-preview{border:1px solid #58718f;border-radius:10px;padding:16px;margin-top:16px}.skill-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}
-.runtime-field{display:block;margin:12px 0;font-size:13px}.runtime-field input[type=number]{box-sizing:border-box;width:100%;margin-top:5px;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:5px;padding:8px}#runtimePanel p{font-size:12px;overflow-wrap:anywhere}#runtimePanel select{max-width:100%;margin-right:6px}</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
+.runtime-field{display:block;margin:12px 0;font-size:13px}.runtime-field input[type=number]{box-sizing:border-box;width:100%;margin-top:5px;background:#0b111d;color:#e7edfa;border:1px solid #49607d;border-radius:5px;padding:8px}#runtimePanel p{font-size:12px;overflow-wrap:anywhere}#runtimePanel select{max-width:100%;margin-right:6px}
+#chatSearch{box-sizing:border-box;width:100%;padding:10px;margin-top:10px;background:#0b111d;border:1px solid #49607d;border-radius:7px;color:#e7edfa}.history-count{font-size:11px;margin:10px 0}
+.history-row{display:grid;grid-template-columns:minmax(0,1fr) 28px 28px;align-items:center;gap:3px;border:1px solid transparent;border-radius:9px;padding:4px;margin:5px 0}.history-row.selected{border-color:#5d8ec4;background:#1a3550}#leftbar .history-row .chat-open{min-width:0;width:100%;padding:9px 5px;background:transparent;margin:0}.history-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.chat-open small{display:block;font-size:10px;margin-top:5px;color:#aabbd4}#leftbar .history-row .chat-action{width:28px;height:30px;padding:3px;margin:0;text-align:center;background:#203249}
+.chat-dialog{background:#132237;color:#e7edfa;border:1px solid #597a9d;border-radius:14px;width:min(420px,calc(100vw - 60px));padding:24px}.chat-dialog::backdrop{background:#030a14b8}.chat-dialog h2{font-size:20px;margin-top:0}.chat-dialog label{display:block;font-size:13px}.chat-dialog input{box-sizing:border-box;width:100%;margin-top:9px;padding:12px;border:1px solid #597a9d;background:#0b111d;color:#e7edfa;border-radius:7px;font:inherit}.dialog-actions{display:flex;justify-content:flex-end;gap:10px}.dialog-error{min-height:20px;color:#ffadad;font-size:13px}
+</style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
 <section class="panel"><h2>Workflow planner</h2><p>Preview ordered steps and dependency checks. Dry run only — no tools execute.</p>
@@ -125,8 +129,10 @@ function initShell(){
  const center=document.createElement('section');center.id='workspace';
  const right=document.createElement('aside');right.id='rightbar';
  left.innerHTML='<h2>Chat history</h2>';
- const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=async()=>{const title=prompt('Conversation title (required, up to 120 characters)');if(title===null)return;if(!title.trim()||title.length>120){alert('Enter a title between 1 and 120 characters');return}try{const chat=await api('/api/chats','POST',{action:'create',title:title.trim()});activeChat=chat.id;await refreshChats();await openChat(chat.id)}catch(e){alert(e.message)}};
- const history=document.createElement('div');history.id='chatHistory';left.append(newChat,history);
+ const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=()=>editConversationTitle();
+ const historySearch=document.createElement('input');historySearch.id='chatSearch';historySearch.type='search';historySearch.placeholder='Search conversations';historySearch.setAttribute('aria-label','Search conversation titles');historySearch.oninput=renderChatHistory;
+ const historyCount=document.createElement('p');historyCount.id='historyCount';historyCount.className='history-count';
+ const history=document.createElement('div');history.id='chatHistory';left.append(newChat,historySearch,historyCount,history);
  const title=document.createElement('h2');title.id='chatTitle';title.textContent='SMELTER · Local chat';
  const log=document.createElement('div');log.id='chatlog';log.setAttribute('role','log');log.setAttribute('aria-label','Conversation messages');log.textContent='Select New chat. Python tools require permission for each message.';
  const permissionsBox=document.createElement('details');permissionsBox.id='pythonTools';
@@ -394,16 +400,30 @@ async function refreshSystem(){
  finally{systemStatusBusy=false}
 }
 setInterval(()=>{if(document.getElementById('sysfooter')&&!document.getElementById('sysfooter').hidden)refreshSystem()},5000);
-async function refreshChats(){
- const data=await api('/api/chats');const history=document.getElementById('chatHistory');history.replaceChildren();
- for(const chat of data.conversations){
-  const row=document.createElement('div');row.className='ext';
-  const open=document.createElement('button');open.textContent=chat.title;open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
-  const rename=document.createElement('button');rename.textContent='✎';rename.title='Rename';rename.onclick=async()=>{const title=prompt('Rename conversation',chat.title);if(title===null)return;try{await api('/api/chats','POST',{action:'rename',id:chat.id,title});await refreshChats()}catch(e){alert(e.message)}};
-  const del=document.createElement('button');del.textContent='×';del.title='Delete';del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete this conversation and its notes?'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatlog').textContent='Conversation deleted'}await refreshChats()}catch(e){alert(e.message)}};
-  row.append(open,rename,del);history.append(row);
- }
+let conversationHistory=[];
+function localTimestamp(value){const raw=String(value||'');const date=new Date(raw.includes('T')?raw:raw.replace(' ','T')+'Z');return Number.isNaN(date.getTime())?raw:date.toLocaleString()}
+function highlightChat(){for(const row of document.querySelectorAll('.history-row')){const selected=row.dataset.chatId===activeChat;row.classList.toggle('selected',selected);row.querySelector('.chat-open')?.setAttribute('aria-current',selected?'true':'false')}}
+async function editConversationTitle(chat=null){
+ if(document.getElementById('chatinput').disabled)return;
+ const dialog=document.createElement('dialog');dialog.className='chat-dialog';const form=document.createElement('form');const heading=document.createElement('h2');heading.textContent=chat?'Rename conversation':'New conversation';heading.id='chatDialogTitle';dialog.setAttribute('aria-labelledby',heading.id);
+ const label=document.createElement('label');label.textContent='Conversation title';const field=document.createElement('input');field.type='text';field.required=true;field.maxLength=120;field.value=chat?.title||'';field.placeholder='Give this conversation a name';label.append(field);
+ const error=document.createElement('p');error.className='dialog-error';error.setAttribute('role','alert');const actions=document.createElement('div');actions.className='dialog-actions';const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';const save=document.createElement('button');save.type='submit';save.textContent=chat?'Save title':'Create conversation';actions.append(cancel,save);form.append(heading,label,error,actions);dialog.append(form);document.body.append(dialog);
+ let pending=false;cancel.onclick=()=>dialog.close();dialog.addEventListener('cancel',event=>{if(pending)event.preventDefault()});dialog.addEventListener('close',()=>dialog.remove());
+ form.onsubmit=async event=>{event.preventDefault();if(pending)return;const title=field.value.trim();if(!title){error.textContent='A conversation title is required.';field.focus();return}if(document.getElementById('chatinput').disabled){error.textContent='Finish or stop the active request first.';return}pending=true;save.disabled=cancel.disabled=true;field.disabled=true;error.textContent='';
+ try{const result=await api('/api/chats','POST',chat?{action:'rename',id:chat.id,title}:{action:'create',title});if(!chat||activeChat===chat.id)await openChat(result.id);await refreshChats();dialog.close();}
+ catch(e){error.textContent=e.message;pending=false;save.disabled=cancel.disabled=false;field.disabled=false;field.focus()}};
+ dialog.showModal();field.focus();field.select();
 }
+function renderChatHistory(){
+ const history=document.getElementById('chatHistory');if(!history)return;history.replaceChildren();const query=(document.getElementById('chatSearch')?.value||'').trim().toLocaleLowerCase();const matches=conversationHistory.filter(chat=>chat.title.toLocaleLowerCase().includes(query));document.getElementById('historyCount').textContent=matches.length+' of '+conversationHistory.length+' recent conversations';
+ if(!matches.length){const empty=document.createElement('p');empty.textContent=query?'No matching titles.':'Create your first conversation.';history.append(empty)}
+ for(const chat of matches){const row=document.createElement('div');row.className='history-row';row.dataset.chatId=chat.id;
+ const open=document.createElement('button');open.className='chat-open';open.title=chat.title;const title=document.createElement('span');title.className='history-title';title.textContent=chat.title;const date=document.createElement('small');date.textContent=localTimestamp(chat.created_at);open.append(title,date);open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
+ const rename=document.createElement('button');rename.className='chat-action';rename.textContent='✎';rename.title='Rename';rename.setAttribute('aria-label','Rename '+chat.title);rename.onclick=()=>editConversationTitle(chat);
+ const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'” and its messages? Diagnostic files and audit logs remain on disk.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
+ row.append(open,rename,del);history.append(row)}highlightChat();
+}
+async function refreshChats(){const data=await api('/api/chats');conversationHistory=data.conversations;renderChatHistory()}
 function executionCards(execution){
  const section=document.createElement('section');section.className='execution-cards';section.setAttribute('aria-label','Backend tool execution');
  const heading=document.createElement('h3');heading.textContent='Tool execution · Controller record';section.append(heading);
@@ -419,8 +439,8 @@ function executionCards(execution){
  const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
 }
 async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
- for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+msg.created_at;const body=document.createElement('div');body.className='message-content';body.textContent=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;bubble.append(label,body);log.append(bubble);
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+ for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';body.textContent=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;bubble.append(label,body);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
  }catch(e){alert(e.message)}

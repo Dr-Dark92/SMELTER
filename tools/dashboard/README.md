@@ -277,3 +277,20 @@ These settings do not alter OpenCode or Ollama's service defaults, and saving
 them does not require restarting the dashboard. The timeout covers model
 requests within the turn; an already-running tool retains its own execution
 bounds and cannot be undone by a timeout or Stop.
+
+
+### Conversation navigation
+
+History filters conversation titles as you type and highlights the selected
+conversation. It searches the latest 200 conversations returned by the
+existing API, not message bodies or an unbounded archive.
+
+New and Rename use an in-page modal dialog with required titles, a 120-character
+limit, Enter to submit, Escape/Cancel to dismiss, inline server errors and
+duplicate-submit protection. Active requests block conversation mutations
+in the sending tab. The delete confirmation names the conversation and
+explains that diagnostic files and audit logs remain on disk.
+
+Message and history timestamps are displayed in the browser's local timezone.
+SQLite timestamps remain unchanged. Dialog focus is initially placed in the
+title field; the browser provides modal keyboard focus containment.
