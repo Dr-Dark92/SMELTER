@@ -118,14 +118,19 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <p><label>Role <select id="modelrole"><option value="reasoning">Reasoning</option><option value="lightweight">Lightweight</option></select></label>
 <label> Installed model <select id="modelchoice"></select></label></p>
 <button id="modelsave">Save model preference</button><pre id="modelout"></pre><pre id="ollamaout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
-<section class="panel"><h2>OpenCode agent readiness</h2><p>Detect the installed CLI and report version verification. No agent sessions, commands, or project access.</p>
+<section class="panel"><h2>OpenCode agent readiness</h2><p>Installation checks do not start an agent. The read-only pilot below connects to a separately running OpenCode server.</p>
 <button id="opencodecheck">Check OpenCode</button> <button id="providerpreview">Preview Ollama provider config</button>
 <p><label><input id="deployapprove" type="checkbox"> I approve creating an isolated OpenCode configuration in .smelter only.</label></p>
 <button id="providerdeploy">Deploy isolated config (create only)</button> <button id="providervalidate">Validate staged config</button>
 <pre id="validateout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+<h3>Local OpenCode server · read-only pilot</h3><p>Connects to an existing server on 127.0.0.1:4096. The expected workspace is the sibling V2 directory. This is an OpenCode session permission policy, not an OS sandbox.</p>
+<button id="opencodeServerCheck">Check OpenCode server</button><pre id="opencodeServerStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+<label>Verified local model <select id="opencodeAgentModel" aria-label="OpenCode local model"></select></label>
+<label style="display:block"><input id="opencodeAgentApprove" type="checkbox"> Allow one read-only OpenCode session in the V2 workspace. Editing, shell commands, delegation and external tools are denied.</label>
+<p>Select OpenCode read-only beside the chat composer, then Send. This pilot does not forward SMELTER skills, attachments or MCP grants.</p>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2 id="startupHeading">SMELTER startup</h2><div id="databaseSetup"><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button></div><div id="authRecovery" hidden><p>This page is not authorized for the running dashboard. Use the current launch URL printed in its terminal. Restarting the server changes the token; database initialization will not fix authorization.</p><label>Current launch URL or token<input id="sessionToken" type="password" autocomplete="off" spellcheck="false" aria-label="Current launch URL or token"></label><button id="sessionReconnect">Reconnect session</button></div><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script>
+<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -166,29 +171,38 @@ function initShell(){
  const send=document.createElement('button');send.textContent='Send to Qwen';
  const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · Enter to send · Shift+Enter for a new line';
  const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;
+ const engineLabel=document.createElement('label');engineLabel.textContent='Execution engine ';
+ const engineChoice=document.createElement('select');engineChoice.id='chatEngine';engineChoice.setAttribute('aria-label','Execution engine');
+ for(const [value,text] of [['ollama','Ollama · direct chat'],['opencode_readonly','OpenCode · read-only pilot']]){const option=document.createElement('option');option.value=value;option.textContent=text;engineChoice.append(option)}engineLabel.append(engineChoice);
+ engineChoice.onchange=()=>{send.textContent=engineChoice.value==='opencode_readonly'?'Send via OpenCode':'Send to Qwen'};
  let currentJob=null;
  let fileActivityView=null,fileActivityJob=null,fileActivityHost=null;
  const showFileActivity=job=>{if(!job.files?.length)return;if(fileActivityJob!==job.id||!fileActivityHost?.isConnected){fileActivityHost=document.createElement('section');log.append(fileActivityHost);fileActivityView=SmelterFiles.mount(fileActivityHost);fileActivityJob=job.id}fileActivityView.update(job.files)};
+ let agentHost=null,agentJob=null;
+ const showAgentActivity=job=>{if(job.engine!=='opencode_readonly')return;if(agentJob!==job.id||!agentHost?.isConnected){agentHost=document.createElement('article');agentHost.className='message message-assistant';agentJob=job.id;log.append(agentHost)}agentHost.replaceChildren();const heading=document.createElement('header');heading.className='message-label';heading.textContent='OpenCode · read-only session';const body=document.createElement('div');SmelterChat.render(job.output_text||'Waiting for OpenCode…',body);const activity=document.createElement('pre');activity.style.fontSize='11px';activity.style.whiteSpace='pre-wrap';activity.textContent=(job.tool_activity||[]).map(e=>e.tool+' · '+e.result.status+(e.result.path?' · '+e.result.path:'')).join('\\n');agentHost.append(heading,body,activity)};
  const renderPending=(content)=>{const bubble=document.createElement('article');bubble.className='message message-user';const header=document.createElement('header');header.className='message-label';header.textContent='You · submitting';const body=document.createElement('div');body.className='message-content';body.textContent=content;bubble.append(header,body);log.append(bubble);log.scrollTop=log.scrollHeight;return header};
  stop.onclick=async()=>{if(!currentJob)return;stop.disabled=true;try{const job=await api('/api/chats','POST',{action:'stop',job_id:currentJob});requestStatus.textContent=job.phase}catch(e){requestStatus.textContent='Could not stop: '+e.message;stop.disabled=false}};
  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
  send.onclick=async()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
+ const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
- const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
+ const toolPermissions=executionEngine==='opencode_readonly'?{}:{...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
  readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- let job=await api('/api/chats','POST',{action:'start',id:conversation,content,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;pending.textContent='You · sent';input.value='';imageInput.value='';
+ const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;agentApproval.checked=false;
+ if(executionEngine==='opencode_readonly'&&attachment)throw Error('OpenCode pilot accepts text only');
+ let job=await api('/api/chats','POST',{action:'start',id:conversation,content,engine:executionEngine,opencode_approval:approved,opencode_model:document.getElementById('opencodeAgentModel').value,image:attachment,skills:executionEngine==='opencode_readonly'?[]:selectedSkills,auto_skills:executionEngine==='opencode_readonly'?false:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;pending.textContent='You · sent';input.value='';imageInput.value='';
  try{sessionStorage.setItem('smelterActiveJob',JSON.stringify({id:job.id,conversation}))}catch(e){}
- while(job.state==='running'){showFileActivity(job);requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}showFileActivity(job);
+ while(job.state==='running'){showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}showFileActivity(job);showAgentActivity(job);
  currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}
  requestStatus.textContent=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':'Request failed: '+job.error;
  if(activeChat===conversation)await openChat(conversation);await refreshChats();
  }catch(e){pending.textContent='You · submission/status error';requestStatus.textContent=e.message+(currentJob?' · Request may still be running. Use Stop or reload to reconnect.':'');}
- finally{if(!currentJob){stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;input.focus()}}};
+ finally{if(!currentJob){stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;engineChoice.disabled=false;input.focus()}}};
  const resumeJob=async()=>{let saved;try{saved=JSON.parse(sessionStorage.getItem('smelterActiveJob')||'null')}catch(e){return}if(!saved)return;currentJob=saved.id;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;stop.disabled=false;
- try{let job;do{job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob));showFileActivity(job);requestStatus.textContent=job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':job.state==='error'?'Request failed: '+job.error:job.state;if(job.state==='running')await new Promise(resolve=>setTimeout(resolve,1000))}while(job.state==='running');await openChat(saved.conversation);await refreshChats();}
+ try{let job;do{job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob));showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':job.state==='error'?'Request failed: '+job.error:job.state;if(job.state==='running')await new Promise(resolve=>setTimeout(resolve,1000))}while(job.state==='running');await openChat(saved.conversation);await refreshChats();}
  catch(e){requestStatus.textContent=e.message}
  finally{currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false}};
  window.resumeChatJob=resumeJob;
@@ -196,7 +210,7 @@ function initShell(){
  const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
  const attachModel=document.createElement('button');attachModel.type='button';attachModel.textContent='Attach GLB';attachModel.onclick=()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;modelFile.click()};
  modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
- composer.append(input,imageInput,modelFile,attachModel,send,stop);center.append(title,log,permissionsBox,requestStatus,composer);
+ composer.append(input,imageInput,modelFile,attachModel,send,stop);center.append(title,log,permissionsBox,engineLabel,requestStatus,composer);
  right.innerHTML='<h2>Configuration</h2>';
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
@@ -446,10 +460,11 @@ function executionCards(execution){
  const section=document.createElement('section');section.className='execution-cards';section.setAttribute('aria-label','Backend tool execution');
  const heading=document.createElement('h3');heading.textContent='Tool execution · Controller record';section.append(heading);
  const events=execution.events||[];
+ if(execution.verification_scope){const scope=document.createElement('p');scope.textContent=execution.verification_scope;section.append(scope)}
  if(execution.files?.length){const host=document.createElement('section');section.append(host);SmelterFiles.mount(host).update(execution.files)}
- if(!events.length){const note=document.createElement('p');const grants=execution.permissions||{};note.textContent=execution.cancelled?'Request stopped; no tool result recorded.':grants.inventory_root||grants.write_diagnostics||grants.rea_analysis||grants.mcp_tools?.length||grants.model_ids?.length||grants.frontend_workspace?'Tools were approved, but no tool calls were received.':'No tools were approved for this message.';section.append(note)}
+ if(!events.length){const note=document.createElement('p');const grants=execution.permissions||{};note.textContent=execution.engine==='opencode'?'No tool activity was reported by OpenCode for this session.':execution.cancelled?'Request stopped; no tool result recorded.':grants.inventory_root||grants.write_diagnostics||grants.rea_analysis||grants.mcp_tools?.length||grants.model_ids?.length||grants.frontend_workspace?'Tools were approved, but no tool calls were received.':'No tools were approved for this message.';section.append(note)}
  for(const event of events){const result=event.result||{};const failed=result.status==='error'||result.status==='rea_failed'||result.status==='mcp_failed'||result.status==='workspace_validation_failed';const card=document.createElement('article');card.className='execution-card '+(failed?'execution-error':'execution-success');
- const title=document.createElement('strong');title.textContent=(event.tool||'Unknown tool')+(event.transport==='mcp'?' [MCP]':event.process_owner==='dashboard'?' [dashboard]':'')+' · '+(event.reused?'Reused previous result':failed?(event.executed?'Failed':'Rejected'):result.status||'Unknown');card.append(title);
+ const title=document.createElement('strong');title.textContent=(event.tool||'Unknown tool')+(event.transport==='mcp'?' [MCP]':event.transport==='opencode'?' [OpenCode]':event.process_owner==='dashboard'?' [dashboard]':'')+' · '+(event.reused?'Reused previous result':failed?(event.executed?'Failed':'Rejected'):result.status||'Unknown');card.append(title);
  const details=document.createElement('p');details.textContent=failed?(result.error||result.stderr||'Operation returned failure'):result.status==='written'?'Saved: '+result.path+' · '+result.bytes+' bytes':result.status==='inventoried'?result.files_observed+' files observed · Scan complete: '+result.scan_complete+' · Listed '+result.returned_entries+'/'+result.observed_entries:result.operation?'Operation: '+result.operation+' · Exit: '+result.exit_code:result.status==='model_inspected'?result.filename+' · '+result.meshes+' meshes · '+result.animations+' animation clips':result.server?'MCP server: '+result.server+' · Tool: '+result.tool:'Result recorded';card.append(details);
  const hash=result.sha256||result.evidence_sha256;if(hash){const checksum=document.createElement('p');checksum.className='execution-path';checksum.textContent='SHA-256: '+hash;card.append(checksum)}
  if(result.evidence_path){const path=document.createElement('p');path.className='execution-path';path.textContent='Evidence: '+result.evidence_path;card.append(path)}
@@ -459,13 +474,14 @@ function executionCards(execution){
 }
 async function openChat(id){
  try{const chat=await api('/api/chats/'+encodeURIComponent(id));SmelterModels.clear();if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;window.setChatModelGrants?.(chat.messages.filter(m=>m.model_attachment).map(m=>m.model_attachment));highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
- for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
+ for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?(msg.execution?.engine==='opencode'?'SMELTER · OpenCode response':'SMELTER · AI response'):'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
  }catch(e){alert(e.message)}
 }
 initShell();
 const el=id=>document.getElementById(id);
+SmelterOpenCode.mount(api);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
 async function loadWorkflows(){try{const data=await api('/api/workflows');for(const w of data.workflows){const opt=document.createElement('option');opt.value=w.id;opt.textContent=w.label+' — '+w.description;el('workflow').append(opt)}}catch(e){el('error').textContent=e.message}}
@@ -526,6 +542,8 @@ def handler(token: str):
                 return self.reply(200, Path(__file__).with_name('session_auth.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/file-activity.js':
                 return self.reply(200, Path(__file__).with_name('file_activity.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/opencode-agent-ui.js':
+                return self.reply(200, Path(__file__).with_name('opencode_agent_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/mcp-ui.js':
                 return self.reply(200, Path(__file__).with_name('mcp_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/chat-renderer.js':
@@ -543,6 +561,12 @@ def handler(token: str):
                     return self.reply(404, {'error': str(e)})
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == '/api/opencode/agent':
+                from opencode_runtime import status as opencode_agent_status
+                try:
+                    return self.reply(200, opencode_agent_status(ROOT))
+                except (ValueError, OSError, TypeError, KeyError) as e:
+                    return self.reply(400, {'error':str(e)})
             if route == '/api/mcp/status':
                 try:
                     return self.reply(200, mcp_status(ROOT))

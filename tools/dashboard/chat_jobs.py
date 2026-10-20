@@ -58,6 +58,8 @@ class Control:
         self.completed = False
         self.file_activity = None
         self.tool_call_limit = 4
+        self.output_text = ''
+        self.tool_activity = []
 
     def check(self):
         if self.cancelled.is_set():
@@ -167,13 +169,22 @@ class Jobs:
         prompt = data.get('content')
         if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
             raise ValueError('Prompt must be 1–1800 characters')
+        engine = data.get('engine', 'ollama')
+        if engine not in ('ollama', 'opencode_readonly'):
+            raise ValueError('Unknown execution engine')
+        if engine == 'opencode_readonly':
+            if data.get('opencode_approval') is not True:
+                raise ValueError('Approve this read-only OpenCode session before sending')
+            from functools import partial
+            from opencode_runtime import ask as opencode_ask
+            worker = partial(opencode_ask, model_key=data.get('opencode_model'), approval=True)
         with self.lock:
             if any(j['state'] == 'running' for j in self.jobs.values()):
                 raise ValueError('A chat request is already running; finish or stop it first')
             if len(self.jobs) >= 50:
                 del self.jobs[next(iter(self.jobs))]
             job = {'id': str(uuid4()), 'conversation_id': data['id'], 'state': 'running',
-                   'started': time.monotonic(), 'control': Control(), 'error': None}
+                   'started': time.monotonic(), 'control': Control(), 'error': None, 'engine':engine}
             self.jobs[job['id']] = job
         threading.Thread(target=self._run, args=(root, data, job, worker), daemon=True).start()
         return self.status(job['id'])
@@ -182,10 +193,12 @@ class Jobs:
         from chat_inference import ask
         control = job['control']
         try:
-            (worker or ask)(root, data['id'], data['content'], image=data.get('image'),
+            result = (worker or ask)(root, data['id'], data['content'], image=data.get('image'),
                 skills=data.get('skills'), auto_skills=data.get('auto_skills', False),
                 tool_permissions=data.get('tool_permissions'), control=control)
             state, error = ('cancelled', None) if control.cancelled.is_set() else ('done', None)
+            if state == 'done' and isinstance(result, dict) and result.get('status') == 'error':
+                state, error = 'error', str(result.get('error', 'Agent task failed'))[:1000]
         except ChatCancelled:
             state, error = 'cancelled', None
         except Exception as exc:
@@ -201,7 +214,10 @@ class Jobs:
                 raise ValueError('Chat request not found; the server may have restarted')
             job = self.jobs[jid]
             return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error')} | {
+                'engine': job['engine'],
                 'phase': job['control'].phase,
+                'output_text': job['control'].output_text,
+                'tool_activity': job['control'].tool_activity,
                 'files': job['control'].file_activity.snapshot() if job['control'].file_activity is not None else [],
                 'elapsed_seconds': round(job.get('ended', time.monotonic()) - job['started'], 1)}
 
