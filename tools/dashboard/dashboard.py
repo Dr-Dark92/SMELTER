@@ -71,6 +71,12 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 .message-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
 #chatinput{resize:vertical;min-height:64px;max-height:180px;font:inherit;box-sizing:border-box}#requestStatus{flex-shrink:0;font-size:12px;margin:6px 0;min-height:18px}#composer{flex-shrink:0;align-items:flex-end;flex-wrap:wrap}#pythonTools{flex-shrink:0;max-height:35%;overflow:auto}
 @media(max-width:850px){.message{max-width:97%}}
+
+.execution-cards{align-self:stretch;border:1px solid #3d596b;background:#0d2029;border-radius:12px;padding:14px;flex-shrink:0;min-width:0}
+.execution-cards h3{font-size:13px;color:#92d5c5;margin:0 0 10px}.execution-cards p{font-size:12px;margin:7px 0;overflow-wrap:anywhere}
+.execution-card{border-left:3px solid #69c6a3;background:#132c34;margin:10px 0;padding:12px;border-radius:6px;font-size:13px}
+.execution-error{border-left-color:#ee9b9b;background:#34232c}.execution-path{font-family:monospace;overflow-wrap:anywhere}
+.execution-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto;font-size:11px}.execution-card summary{cursor:pointer;color:#b6d5e0}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -344,8 +350,26 @@ async function refreshChats(){
   row.append(open,rename,del);history.append(row);
  }
 }
+function executionCards(execution){
+ const section=document.createElement('section');section.className='execution-cards';section.setAttribute('aria-label','Backend tool execution');
+ const heading=document.createElement('h3');heading.textContent='Tool execution · Controller record';section.append(heading);
+ const events=execution.events||[];
+ if(!events.length){const note=document.createElement('p');const grants=execution.permissions||{};note.textContent=execution.cancelled?'Request stopped; no tool result recorded.':grants.inventory_root||grants.write_diagnostics||grants.rea_analysis?'Tools were approved, but no tool calls were received.':'No tools were approved for this message.';section.append(note)}
+ for(const event of events){const result=event.result||{};const failed=result.status==='error'||result.status==='rea_failed';const card=document.createElement('article');card.className='execution-card '+(failed?'execution-error':'execution-success');
+ const title=document.createElement('strong');title.textContent=(event.tool||'Unknown tool')+' · '+(event.reused?'Reused previous result':failed?(event.executed?'Failed':'Rejected'):result.status||'Unknown');card.append(title);
+ const details=document.createElement('p');details.textContent=failed?(result.error||result.stderr||'Operation returned failure'):result.status==='written'?'Saved: '+result.path+' · '+result.bytes+' bytes':result.status==='inventoried'?result.files_observed+' files observed · Scan complete: '+result.scan_complete+' · Listed '+result.returned_entries+'/'+result.observed_entries:result.operation?'Operation: '+result.operation+' · Exit: '+result.exit_code:'Result recorded';card.append(details);
+ const hash=result.sha256||result.evidence_sha256;if(hash){const checksum=document.createElement('p');checksum.className='execution-path';checksum.textContent='SHA-256: '+hash;card.append(checksum)}
+ if(result.evidence_path){const path=document.createElement('p');path.className='execution-path';path.textContent='Evidence: '+result.evidence_path;card.append(path)}
+ const disclosure=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Recorded result';const raw=document.createElement('pre');raw.textContent=JSON.stringify(event,null,2);disclosure.append(summary,raw);card.append(disclosure);section.append(card)}
+ if(execution.audit_path){const audit=document.createElement('p');audit.className='execution-path';audit.textContent='Audit: '+execution.audit_path;section.append(audit)}
+ const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
+}
 async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER':'System';label.textContent=speaker+' · '+msg.created_at;const body=document.createElement('div');body.className='message-content';body.textContent=msg.content;bubble.append(label,body);log.append(bubble)}if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight}catch(e){alert(e.message)}
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id));activeChat=id;const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+ for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?'SMELTER · AI response':'System';label.textContent=speaker+' · '+msg.created_at;const body=document.createElement('div');body.className='message-content';body.textContent=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;bubble.append(label,body);log.append(bubble);
+ if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
+ if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
+ }catch(e){alert(e.message)}
 }
 initShell();
 const token=new URLSearchParams(location.hash.slice(1)).get('token');

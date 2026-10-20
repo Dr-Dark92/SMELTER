@@ -185,3 +185,25 @@ The setting applies to skill/tool chats, defaults to 32768, and accepts values
 from 2048 through 131072. It is local to the launched process and does not
 change the home workstation's configuration. Existing synchronous ask clients
 remain compatible; the web interface uses the new start/status/stop API.
+
+
+### Controller execution cards
+
+AI prose and backend tool results now render in separate regions. Tool cards
+show recorded status, errors, file/evidence paths, byte counts, SHA-256, and
+audit location where present. Full event JSON is expandable and rendered as
+plain text. Success colors establish neither model narrative accuracy nor
+asset semantics; they represent the operation's recorded result.
+
+Execution records are saved atomically with each assistant message in an
+additive message_execution table. Existing databases acquire that table on
+the next successful/cancelled chat persistence; reading old chats does not
+change their schema. Old messages remain unchanged and show that structured
+execution metadata is unavailable. The system does not infer execution from
+receipt-shaped historical prose. Deleting a conversation also deletes its
+execution rows, while actual diagnostic files/audits remain on disk.
+
+The legacy reply/content strings still include controller receipts for API
+compatibility. The current GUI displays the separately retained model text
+and renders the actual controller events as cards. Model text cannot create
+these cards by imitating a receipt header or path.

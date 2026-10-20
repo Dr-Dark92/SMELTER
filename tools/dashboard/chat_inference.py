@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from chats import read_chat, _db
+from chats import read_chat, _db, EXECUTION_SCHEMA
 from vision import validate_image
 from skill_context import build_skill_context
 from skill_router import route_skills
@@ -158,7 +158,13 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             if conn.execute("SELECT 1 FROM conversations WHERE id=?", (conversation_id,)).fetchone() is None:
                 raise ValueError("Conversation no longer exists")
             conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
-            conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer))
+            message_id = conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer)).lastrowid
+            conn.execute(EXECUTION_SCHEMA)
+            execution = {'source': 'controller', 'permissions': session.grants,
+                         'events': session.events, 'audit_path': str(session.audit_path) if session.audit_path else None,
+                         'cancelled': bool(control and control.cancelled.is_set()),
+                         'model_text': answer[:-len(receipt)] if receipt else answer}
+            conn.execute("INSERT INTO message_execution(message_id,payload) VALUES(?,?)", (message_id,json.dumps(execution)))
         if control:
             control.completed = True
     return {"reply":answer,"model":MODEL,"stored":True,

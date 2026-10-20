@@ -6,9 +6,14 @@ or access project files.
 from __future__ import annotations
 import sqlite3
 import uuid
+import json
 from contextlib import closing
 from pathlib import Path
 from database import chosen_database, inspect_database
+
+EXECUTION_SCHEMA = """CREATE TABLE IF NOT EXISTS message_execution (
+message_id INTEGER PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
+payload TEXT NOT NULL)"""
 
 def _db(root: Path) -> Path:
     if not inspect_database(root)["ready"]:
@@ -40,8 +45,13 @@ def read_chat(root: Path, cid: str) -> dict:
         row = conn.execute("SELECT title FROM conversations WHERE id=?", (cid,)).fetchone()
         if row is None:
             raise ValueError("Conversation not found")
-        messages = conn.execute("SELECT role,content,created_at FROM messages WHERE conversation_id=? ORDER BY id LIMIT 1000", (cid,)).fetchall()
-    return {"id": cid, "title": row[0], "messages": [{"role": r, "content": c, "created_at": d} for r,c,d in messages]}
+        messages = conn.execute("SELECT id,role,content,created_at FROM messages WHERE conversation_id=? ORDER BY id LIMIT 1000", (cid,)).fetchall()
+        has_execution = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone()
+        evidence = dict(conn.execute("SELECT e.message_id,e.payload FROM message_execution e JOIN messages m ON m.id=e.message_id WHERE m.conversation_id=?", (cid,))) if has_execution else {}
+    return {"id": cid, "title": row[0], "messages": [
+        {"role": r, "content": c, "created_at": d,
+         "execution": json.loads(evidence[mid]) if mid in evidence else None}
+        for mid,r,c,d in messages]}
 
 def add_note(root: Path, cid: str, content: str) -> dict:
     cid = _id(cid)
@@ -66,6 +76,8 @@ def rename_chat(root: Path, cid: str, title: str) -> dict:
 def delete_chat(root: Path, cid: str) -> dict:
     cid = _id(cid)
     with closing(sqlite3.connect(_db(root))) as conn, conn:
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone():
+            conn.execute("DELETE FROM message_execution WHERE message_id IN (SELECT id FROM messages WHERE conversation_id=?)", (cid,))
         conn.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
         if not conn.execute("DELETE FROM conversations WHERE id=?", (cid,)).rowcount:
             raise ValueError("Conversation not found")
