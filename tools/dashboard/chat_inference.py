@@ -23,7 +23,10 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
         raise ValueError("Prompt must be 1–1800 characters")
     chat = read_chat(root, conversation_id)
-    session = ToolSession(root, tool_permissions, conversation_id)
+    from config_store import load_config
+    model = load_config(root, 'model_preferences.json')['models'].get('reasoning', MODEL)
+    failure = None
+    session = ToolSession(root, tool_permissions, conversation_id, policy=control.access_policy if control else None)
     if control:
         control.file_activity = session.file_activity
     messages = [{"role":"system","content":"You are SMELTER's local assistant. " + session.context() +
@@ -68,7 +71,11 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
         request_messages = [dict(message) for message in messages]
         if not thinking:
             request_messages[0]["content"] += " Respond directly and concisely."
-        body = {"model": MODEL, "messages": request_messages, "stream": False,
+        from context_budget import bounded
+        request_messages, budget = bounded(request_messages, available_tools, settings['context_tokens'], settings['max_output_tokens'])
+        if control:
+            control.context_budget = budget
+        body = {"model": model, "messages": request_messages, "stream": False,
                 "think": thinking, "options": {"num_predict": settings['max_output_tokens'],
                                                'num_ctx': settings['context_tokens']}}
         if available_tools:
@@ -116,12 +123,16 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
                 answer = "No Python tools were approved for this message. No requested action was executed."
                 break
             if len(session.events) + len(calls) > session.call_limit:
+                failure = 'Tool call budget exhausted'
                 answer = "Python tool call limit reached. Further requested actions were not executed."
                 break
             messages.append({**message, "role": "assistant"})
             for call in calls:
                 checkpoint("Running tool; Stop prevents subsequent actions")
                 result = session.execute(call)
+                if control:
+                    with control.lock:
+                        control.tool_activity = list(session.events)
                 checkpoint()
                 function = call.get("function") if isinstance(call, dict) else None
                 name = function.get("name") if isinstance(function, dict) else None
@@ -131,11 +142,13 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             available = session.tools if len(session.events) < session.call_limit else None
             answer, reason, calls, message = infer(False, available)
             if calls and not available:
+                failure = 'Tool call budget exhausted'
                 answer = "Python tool call limit reached. Further requested actions were not executed."
                 break
         if not answer.strip():
             answer, retry_reason, extra_calls, _ = infer(False)
             if extra_calls:
+                failure = 'No final answer; extra tool calls were not executed'
                 answer = "No final answer was produced; additional tool calls were not executed."
             elif not answer.strip():
                 raise ValueError("Qwen returned no final answer (first: %s; retry: %s). Check Ollama logs and model memory." % (reason, retry_reason))
@@ -148,7 +161,10 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             raise
         # Keep durable receipts visible even when model follow-up fails after a write.
         else:
+            failure = str(exc)
             answer = "Model follow-up failed: " + str(exc) + ". See the actual tool receipts below."
+    failed_tools = any(e.get('result', {}).get('status') in ('error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed') for e in session.events)
+    failure = failure or ('One or more tool operations failed; inspect the receipts' if failed_tools else None)
     receipt = session.receipt()
     session.file_activity.settle(bool(control and control.cancelled.is_set()))
     if receipt and len(answer) + len(receipt) > 64000:
@@ -167,7 +183,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'user',?)", (conversation_id,prompt.strip()))
             message_id = conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)", (conversation_id,answer)).lastrowid
             conn.execute(EXECUTION_SCHEMA)
-            execution = {'source': 'controller', 'permissions': {**session.grants, 'transport': session.transport, 'mcp_tools': list(session.external_tools)},
+            execution = {'source': 'controller', 'policy_revision': session.policy.revision if session.policy else None, 'engine': 'ollama', 'model': model, 'outcome': 'cancelled' if control and control.cancelled.is_set() else 'partial' if failure else 'completed', 'permissions': {**session.grants, 'transport': session.transport, 'mcp_tools': list(session.external_tools)},
                          'events': session.events, 'audit_path': str(session.audit_path) if session.audit_path else None,
                          'files': session.file_activity.snapshot(),
                          'cancelled': bool(control and control.cancelled.is_set()),
@@ -175,7 +191,9 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
             conn.execute("INSERT INTO message_execution(message_id,payload) VALUES(?,?)", (message_id,json.dumps(execution)))
         if control:
             control.completed = True
-    return {"reply":answer,"model":MODEL,"stored":True,
+    return {"reply":answer,"model":model,"stored":True,
+            "status": 'cancelled' if control and control.cancelled.is_set() else 'partial' if failure else 'completed',
+            "error": failure,
             "tools_executed":any(event["executed"] for event in session.events),
             "tool_events":session.events,"tool_audit_path":str(session.audit_path) if session.audit_path else None,
             "image_analyzed":image is not None,"skills_used":active_skills or []}

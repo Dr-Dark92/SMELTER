@@ -1,5 +1,6 @@
 """SMELTER V1.4.3: approved, read-only FFprobe media inspection."""
 from __future__ import annotations
+import os
 import json
 import subprocess
 from pathlib import Path
@@ -13,10 +14,10 @@ MAX_OUTPUT = 32000
 
 def resolve_ffprobe(finder=find_executable) -> str | None:
     ffmpeg = finder("ffmpeg")
-    if not ffmpeg or Path(ffmpeg).suffix.lower() != ".exe":
+    if not ffmpeg or Path(ffmpeg).suffix.lower() in (".cmd", ".bat", ".ps1") or (os.name == "nt" and Path(ffmpeg).suffix.lower() != ".exe"):
         return None
     # Only use the companion executable in the verified FFmpeg installation.
-    companion = Path(ffmpeg).with_name("ffprobe.exe")
+    companion = Path(ffmpeg).with_name("ffprobe.exe" if os.name == "nt" else "ffprobe")
     return str(companion) if companion.is_file() else None
 
 def inspect_media(path: str, approval: str, state: dict, tool_status: dict,
@@ -34,7 +35,7 @@ def inspect_media(path: str, approval: str, state: dict, tool_status: dict,
     if source.is_symlink():
         raise ValueError("Symlink inputs are not supported")
     probe = resolver()
-    if not probe or Path(probe).suffix.lower() != ".exe":
+    if not probe or Path(probe).suffix.lower() in (".cmd", ".bat", ".ps1") or (os.name == "nt" and Path(probe).suffix.lower() != ".exe"):
         raise ValueError("ffprobe.exe not found beside verified ffmpeg.exe")
     command = [probe, "-v", "error", "-show_format", "-show_streams",
                "-of", "json", "-i", str(source)]
@@ -44,7 +45,7 @@ def inspect_media(path: str, approval: str, state: dict, tool_status: dict,
             "output_validation": {"status": "not_applicable", "reason": "metadata only; no output generated"}}
     try:
         result = runner(command, shell=False, capture_output=True, text=True,
-                        errors="replace", stdin=subprocess.DEVNULL, timeout=20, check=False)
+                        errors="replace", stdin=subprocess.DEVNULL, timeout=20, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         stdout = (result.stdout or "")[:MAX_OUTPUT]
         stderr = (result.stderr or "")[:4000]
         metadata = None

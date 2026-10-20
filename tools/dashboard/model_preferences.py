@@ -52,4 +52,4 @@ def configured_status(preferences: dict, discovery: dict) -> dict:
     return {"preferences": preferences, "availability": {
         role: ("available" if discovery.get("status") == "connected" and model in installed
                else "unavailable") for role, model in preferences["models"].items()
-    }, "inference_enabled": False}
+    }, "inference_enabled": True}

@@ -111,6 +111,8 @@ def inventory(grants, arguments):
         raise ValueError("Path escapes approved folder")
     approved = Path(grants["inventory_root"])
     target = _plain_path(approved / rel).resolve(strict=True)
+    from access_policy import require
+    require(target, 'read')
     if not target.is_relative_to(approved) or not target.is_dir():
         raise ValueError("Inventory target must be a directory inside approved folder")
     pending = [(target, 0)]
@@ -133,6 +135,10 @@ def inventory(grants, arguments):
                         if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
                             skipped_links += 1
                             scan_reasons.add("links_skipped")
+                            continue
+                        from access_policy import allowed
+                        if not allowed(Path(entry.path), 'read'):
+                            scan_reasons.add('policy_exclusion')
                             continue
                         is_dir = stat.S_ISDIR(info.st_mode)
                         is_file = stat.S_ISREG(info.st_mode)
@@ -204,6 +210,8 @@ def write_markdown(root, grants, arguments):
     if len(raw) > MAX_MARKDOWN_BYTES:
         raise ValueError("Markdown exceeds 32 KiB")
     folder = _plain_path(Path(root).resolve() / "diagnostics")
+    from access_policy import require
+    require(folder, 'write')
     folder.mkdir(exist_ok=True)
     _plain_path(folder)
     for suffix in range(100):
@@ -228,14 +236,23 @@ def write_markdown(root, grants, arguments):
 
 class ToolSession:
     """One chat turn's grant, bounded calls, deduplication and on-disk audit."""
-    def __init__(self, root, granted=None, conversation_id=None):
+    def __init__(self, root, granted=None, conversation_id=None, policy=None):
         self.root = Path(root).resolve()
+        from access_policy import current
+        policy = policy or current(self.root)
+        self.policy = policy
+        from skill_runtime import monitor
+        monitor(self.root)
         supplied = dict(granted) if isinstance(granted, dict) else granted
         self.transport = supplied.pop('transport', 'python') if isinstance(supplied, dict) else 'python'
         selected = supplied.pop('mcp_tools', []) if isinstance(supplied, dict) else []
         if self.transport not in ('python', 'mcp'):
             raise ValueError('Unknown tool transport')
         self.grants = permissions(self.root, supplied)
+        if policy is not None:
+            from access_policy import check_grants
+            check_grants(self.root,self.grants,policy)
+            if selected:raise ValueError('External MCP execution requires a confined runner')
         self.model_attachments = [{'id': aid} for aid in self.grants.get('model_ids', [])]
         if self.grants.get('model_ids') and conversation_id is not None:
             from chats import read_chat
@@ -318,6 +335,11 @@ class ToolSession:
         return self.audit_path
 
     def execute(self, call):
+        from access_policy import using
+        with using(self.policy):
+            return self._execute(call)
+
+    def _execute(self, call):
         if len(self.events) >= self.call_limit:
             raise ValueError("Python tool call limit reached")
         function = call.get("function", {}) if isinstance(call, dict) else {}
@@ -340,7 +362,7 @@ class ToolSession:
                 raise ValueError("Tool arguments must be a JSON object")
             self.file_activity.begin(call)
             key = json.dumps([name, arguments], sort_keys=True)
-            cacheable = name not in {'frontend_workspace_info', 'read_frontend_file', 'validate_frontend_workspace'}
+            cacheable = name not in self.external_tools and name in {'prepare_frontend_workspace', 'write_diagnostic_markdown', 'replace_frontend_css', 'launch_frontend_preview'}
             if cacheable and key in self.cache:
                 result = self.cache[key]
                 event["reused"] = True

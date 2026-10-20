@@ -55,6 +55,8 @@ def _source_files(root):
             total += path.stat().st_size
             if total > MAX_COPY:
                 raise ValueError('Workspace source exceeds 1 GiB')
+            from access_policy import require
+            require(path, 'read')
             result[relative] = path
     for name in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md'):
         path = _plain_path(root / name)
@@ -110,6 +112,8 @@ def prepare(root, arguments):
             return {'status': 'workspace_ready', 'target': str(target), 'reused': True,
                     'message': 'Existing managed workspace preserved; inspect before changing it.'}
         raise ValueError('Destination already exists and is unmanaged; refusing to overwrite')
+    from access_policy import require
+    require(target, 'write')
     files = _source_files(root)
     extra = {}
     # Copy local runtime dependencies and enabled skill references, not logs,
@@ -122,6 +126,10 @@ def prepare(root, arguments):
         path = _plain_path(root / relative)
         if path.is_file():
             extra[relative] = path
+    # Check every copied source-code destination before creating the workspace.
+    # Runtime dependencies/markers are application-owned state, not agent file access.
+    for relative in files:
+        require(target / relative, 'write')
     all_files = {**files, **extra}
     size = sum(p.stat().st_size for p in all_files.values())
     if len(all_files) > MAX_FILES or size > MAX_COPY:
@@ -144,6 +152,11 @@ def prepare(root, arguments):
                 hashes[relative] = _digest(raw)
         from database import select_database
         select_database(target, str(data))
+        from database import inspect_database
+        if inspect_database(root)['ready']:
+            from config_store import load_config, save_config
+            for name in ('extensions.json', 'model_preferences.json', 'runtime_settings.json'):
+                save_config(target, name, load_config(root, name))
         marker = {'schema_version': 1, 'source': str(root), 'target': str(target),
                   'data_directory': str(data), 'files': hashes}
         _marker(root).write_text(json.dumps(marker), encoding='utf-8')
@@ -181,6 +194,9 @@ def _check(root):
         raise ValueError('Source file set changed; workspace baseline is stale')
     source_text, target_text = None, None
     for relative, expected in marker['files'].items():
+        from access_policy import require
+        require(root / relative, 'read')
+        require(target / relative, 'read')
         original = _plain_path(root / relative).read_bytes()
         if _digest(original) != expected:
             raise ValueError('Original source changed since preparation: ' + relative)
@@ -223,6 +239,8 @@ def read_file(root, arguments):
     if area == 'destination':
         _load(root)
     path = _plain_path((Path(root) if area == 'source' else target_path(root)) / relative)
+    from access_policy import require
+    require(path, 'read')
     text = path.read_text(encoding='utf-8')
     if relative == DASHBOARD:
         _, literal = _html(text)
@@ -275,6 +293,8 @@ def replace_css(root, arguments):
     result = encoded[:start] + repr(new_html).encode('utf-8') + encoded[end:]
     ast.parse(result.decode())
     path = _plain_path(target_path(root) / DASHBOARD)
+    from access_policy import require
+    require(path, 'write')
     temporary = _plain_path(path.with_suffix('.py.frontend-tmp'))
     temporary.write_bytes(result)
     temporary.replace(path)
@@ -287,6 +307,8 @@ def validate(root, arguments):
         raise ValueError('Workspace validation takes no arguments')
     _, source = _check(root)
     target = target_path(root)
+    from access_policy import require
+    require(target, 'execute', 'tests')
     commands = [[sys.executable, '-m', 'unittest', 'discover', '-s', 'tools/dashboard', '-p', 'test_*.py']]
     node = shutil.which('node')
     if node:
@@ -325,6 +347,8 @@ def launch(root, arguments):
         raise ValueError('Workspace launch takes no arguments')
     marker, source = _check(root)
     target = target_path(root)
+    from access_policy import require
+    require(target, 'execute', 'preview')
     record_path = _plain_path(target / '.smelter/frontend-validation/passed.json')
     if not record_path.is_file() or json.loads(record_path.read_text()).get('dashboard_sha256') != _digest(source.encode()):
         raise ValueError('Run workspace validation after the last CSS edit before launch')

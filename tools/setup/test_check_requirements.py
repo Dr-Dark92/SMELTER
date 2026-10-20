@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+NATIVE_PATH = type(Path())
 from unittest.mock import patch
 import subprocess
 
@@ -22,7 +23,7 @@ class RequirementsTests(unittest.TestCase):
     def test_registered_path_detects_new_ffmpeg(self):
         def which(name, path=None):
             return r"C:\Winget\ffmpeg\bin\ffmpeg.exe" if name == "ffmpeg" and path == r"C:\Winget\ffmpeg\bin" else None
-        with patch.object(module.os, "name", "nt"):
+        with patch.object(module, "Path", NATIVE_PATH), patch.object(module.os, "name", "nt"):
             with patch.object(module, "windows_path_entries", return_value=[r"C:\Winget\ffmpeg\bin"]):
                 with patch.object(module.shutil, "which", side_effect=which):
                     self.assertEqual(module.find_executable("ffmpeg"), r"C:\Winget\ffmpeg\bin\ffmpeg.exe")
@@ -32,7 +33,7 @@ class RequirementsTests(unittest.TestCase):
             seven = Path(tmp) / "7-Zip" / "7z.exe"
             seven.parent.mkdir()
             seven.write_bytes(b"")
-            with patch.object(module.os, "name", "nt"), patch.dict(module.os.environ, {"ProgramFiles": tmp}, clear=True):
+            with patch.object(module, "Path", NATIVE_PATH), patch.object(module.os, "name", "nt"), patch.dict(module.os.environ, {"ProgramFiles": tmp}, clear=True):
                 with patch.object(module.shutil, "which", return_value=None):
                     self.assertEqual(module.find_executable("7z"), str(seven))
 
@@ -44,7 +45,7 @@ class RequirementsTests(unittest.TestCase):
             cli.write_text("// mock", encoding="utf-8")
             npm = root / "npm.cmd"
             npm.write_text("@echo off", encoding="utf-8")
-            with patch.object(module.os, "name", "nt"):
+            with patch.object(module, "Path", NATIVE_PATH), patch.object(module.os, "name", "nt"):
                 with patch.object(module, "find_executable", side_effect=lambda name: str(npm) if name == "npm" else str(root / "node.exe")):
                     with patch.object(module.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "11.0.0\\n", "")) as runner:
                         result = module.probe("npm", ["npm", "--version"], "optional")
@@ -55,7 +56,7 @@ class RequirementsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             npm = Path(tmp) / "npm.cmd"
             npm.write_text("@echo off", encoding="utf-8")
-            with patch.object(module.os, "name", "nt"):
+            with patch.object(module, "Path", NATIVE_PATH), patch.object(module.os, "name", "nt"):
                 with patch.object(module, "find_executable", side_effect=lambda name: str(npm) if name == "npm" else "node.exe"):
                     with patch.object(module.subprocess, "run") as runner:
                         result = module.probe("npm", ["npm", "--version"], "optional")

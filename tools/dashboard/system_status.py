@@ -14,7 +14,7 @@ def system_status(root: Path) -> dict:
     return {
         "timestamp": int(time.time()),
         "database": {"status": db["status"], "path": db.get("database")},
-        "services": {"dashboard": "running", "ollama": "check_via_models", "opencode": "not_started"},
+        "services": {"dashboard": "running", "ollama": "check_via_models", "opencode": "not_checked"},
         "storage": {"path": str(drive), "total_bytes": disk.total, "free_bytes": disk.free},
         **resource_status(),
         "read_only": True

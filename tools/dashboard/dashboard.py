@@ -8,7 +8,7 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit, unquote
+from urllib.parse import urlsplit, unquote, parse_qs
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "setup"))
@@ -93,6 +93,19 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 
 .message-label{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.copy-button{background:#263f59;color:#cde3fa;padding:5px 9px;font-size:11px;border:1px solid #47617b;white-space:nowrap}.formatted-message{white-space:normal}.formatted-message p{color:inherit;white-space:pre-wrap;margin:9px 0}.formatted-message h3,.formatted-message h4,.formatted-message h5,.formatted-message h6{color:#eff6ff;margin:16px 0 8px}.formatted-message ul,.formatted-message ol{padding-left:24px;margin:9px 0}.formatted-message li{margin:5px 0;white-space:pre-wrap}.formatted-message blockquote{border-left:3px solid #638bac;padding-left:12px;margin:10px 0;color:#b6cce3}.formatted-message :not(pre)>code{background:#0b1624;border-radius:4px;padding:2px 5px;font-size:.9em;overflow-wrap:anywhere}.code-block{border:1px solid #3b526d;border-radius:8px;overflow:hidden;margin:12px 0;background:#09121f;min-width:0}.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1c2c40;padding:6px 10px;font:12px system-ui;color:#bcd2e7}.code-block pre{margin:0;padding:14px;overflow-x:auto;max-width:100%;white-space:pre;tab-size:4;font:12px/1.65 ui-monospace,monospace}.code-block pre code{background:none;padding:0;overflow-wrap:normal}.message-assistant{max-width:95%;width:fit-content}
 .model-card{border:1px solid #526e8b;border-radius:10px;padding:14px;margin-top:12px;min-width:0}.model-card h3{margin:0 0 8px;font-size:16px}.model-card p{font-size:12px;overflow-wrap:anywhere}.model-card button{font-size:12px;padding:8px;margin:4px}.model-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font-size:11px}.animation-panel{margin-top:14px;padding-top:12px;border-top:1px solid #526e8b}.animation-panel h4{margin:0 0 8px}.animation-panel select,.animation-panel input:not([type=range]){box-sizing:border-box;max-width:100%;width:100%;padding:9px;margin:5px 0;background:#0b111d;color:#e7edfa;border:1px solid #597a9d;border-radius:6px}.animation-panel input[type=range]{width:75%;vertical-align:middle}.model-stage{width:100%;min-width:0}.message:has(.model-card){width:95%;max-width:95%}
+
+/* Unified settings surface and stable full-width composer. */
+#shell{grid-template-columns:245px minmax(0,1fr)}
+.workspace-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;margin-bottom:12px}
+#taskAccessSummary{flex:1;font-size:12px;color:#b8cbe3;min-width:180px}
+#composer{align-items:center;gap:8px}#chatinput{flex-basis:100%;width:100%;min-width:100%;min-height:88px}
+.settings-screen{box-sizing:border-box;width:min(1100px,96vw);height:92dvh;max-width:none;max-height:none;padding:18px;border:1px solid #49607d;border-radius:12px;background:#0b111d;color:#e7edfa}
+.settings-screen::backdrop{background:#000a}.settings-header{display:flex;justify-content:space-between;align-items:center;gap:12px}.settings-header h2{margin:0;font-size:21px}
+.settings-screen #rightbar{height:auto;max-height:none;overflow:visible;border:0;padding:8px 0;background:transparent}.settings-screen .panel{max-width:none}
+.settings-screen input:not([type=checkbox]),.settings-screen select,.settings-screen textarea{box-sizing:border-box;max-width:100%;padding:9px;border:1px solid #49607d;border-radius:6px;background:#0b111d;color:#e7edfa;font:inherit}
+.access-location-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}.access-location{min-width:0;border:1px solid #49607d;border-radius:8px;padding:14px}.access-location>label{display:block;margin:8px 0}.access-location>label input,.access-location textarea{display:block;width:100%;margin-top:5px}.access-flags{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+#taskAccessPanel #pythonTools{max-height:none;overflow:visible}#taskAccessPanel>p{max-width:85ch}
+@media(max-width:850px){#leftbar{max-height:180px;min-height:0}#workspace{height:76dvh;min-height:460px;max-height:none;overflow:hidden}#chatlog{flex:1;min-height:0}#composer input[type=file]{max-width:150px}.settings-screen{padding:12px;width:98vw;height:96dvh}.workspace-toolbar button{font-size:12px;padding:8px}}
 </style><main><h1>⚒ SMELTER</h1><p>V1.6.8 · Qwen vision · Local multimodal chat</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -130,7 +143,7 @@ main>h1,main>p{flex-shrink:0;margin:8px 16px}
 <p>Select OpenCode read-only beside the chat composer, then Send. This pilot does not forward SMELTER skills, attachments or MCP grants.</p>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2 id="startupHeading">SMELTER startup</h2><div id="databaseSetup"><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\\SMELTER-Data"><button id="dbselect">Initialize database</button></div><div id="authRecovery" hidden><p>This page is not authorized for the running dashboard. Use the current launch URL printed in its terminal. Restarting the server changes the token; database initialization will not fix authorization.</p><label>Current launch URL or token<input id="sessionToken" type="password" autocomplete="off" spellcheck="false" aria-label="Current launch URL or token"></label><button id="sessionReconnect">Reconnect session</button></div><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script>
+<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script src="/assets/access-ui.js"></script><script>
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
@@ -149,7 +162,7 @@ function initShell(){
  const log=document.createElement('div');log.id='chatlog';log.setAttribute('role','log');log.setAttribute('aria-label','Conversation messages');log.textContent='Select New chat. Python tools require permission for each message.';
  const permissionsBox=document.createElement('details');permissionsBox.id='pythonTools';
  const permissionsTitle=document.createElement('summary');permissionsTitle.textContent='Tool permissions for the next message';
- const readFolder=document.createElement('input');readFolder.id='inventoryRoot';readFolder.placeholder='Absolute folder to inventory';readFolder.style.width='95%';
+ const readFolder=document.createElement('select');readFolder.id='inventoryRoot';readFolder.placeholder='Absolute folder to inventory';readFolder.style.width='95%';
  const readGrant=document.createElement('input');readGrant.type='checkbox';readGrant.id='approveInventory';
  const readLabel=document.createElement('label');readLabel.append(readGrant,document.createTextNode(' Allow read-only inventory of this folder'));
  const writeGrant=document.createElement('input');writeGrant.type='checkbox';writeGrant.id='approveDiagnostics';
@@ -179,7 +192,7 @@ function initShell(){
  let fileActivityView=null,fileActivityJob=null,fileActivityHost=null;
  const showFileActivity=job=>{if(!job.files?.length)return;if(fileActivityJob!==job.id||!fileActivityHost?.isConnected){fileActivityHost=document.createElement('section');log.append(fileActivityHost);fileActivityView=SmelterFiles.mount(fileActivityHost);fileActivityJob=job.id}fileActivityView.update(job.files)};
  let agentHost=null,agentJob=null;
- const showAgentActivity=job=>{if(job.engine!=='opencode_readonly')return;if(agentJob!==job.id||!agentHost?.isConnected){agentHost=document.createElement('article');agentHost.className='message message-assistant';agentJob=job.id;log.append(agentHost)}agentHost.replaceChildren();const heading=document.createElement('header');heading.className='message-label';heading.textContent='OpenCode · read-only session';const body=document.createElement('div');SmelterChat.render(job.output_text||'Waiting for OpenCode…',body);const activity=document.createElement('pre');activity.style.fontSize='11px';activity.style.whiteSpace='pre-wrap';activity.textContent=(job.tool_activity||[]).map(e=>e.tool+' · '+e.result.status+(e.result.path?' · '+e.result.path:'')).join('\\n');agentHost.append(heading,body,activity)};
+ const showAgentActivity=job=>{if(!job.output_text&&!job.tool_activity?.length)return;if(agentJob!==job.id||!agentHost?.isConnected){agentHost=document.createElement('article');agentHost.className='message message-assistant';agentJob=job.id;log.append(agentHost)}agentHost.replaceChildren();const heading=document.createElement('header');heading.className='message-label';heading.textContent=job.engine==='opencode_readonly'?'OpenCode · read-only session':'Ollama · generating';const body=document.createElement('div');SmelterChat.render(job.output_text||'Waiting for OpenCode…',body);const activity=document.createElement('pre');activity.style.fontSize='11px';activity.style.whiteSpace='pre-wrap';activity.textContent=(job.tool_activity||[]).map(e=>e.tool+' · '+e.result.status+(e.result.path?' · '+e.result.path:'')).join('\\n');agentHost.append(heading,body,activity)};
  const renderPending=(content)=>{const bubble=document.createElement('article');bubble.className='message message-user';const header=document.createElement('header');header.className='message-label';header.textContent='You · submitting';const body=document.createElement('div');body.className='message-content';body.textContent=content;bubble.append(header,body);log.append(bubble);log.scrollTop=log.scrollHeight;return header};
  stop.onclick=async()=>{if(!currentJob)return;stop.disabled=true;try{const job=await api('/api/chats','POST',{action:'stop',job_id:currentJob});requestStatus.textContent=job.phase}catch(e){requestStatus.textContent='Could not stop: '+e.message;stop.disabled=false}};
  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
@@ -187,7 +200,7 @@ function initShell(){
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
  const toolPermissions=executionEngine==='opencode_readonly'?{}:{...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
- readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();
+ readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
@@ -197,7 +210,7 @@ function initShell(){
  try{sessionStorage.setItem('smelterActiveJob',JSON.stringify({id:job.id,conversation}))}catch(e){}
  while(job.state==='running'){showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}showFileActivity(job);showAgentActivity(job);
  currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}
- requestStatus.textContent=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':'Request failed: '+job.error;
+ requestStatus.textContent=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':job.state==='partial'?'Partially completed · '+job.error:'Request failed: '+job.error;
  if(activeChat===conversation)await openChat(conversation);await refreshChats();
  }catch(e){pending.textContent='You · submission/status error';requestStatus.textContent=e.message+(currentJob?' · Request may still be running. Use Stop or reload to reconnect.':'');}
  finally{if(!currentJob){stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;engineChoice.disabled=false;input.focus()}}};
@@ -232,14 +245,14 @@ function initShell(){
   for(const label of folder.planned||[]){const b=document.createElement('button');b.className='navbtn';b.textContent=label+' · planned';b.disabled=true;contents.append(b)}
   group.append(contents);right.append(group);
  }
- function sectionFocus(section,button){section.classList.add('active');button.classList.add('active')}
+ function sectionFocus(section,button){right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));section.classList.add('active');button.classList.add('active')}
  folders[0] && (right.querySelector('details').open=true);
  if(nav.length)nav[0].click();
  shell.append(left,center,right);
  const skillNotice=document.createElement('div');skillNotice.id='skillNotice';skillNotice.hidden=true;skillNotice.setAttribute('role','status');
  const skillNoticeText=document.createElement('span');const skillReview=document.createElement('button');skillReview.textContent='Review skills';const dismissNotice=document.createElement('button');dismissNotice.textContent='Dismiss';skillNotice.append(skillNoticeText,skillReview,dismissNotice);main.prepend(skillNotice);
  const skillView=document.createElement('section');skillView.id='skillsOverview';skillView.hidden=true;center.append(skillView);
- const chatElements=[title,log,permissionsBox,requestStatus,composer];
+ const chatElements=[title,log,engineLabel,requestStatus,composer];
  window.showChatWorkspace=()=>{skillView.hidden=true;chatElements.forEach(x=>x.hidden=false)};
  const showSkills=()=>{if(send.disabled){alert('Finish or stop the current chat request first');return}SmelterModels.clear();chatElements.forEach(x=>x.hidden=true);skillView.hidden=false;loadSkillsOverview()};
  const overviewButton=document.createElement('button');overviewButton.textContent='Skills & Tools';overviewButton.className='navbtn';overviewButton.onclick=showSkills;
@@ -472,8 +485,9 @@ function executionCards(execution){
  if(execution.audit_path){const audit=document.createElement('p');audit.className='execution-path';audit.textContent='Audit: '+execution.audit_path;section.append(audit)}
  const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
 }
-async function openChat(id){
- try{const chat=await api('/api/chats/'+encodeURIComponent(id));SmelterModels.clear();if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;window.setChatModelGrants?.(chat.messages.filter(m=>m.model_attachment).map(m=>m.model_attachment));highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+async function openChat(id,before=null){
+ try{const chat=await api('/api/chats/'+encodeURIComponent(id)+(before?'?before='+encodeURIComponent(before):''));SmelterModels.clear();if(window.showChatWorkspace)window.showChatWorkspace();activeChat=id;window.setChatModelGrants?.(chat.messages.filter(m=>m.model_attachment).map(m=>m.model_attachment));highlightChat();const log=document.getElementById('chatlog');log.replaceChildren();document.getElementById('chatTitle').textContent=chat.title;
+ if(chat.has_older){const older=document.createElement('button');older.textContent='Load older messages';older.onclick=()=>openChat(id,chat.older_cursor);log.append(older)}if(before){const latest=document.createElement('button');latest.textContent='Return to latest messages';latest.onclick=()=>openChat(id);log.append(latest)}
  for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?(msg.execution?.engine==='opencode'?'SMELTER · OpenCode response':'SMELTER · AI response'):'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
  if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
@@ -482,6 +496,7 @@ async function openChat(id){
 initShell();
 const el=id=>document.getElementById(id);
 SmelterOpenCode.mount(api);
+SmelterAccess.mount(api);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(){try{el('error').textContent='';const data=await api('/api/extensions');const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
 async function loadWorkflows(){try{const data=await api('/api/workflows');for(const w of data.workflows){const opt=document.createElement('option');opt.value=w.id;opt.textContent=w.label+' — '+w.description;el('workflow').append(opt)}}catch(e){el('error').textContent=e.message}}
@@ -493,7 +508,7 @@ el('mediainspect').onclick=async()=>{const out=el('mediaout');if(!el('mediaappro
 el('blenderinspect').onclick=async()=>{const out=el('blenderout');if(!el('blenderapprove').checked){out.textContent='Approval required';return}el('blenderapprove').checked=false;try{const data=await api('/api/blender/inspect','POST',{approval:'CHECK BLENDER'});out.textContent='Status: '+data.status+' | Exit: '+data.exit_code+'\\n'+data.stdout+'\\n'+data.stderr;await history()}catch(e){out.textContent=e.message}};
 async function loadModels(){try{const data=await api('/api/ollama/models');el('ollamaout').textContent='Ollama: '+data.status+'\\n'+(data.error||'')+'\\n'+data.models.map(m=>m.name+' ('+(m.size===null?'size unknown':(m.size/1073741824).toFixed(2)+' GiB')+')').join('\\n');const choices=el('modelchoice');choices.replaceChildren();for(const m of data.models){const option=document.createElement('option');option.value=m.name;option.textContent=m.name;choices.append(option)}const pref=await api('/api/ollama/preferences');el('modelout').textContent='Saved preferences: '+JSON.stringify(pref.preferences.models)+'\\nAvailability: '+JSON.stringify(pref.availability)}catch(e){el('ollamaout').textContent=e.message}}
 el('ollamascan').onclick=loadModels;
-el('modelsave').onclick=async()=>{try{const result=await api('/api/ollama/preferences','POST',{role:el('modelrole').value,model:el('modelchoice').value});el('modelout').textContent='Saved: '+JSON.stringify(result.preferences.models)+'\\nAvailability: '+JSON.stringify(result.availability)}catch(e){el('modelout').textContent=e.message}};
+el('modelsave').onclick=async()=>{try{const result=await api('/api/ollama/preferences','POST',{role:el('modelrole').value,model:el('modelchoice').value});el('modelout').textContent='Saved: '+JSON.stringify(result.preferences.models)+'\\nAvailability: '+JSON.stringify(result.availability);window.reloadTaskContext?.()}catch(e){el('modelout').textContent=e.message}};
 el('opencodecheck').onclick=async()=>{try{const data=await api('/api/opencode/status');el('opencodeout').textContent='Status: '+data.status+'\\nDetected: '+data.detected+'\\nEntry type: '+data.entry_type+'\\nVersion: '+(data.version||'unverified')+'\\nAgent execution: disabled\\n'+data.notes}catch(e){el('opencodeout').textContent=e.message}};
 el('providerpreview').onclick=async()=>{try{const data=await api('/api/opencode/provider-preview');el('providerout').textContent='Preview only (not written or executed)\\n'+JSON.stringify(data,null,2)}catch(e){el('providerout').textContent=e.message}};
 el('providerdeploy').onclick=async()=>{const out=el('deployout');if(!el('deployapprove').checked){out.textContent='Approval required';return}el('deployapprove').checked=false;try{const data=await api('/api/opencode/deploy','POST',{approval:'DEPLOY ISOLATED CONFIG'});out.textContent=JSON.stringify(data,null,2)}catch(e){out.textContent=e.message}};
@@ -504,7 +519,7 @@ async function startup(){
  try{
   const db=await api('/api/startup');
   el('databaseSetup').hidden=db.ready;el('dbstatus').textContent=JSON.stringify(db,null,2);
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem();if(window.resumeChatJob)window.resumeChatJob()}
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem();window.reloadTaskContext?.();if(window.resumeChatJob)window.resumeChatJob()}
  }catch(e){const unauthorized=e.status===401||e.status===403;el('authRecovery').hidden=!unauthorized;el('startupHeading').textContent=unauthorized?'Session authorization required':'SMELTER startup check failed';el('dbstatus').textContent=unauthorized?'The session token is missing, expired, or rejected. Existing database files have not been reinitialized.':e.message}
 }
 el('sessionReconnect').onclick=()=>{try{const previous=location.hash;SmelterAuth.apply(el('sessionToken').value);el('sessionToken').value='';if(previous===location.hash)startup()}catch(error){el('dbstatus').textContent=error.message}};
@@ -519,6 +534,11 @@ el('refresh').onclick=refresh;startup();
 
 def handler(token: str):
     class Handler(BaseHTTPRequestHandler):
+        def handle(self):
+            try:
+                super().handle()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                self.close_connection = True
         def reply(self, status, data, content_type="application/json"):
             body = data if isinstance(data, bytes) else data.encode() if isinstance(data, str) else json.dumps(data).encode()
             self.send_response(status)
@@ -528,7 +548,10 @@ def handler(token: str):
             self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'unsafe-inline'; connect-src 'self' blob: data:; img-src 'self' blob: data:; worker-src 'self' blob:")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                self.close_connection = True
         def authorized(self):
             origin = self.headers.get("Origin")
             expected = "http://127.0.0.1:" + str(self.server.server_port)
@@ -542,6 +565,8 @@ def handler(token: str):
                 return self.reply(200, Path(__file__).with_name('session_auth.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/file-activity.js':
                 return self.reply(200, Path(__file__).with_name('file_activity.js').read_text(encoding='utf-8'), 'application/javascript')
+            if route == '/assets/access-ui.js':
+                return self.reply(200, Path(__file__).with_name('access_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/opencode-agent-ui.js':
                 return self.reply(200, Path(__file__).with_name('opencode_agent_ui.js').read_text(encoding='utf-8'), 'application/javascript')
             if route == '/assets/mcp-ui.js':
@@ -561,6 +586,9 @@ def handler(token: str):
                     return self.reply(404, {'error': str(e)})
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
+            if route == '/api/access-policy':
+                from access_policy import current
+                return self.reply(200, {**current(ROOT).report(), 'model':load_config(ROOT, 'model_preferences.json')['models'].get('reasoning', 'qwen3.5:9b')})
             if route == '/api/opencode/agent':
                 from opencode_runtime import status as opencode_agent_status
                 try:
@@ -618,7 +646,7 @@ def handler(token: str):
                     return self.reply(400, {"error": str(e)})
             if route.startswith("/api/chats/"):
                 try:
-                    return self.reply(200, read_chat(ROOT, route.removeprefix("/api/chats/")))
+                    return self.reply(200, read_chat(ROOT, route.removeprefix("/api/chats/"), before=parse_qs(urlsplit(self.path).query).get("before", [None])[0]))
                 except (ValueError, OSError) as e:
                     return self.reply(400, {"error": str(e)})
             if route == "/api/startup":
@@ -640,8 +668,8 @@ def handler(token: str):
             if route == "/api/opencode/provider-preview":
                 try:
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
-                        preferences = load_preferences(MODEL_PREFS)
+                        current_state = load_config(ROOT, 'extensions.json')
+                        preferences = load_config(ROOT, 'model_preferences.json')
                     status = {item["name"]: item for item in scan()["tools"]}
                     discovery = list_models(current_state, {name: item["status"] for name, item in status.items()})
                     agent = inspect_opencode(current_state, status)
@@ -651,7 +679,7 @@ def handler(token: str):
             if route == "/api/opencode/status":
                 try:
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item for item in scan()["tools"]}
                     return self.reply(200, inspect_opencode(current_state, status))
                 except (ValueError, OSError, json.JSONDecodeError) as e:
@@ -659,8 +687,8 @@ def handler(token: str):
             if route == "/api/ollama/preferences":
                 try:
                     with STATE_LOCK:
-                        preferences = load_preferences(MODEL_PREFS)
-                        current_state = load_state(STATE)
+                        preferences = load_config(ROOT, 'model_preferences.json')
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
                     return self.reply(200, configured_status(preferences, list_models(current_state, status)))
                 except (ValueError, OSError, json.JSONDecodeError) as e:
@@ -668,7 +696,7 @@ def handler(token: str):
             if route == "/api/ollama/models":
                 try:
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
                     return self.reply(200, list_models(current_state, status))
                 except (ValueError, OSError, json.JSONDecodeError) as e:
@@ -679,7 +707,7 @@ def handler(token: str):
                 return self.reply(200, {"workflows": definitions()})
             if route == "/api/extensions":
                 try:
-                    return self.reply(200, {"extensions": catalog(scan(), load_state(STATE))})
+                    return self.reply(200, {"extensions": catalog(scan(), load_config(ROOT, 'extensions.json'))})
                 except (ValueError, OSError, json.JSONDecodeError) as e:
                     return self.reply(500, {"error": str(e)})
             return self.reply(404, {"error": "Not found"})
@@ -687,15 +715,19 @@ def handler(token: str):
             if not self.authorized():
                 return self.reply(403, {"error": "Unauthorized"})
             route = urlsplit(self.path).path
-            if route not in ("/api/mcp", "/api/models", "/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
+            if route not in ("/api/access-policy", "/api/mcp", "/api/models", "/api/extensions", "/api/workflows/plan", "/api/archive/inspect", "/api/media/inspect", "/api/blender/inspect", "/api/ollama/preferences", "/api/opencode/deploy", "/api/database/select", "/api/chats", "/api/aero/classify", "/api/skills/manage", "/api/skills/discover", "/api/skills/discover-repository", "/api/skills/collection-preview"):
                 return self.reply(404, {"error": "Not found"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= (36 * 1024 * 1024 if route == "/api/models" else 65536 if route == "/api/mcp" else 3 * 1024 * 1024 if route == "/api/chats" else 16384):
+                if not 0 < length <= (36 * 1024 * 1024 if route == "/api/models" else 65536 if route in ("/api/mcp", "/api/access-policy") else 3 * 1024 * 1024 if route == "/api/chats" else 16384):
                     raise ValueError("Invalid request size")
                 data = json.loads(self.rfile.read(length))
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request")
+                if route == '/api/access-policy':
+                    from access_policy import save
+                    with STATE_LOCK:
+                        return self.reply(200, save(ROOT, data.get('policy')))
                 if route == '/api/mcp':
                     if data.get('action') == 'save':
                         with STATE_LOCK:
@@ -704,8 +736,14 @@ def handler(token: str):
                         sid = data.get('server')
                         if not isinstance(sid, str):
                             raise ValueError('Choose an MCP server')
-                        grants = validate_tool_permissions(ROOT, data.get('permissions')) if sid == 'smelter' else {}
-                        return self.reply(200, mcp_exchange(ROOT, sid, grants, timeout=20))
+                        if sid != 'smelter':
+                            raise ValueError('External MCP servers require a confined runner; no process was started')
+                        from access_policy import current, check_grants, using
+                        policy = current(ROOT)
+                        grants = validate_tool_permissions(ROOT, data.get('permissions'))
+                        check_grants(ROOT, grants, policy)
+                        with using(policy):
+                            return self.reply(200, mcp_exchange(ROOT, sid, grants, timeout=20))
                     raise ValueError('Unknown MCP action')
                 if route == "/api/models":
                     return self.reply(200, rename_animation(ROOT, data) if data.get('action') == 'rename_animation' else attach_model(ROOT, data))
@@ -740,15 +778,13 @@ def handler(token: str):
                 if route == '/api/chats' and data.get('action') == 'runtime_settings':
                     return self.reply(200, save_runtime(ROOT, data.get('settings')))
                 if route == "/api/chats":
-                    if data.get("action") == "start":
+                    if data.get("action") in ("start", "ask"):
                         return self.reply(202, JOBS.start(ROOT, data))
                     if data.get("action") == "stop":
                         return self.reply(200, JOBS.cancel(data.get("job_id")))
                     with STATE_LOCK:
                         action = data.get("action")
-                        if action == "ask":
-                            result = ask(ROOT, data.get("id"), data.get("content"), image=data.get("image"), skills=data.get("skills"), auto_skills=data.get("auto_skills", False), tool_permissions=data.get("tool_permissions"))
-                        elif action == "create":
+                        if action == "create":
                             result = create_chat(ROOT, data.get("title"))
                         elif action == "note":
                             result = add_note(ROOT, data.get("id"), data.get("content"))
@@ -764,8 +800,8 @@ def handler(token: str):
                         return self.reply(200, select_database(ROOT, data.get("directory")))
                 if route == "/api/opencode/deploy":
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
-                        preferences = load_preferences(MODEL_PREFS)
+                        current_state = load_config(ROOT, 'extensions.json')
+                        preferences = load_config(ROOT, 'model_preferences.json')
                     status = {item["name"]: item for item in scan()["tools"]}
                     discovery = list_models(current_state, {name: item["status"] for name, item in status.items()})
                     agent = inspect_opencode(current_state, status)
@@ -775,7 +811,7 @@ def handler(token: str):
                     return self.reply(200, result)
                 if route == "/api/ollama/preferences":
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
                     discovery = list_models(current_state, status)
                     with STATE_LOCK:
@@ -788,35 +824,46 @@ def handler(token: str):
                     return self.reply(200, configured_status(preferences, discovery))
                 if route == "/api/blender/inspect":
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
+                    from access_policy import current
+                    policy = current(ROOT)
+                    policy.authorize(ROOT, 'execute', 'blender')
                     report = inspect_blender(data.get("approval"), current_state, status)
                     with STATE_LOCK:
                         save_report(REPORTS, report)
                     return self.reply(200, report)
                 if route == "/api/media/inspect":
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
+                    from access_policy import current
+                    policy = current(ROOT)
+                    policy.authorize(ROOT, 'execute', 'media')
+                    policy.authorize(data.get('path'), 'read')
                     report = inspect_media(data.get("path"), data.get("approval"), current_state, status)
                     with STATE_LOCK:
                         save_report(REPORTS, report)
                     return self.reply(200, report)
                 if route == "/api/archive/inspect":
                     with STATE_LOCK:
-                        current_state = load_state(STATE)
+                        current_state = load_config(ROOT, 'extensions.json')
                     status = {item["name"]: item["status"] for item in scan()["tools"]}
+                    from access_policy import current
+                    policy = current(ROOT)
+                    policy.authorize(ROOT, 'execute', 'archive')
+                    policy.authorize(data.get('path'), 'read')
                     report = inspect_archive(data.get("path"), data.get("approval"), current_state, status)
                     with STATE_LOCK:
                         save_report(REPORTS, report)
                     return self.reply(200, report)
                 if route == "/api/workflows/plan":
-                    report = attach_inputs(plan(data.get("workflow_id"), scan(), load_state(STATE)), data.get("inputs"))
+                    report = attach_inputs(plan(data.get("workflow_id"), scan(), load_config(ROOT, 'extensions.json')), data.get("inputs"))
                     with STATE_LOCK:
                         save_report(REPORTS, report)
                     return self.reply(200, report)
                 with STATE_LOCK:
-                    state = set_enabled(load_state(STATE), data.get("id"), data.get("enabled"), scan())
+                    state = set_enabled(load_config(ROOT, 'extensions.json'), data.get("id"), data.get("enabled"), scan())
                     save_config(ROOT, 'extensions.json', state)
                 return self.reply(200, {"enabled": state["enabled"]})
             except (ValueError, OSError, json.JSONDecodeError) as e:

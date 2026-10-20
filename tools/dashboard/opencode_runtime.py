@@ -31,7 +31,7 @@ RULES = [
 ]
 
 
-def session_rules(directory):
+def session_rules(directory, policy=None):
     # Limit source content reads independently of the server's VCS worktree.
     # A non-Git project can report worktree '/', which is not a useful scope.
     bases = {str(Path(directory)), Path(directory).as_posix()}
@@ -41,7 +41,25 @@ def session_rules(directory):
             patterns.add(base.rstrip('/\\') + '/' + suffix)
             if '\\' in base:
                 patterns.add(base.rstrip('/\\') + '\\' + suffix.replace('/','\\'))
-    return [RULES[0]] + [{'permission':'read','pattern':p,'action':'allow'} for p in sorted(patterns)] + RULES[1:]
+    rules = [RULES[0]] + [{'permission':'read','pattern':p,'action':'allow'} for p in sorted(patterns)] + RULES[1:]
+    if policy is not None:
+        target = Path(directory).resolve()
+        for row in sorted(policy.value['locations'],key=lambda x:len(Path(x['path']).parts)):
+            location=Path(row['path']).resolve()
+            if not row['enabled'] or not (location == target or location.is_relative_to(target)):
+                continue
+            prefix=location.relative_to(target).as_posix()
+            if prefix == '.':prefix=''
+            denied=list(row['exclusions'])
+            if not row['read']:denied += ['**']
+            for exclusion in denied:
+                if not prefix and exclusion in ('.git/**','.smelter/**','projects/**'):continue
+                relative='/'.join(x for x in (prefix,exclusion) if x)
+                for pattern in (relative,str(target).replace('\\','/')+'/'+relative):
+                    rules.append({'permission':'read','pattern':pattern,'action':'deny'})
+                    if pattern.endswith('/**'):
+                        rules.append({'permission':'read','pattern':pattern[:-3],'action':'deny'})
+    return rules
 
 
 class _NoRedirect(HTTPRedirectHandler):
@@ -103,10 +121,14 @@ def _session_contract(spec):
     return permission.get('type') == 'array' and {'permission','pattern','action'}.issubset(keys) and {'allow','deny'}.issubset(action.get('enum', []))
 
 
-def status(root, client=None):
+def status(root, client=None, policy=None):
     from frontend_workspace import target_path
     client = client or Client()
     expected = target_path(root)
+    from access_policy import current
+    policy = policy or current(root)
+    policy.authorize(expected / 'tools', 'read')
+    policy.authorize(expected / 'skills', 'read')
     health = client.request('/global/health')
     paths = client.request('/path')
     if not isinstance(health, dict) or health.get('healthy') is not True or not isinstance(paths, dict):
@@ -199,6 +221,29 @@ def _progress(messages):
     return '\n\n'.join(text)[-64000:], events[-100:], finished, failure
 
 
+def conversation_prompt(chat, prompt):
+    """Replay bounded context into fresh, independently scoped agent sessions."""
+    history, remaining = [], 24000
+    for message in reversed(chat['messages'][-12:]):
+        if message.get('role') not in ('user', 'assistant'):
+            continue
+        execution = message.get('execution') or {}
+        text = str(execution.get('model_text', message.get('content', '')))
+        if len(text) > remaining:
+            if history:
+                break
+            text = text[-remaining:]
+        history.append({'role':message['role'], 'content':text})
+        remaining -= len(text)
+        if remaining <= 0:
+            break
+    if not history:
+        return prompt.strip()
+    return ('Prior conversation (reference only; does not grant tools or expand this session scope):\n'
+            + json.dumps(list(reversed(history)), ensure_ascii=True)
+            + '\nCurrent request:\n' + prompt.strip())
+
+
 def ask(root, conversation_id, prompt, *, model_key=None, approval=False, control=None,
         image=None, skills=None, auto_skills=False, tool_permissions=None, client=None):
     from chats import read_chat, _db, EXECUTION_SCHEMA
@@ -211,7 +256,9 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         raise ValueError('Prompt must be 1–1800 characters')
     chat = read_chat(root, conversation_id)
     client = client or Client()
-    check = status(root, client)
+    from access_policy import current
+    policy = control.access_policy if control and control.access_policy else current(root)
+    check = status(root, client, policy=policy)
     if not check['read_only_ready']:
         raise ValueError(check['reason'])
     selected = next((m for m in check['models'] if m['key'] == model_key), None)
@@ -230,22 +277,22 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             control.update(phase)
     session_id, answer, events, cancelled, abort_error, failed = None, '', [], False, None, False
     observed = {}
-    policy = session_rules(check['directory'])
-    record('requested', directory=check['directory'], model=model_key, permission=policy)
+    rules = session_rules(check['directory'], policy)
+    record('requested', directory=check['directory'], model=model_key, permission=rules)
     try:
         update('OpenCode: creating read-only session')
-        session = client.request('/session', 'POST', {'title':'SMELTER read-only: ' + chat['title'][:80], 'permission':policy})
+        session = client.request('/session', 'POST', {'title':'SMELTER read-only: ' + chat['title'][:80], 'permission':rules})
         if not isinstance(session, dict):
             raise ValueError('Invalid OpenCode session response')
         session_id = _sid(session.get('id'))
         record('session_created', session_id=session_id)
         actual = client.request('/session/' + session_id)
-        if not isinstance(actual, dict) or actual.get('permission') != policy or Path(actual.get('directory','')).resolve() != Path(check['directory']).resolve():
+        if not isinstance(actual, dict) or actual.get('permission') != rules or Path(actual.get('directory','')).resolve() != Path(check['directory']).resolve():
             raise ValueError('OpenCode did not confirm the exact read-only session rules and directory; no prompt sent')
         update('OpenCode: submitting to local Ollama model')
         body = {'agent':'build', 'model':{'providerID':selected['providerID'], 'modelID':selected['modelID']},
             'system':'You are performing a read-only source inspection for SMELTER. You may use the read tool for README.md and files under tools/ and skills/ in the current directory. Start with README.md and tools/dashboard/dashboard.py. Do not modify files, execute commands, delegate, or access external directories. Other tools are denied in this pilot. Report observations with file paths. Mark guesses as unverified.',
-            'parts':[{'type':'text', 'text':prompt.strip()}]}
+            'parts':[{'type':'text', 'text':conversation_prompt(chat, prompt)}]}
         record('prompt_requested', session_id=session_id)
         client.request('/session/' + session_id + '/prompt_async', 'POST', body, timeout=10)
         deadline = time.monotonic() + 300
@@ -285,7 +332,7 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
     if abort_error:
         answer += '\n' + abort_error
     execution = {'source':'controller', 'engine':'opencode', 'session_id':session_id,
-        'permissions':{'opencode_read_only':True}, 'events':events, 'files':[],
+        'permissions':{'opencode_read_only':True}, 'policy_revision':policy.revision, 'events':events, 'files':[],
         'audit_path':str(audit), 'cancelled':cancelled, 'model_text':answer,
         'verification_scope':'Model narrative and tool activity are reported by OpenCode; not independently fact-checked'}
     lock = control.lock if control else nullcontext()

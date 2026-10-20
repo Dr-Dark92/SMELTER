@@ -51,20 +51,35 @@ def select_database(root: Path, directory: str) -> dict:
     db = folder / DB_NAME
     if db.is_symlink() or db.exists():
         raise ValueError("Database target already exists; refusing to overwrite")
-    with closing(sqlite3.connect(db)) as connection, connection:
-        connection.executescript(SCHEMA)
-        connection.execute("PRAGMA foreign_keys=ON")
-        connection.execute("INSERT INTO metadata(key,value) VALUES('schema_version','1')")
-        for name in CONFIG_FILES:
-            legacy = root / ".smelter" / name
-            if legacy.is_file() and not legacy.is_symlink():
-                payload = json.loads(legacy.read_text(encoding="utf-8"))
-                connection.execute("INSERT INTO config_snapshots(name,payload) VALUES(?,?)", (name, json.dumps(payload)))
-        connection.commit()
+    # Validate legacy data before creating any persistent database file.
+    from config_store import _validate
+    imported = []
+    for name in CONFIG_FILES:
+        legacy = root / ".smelter" / name
+        if legacy.is_file() and not legacy.is_symlink():
+            payload = json.loads(legacy.read_text(encoding="utf-8"))
+            _validate(name, payload)
+            imported.append((name, json.dumps(payload)))
     marker = marker_path(root)
     marker.parent.mkdir(parents=True, exist_ok=True)
-    with marker.open("x", encoding="utf-8") as stream:
-        json.dump({"schema_version": 1, "path": str(db)}, stream)
+    created_db = created_marker = False
+    try:
+        with db.open('xb'):
+            created_db = True
+        with closing(sqlite3.connect(db)) as connection, connection:
+            connection.executescript(SCHEMA)
+            connection.execute("PRAGMA foreign_keys=ON")
+            connection.execute("INSERT INTO metadata(key,value) VALUES('schema_version','1')")
+            connection.executemany("INSERT INTO config_snapshots(name,payload) VALUES(?,?)", imported)
+        with marker.open("x", encoding="utf-8") as stream:
+            created_marker = True
+            json.dump({"schema_version": 1, "path": str(db)}, stream)
+    except Exception:
+        if created_marker:
+            marker.unlink(missing_ok=True)
+        if created_db:
+            db.unlink(missing_ok=True)
+        raise
     return {"status": "configured", "path": str(db), "legacy_files_preserved": True}
 
 def inspect_database(root: Path) -> dict:

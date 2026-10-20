@@ -58,7 +58,7 @@ def package_status(root, finder=shutil.which):
 
 def _runtime_version(node, runner):
     result = runner([node, "--version"], shell=False, capture_output=True,
-                    stdin=subprocess.DEVNULL, timeout=5, check=False)
+                    stdin=subprocess.DEVNULL, timeout=5, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     raw = result.stdout.decode("utf-8", errors="replace") if isinstance(result.stdout, bytes) else str(result.stdout)
     match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)\s*", raw)
     if result.returncode != 0 or not match:
@@ -129,15 +129,19 @@ def run_rea(root, grants, name, arguments, runner=subprocess.run, finder=shutil.
         with target.open("rb") as source:
             if source.read(2) != b"MZ":
                 raise ValueError("Selected file has no PE/DOS MZ signature")
+        from access_policy import require
+        require(target, 'read')
         operation = ["inspect-pe-resources", str(target), "--json"]
     else:
         raise ValueError("REA operation is not allowed")
+    from access_policy import require
+    require(Path(status['working_directory']), 'execute', 'rea')
     try:
         node_version = _runtime_version(status["node"], runner)
         # No .cmd/.bat launchers or model-supplied commands/flags are accepted.
         command = [status["node"], status["launcher"], *operation]
         result = runner(command, cwd=status["working_directory"], shell=False,
-                        capture_output=True, stdin=subprocess.DEVNULL, timeout=35, check=False)
+                        capture_output=True, stdin=subprocess.DEVNULL, timeout=35, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except subprocess.TimeoutExpired as exc:
         raise ValueError("REA timed out; no target program was launched") from exc
     raw = result.stdout if isinstance(result.stdout, bytes) else result.stdout.encode("utf-8")

@@ -12,7 +12,12 @@ async def serve(root, grants):
     from mcp.server.lowlevel import Server, NotificationOptions
     from mcp.server.models import InitializationOptions
     from mcp.server.stdio import stdio_server
-    session = ToolSession(root, grants)
+    if os.environ.get('SMELTER_SKILL_SNAPSHOT'):
+        from skill_runtime import inherit_snapshot
+        inherit_snapshot(root, os.environ['SMELTER_SKILL_SNAPSHOT'])
+    from access_policy import Policy, current
+    policy = Policy(json.loads(os.environ['SMELTER_ACCESS_POLICY'])) if os.environ.get('SMELTER_ACCESS_POLICY') else current(root)
+    session = ToolSession(root, grants, policy=policy)
     # Persistent children cannot belong to this short-lived stdio process.
     # The dashboard handles the preview lifecycle locally, including when
     # all other workspace operations use MCP.

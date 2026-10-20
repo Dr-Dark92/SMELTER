@@ -60,6 +60,8 @@ class Control:
         self.tool_call_limit = 4
         self.output_text = ''
         self.tool_activity = []
+        self.access_policy = None
+        self.context_budget = None
 
     def check(self):
         if self.cancelled.is_set():
@@ -133,6 +135,9 @@ class Control:
                     if value:
                         output.append(value)
                         self.update('Generating response' if key == 'content' else 'Model thinking')
+                        if key == 'content':
+                            with self.lock:
+                                self.output_text = ''.join(content)[-64000:]
                 new_calls = message.get('tool_calls', [])
                 if not isinstance(new_calls, list):
                     raise ValueError('Invalid Ollama tool calls')
@@ -169,6 +174,13 @@ class Jobs:
         prompt = data.get('content')
         if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
             raise ValueError('Prompt must be 1–1800 characters')
+        from access_policy import current, check_grants
+        policy = current(root)
+        supplied = data.get('tool_permissions') or {}
+        if not isinstance(supplied, dict):raise ValueError('Invalid tool permissions')
+        check_grants(root, supplied, policy)
+        if supplied.get('mcp_tools'):
+            raise ValueError('External MCP execution requires a confined runner; no process was started')
         engine = data.get('engine', 'ollama')
         if engine not in ('ollama', 'opencode_readonly'):
             raise ValueError('Unknown execution engine')
@@ -185,6 +197,7 @@ class Jobs:
                 del self.jobs[next(iter(self.jobs))]
             job = {'id': str(uuid4()), 'conversation_id': data['id'], 'state': 'running',
                    'started': time.monotonic(), 'control': Control(), 'error': None, 'engine':engine}
+            job['control'].access_policy = policy
             self.jobs[job['id']] = job
         threading.Thread(target=self._run, args=(root, data, job, worker), daemon=True).start()
         return self.status(job['id'])
@@ -197,8 +210,8 @@ class Jobs:
                 skills=data.get('skills'), auto_skills=data.get('auto_skills', False),
                 tool_permissions=data.get('tool_permissions'), control=control)
             state, error = ('cancelled', None) if control.cancelled.is_set() else ('done', None)
-            if state == 'done' and isinstance(result, dict) and result.get('status') == 'error':
-                state, error = 'error', str(result.get('error', 'Agent task failed'))[:1000]
+            if state == 'done' and isinstance(result, dict) and result.get('status') in ('error', 'partial'):
+                state, error = result['status'], str(result.get('error', 'Agent task failed'))[:1000]
         except ChatCancelled:
             state, error = 'cancelled', None
         except Exception as exc:
@@ -215,6 +228,8 @@ class Jobs:
             job = self.jobs[jid]
             return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error')} | {
                 'engine': job['engine'],
+                'policy_revision': job['control'].access_policy.revision if job['control'].access_policy else None,
+                'context_budget': job['control'].context_budget,
                 'phase': job['control'].phase,
                 'output_text': job['control'].output_text,
                 'tool_activity': job['control'].tool_activity,

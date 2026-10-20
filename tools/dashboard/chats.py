@@ -39,19 +39,30 @@ def create_chat(root: Path, title: str = None) -> dict:
         conn.execute("INSERT INTO conversations(id,title) VALUES(?,?)", (cid, title.strip()))
     return {"id": cid, "title": title.strip()}
 
-def read_chat(root: Path, cid: str) -> dict:
+def read_chat(root: Path, cid: str, before=None, limit=1000) -> dict:
     cid = _id(cid)
+    if type(limit) is not int or not 1 <= limit <= 1000:
+        raise ValueError('Page limit must be 1–1000')
+    if before is not None:
+        if isinstance(before, bool) or not str(before).isdigit() or not 0 < int(before) < 2**63:
+            raise ValueError('Invalid message cursor')
+        before = int(before)
     with closing(sqlite3.connect(_db(root))) as conn:
         row = conn.execute("SELECT title FROM conversations WHERE id=?", (cid,)).fetchone()
         if row is None:
             raise ValueError("Conversation not found")
-        messages = conn.execute("SELECT id,role,content,created_at FROM messages WHERE conversation_id=? ORDER BY id LIMIT 1000", (cid,)).fetchall()
+        messages = conn.execute("SELECT id,role,content,created_at FROM messages WHERE conversation_id=? AND (? IS NULL OR id<?) ORDER BY id DESC LIMIT ?", (cid,before,before,limit+1)).fetchall()
+        has_older = len(messages) > limit
+        messages = list(reversed(messages[:limit]))
+        page_ids = [m[0] for m in messages]
+        page_placeholders = ','.join('?' for _ in page_ids) or 'NULL'
         has_execution = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone()
-        evidence = dict(conn.execute("SELECT e.message_id,e.payload FROM message_execution e JOIN messages m ON m.id=e.message_id WHERE m.conversation_id=?", (cid,))) if has_execution else {}
+        evidence = dict(conn.execute("SELECT e.message_id,e.payload FROM message_execution e JOIN messages m ON m.id=e.message_id WHERE m.conversation_id=? AND m.id IN ("+page_placeholders+")", (cid,*page_ids))) if has_execution else {}
         has_models = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_attachments'").fetchone()
-        models = {mid: {'id': aid, 'filename': filename, **json.loads(metadata)} for mid, aid, filename, metadata in conn.execute('SELECT a.message_id,a.id,a.filename,a.metadata FROM model_attachments a JOIN messages m ON m.id=a.message_id WHERE m.conversation_id=?', (cid,))} if has_models else {}
-    return {"id": cid, "title": row[0], "messages": [
-        {"role": r, "content": c, "created_at": d,
+        models = {mid: {'id': aid, 'filename': filename, **json.loads(metadata)} for mid, aid, filename, metadata in conn.execute('SELECT a.message_id,a.id,a.filename,a.metadata FROM model_attachments a JOIN messages m ON m.id=a.message_id WHERE m.conversation_id=? AND m.id IN ('+page_placeholders+')', (cid,*page_ids))} if has_models else {}
+    return {"id": cid, "title": row[0], 'has_older': has_older,
+            'older_cursor': messages[0][0] if has_older and messages else None, "messages": [
+        {"id": mid, "role": r, "content": c, "created_at": d,
          "execution": json.loads(evidence[mid]) if mid in evidence else None,
          "model_attachment": models.get(mid)}
         for mid,r,c,d in messages]}

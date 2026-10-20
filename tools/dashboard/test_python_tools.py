@@ -31,6 +31,10 @@ class PythonToolTests(unittest.TestCase):
         (self.game / "textures").mkdir()
         (self.game / "textures" / "sample.dds").write_bytes(b"dds")
         select_database(self.root, str(self.base / "data"))
+        from access_policy import defaults, save
+        policy = defaults(self.root)
+        policy['locations'].append({'id':'game','name':'Fixture game','path':str(self.game), 'read':True,'write':False,'execute':False,'operations':[],'exclusions':[],'enabled':True})
+        save(self.root, policy)
         self.cid = create_chat(self.root, "Python tools")["id"]
         self.grants = permissions(self.root, {"inventory_root": str(self.game), "write_diagnostics": True})
 
@@ -224,14 +228,14 @@ class PythonToolTests(unittest.TestCase):
         thread.start()
         connection = HTTPConnection("127.0.0.1", server.server_port, timeout=5)
         try:
-            with patch("dashboard.ask", return_value={"reply": "ok", "tools_executed": False}) as mocked:
+            with patch("dashboard.JOBS.start", return_value={"id": "job-fixture", "state": "running"}) as mocked:
                 body = json.dumps({"action": "ask", "id": self.cid, "content": "Inspect", "tool_permissions": self.grants})
                 connection.request("POST", "/api/chats", body=body,
                                    headers={"X-Smelter-Token": "test-token", "Content-Type": "application/json"})
                 response = connection.getresponse()
-                self.assertEqual(response.status, 200)
-                self.assertEqual(json.loads(response.read())["reply"], "ok")
-                self.assertEqual(mocked.call_args.kwargs["tool_permissions"], self.grants)
+                self.assertEqual(response.status, 202)
+                self.assertEqual(json.loads(response.read())["state"], "running")
+                self.assertEqual(mocked.call_args.args[1]["tool_permissions"], self.grants)
         finally:
             connection.close()
             server.shutdown()

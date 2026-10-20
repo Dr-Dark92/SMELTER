@@ -19,6 +19,12 @@ class McpFixture:
         self.root.mkdir()
         self.folder = self.base / 'game'
         self.folder.mkdir()
+        from database import select_database
+        from access_policy import defaults, save
+        select_database(self.root, str(self.base / 'data'))
+        policy=defaults(self.root)
+        policy['locations'].append({'id':'game','name':'Fixture folder','path':str(self.folder),'read':True,'write':False,'execute':False,'operations':[],'exclusions':[],'enabled':True})
+        save(self.root, policy)
 
     def config(self):
         return {'schema_version': 1, 'servers': [{'id': 'fixture', 'command': str(Path(sys.executable).resolve()),
@@ -133,12 +139,35 @@ class McpIntegrationTests(McpFixture, unittest.TestCase):
             exchange(self.root, grants={}, name='write_diagnostic_markdown', arguments={'filename': 'denied.md', 'content': 'no'}, timeout=15)
         self.assertFalse((self.root / 'diagnostics/denied.md').exists())
 
+    def test_real_mcp_child_cannot_activate_changed_skill(self):
+        from skill_runtime import initialize
+        folder=self.root/'skills/taste';folder.mkdir(parents=True)
+        manifest=folder/'SKILL.md';manifest.write_text('# Taste\n\n## Purpose\nOriginal design guidance.\n')
+        initialize(self.root)
+        grants={'frontend_workspace':True}
+        original=call(self.root,grants,'read_enabled_design_skill',{'skill_id':'taste'})
+        self.assertEqual(original['status'],'workspace_skill')
+        manifest.write_text('# Taste\n\n## Purpose\nChanged design guidance.\n')
+        rejected=call(self.root,grants,'read_enabled_design_skill',{'skill_id':'taste'})
+        self.assertEqual(rejected['status'],'error')
+        self.assertNotIn('Changed design guidance',json.dumps(rejected))
+
+    def test_real_mcp_inherits_frozen_access_exclusions(self):
+        from access_policy import current, using
+        (self.folder/'public.txt').write_text('public')
+        (self.folder/'private.txt').write_text('private')
+        value=current(self.root).value;value['locations'][-1]['exclusions']=['private.txt']
+        from access_policy import Policy
+        with using(Policy(value)):
+            result=call(self.root,{'inventory_root':str(self.folder)},'inventory_directory',{'relative_path':'.'})
+        self.assertEqual(result['files_observed'],1)
+        self.assertNotIn('private.txt',json.dumps(result))
+
     def test_chat_turn_uses_mcp_and_persists_controller_receipt(self):
         import io
         from database import select_database
         from chats import create_chat, read_chat
         from chat_inference import ask
-        select_database(self.root, str(self.base / 'data'))
         cid = create_chat(self.root, 'MCP chat fixture')['id']
         calls = [json.dumps({'message': {'content': '', 'tool_calls': [{'function': {
             'name': 'write_diagnostic_markdown', 'arguments': {'filename': 'chat-mcp.md', 'content': '# Chat MCP'}}}]}}).encode(),
@@ -159,7 +188,6 @@ class McpIntegrationTests(McpFixture, unittest.TestCase):
         from database import select_database
         from chats import create_chat
         from model_assets import attach_model, model_path
-        select_database(self.root, str(self.base / 'data'))
         cid = create_chat(self.root, 'GLB MCP fixture')['id']
         document = json.dumps({'asset': {'version': '2.0'}, 'nodes': [], 'meshes': [], 'animations': []}).encode()
         document += b' ' * (-len(document) % 4)
@@ -216,14 +244,18 @@ for line in sys.stdin:
         connection = exchange(self.root, 'fixture', timeout=10)
         self.assertEqual({t['name']: t['allowed'] for t in connection['tools']}, {'echo': True, 'blocked': False})
         selected = [{'server': 'fixture', 'name': 'echo'}]
-        session = ToolSession(self.root, {'mcp_tools': selected})
-        name = session.tools[0]['function']['name']
-        result = session.execute({'function': {'name': name, 'arguments': {'text': 'actual MCP'}}})
-        self.assertEqual(result['status'], 'mcp_completed')
-        self.assertEqual(result['mcp_result']['structuredContent'], {'echo': 'actual MCP'})
+        with self.assertRaisesRegex(ValueError, 'confined runner'):
+            ToolSession(self.root, {'mcp_tools': selected})
+        # Protocol helpers are tested directly; the GUI/task bridge must not
+        # expose arbitrary external processes without confinement.
+        from mcp_connections import call
+        name = alias('fixture', 'echo')
+        approved = approved_tools(self.root, selected)[name]
+        result = call(self.root, {}, name, {'text':'actual MCP'}, approved)
+        self.assertEqual(result['mcp_result']['structuredContent'], {'echo':'actual MCP'})
         with self.assertRaises(ValueError):
             approved_tools(self.root, [{'server': 'fixture', 'name': 'blocked'}])
-        stale = dict(session.external_tools[name])
+        stale = dict(approved)
         stale['descriptor'] = {**stale['descriptor'], 'description': 'old description'}
         with self.assertRaisesRegex(ValueError, 'definition changed'):
             exchange(self.root, 'fixture', name='echo', arguments={'text': 'no'}, expected=stale, timeout=10)

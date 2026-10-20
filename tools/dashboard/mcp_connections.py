@@ -93,10 +93,12 @@ def status(root):
 
 def _server(root, sid, grants):
     if sid == 'smelter':
+        from skill_runtime import export_snapshot
+        from access_policy import _active
         return {'id': sid, 'command': sys.executable,
                 'args': [str(Path(__file__).with_name('mcp_server.py').resolve()), '--root', str(Path(root).resolve())],
                 'cwd': str(Path(root).resolve()), 'enabled': True, 'allowed_tools': None,
-                'env': {'SMELTER_MCP_GRANTS': json.dumps(grants)}}
+                'env': {'SMELTER_MCP_GRANTS': json.dumps(grants), 'SMELTER_SKILL_SNAPSHOT': export_snapshot(root), 'SMELTER_ACCESS_POLICY': json.dumps(_active.get().value) if _active.get() else ''}}
     config = load_config(root)
     server = next((s for s in config['servers'] if s['id'] == sid and s['enabled']), None)
     if not server:

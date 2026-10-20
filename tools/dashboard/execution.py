@@ -1,6 +1,7 @@
 """SMELTER V1.4.2: tightly scoped, explicitly approved archive listing."""
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from uuid import uuid4
@@ -28,13 +29,13 @@ def inspect_archive(path: str, approval: str, state: dict, tool_status: dict,
     if source.is_symlink():
         raise ValueError("Symlink inputs are not supported")
     executable = finder("7z")
-    if not executable or Path(executable).suffix.lower() != ".exe":
+    if not executable or Path(executable).suffix.lower() in (".cmd", ".bat", ".ps1") or (os.name == "nt" and Path(executable).suffix.lower() != ".exe"):
         raise ValueError("Verified 7-Zip executable unavailable")
     command = [executable, "l", "-slt", "-bd", "--", str(source)]
     # 7z supports '--' as switch terminator on supported versions; absolute path follows.
     try:
         result = runner(command, shell=False, capture_output=True, text=True,
-                        errors="replace", stdin=subprocess.DEVNULL, timeout=20, check=False)
+                        errors="replace", stdin=subprocess.DEVNULL, timeout=20, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         status = "completed" if result.returncode == 0 else "failed"
         output = (result.stdout or "")[:MAX_OUTPUT]
         error = (result.stderr or "")[:MAX_OUTPUT]

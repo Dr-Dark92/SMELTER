@@ -56,6 +56,8 @@ class FileActivity:
             _load(self.root)
         base = self.root if area == 'source' else target_path(self.root)
         path = _plain_path(base / relative)
+        from access_policy import require
+        require(path, 'read')
         with path.open('r', encoding='utf-8') as stream:
             text = stream.read(MAX_TEXT + 1)
         return text[:MAX_TEXT], len(text) > MAX_TEXT

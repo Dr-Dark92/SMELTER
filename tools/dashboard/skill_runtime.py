@@ -126,3 +126,32 @@ def tools_status(root):
             {'name': 'write_diagnostic_markdown', 'status': 'connected', 'detail': 'Requires diagnostic write approval'},
             {'name': 'rea_capabilities / rea_inspect_pe_resources', 'status': rea['status'], 'detail': rea['reason']},
             {'name': 'Blender modeling', 'status': 'not_connected', 'detail': 'Skill instructions do not provide an execution adapter'}]
+
+
+def export_snapshot(root):
+    """Compact startup fingerprints; never transfer manifest instructions as authority."""
+    import base64, zlib
+    instance = monitor(root)
+    raw = json.dumps({sid: x.get('fingerprint') for sid, x in instance.baseline.items()}, sort_keys=True).encode()
+    if len(raw) > 128 * 1024:
+        raise ValueError('Skill snapshot exceeds transport budget')
+    return base64.b64encode(zlib.compress(raw)).decode('ascii')
+
+
+def inherit_snapshot(root, encoded):
+    import base64, zlib
+    if not isinstance(encoded, str) or len(encoded) > 32700:
+        raise ValueError('Invalid inherited skill snapshot')
+    decoder = zlib.decompressobj()
+    raw = decoder.decompress(base64.b64decode(encoded, validate=True), 128 * 1024 + 1)
+    if len(raw) > 128 * 1024 or not decoder.eof or decoder.unused_data:
+        raise ValueError('Invalid inherited skill snapshot')
+    expected = json.loads(raw)
+    if not isinstance(expected, dict) or any(not isinstance(k, str) or v is not None and (not isinstance(v, str) or not re.fullmatch(r'[a-f0-9]{64}', v)) for k,v in expected.items()):
+        raise ValueError('Invalid inherited skill fingerprints')
+    instance = initialize(root)
+    # Keep current text only when its fingerprint matches the parent's startup
+    # baseline. manifest() rejects mismatches and newly added IDs.
+    instance.baseline = {sid: {**skill, 'fingerprint': expected[sid]}
+                         for sid, skill in instance.baseline.items() if sid in expected}
+    return instance
