@@ -7,7 +7,7 @@ future upstream release. Its canonical `skills/` contains 311 manifests; the
 whole checkout contains 1,062 including harness-specific copies.
 
 **Current result: selected ECC instructions can run through SMELTERV1's agent
-bridge. The full ECC executable plugin is not integrated.**
+bridge. The scoped coding patch/test/review adapter is implemented. The full ECC executable plugin is not integrated.**
 
 ## Compatibility by layer
 
@@ -16,8 +16,8 @@ bridge. The full ECC executable plugin is not integrated.**
 | SKILL.md instructions | Supported as selected, enabled startup snapshots | Exact loaded-text hash in execution metadata; up to three skills / 48,000 characters per task |
 | Large GitHub catalogue | Discover metadata, then review/import selected manifests | Up to 2,048 entries / 8 MiB tree; immutable branch commit; imports capped at 40; duplicates skipped |
 | Referenced scripts, rules, documents | Not copied by instruction import | Read referenced source separately; a manifest alone does not install its dependencies |
-| Existing built-in MCP actions | Available only under operator-approved task scopes | Diagnostic reports, inventory, static REA, GLB metadata and narrow CSS workspace operations |
-| Native OpenCode coding tools | Source reads allowed; native edits/shell denied | No generic multi-file editing or arbitrary command runner |
+| Existing built-in MCP actions | Available only under operator-approved task scopes | Diagnostic reports, inventory, static REA, GLB metadata, CSS operations and separately approved coding copies |
+| Native OpenCode coding tools | Source reads allowed; native edits/shell denied | General 1–6-file proposals/apply and fixed tests are available through coding MCP; native edits/shell remain denied |
 | ECC OpenCode plugin, hooks and custom tools | Unsupported in the managed runner | Production starts OpenCode with `--pure`; plugin source/build dependencies are not loaded |
 | ECC agents and orchestration commands | Not registered | Delegation is denied; copied instructions do not create roles or slash commands |
 | Continuous learning, instincts and memory | Not connected | No persisted ECC hook runtime or automatic learned-skill promotion |
@@ -55,7 +55,7 @@ if ($LASTEXITCODE -ne 0) { throw 'ECC import failed.' }
 ```
 
 The collection is `affaan-m-ecc`; skills are `coding-standards`, `security-review`
-and `verification-loop`. Imports are disabled; duplicates are skipped without
+and `verification-loop`. The optional `--pack coding` adds `tdd-workflow`. Imports are disabled; duplicates are skipped without
 overwriting existing skills. Review, enable, restart the dashboard to activate
 new manifests, then select a row and **Use in next task**. Select only what the
 task needs. Imported commands and installation examples remain reference text;
@@ -76,9 +76,7 @@ real OpenCode and a permitted action reaches the actual Python MCP server.
 
 1. Keep the selected-instruction/MCP path verifiable with the home smoke and
    existing cross-platform contracts. Complete the live rig acceptance.
-2. Add a general patch proposal/test/review contract in an isolated workspace,
-   preserving the source and requiring hashes. Current CSS-only tooling cannot
-   satisfy a general ECC TDD or refactoring workflow.
+2. The [coding workspace](ECC_CODING_WORKSPACE.md) now supplies hash-checked multi-file proposals/apply, fixed confined tests and current-tree review. Verify its actual RED/GREEN smoke and complete live model acceptance; coverage and Git checkpoints remain unsupported.
 3. Audit and pin ECC's compiled plugin and dependency graph in a separate
    reviewed image. Define exactly which events/tools may run, with bounded
    output, deadlines and independently recorded results. Preserve `--pure` for
@@ -90,6 +88,6 @@ real OpenCode and a permitted action reaches the actual Python MCP server.
    confinement before exposing ECC's external services. Never inherit upstream
    broad permission settings into the operator's host.
 
-The last four steps are future implementation, not completed features. Do not
+Executable plugin, memory and external-server work remain future implementation. The coding adapter does not imply those layers are complete. Do not
 report full ECC compatibility until executable-plugin and task-permission
 contracts, cleanup, native Windows/Linux checks and live acceptance pass.

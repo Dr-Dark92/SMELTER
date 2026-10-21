@@ -62,7 +62,8 @@ class ManagedClient:
         if not ready['ready']:raise ValueError('Confined OpenCode unavailable: '+ready['reason'])
         from access_policy import using
         from frontend_workspace import target_path
-        self.host_directory=target_path(root)
+        coding = bridge is not None and bridge.session.grants.get('coding_workspace')
+        self.host_directory=Path(root).resolve() if coding or not allow_inference else target_path(root)
         with using(policy):self.folder,self.code=snapshot(root,self.host_directory)
         self.docker=ready['docker'];self.name='smelter-opencode-'+__import__('uuid').uuid4().hex
         self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference

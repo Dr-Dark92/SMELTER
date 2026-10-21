@@ -43,7 +43,7 @@ const SmelterFiles = (() => {
         const saved = file.status === 'saved';
         const value = saved ? file.after : file.draft;
         ui.caption.textContent = saved ? 'Updated file · saved' + (file.after_truncated ? ' · preview truncated' : '') :
-          file.draft ? 'Proposed CSS replacement · not confirmed saved' : 'Updated code · waiting for an edit';
+          file.draft ? (file.kind==='code'?'Proposed code · not confirmed saved':'Proposed CSS replacement · not confirmed saved') : 'Updated code · waiting for an edit';
         const text = value == null ? '' : String(value);
         if (ui.code.value !== text) {
           const atEnd = ui.code.scrollHeight - ui.code.scrollTop - ui.code.clientHeight < 40;

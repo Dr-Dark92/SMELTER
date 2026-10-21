@@ -53,7 +53,8 @@ def status(root,operation="frontend"):
             if info.get(capability) is not True:raise ValueError('Docker cannot enforce required resource limit: '+capability)
         if not any('seccomp' in option for option in info.get('SecurityOptions',[])):
             raise ValueError('Docker default seccomp support is required')
-        required=('opencode_image',) if operation=='opencode' else ('python_image','node_image')
+        required={'opencode':('opencode_image',), 'coding_python':('python_image',),
+                  'coding_node':('node_image',)}.get(operation, ('python_image','node_image'))
         for key in required:
             image=value[key]
             if not image:raise ValueError('Configure the required immutable image IDs in Settings')
@@ -157,6 +158,68 @@ def tests(root,target):
     except Exception:
         # Preserve ownership metadata when cleanup is unconfirmed.
         raise
+
+
+CODING_PYTHON = r'''
+import json,os,sys,threading,unittest
+timer=threading.Timer(80,lambda:os._exit(124));timer.daemon=True;timer.start()
+suite=unittest.defaultTestLoader.discover('tools/dashboard',pattern='test_*.py')
+result=unittest.TextTestRunner(verbosity=2).run(suite)
+print('SMELTER_TEST_RESULT|'+json.dumps({'tests':result.testsRun,'failures':len(result.failures),
+ 'errors':len(result.errors),'skipped':len(result.skipped)}),flush=True)
+timer.cancel()
+sys.exit(0 if result.wasSuccessful() and result.testsRun>len(result.skipped) else 1)
+'''
+CODING_NODE = r'''
+const fs=require('node:fs'),cp=require('node:child_process');
+const files=fs.readdirSync('tools/dashboard').filter(n=>/^test_[A-Za-z0-9_.-]+\.js$/.test(n)).sort();
+if(!files.length||files.length>64)process.exit(2);
+const child=cp.spawn(process.execPath,['--test',...files.map(n=>'tools/dashboard/'+n)],{stdio:'inherit'});
+const timer=setTimeout(()=>process.exit(124),80000);
+child.on('error',()=>process.exit(2));child.on('exit',code=>{clearTimeout(timer);process.exit(code??2)});
+'''
+
+
+def coding_test(root,target,profile):
+    """One fixed test profile over a read-only snapshot; never a host command."""
+    if profile not in ('python','node'):raise ValueError('Unsupported coding test profile')
+    from access_policy import require
+    require(target,'execute','tests')
+    ready=status(root,operation='coding_'+profile)
+    if not ready['ready']:raise ValueError('Confined coding tests unavailable: '+ready['reason'])
+    folder,code=snapshot(root,target)
+    name='smelter-tests-'+uuid4().hex
+    image=ready['configured'][profile+'_image']
+    command=['python','-I','-c',CODING_PYTHON] if profile=='python' else ['node','-e',CODING_NODE]
+    confirmed=False
+    try:
+        record_owner(folder,name,image,'tests')
+        result=run(_flags(ready['docker'],name,code)+['--rm',image,*command],
+                   timeout=90,max_output=2*1024*1024)
+        raw=result.stdout+result.stderr
+        output=raw.decode('utf-8',errors='replace')
+        counts={}
+        if profile=='python':
+            matches=re.findall(r'^SMELTER_TEST_RESULT\|(\{[^\n]+\})\s*$',output,re.M)
+            if len(matches)==1:
+                try:counts=json.loads(matches[0])
+                except ValueError:pass
+            valid=set(counts)=={'tests','failures','errors','skipped'} and all(type(n)is int and n>=0 for n in counts.values())
+            stage=('GREEN' if result.returncode==0 and counts['tests']>counts['skipped'] and not counts['errors'] and not counts['failures'] else
+                   'RED' if result.returncode==1 and counts['failures']>0 and counts['errors']==0 else 'ERROR') if valid else 'ERROR'
+        else:
+            counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped) (\d+)\s*$',output,re.M)}
+            stage=('GREEN' if result.returncode==0 and counts.get('pass',0)>0 and counts.get('fail')==0 and counts.get('cancelled',0)==0 else
+                   'RED' if result.returncode==1 and counts.get('fail',0)>0 and 'ERR_ASSERTION' in output else 'ERROR')
+        evidence={'exit_code':result.returncode,'stage':stage,'counts':counts,'image':image,
+                  'sandbox':'docker-no-network','profile':profile,'coverage':'not measured',
+                  'log_tail':output[-6000:],'_raw_output':raw}
+    finally:
+        confirmed=_remove(ready['docker'],name)
+        record_owner(folder,name,image,'tests',finished=confirmed)
+        if confirmed:shutil.rmtree(folder)
+        else:raise ValueError('Coding test container cleanup was not confirmed: '+name)
+    return {**evidence,'cleanup_confirmed':confirmed}
 
 
 PREVIEW_BOOT=r'''

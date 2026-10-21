@@ -42,11 +42,14 @@ def _plain_path(path):
 def permissions(root, value=None):
     if value is None:
         value = {}
-    if not isinstance(value, dict) or set(value) - {"inventory_root", "write_diagnostics", "rea_root", "rea_analysis", "model_ids", "frontend_workspace"}:
+    if not isinstance(value, dict) or set(value) - {"inventory_root", "write_diagnostics", "rea_root", "rea_analysis", "model_ids", "frontend_workspace", "coding_workspace"}:
         raise ValueError("Invalid Python tool permissions")
     workspace = value.get('frontend_workspace', False)
     if type(workspace) is not bool:
         raise ValueError('Frontend workspace permission must be boolean')
+    coding = value.get('coding_workspace', False)
+    if type(coding) is not bool:
+        raise ValueError('Coding workspace permission must be boolean')
     model_ids = value.get('model_ids', [])
     if not isinstance(model_ids, list) or len(model_ids) > 8 or any(not isinstance(aid, str) for aid in model_ids) or len(set(model_ids)) != len(model_ids):
         raise ValueError('Approve up to 8 distinct model attachment IDs')
@@ -86,7 +89,7 @@ def permissions(root, value=None):
         scopes[key] = str(folder)
     if scopes["rea_root"] and not rea:
         raise ValueError("REA folder scope requires explicit REA approval")
-    return {**scopes, "write_diagnostics": writable, "rea_analysis": rea, **({"model_ids": model_ids} if model_ids else {}), **({"frontend_workspace": True} if workspace else {})}
+    return {**scopes, "write_diagnostics": writable, "rea_analysis": rea, **({"model_ids": model_ids} if model_ids else {}), **({"frontend_workspace": True} if workspace else {}), **({'coding_workspace': True} if coding else {})}
 
 
 def schemas(grants):
@@ -263,7 +266,7 @@ class ToolSession:
             self.model_attachments = [{'id': aid, 'filename': attached.get(aid)} for aid in self.grants['model_ids']]
             if any(aid not in attached for aid in self.grants['model_ids']):
                 raise ValueError('Model approval must refer to attachments in this conversation')
-        self.call_limit = 24 if self.grants.get('frontend_workspace') else MAX_CALLS
+        self.call_limit = 32 if self.grants.get('coding_workspace') else 24 if self.grants.get('frontend_workspace') else MAX_CALLS
         self.tools = schemas(self.grants)
         self.external_tools = {}
         if selected:
@@ -283,6 +286,9 @@ class ToolSession:
         self.events = []
         from file_activity import FileActivity
         self.file_activity = FileActivity(self.root, self.grants.get('frontend_workspace') is True)
+        if self.grants.get('coding_workspace'):
+            from coding_activity import CodingActivity
+            self.file_activity = CodingActivity(self.root, self.file_activity, policy)
         self.cache = {}
         self.run_id = str(uuid4())
         self.conversation_id = conversation_id
@@ -300,16 +306,18 @@ class ToolSession:
         if self.grants.get('model_ids'):
             models = ' You may call inspect_model_attachment for these explicitly approved saved attachment IDs: ' + json.dumps(self.model_attachments) + '. Read actual tool results before describing GLB structure or clip durations; animation meanings remain unknown. '
         workspace = ''
+        if self.grants.get('coding_workspace'):
+            workspace += (' Coding tools are approved for a new isolated V2/coding/UUID copy only. Prepare once, read exact bytes/hashes, propose and apply recorded patches, then use fixed confined tests and review. Native shell/edits remain denied. RED requires an actual assertion failure; import/runner errors are ERROR. GREEN is scoped to the exact tested tree; coverage and Git checkpoints are not provided. Never claim a source merge or deployment. ')
         if self.grants.get('frontend_workspace'):
             from frontend_workspace import target_path
-            workspace = (' You have approved frontend workspace tools for this message: original source ' + str(self.root) +
+            workspace += (' You have approved frontend workspace tools for this message: original source ' + str(self.root) +
                 ', destination ' + str(target_path(self.root)) + '. You can read listed frontend files and actual enabled design skills, create the isolated copy, edit CSS only, run fixed tests, and launch the validated preview on port 8770. '
-                'You cannot edit Python backend, HTML structure, JavaScript behavior, original files, projects, or arbitrary paths. No generic shell or browser automation is supplied. '
+                'These frontend operations cannot edit Python backend, HTML structure, JavaScript behavior, original files, projects, or arbitrary paths. Separately approved coding tools use their own new copy. No generic shell or browser automation is supplied. '
                 'Call frontend_workspace_info first, read actual enabled design skills, prepare, read CSS, use exact hash-checked CSS replacements, validate, then launch. '
                 'Do the work through actual tool calls. Report unsupported steps as untested. Never invent skills, code structure, test results, saved files or launch URLs. '
                 'Workspace tasks allow up to 24 total calls. Stop prevents subsequent actions; active fixed operations finish within their own bounds. ')
         return workspace + models + external + ("You may call only the supplied tools with this message's explicit permissions: "
-                + json.dumps(self.grants) + ". No shell, arbitrary Python execution, extraction or overwrites. "
+                + json.dumps(self.grants) + ". No shell, arbitrary Python execution, extraction or writes outside explicitly approved tool scopes. "
                 "When rea_analysis is approved, the fixed REA tools run Node locally; they may read "
                 "the selected PE file and retain evidence. REA skill instructions are loaded for you. "
                 "Use rea_capabilities to discover actual capabilities. Never claim a native analysis "
@@ -414,7 +422,7 @@ class ToolSession:
                 lines.append("Verification: saved bytes match; model narrative is not fact-checked.")
             elif result["status"] == "inventoried":
                 lines.append(f"{prefix}: {result['files_observed']} files observed | scan_complete={result['scan_complete']} | listed={result['returned_entries']}/{result['observed_entries']} | errors={result['errors']}")
-            elif result['status'].startswith('workspace_'):
+            elif result['status'].startswith(('workspace_', 'coding_')):
                 lines.append(f"{prefix}: {result['status']} | {result.get('message', result.get('path', result.get('relative_path', 'Result recorded')))}")
                 if result.get('url'):
                     lines.append('Preview: ' + result['url'])

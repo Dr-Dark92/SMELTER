@@ -124,6 +124,14 @@ def current(root):
 
 
 def check_grants(root,grants,policy):
+    if grants.get('coding_workspace'):
+        source = Path(root).resolve()
+        target = source.with_name(source.name+'V2')/'coding'
+        policy.authorize(source/'tools','read')
+        policy.authorize(source/'skills','read')
+        policy.authorize(target,'read')
+        policy.authorize(target,'write')
+        policy.authorize(target,'execute','tests')
     for key in ('inventory_root','rea_root'):
         if grants.get(key):policy.authorize(grants[key],'read')
     if grants.get('write_diagnostics'):policy.authorize(Path(root).resolve()/'diagnostics','write')

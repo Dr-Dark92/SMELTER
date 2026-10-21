@@ -178,6 +178,7 @@ def write_report(directory, report):
 
 
 def execute(args, *, root=REPO, command=run):
+    coding = getattr(args, 'coding', False)
     directory = Path(args.output).resolve() if args.output else root / 'diagnostics' / (
         'home-smoke-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ-') + uuid4().hex[:8])
     directory.mkdir(parents=True, exist_ok=False)
@@ -191,10 +192,13 @@ def execute(args, *, root=REPO, command=run):
         checks, images = preflight(root, runtime=args.live or args.fixture or args.preflight_only,
                                    live=args.live or args.preflight_only, image=args.opencode_image, command=command)
         report['checks'] = checks
+        if coding:
+            checks.append({'name': 'Python coding image', 'status': 'PASS' if images.get('python_image') else 'BLOCKED',
+                           'detail': images.get('python_image') or 'Install/configure the local Python test image'})
         manifests = []
-        if args.ecc:
+        if args.ecc or coding:
             from install_ecc_skills import preview, REVISION
-            manifests = preview()
+            manifests = preview(pack='coding' if coding else 'core')
             for manifest in manifests:
                 folder = directory / 'ecc-manifests' / manifest['id']
                 folder.mkdir(parents=True)
@@ -231,6 +235,16 @@ def execute(args, *, root=REPO, command=run):
                         report['ollama_after_test'] = read_local_json('/api/ps')
                     except Exception as exc:
                         report['ollama_after_test'] = {'observation_error': redact(exc)}
+                if coding and result['status'] == 'PASS':
+                    argv = [sys.executable, str(root / 'tools/analysis/smoke_ecc_coding.py'),
+                            '--image', images['opencode_image'], '--python-image', images['python_image'],
+                            '--skill-manifest', str(directory / 'ecc-manifests/tdd-workflow/SKILL.md'),
+                            '--evidence-dir', str(directory / 'coding-runtime-evidence')]
+                    if args.live:argv.append('--live')
+                    report['phases'].append(phase(directory, 'ecc-coding-runtime', argv, root=root,
+                                                  timeout=420, command=command))
+                    report['coding_test_profile'] = {'context_tokens': 32768, 'max_output_tokens': 1024,
+                                                    'timeout_seconds': 300, 'thinking': False}
         report['status'] = ('BLOCKED' if blocked else 'FAIL' if any(item['status'] == 'FAIL' for item in report['phases']) else 'PASS')
     except Exception as exc:
         report['error'] = redact(exc)
@@ -248,9 +262,12 @@ def main():
     mode.add_argument('--preflight-only', action='store_true', help='Read-only prerequisite checks; no tests or inference')
     parser.add_argument('--prepare-demo', action='store_true', help='Create fresh GUI source/V2 and separate databases; do not launch')
     parser.add_argument('--ecc', action='store_true', help='Fetch three pinned ECC manifests; test verification-loop if runtime is requested')
+    parser.add_argument('--coding', action='store_true', help='Also test ECC RED/fix/GREEN; requires --live or --fixture and a Python image')
     parser.add_argument('--opencode-image', help='Override with existing immutable sha256 ID; never pull/build')
     parser.add_argument('--output', help='New evidence directory; existing paths are rejected')
     args = parser.parse_args()
+    if args.coding and not (args.live or args.fixture):
+        parser.error('--coding requires the explicit --live or --fixture runtime mode')
     try:
         return execute(args)
     except (OSError, ValueError) as exc:

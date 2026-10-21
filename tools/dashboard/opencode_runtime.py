@@ -131,7 +131,7 @@ def status(root, client=None, policy=None):
     from frontend_workspace import target_path
     from access_policy import current
     policy=policy or current(root)
-    expected_host=target_path(root)
+    expected_host=Path(getattr(client,'host_directory',target_path(root))) if client is not None else Path(root).resolve()
     policy.authorize(expected_host/'tools','read');policy.authorize(expected_host/'skills','read')
     if client is None:
         from opencode_sandbox import ManagedClient

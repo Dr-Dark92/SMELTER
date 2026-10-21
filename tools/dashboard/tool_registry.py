@@ -4,6 +4,21 @@ MAX_DEPTH = 8
 
 def schemas(grants):
     tools = []
+    if grants.get('coding_workspace'):
+        sid = {'type': 'string', 'description': 'Exact workspace UUID returned by prepare_coding_workspace'}
+        def parameters(properties, required):
+            return {'type': 'object', 'properties': properties, 'required': required, 'additionalProperties': False}
+        operations = [
+            ('prepare_coding_workspace', 'Create a NEW isolated copy of this project under registered V2/coding/UUID. Preserve original and existing V2. No shell, installs, Git, deletions or preview.', parameters({}, [])),
+            ('list_coding_files', 'List real paths/hashes in a prepared coding copy, with pagination.', parameters({'workspace_id': sid, 'offset': {'type': 'integer', 'minimum': 0}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200}}, ['workspace_id'])),
+            ('read_coding_file', 'Read exact UTF-8 bytes as text with full-file SHA256 and character pagination. Reads only the selected coding copy.', parameters({'workspace_id': sid, 'relative_path': {'type': 'string'}, 'offset': {'type': 'integer', 'minimum': 0}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 16000}}, ['workspace_id', 'relative_path'])),
+            ('propose_coding_patch', 'Record a reviewable proposal for 1-6 complete UTF-8 files. No code is applied. Use current full-file SHA256, or null to create a new file without overwriting. Maximum 128 KiB per file, 512 KiB total.', parameters({'workspace_id': sid, 'changes': {'type': 'array', 'minItems': 1, 'maxItems': 6, 'items': parameters({'relative_path': {'type': 'string'}, 'expected_sha256': {'type': ['string', 'null']}, 'content': {'type': 'string'}}, ['relative_path', 'expected_sha256', 'content'])}}, ['workspace_id', 'changes'])),
+            ('apply_coding_patch', 'Apply an existing proposal only inside its coding copy after rechecking every hash. Changes are staged with rollback on failure. Repeated successful calls do not reapply. Original source is never written.', parameters({'workspace_id': sid, 'proposal_id': {'type': 'string'}}, ['workspace_id', 'proposal_id'])),
+            ('run_coding_tests', 'Run one fixed python unittest or node --test profile inside a no-network, read-only Docker snapshot. No commands, dependencies or host fallback. Return RED for assertion failure, GREEN for nonempty passing tests, ERROR for infrastructure/import problems; coverage is not measured.', parameters({'workspace_id': sid, 'profile': {'type': 'string', 'enum': ['python', 'node']}}, ['workspace_id', 'profile'])),
+            ('review_coding_workspace', 'Report actual changed file hashes and whether ALL detected fixed test profiles passed against the current exact tree. Editing after tests makes that evidence stale. No commit, deployment, source merge, preview or coverage claim.', parameters({'workspace_id': sid}, ['workspace_id'])),
+        ]
+        for name, description, schema in operations:
+            tools.append({'type': 'function', 'function': {'name': name, 'description': description, 'parameters': schema}})
     if grants.get('frontend_workspace'):
         empty = {'type': 'object', 'properties': {}, 'additionalProperties': False}
         operations = [
@@ -58,6 +73,10 @@ def schemas(grants):
 
 def execute_builtin(root, grants, name, arguments):
     from python_tools import inventory, write_markdown
+    if name in {'prepare_coding_workspace','list_coding_files','read_coding_file','propose_coding_patch',
+                'apply_coding_patch','run_coding_tests','review_coding_workspace'}:
+        from coding_workspace import execute
+        return execute(root, grants, name, arguments)
     if name in {'frontend_workspace_info', 'prepare_frontend_workspace', 'read_frontend_file', 'read_enabled_design_skill', 'replace_frontend_css', 'validate_frontend_workspace', 'launch_frontend_preview'}:
         from frontend_workspace import execute
         return execute(root, grants, name, arguments)

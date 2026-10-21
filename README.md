@@ -46,6 +46,7 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 | GLB | Browser preview, animation selection, frame/turntable export and stored animation labels; no automatic semantic naming |
 | REA | Pinned adapter exposes capabilities and static PE resource inspection, not general native decompilation or game-container extraction |
 | OpenCode | Managed no-network container, pinned 1.19.3, selected skills and approved MCP tools; native code snapshot remains read-only; live rig inference still requires validation |
+| Coding workspace | Separate new V2/coding/UUID copies; hash-checked proposals/apply, fixed Python/Node container tests and current-tree review; no shell, deletion, source merge, coverage or Git commits |
 | Workflow planner | Dry-run dependency planning; not an autonomous execution workflow |
 | Legacy CLI/core | Shared skill/capability catalog; explicit scoped Registry bridge; other adapters labelled library-only |
 
@@ -59,7 +60,7 @@ Use the [home smoke test and GUI demo](docs/HOME_SMOKE_TEST.md) for exact PowerS
 
 ## Documentation
 
-See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. General multi-file coding and arbitrary external MCP remain future work.
+See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. The [ECC coding workspace](docs/ECC_CODING_WORKSPACE.md) adds separately approved multi-file patch/test/review copies. Arbitrary external MCP and the full ECC plugin remain future work.
 The [agent bridge handover](docs/AGENT_BRIDGE_HANDOVER_20261021.md) records the verified source, smoke evidence and remaining live-rig checks.
 
 | File | Contents |

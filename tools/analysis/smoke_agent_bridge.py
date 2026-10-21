@@ -70,6 +70,33 @@ def smoke_state(evidence_directory=None):
                     with (evidence / 'chat-evidence.json').open('x', encoding='utf-8') as stream:
                         json.dump(chats, stream, indent=2)
                     copied.append('chat-evidence.json')
+                # Only this disposable smoke's coding proposals/results and
+                # saved source are retained. Never copy a production database.
+                coding = root / '.smelter/coding-workspaces'
+                retained = 0
+                for source in sorted(coding.rglob('*')) if coding.is_dir() else []:
+                    if not source.is_file() or source.suffix not in ('.json', '.log'):
+                        continue
+                    retained += source.stat().st_size
+                    if retained > 16 * 1024 * 1024:
+                        raise ValueError('Coding smoke evidence exceeds 16 MiB')
+                    relative = Path('coding-evidence') / source.relative_to(coding)
+                    destination = evidence / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    with destination.open('xb') as stream:stream.write(source.read_bytes())
+                    copied.append(relative.as_posix())
+                workspaces = base / 'SMELTERV2/coding'
+                for source in sorted(workspaces.rglob('*')) if workspaces.is_dir() else []:
+                    if not source.is_file() or source.suffix not in ('.py', '.js'):
+                        continue
+                    retained += source.stat().st_size
+                    if retained > 16 * 1024 * 1024:
+                        raise ValueError('Coding smoke saved source exceeds 16 MiB')
+                    relative = Path('saved-code') / source.relative_to(workspaces)
+                    destination = evidence / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    with destination.open('xb') as stream:stream.write(source.read_bytes())
+                    copied.append(relative.as_posix())
                 with (evidence / 'evidence-index.json').open('x', encoding='utf-8') as stream:
                     json.dump({'scope': 'disposable smoke task only; original temporary paths no longer exist',
                                'files': copied, 'production_state_copied': False}, stream, indent=2)
