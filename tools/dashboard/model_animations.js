@@ -14,7 +14,7 @@ const SmelterAnimations = (() => {
     const save = document.createElement('button'); save.textContent = 'Save animation name';
     const note = document.createElement('p'); note.textContent = 'Names are saved in SMELTER. The original GLB and embedded clip names remain unchanged.';
     element.append(heading, notice, select, original, play, restart, seek, time, label, save, note);
-    let viewer = null, timer = null, names = [], busy = false, saving = false;
+    let viewer = null, timer = null, names = [], busy = false, saving = false, generation = 0;
     const controls = [select, play, restart, seek, label, save];
     function usable() { return viewer && names.length && names.filter(n => n === names[select.selectedIndex]).length === 1; }
     function refresh() {
@@ -28,6 +28,7 @@ const SmelterAnimations = (() => {
       time.textContent = (viewer.currentTime || 0).toFixed(2) + ' / ' + duration.toFixed(2) + ' s';
     }
     function choose() {
+      if (!viewer || !names.length) return;
       const index = select.selectedIndex;
       viewer.pause(); viewer.animationCrossfadeDuration = 0; viewer.animationName = names[index]; viewer.currentTime = 0;
       const source = asset.animation_clips?.[index]?.source_name;
@@ -41,19 +42,22 @@ const SmelterAnimations = (() => {
     restart.onclick = () => { viewer.currentTime = 0; viewer.play(); refresh(); };
     seek.oninput = () => { viewer.pause(); viewer.currentTime = Number(seek.value); refresh(); };
     save.onclick = async () => {
+      if (!viewer || busy || saving || !names.length) return;
+      const binding = generation;
       const index = select.selectedIndex, value = label.value.trim();
       if (!value) { notice.textContent = 'Enter an animation name first.'; return; }
       saving = true; refresh();
       try {
         const updated = await api('/api/models', 'POST', {action: 'rename_animation', id: asset.id, index, label: value});
         Object.assign(asset, updated);
+        if (binding !== generation) return;
         select.options[index].textContent = (index + 1) + '. ' + updated.animation_labels[String(index)] + ' [' + names[index] + ']';
         notice.textContent = 'Animation name saved.';
-      } catch (error) { notice.textContent = error.message; }
+      } catch (error) { if (binding === generation) notice.textContent = error.message; }
       finally { saving = false; refresh(); }
     };
     function disable() {
-      clearInterval(timer); timer = null; viewer = null; refresh();
+      generation++; clearInterval(timer); timer = null; viewer = null; names = []; busy = false; refresh();
     }
     function bind(target) {
       disable(); viewer = target; names = [...target.availableAnimations]; select.replaceChildren();

@@ -13,6 +13,13 @@ def configuration(root):
     return value
 
 
+OUTPUT_LIMIT_ERROR = 'Model output limit reached; response is partial'
+
+
+def generation_limited(reason):
+    return reason == 'length'
+
+
 def outcome(cancelled=False, error=None, partial=False):
     state='cancelled' if cancelled else 'partial' if error and partial else 'error' if error else 'completed'
     return {'status':state,'error':str(error)[:1000] if error else None,'cancelled':bool(cancelled)}

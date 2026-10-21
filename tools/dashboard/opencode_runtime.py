@@ -17,6 +17,7 @@ from urllib.parse import quote
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
 from uuid import uuid4
 from datetime import datetime, timezone
+from task_contract import OUTPUT_LIMIT_ERROR,generation_limited
 
 BASE = 'http://127.0.0.1:4096'
 VERSION = '1.19.3'
@@ -198,6 +199,7 @@ def _progress(messages):
     if not isinstance(messages, list):
         raise ValueError('Invalid OpenCode messages response')
     text, events, finished, failure = [], [], False, None
+    finish_reason = None
     for message in messages[-50:]:
         if not isinstance(message, dict) or not isinstance(message.get('info'), dict) or not isinstance(message.get('parts', []), list):
             raise ValueError('Invalid OpenCode message')
@@ -208,7 +210,8 @@ def _progress(messages):
             failure = 'OpenCode reported a model/session error; inspect its server log'
         # Intermediate assistant messages can finish a tool-call step. Only
         # the latest assistant's final stop establishes task completion.
-        finished = bool(info.get('time', {}).get('completed')) and info.get('finish') == 'stop'
+        finish_reason = info.get('finish')
+        finished = bool(info.get('time', {}).get('completed')) and (finish_reason == 'stop' or generation_limited(finish_reason))
         for part in message.get('parts', []):
             if not isinstance(part, dict):
                 raise ValueError('Invalid OpenCode message part')
@@ -227,6 +230,8 @@ def _progress(messages):
                     'result':{'status':state_name, 'path':str(path)[:1024] if path else None,
                               'error':str(state.get('error',''))[:500],
                               'verification_scope':'Tool activity reported by OpenCode; no independent filesystem verification'}})
+    if finished and generation_limited(finish_reason) and failure is None:
+        failure = OUTPUT_LIMIT_ERROR
     return '\n\n'.join(text)[-64000:], events[-100:], finished, failure
 
 
@@ -293,6 +298,7 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             control.update(phase)
     session_id, answer, events, cancelled, abort_error, failed = None, '', [], False, None, False
     observed = {}
+    output_limited = False
     rules = session_rules(check['directory'],policy,host_directory=getattr(client,'host_directory',None))
     record('requested', directory=check['directory'], model=model_key, permission=rules)
     try:
@@ -323,6 +329,11 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             if control:
                 with control.lock:
                     control.output_text, control.tool_activity = answer, events
+            if failure == OUTPUT_LIMIT_ERROR:
+                output_limited = True
+                if not answer.strip():
+                    answer = 'The model reached its output limit before producing an answer.'
+                break
             if failure:
                 raise ValueError(failure)
             if finished:
@@ -357,5 +368,5 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         'audit_path':str(audit), 'cancelled':cancelled, 'model_text':answer, 'confinement':'managed no-network container' if getattr(client,'confined',False) else 'injected fixture',
         'verification_scope':'Model narrative and tool activity are reported by OpenCode; not independently fact-checked'}
     from execution_store import finalize
-    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=answer[:1000] if failed else None,partial=bool(events),cancelled=cancelled)
+    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=answer[:1000] if failed else OUTPUT_LIMIT_ERROR if output_limited else None,partial=bool(events) or output_limited,cancelled=cancelled)
     return {**result,'engine':'opencode','session_id':session_id}

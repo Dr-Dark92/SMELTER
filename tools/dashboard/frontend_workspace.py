@@ -54,6 +54,8 @@ def _source_files(root):
     for name in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md'):
         path = _plain_path(root / name)
         if path.is_file():
+            from access_policy import require
+            require(path, 'read')
             result[name] = path
     if DASHBOARD not in result:
         raise ValueError('Source dashboard is missing')
@@ -90,7 +92,10 @@ def info(root, arguments):
             'editable_surface': 'CSS style blocks only; HTML structure and all JavaScript remain unchanged',
             'skills': [{'id': s['id'], 'name': s['name'][:160], 'description': s['description'][:1000]} for s in _design_skills(root)],
             'readable_files': [DASHBOARD, 'tools/dashboard/model_preview.js', 'tools/dashboard/model_animations.js',
-                               'tools/dashboard/mcp_ui.js', 'tools/dashboard/session_auth.js', 'tools/dashboard/chat_renderer.js'],
+                               'tools/dashboard/mcp_ui.js', 'tools/dashboard/session_auth.js', 'tools/dashboard/chat_renderer.js',
+                               'tools/dashboard/dashboard_shell.js', 'tools/dashboard/settings_ui.js',
+                               'tools/dashboard/access_ui.js', 'tools/dashboard/locations_ui.js',
+                               'tools/dashboard/attachments_ui.js', 'tools/dashboard/skills_ui.js'],
             'preview_port': PORT, 'visual_browser_automation': False,
             'message': 'Use prepare, skill reading, source reading, CSS replacement, validation, then launch. No generic shell or arbitrary source writes.'}
 
@@ -134,6 +139,7 @@ def prepare(root, arguments):
     if data.exists():
         raise ValueError('Isolated preview data directory already exists; refusing to reuse it')
     target.mkdir()
+    created_data = False
     try:
         hashes = {}
         for relative, source in all_files.items():
@@ -143,6 +149,9 @@ def prepare(root, arguments):
             destination.write_bytes(raw)
             if relative in files:
                 hashes[relative] = _digest(raw)
+        # Claim only a new data directory so rollback cannot erase existing data.
+        data.mkdir()
+        created_data = True
         from database import select_database
         select_database(target, str(data))
         from database import inspect_database
@@ -157,6 +166,8 @@ def prepare(root, arguments):
         # Only this newly created destination is removed; pre-existing targets
         # and the original checkout are never cleanup candidates.
         shutil.rmtree(target)
+        if created_data:
+            shutil.rmtree(data)
         raise
     return {'status': 'workspace_ready', 'target': str(target), 'data_directory': str(data),
             'copied_files': len(all_files), 'bytes': size, 'source_unchanged': True,
@@ -289,6 +300,7 @@ def replace_css(root, arguments):
     from access_policy import require
     require(path, 'write')
     temporary = _plain_path(path.with_suffix('.py.frontend-tmp'))
+    require(temporary, 'write')
     temporary.write_bytes(result)
     temporary.replace(path)
     return {'status': 'workspace_edited', 'path': str(path), 'css_sha256': _digest(updated.encode()),

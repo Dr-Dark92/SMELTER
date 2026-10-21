@@ -52,7 +52,7 @@ def validate(value):
         path=plain(row['path'])
         if path.parent==path:
             raise ValueError('Whole-drive or filesystem-root grants are not allowed')
-        key=str(path).casefold()
+        key=path  # Path equality follows the host platform's path semantics.
         if key in paths:raise ValueError('Duplicate access location')
         paths.add(key)
         if any(type(row[k]) is not bool for k in ('read','write','execute','enabled')):

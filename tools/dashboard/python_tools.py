@@ -217,6 +217,8 @@ def write_markdown(root, grants, arguments):
     for suffix in range(100):
         filename = name if suffix == 0 else f"{Path(name).stem}_{suffix:02d}.md"
         path = folder / filename
+        require(path, 'write')
+        _plain_path(path)
         try:
             # Exclusive binary creation gives stable LF hashes and prevents overwrites.
             with path.open("xb") as output:

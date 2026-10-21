@@ -8,6 +8,7 @@ from skill_router import route_skills
 from chat_jobs import ChatCancelled
 from python_tools import ToolSession,REA_SKILL_ID
 from ollama_turn import ENDPOINT,MAX_RESPONSE
+from task_contract import OUTPUT_LIMIT_ERROR,generation_limited
 MODEL='qwen3.5:9b'
 
 
@@ -42,6 +43,8 @@ def _messages(root, chat, prompt, image, skills, auto_skills, session):
 def _tool_loop(infer, checkpoint, session, messages, settings, image, control):
     failure = None
     answer, reason, calls, message = infer(False if image is not None or session.tools else settings['thinking'], session.tools)
+    if generation_limited(reason):
+        return (answer or 'The model reached its output limit before producing an answer.', OUTPUT_LIMIT_ERROR)
     while calls:
         if not session.tools:
             answer = 'No Python tools were approved for this message. No requested action was executed.'
@@ -64,12 +67,16 @@ def _tool_loop(infer, checkpoint, session, messages, settings, image, control):
             messages.append({'role': 'tool', 'tool_name': name, 'content': json.dumps(result, ensure_ascii=True)})
         available = session.tools if len(session.events) < session.call_limit else None
         answer, reason, calls, message = infer(False, available)
+        if generation_limited(reason):
+            return (answer or 'The model reached its output limit before producing an answer.', OUTPUT_LIMIT_ERROR)
         if calls and (not available):
             failure = 'Tool call budget exhausted'
             answer = 'Python tool call limit reached. Further requested actions were not executed.'
             break
     if not answer.strip():
         answer, retry_reason, extra_calls, _ = infer(False)
+        if generation_limited(retry_reason):
+            return (answer or 'The model reached its output limit before producing an answer.', OUTPUT_LIMIT_ERROR)
         if extra_calls:
             failure = 'No final answer; extra tool calls were not executed'
             answer = 'No final answer was produced; additional tool calls were not executed.'
@@ -94,7 +101,11 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     except (ValueError,OSError) as exc:
         if control and control.cancelled.is_set():answer='Request stopped. Completed tool actions remain recorded below.'
         elif not session.events:raise
-        else:failure=str(exc);answer='Model follow-up failed: '+str(exc)+'. See the actual tool receipts below.'
+        else:
+            failure=str(exc)
+            answer='Model follow-up failed: '+str(exc)+'. See the actual tool receipts below.'
+            if control and control.output_text:
+                answer+='\n\nPartial model response:\n'+control.output_text[-12000:]
     failed_tools=any(e.get('result',{}).get('status') in ('error','rea_failed','mcp_failed','workspace_validation_failed') for e in session.events)
     failure=failure or ('One or more tool operations failed; inspect the receipts' if failed_tools else None)
     receipt=session.receipt();session.file_activity.settle(bool(control and control.cancelled.is_set()))
@@ -104,7 +115,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     execution={'source':'controller','policy_revision':session.policy.revision,'engine':'ollama','model':effective['model'],'configuration':effective,
                'permissions':{**session.grants,'transport':session.transport,'mcp_tools':list(session.external_tools)},
                'events':session.events,'audit_path':str(session.audit_path) if session.audit_path else None,'files':session.file_activity.snapshot()}
-    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=failure,partial=bool(session.events),receipt=receipt,
+    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=failure,partial=bool(session.events) or failure==OUTPUT_LIMIT_ERROR,receipt=receipt,
                     cancel_answer='Request stopped. Completed tool actions remain recorded below.'+receipt)
     return {**result,'model':effective['model'],'tools_executed':any(e['executed'] for e in session.events),'tool_events':session.events,
             'tool_audit_path':str(session.audit_path) if session.audit_path else None,'image_analyzed':image is not None,'skills_used':active_skills or []}

@@ -213,7 +213,7 @@ class PythonToolTests(unittest.TestCase):
 
     def test_tools_ui_has_explicit_one_message_controls(self):
         from dashboard import HTML
-        HTML += Path(__file__).with_name("dashboard_shell.js").read_text()
+        HTML += Path(__file__).with_name("dashboard_shell.js").read_text(encoding="utf-8")
         self.assertIn("approveInventory", HTML)
         self.assertIn("approveDiagnostics", HTML)
         self.assertIn("readGrant.checked=false;writeGrant.checked=false", HTML)

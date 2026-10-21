@@ -50,7 +50,9 @@ class ApiRoutes:
             if not 0<length<=limit:raise ValueError('Invalid request size')
             data=json.loads(self.rfile.read(length))
             if not isinstance(data,dict):raise ValueError('Request must be a JSON object')
-            with self.app.STATE_LOCK:return getattr(self,name)(route,data)
+            # Handlers lock state mutations narrowly. Stop must never wait for
+            # unrelated discovery, filesystem work or container startup.
+            return getattr(self,name)(route,data)
         except (ValueError,OSError,TypeError,KeyError) as error:return self.reply(400,{'error':str(error)})
         except sqlite3.Error:return self.reply(503,{'error':'Database operation failed; inspect local diagnostics'})
 
@@ -278,9 +280,13 @@ class ApiRoutes:
 
     def _post_api_chats(self, route, data=None):
         if data.get('action') == 'runtime_settings':
-            return self.reply(200, self.app.save_runtime(self.app.ROOT, data.get('settings')))
+            with self.app.STATE_LOCK:
+                result = self.app.save_runtime(self.app.ROOT, data.get('settings'))
+            return self.reply(200, result)
         if data.get('action') in ('start', 'ask'):
-            return self.reply(202, self.app.JOBS.start(self.app.ROOT, data))
+            with self.app.STATE_LOCK:
+                result = self.app.JOBS.start(self.app.ROOT, data)
+            return self.reply(202, result)
         if data.get('action') == 'stop':
             return self.reply(200, self.app.JOBS.cancel(data.get('job_id')))
         with self.app.STATE_LOCK:
@@ -386,6 +392,11 @@ class ApiRoutes:
         return self.reply(200,status(self.app.ROOT))
 
     def _post_maintenance(self,route,data):
+        # Serialize admission against idle-only maintenance, without locking Stop.
+        with self.app.STATE_LOCK:
+            return self._maintenance_operation(route,data)
+
+    def _maintenance_operation(self,route,data):
         from maintenance import status,plan,prune,backup
         action=data.get('action')
         if action=='status':result=status(self.app.ROOT)
@@ -406,6 +417,10 @@ class ApiRoutes:
         return self.reply(200,status(self.app.ROOT))
 
     def _post_sandbox(self,route,data):
+        with self.app.STATE_LOCK:
+            return self._sandbox_operation(route,data)
+
+    def _sandbox_operation(self,route,data):
         if data.get('action')=='save':
             from config_store import save_config
             save_config(self.app.ROOT,'sandbox.json',data.get('configuration'))

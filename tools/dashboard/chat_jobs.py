@@ -94,6 +94,8 @@ class Control:
     def infer(self, body, timeout, maximum):
         """Read native Ollama NDJSON; close its request socket on Stop."""
         self.update('Waiting for model')
+        with self.lock:
+            self.output_text = ''
         deadline = time.monotonic() + timeout
         connection = http.client.HTTPConnection('127.0.0.1', 11434, timeout=timeout)
         response = None
@@ -129,6 +131,12 @@ class Control:
                 if size > maximum:
                     raise ValueError('Model stream too large')
                 part = json.loads(line)
+                if not isinstance(part, dict):
+                    raise ValueError('Invalid Ollama stream packet: expected an object')
+                if type(part.get('done', False)) is not bool:
+                    raise ValueError('Invalid Ollama completion flag')
+                if part.get('done') and not isinstance(part.get('done_reason', 'stop'), str):
+                    raise ValueError('Invalid Ollama completion reason')
                 if part.get('error'):
                     raise ValueError('Local Ollama: ' + str(part['error'])[:300])
                 message = part.get('message', {})

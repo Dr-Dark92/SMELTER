@@ -2,6 +2,7 @@
 import io
 import json
 import sqlite3
+from contextlib import closing
 import tempfile
 import threading
 import unittest
@@ -48,7 +49,7 @@ class RevisionContracts(unittest.TestCase):
         self.assertEqual(seen[0]['model'],'selected-model');self.assertEqual(result['model'],'selected-model')
 
     def test_latest_history_and_older_page_do_not_lose_messages(self):
-        with sqlite3.connect(chosen_database(self.root)) as c:
+        with closing(sqlite3.connect(chosen_database(self.root))) as c, c:
             c.executemany('INSERT INTO messages(conversation_id,role,content) VALUES(?,?,?)',[(self.cid,'user',str(i)) for i in range(1002)])
         latest=read_chat(self.root,self.cid);self.assertEqual(latest['messages'][-1]['content'],'1001');self.assertTrue(latest['has_older'])
         previous=read_chat(self.root,self.cid,before=latest['older_cursor']);self.assertEqual([m['content'] for m in previous['messages']],['0','1'])
