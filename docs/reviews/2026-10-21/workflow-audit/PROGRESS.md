@@ -75,3 +75,21 @@ Local 409 dashboard tests (2 skips) and 23 analysis tests passed. Exact final CI
 results are retained in [cleanup follow-up evidence](cleanup-followup.json).
 Repeat the isolated profiles before the full live run; original desktop results
 remain evidence for their completed stages, not a full smoke PASS.
+
+## Desktop direct-model acceptance follow-up
+
+The run beginning 2026-10-21 18:12:45 UTC passed all prerequisites, 409 dashboard
+tests (8 desktop skips), 32 setup, 23 analysis, 16 JS, actual HTTP/MCP/storage,
+Chromium/GLB, all six Python/Node fixture outcomes and current CSS validation/preview.
+Cleanup was confirmed. Direct Qwen then ran for 13.72s and failed the combined
+saved-content/receipt-hash check. That source branch requires completed model
+outcome, one controller event and an existing expected file before that check.
+The raw mismatched bytes and requested arguments were not in the uploaded logs.
+Their cause remains unresolved pending the retained transcript/tool audits.
+
+The direct harness now retains failed saved bytes and independent acceptance
+checks; the full report marks direct live FAIL and managed/ECC NOT_RUN correctly.
+All 29 local analysis tests passed, including real MCP with synthetic responses
+for exact content and deliberately wrong final-newline content. Strict byte
+acceptance and stop-before-later-live-phases remain enforced. No local model
+quality, GPU performance or full desktop acceptance is claimed by those fixtures.

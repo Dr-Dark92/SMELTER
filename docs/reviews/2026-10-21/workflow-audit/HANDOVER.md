@@ -23,14 +23,21 @@ does not register shell, memory, coverage, plugins or reverse-engineering tools.
 
 ## Pending acceptance
 
-The desktop progressed through all prerequisites, native contracts, actual
-HTTP/MCP/storage and Chromium/GLB, then hit the false cleanup check described in
-[progress](PROGRESS.md). The exact-name operator listing confirmed absence and
-exposed lowercase Docker error wording. Repair source `095add422d399a481ee9898d7f14905a0f62bb36`
-uses a successful listing as absence evidence; label checks remain required for
-deletion. See [follow-up evidence](cleanup-followup.json) and the targeted rerun
-in the full runbook. The graph remains the explicitly pinned audit snapshot;
-these later narrow preflight/cleanup revisions are recorded separately.
+The next desktop run (`home-smoke-20261021T181245Z-416ecc68`) passed all
+prerequisites and eight stages, including actual container profile cleanup and
+CSS tests/preview. Direct Qwen completed with one controller event and an existing
+file, then failed a combined exact-content/receipt-hash check. OpenCode/ECC live
+tasks did not run. The original failed file was not retained; inspect its
+`direct-live-evidence/chat-evidence.json` and `tool-runs/*.jsonl` before assigning
+a root cause. See [progress](PROGRESS.md).
+
+The follow-up retains failed bytes and independent acceptance checks, corrects
+the aggregate live headline and keeps strict acceptance and later-stage gates.
+Run only the targeted direct recheck in [the runbook](../../../FULL_SMOKE_TEST.md)
+first; no need to repeat eight completed stages to collect this evidence.
+Local validation: 29 analysis tests, including actual MCP with synthetic exact
+and missing-final-LF arguments. Live Qwen remains unaccepted. The graph remains
+the explicitly pinned audit snapshot; narrow follow-ups are recorded separately.
 
 Live Qwen, optional vision, installed native tools and manual rig performance.
 Synthetic inference verified transport/tool wiring only. No game library was

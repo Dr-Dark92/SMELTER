@@ -174,11 +174,24 @@ def phase(directory, name, argv, *, root=REPO, timeout=900, command=run, extra_e
     return item
 
 
+def live_acceptance(report):
+    """Summarize all requested live routes, including an early direct failure."""
+    requested = report.get('requested_live_stages', [])
+    observed = {item['name']: item['status'] for item in report['phases'] if item['name'] in requested}
+    if report['mode'] != 'live' or not observed:
+        return 'NOT_RUN'
+    if any(status == 'FAIL' for status in observed.values()):
+        return 'FAIL'
+    return 'PASS' if all(observed.get(name) == 'PASS' for name in requested) else 'PARTIAL'
+
+
 def write_report(directory, report):
     with (directory / 'summary.json').open('x', encoding='utf-8') as stream:
         json.dump(report, stream, indent=2)
     lines = ['# SMELTER home smoke', '', 'Automated result: **' + report['status'] + '**',
-             '', 'GUI demo: **MANUAL_PENDING**. Live Qwen: **' + report['live_qwen'] + '**.', '',
+             '', 'GUI demo: **MANUAL_PENDING**. Live Qwen acceptance: **' + report['live_qwen'] + '**.',
+             'Direct Ollama (live): **' + report['live_direct_ollama'] + '**. Managed OpenCode (live): **' +
+             report['live_opencode'] + '**. ECC coding (live): **' + report['live_ecc_coding'] + '**.', '',
              '| Check | Result |', '|---|---|']
     lines += ['| ' + row['name'] + ' | ' + row['status'] + ' |' for row in report['checks'] + report['phases']]
     lines += ['', 'Read `summary.json` for details and phase logs for errors.',
@@ -208,7 +221,9 @@ def execute(args, *, root=REPO, command=run):
               'smoke_profile': PROFILE, 'evidence_directory': str(directory), 'services_started_automatically': False,
               'scope': 'full automated layer smoke' if full else 'baseline contracts and requested runtime',
               'manual_acceptance': 'PENDING', 'live_direct_ollama': 'NOT_RUN', 'coding_profiles': 'NOT_RUN',
-              'browser': 'NOT_RUN'}
+              'browser': 'NOT_RUN', 'live_opencode': 'NOT_RUN', 'live_ecc_coding': 'NOT_RUN',
+              'requested_live_stages': ((['direct-ollama-live'] if full else []) + ['agent-runtime'] +
+                                       (['ecc-coding-runtime'] if coding else [])) if args.live else []}
     try:
         fixtures = create_fixtures(directory / 'inputs')
         report['inputs'] = fixtures
@@ -297,7 +312,7 @@ def execute(args, *, root=REPO, command=run):
                 result = phase(directory, 'agent-runtime', argv, root=root, timeout=300, command=command)
                 report['phases'].append(result)
                 if args.live:
-                    report['live_qwen'] = result['status']
+                    report['live_opencode'] = result['status']
                     try:
                         report['ollama_after_test'] = read_local_json('/api/ps')
                     except Exception as exc:
@@ -308,14 +323,17 @@ def execute(args, *, root=REPO, command=run):
                             '--skill-manifest', str(directory / 'ecc-manifests/tdd-workflow/SKILL.md'),
                             '--evidence-dir', str(directory / 'coding-runtime-evidence')]
                     if args.live:argv.append('--live')
-                    report['phases'].append(phase(directory, 'ecc-coding-runtime', argv, root=root,
-                                                  timeout=420, command=command))
+                    coding_result = phase(directory, 'ecc-coding-runtime', argv, root=root,
+                                          timeout=420, command=command)
+                    report['phases'].append(coding_result)
+                    if args.live:report['live_ecc_coding'] = coding_result['status']
                     report['coding_test_profile'] = {'context_tokens': 32768, 'max_output_tokens': 1024,
                                                     'timeout_seconds': 300, 'thinking': False}
         report['status'] = ('BLOCKED' if blocked else 'FAIL' if any(item['status'] == 'FAIL' for item in report['phases']) else 'PASS')
     except Exception as exc:
         report['error'] = failure_detail(exc)
         report['status'] = 'FAIL'
+    report['live_qwen'] = live_acceptance(report)
     write_report(directory, report)
     print(report['status'] + ': ' + str(directory / 'SUMMARY.md'), flush=True)
     return {'PASS': 0, 'FAIL': 1, 'BLOCKED': 2}[report['status']]

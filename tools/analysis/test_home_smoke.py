@@ -125,6 +125,49 @@ class HomeSmokeTests(unittest.TestCase):
         for secret in ('abc123', 'headersecret', 'password=secret'):
             self.assertNotIn(secret, result)
 
+    def test_live_summary_distinguishes_direct_failure_from_unrun_managed_route(self):
+        requested = ['direct-ollama-live', 'agent-runtime', 'ecc-coding-runtime']
+        cases = [([], 'NOT_RUN'),
+                 ([('direct-ollama-live', 'FAIL')], 'FAIL'),
+                 ([('direct-ollama-live', 'PASS')], 'PARTIAL'),
+                 ([('direct-ollama-live', 'PASS'), ('agent-runtime', 'FAIL')], 'FAIL'),
+                 ([(name, 'PASS') for name in requested], 'PASS')]
+        for phases, expected in cases:
+            with self.subTest(phases=phases):
+                report = {'mode': 'live', 'requested_live_stages': requested,
+                          'phases': [{'name': name, 'status': status} for name, status in phases]}
+                self.assertEqual(home_smoke.live_acceptance(report), expected)
+                report['mode'] = 'fixture'
+                self.assertEqual(home_smoke.live_acceptance(report), 'NOT_RUN')
+
+    def test_failed_direct_acceptance_stops_before_managed_inference(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            images = {key: 'sha256:' + 'a' * 64 for key in ('python_image', 'node_image', 'opencode_image')}
+            command = unittest.mock.Mock(return_value=subprocess.CompletedProcess(['node'], 0, '', ''))
+            names = []
+            def phase(directory, name, argv, **kwargs):
+                names.append(name)
+                return {'name': name, 'status': 'FAIL' if name == 'direct-ollama-live' else 'PASS',
+                        'exit_code': 1 if name == 'direct-ollama-live' else 0}
+            with patch.object(home_smoke, 'preflight', return_value=([{'name': 'Base', 'status': 'PASS'}], images)), \
+                 patch.object(home_smoke, 'phase', side_effect=phase), \
+                 patch('model_assets.viewer_bundle', return_value={}), \
+                 patch('install_ecc_skills.preview', return_value=[]):
+                output = Path(temporary) / 'report'
+                code = home_smoke.execute(self.options(output, full=True, live=True), command=command)
+            report = json.loads((output / 'summary.json').read_text())
+            self.assertEqual(code, 1)
+            self.assertEqual(names[-1], 'direct-ollama-live')
+            self.assertNotIn('agent-runtime', names)
+            self.assertNotIn('ecc-coding-runtime', names)
+            self.assertEqual(report['live_qwen'], 'FAIL')
+            self.assertEqual(report['live_direct_ollama'], 'FAIL')
+            self.assertEqual(report['live_opencode'], 'NOT_RUN')
+            self.assertEqual(report['live_ecc_coding'], 'NOT_RUN')
+            summary = (output / 'SUMMARY.md').read_text()
+            self.assertIn('Live Qwen acceptance: **FAIL**', summary)
+            self.assertIn('Managed OpenCode (live): **NOT_RUN**', summary)
+
     def test_failed_command_retains_bounded_redacted_native_error(self):
         error = subprocess.CalledProcessError(1, ['docker', 'info'], stderr=(
             'Cannot connect to dockerDesktopLinuxEngine\nAuthorization: Bearer secret\n' +

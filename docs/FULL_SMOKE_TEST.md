@@ -228,6 +228,30 @@ and an existing container still needs the exact invocation ownership label.
 
 ### Evidence and limits
 
+For an isolated direct-model recheck, use a new evidence directory:
+
+```powershell
+$smelterDirectEvidence = Join-Path 'diagnostics' ('direct-live-recheck-' + [guid]::NewGuid().ToString('N'))
+python tools\analysis\smoke_direct_chat.py --live --output $smelterDirectEvidence
+```
+
+This invokes the existing Qwen once as a task; model follow-up is part of the
+normal bounded tool loop. There is no automatic retry or content repair. The
+result must show one executed MCP write, completed model outcome, the exact
+23-byte content (`# DIRECT_QWEN_SMOKE_OK` including its final LF), and matching receipt
+hash/byte count. Inspect `expected`, `observed`, `checks`, `failed_checks` and
+`receipt` in `result.json`. Failed saved content is retained as `direct-smoke.md`;
+`chat-evidence.json` and `tool-runs/` distinguish model arguments from tool results.
+Synthetic test injection is explicitly labelled and is unavailable as a CLI
+substitute for the required `--live` option.
+
+The aggregate live acceptance includes all requested live routes. An early direct
+failure is FAIL even when the managed route is NOT_RUN. Requested routes that
+have only partly passed are PARTIAL; the headline cannot certify unrun routes.
+Direct, managed OpenCode and ECC results are shown separately. The original
+desktop run's generic content/hash failure did not retain the failed saved file;
+its tool audit is required before attributing that failure to model or storage.
+
 Read `SUMMARY.md`, `summary.json`, the first failed phase log and its retained
 tool/test artifacts. A completed model explanation cannot override failed hashes,
 missing receipts, ERROR tests, stale review or unconfirmed cleanup. Check the

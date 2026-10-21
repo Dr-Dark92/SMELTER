@@ -2,6 +2,13 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Direct live acceptance evidence follow-up — 2026-10-21
+
+- The next desktop run passed all prerequisites and eight phases, including both real coding profiles and CSS tests/preview. Direct Qwen reached a completed single-event/file-presence check, then failed the combined exact-content/receipt-hash check. The supplied log cannot distinguish those causes; managed OpenCode/ECC live tasks were skipped.
+- Preserve the actual saved marker before acceptance, including failed content, byte count/hash, bounded UTF-8 preview, transcript and audits. Report exact content, actual MCP execution, model outcome, receipt hash and receipt byte checks separately. Keep byte-exact acceptance; no whitespace repair, automatic retries or tolerance were added.
+- Correct the aggregate live headline to include a direct failure. Show direct, managed OpenCode and ECC live outcomes separately; partial completion cannot report a full live acceptance PASS.
+- Local validation: 29 analysis tests, including actual MCP writes with synthetic controlled responses. Missing-final-newline content remains FAIL with retained evidence; the exact argument passes. No live Qwen was run here.
+
 ## Docker cleanup verification follow-up — 2026-10-21
 
 - The desktop run passed all prerequisites, native contracts, actual HTTP/MCP/storage and browser/GLB checks, then stopped because an already absent test container was reported as unconfirmed cleanup. Qwen inference and later stages had not run.
