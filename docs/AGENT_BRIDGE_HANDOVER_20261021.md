@@ -99,3 +99,7 @@ Existing V2 copies are preserved. A stale frontend baseline can still fail
 validation; do not delete or reset user changes to bypass it. Next milestones
 are confined general patch/test/review support, safe V2 refresh, an external MCP
 confinement adapter and real-model task quality/performance measurements.
+
+## Home smoke and ECC follow-up
+
+Use [HOME_SMOKE_TEST.md](HOME_SMOKE_TEST.md) for the full operator sequence, exact demo prompts and expected evidence. [ECC_COMPATIBILITY.md](ECC_COMPATIBILITY.md) records the reviewed source revision and the distinction between selected instruction support and the unconnected full plugin. New implementation includes `tools/analysis/home_smoke.py`, known inputs/isolated demo preparation, retained runtime evidence and `tools/dashboard/install_ecc_skills.py`. Original V2 and production SQLite are preserved. Check the current progress file for the new CI result; the earlier application SHA and run above describe the previous milestone.

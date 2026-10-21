@@ -13,6 +13,7 @@ import http.server
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import shutil
 import socket
@@ -27,7 +28,7 @@ sys.path.insert(0,str(REPO/'tools/dashboard'))
 from agent_bridge import AgentBridge
 from access_policy import current
 from chat_jobs import Control
-from chats import create_chat,read_chat
+from chats import create_chat,read_chat,list_chats
 from config_store import save_config
 from database import select_database
 from opencode_runtime import Client,ask,VERSION
@@ -35,6 +36,43 @@ from task_contract import configuration
 
 CONTENT='# SMELTER bridge smoke\n\nVerified marker: SMELTER_AGENT_BRIDGE_SMOKE\n'
 FILENAME='agent-bridge-smoke.md'
+
+
+@contextlib.contextmanager
+def smoke_state(evidence_directory=None):
+    """Retain only disposable task evidence, including on a failed model call."""
+    evidence = Path(evidence_directory).resolve() if evidence_directory else None
+    if evidence:
+        evidence.mkdir(parents=True, exist_ok=False)
+    with tempfile.TemporaryDirectory(prefix='smelter-agent-smoke-') as name:
+        base = Path(name)
+        try:
+            yield base
+        finally:
+            if evidence:
+                root = base / 'SMELTER'
+                copied = []
+                for source in sorted((root / '.smelter/tool-runs').glob('*.jsonl')):
+                    if source.stat().st_size > 4 * 1024 * 1024:
+                        raise ValueError('Smoke audit exceeds evidence size limit')
+                    destination = evidence / source.name
+                    with destination.open('xb') as stream:
+                        stream.write(source.read_bytes())
+                    copied.append(source.name)
+                report = root / 'diagnostics' / FILENAME
+                if report.is_file():
+                    with (evidence / FILENAME).open('xb') as stream:
+                        stream.write(report.read_bytes())
+                    copied.append(FILENAME)
+                from database import inspect_database
+                if root.exists() and inspect_database(root)['ready']:
+                    chats = [read_chat(root, item['id']) for item in list_chats(root)['conversations']]
+                    with (evidence / 'chat-evidence.json').open('x', encoding='utf-8') as stream:
+                        json.dump(chats, stream, indent=2)
+                    copied.append('chat-evidence.json')
+                with (evidence / 'evidence-index.json').open('x', encoding='utf-8') as stream:
+                    json.dump({'scope': 'disposable smoke task only; original temporary paths no longer exist',
+                               'files': copied, 'production_state_copied': False}, stream, indent=2)
 
 
 class ModelFixture(http.server.BaseHTTPRequestHandler):
@@ -171,16 +209,25 @@ def run(args):
     if not 0<=args.fixture_delay<=15 or args.live and args.fixture_delay:
         raise ValueError('Fixture delay must be 0-15 seconds and cannot be used with --live')
     if not args.process_fixture and not args.image:raise ValueError('Pass --image sha256:... for the managed OpenCode image')
-    with tempfile.TemporaryDirectory(prefix='smelter-agent-smoke-') as name:
-        base=Path(name);root=base/'SMELTER';root.mkdir();target=base/'SMELTERV2';target.mkdir()
+    skill_id = getattr(args, 'skill_id', 'documentation')
+    if not re.fullmatch(r'[a-z][a-z0-9_-]{0,63}', skill_id):
+        raise ValueError('Smoke skill ID must be a plain bundled-style identifier')
+    manifest = Path(args.skill_manifest) if getattr(args, 'skill_manifest', None) else REPO/'skills/documentation/SKILL.md'
+    if not manifest.is_file() or manifest.stat().st_size > 48 * 1024:
+        raise ValueError('Choose an existing skill manifest of at most 48 KiB')
+    reference = manifest.read_text(encoding='utf-8')
+    from skill_manifest import parse_skill_manifest
+    if not parse_skill_manifest(reference)['valid']:
+        raise ValueError('Invalid smoke skill manifest')
+    with smoke_state(getattr(args, 'evidence_dir', None)) as base:
+        root=base/'SMELTER';root.mkdir();target=base/'SMELTERV2';target.mkdir()
         (root/'README.md').write_text('# Disposable smoke source\n')
         (target/'README.md').write_text('# Disposable smoke snapshot\n')
         for folder in (root,target):
-            (folder/'tools/dashboard').mkdir(parents=True);(folder/'skills/documentation').mkdir(parents=True)
+            (folder/'tools/dashboard').mkdir(parents=True);(folder/'skills'/skill_id).mkdir(parents=True)
             (folder/'tools/dashboard/dashboard.py').write_text('HTML="<style>body{color:red}</style>"\n')
-        reference=(REPO/'skills/documentation/SKILL.md').read_text(encoding='utf-8')
-        (root/'skills/documentation/SKILL.md').write_bytes(reference.encode('utf-8'))
-        (target/'skills/documentation/SKILL.md').write_bytes(reference.encode('utf-8'))
+        (root/'skills'/skill_id/'SKILL.md').write_bytes(reference.encode('utf-8'))
+        (target/'skills'/skill_id/'SKILL.md').write_bytes(reference.encode('utf-8'))
         select_database(root,str(base/'data'))
         if args.image:save_config(root,'sandbox.json',{'schema_version':1,'python_image':None,'node_image':None,'opencode_image':args.image})
         save_config(root,'runtime_settings.json',{'schema_version':1,'settings':{
@@ -190,7 +237,7 @@ def run(args):
         prompt=(f'Write the approved diagnostic report using smelter_write_diagnostic_markdown. '
                 f'Filename: {FILENAME}. Content must be exactly this JSON string: {json.dumps(CONTENT)}. '
                 'I approve this one report write. Call the tool once, then report its result. Do not use other tools.')
-        bridge=AgentBridge(root,cid,prompt,skills=['documentation'],grants={'write_diagnostics':True},
+        bridge=AgentBridge(root,cid,prompt,skills=[skill_id],grants={'write_diagnostics':True},
                            policy=control.access_policy,control=control)
         if args.fixture_delay:
             invoke=bridge.session._invoke
@@ -198,7 +245,7 @@ def run(args):
                 time.sleep(args.fixture_delay)
                 return invoke(name,arguments,event)
             bridge.session._invoke=delayed
-        with model_fixture(not args.live,'Maintain concise, accurate, version-controlled engineering documentation'):
+        with model_fixture(not args.live,json.dumps(reference)[1:-1]):
             manager=process_fixture(base,root,target,bridge,args.opencode) if args.process_fixture else contextlib.nullcontext(None)
             with manager as client:
                 result=ask(root,cid,prompt,model_key='local/qwen3.5:9b',approval=True,control=control,
@@ -227,7 +274,8 @@ def run(args):
                 'mcp_server_audit_checked':True,'chat_persistence_checked':True,'unapproved_write_denied':True,
                 'opencode_mcp_result_acknowledged':True,'fixture_tool_delay_seconds':args.fixture_delay,
                 'cleanup_confirmed':execution['cleanup_confirmed'],'fixture_model_requests':len(ModelFixture.requests) if not args.live else None,
-                'disposable_state_removed_on_exit':True}
+                'disposable_state_removed_on_exit':True,
+                'evidence_directory':str(Path(args.evidence_dir).resolve()) if getattr(args,'evidence_dir',None) else None}
 
 
 def main():
@@ -237,6 +285,9 @@ def main():
     parser.add_argument('--process-fixture',action='store_true',help='Explicit real-process test without Docker or Qwen')
     parser.add_argument('--opencode',help='Existing executable path for --process-fixture')
     parser.add_argument('--fixture-delay',type=float,default=0,help='Synthetic-only 0-15s tool delay to exercise RPC deadlines')
+    parser.add_argument('--evidence-dir',help='New directory for disposable audit, chat and report evidence; no overwrite')
+    parser.add_argument('--skill-manifest',help='Existing reviewed SKILL.md to test instead of bundled documentation')
+    parser.add_argument('--skill-id',default='documentation',help='Identifier for the selected smoke skill')
     args=parser.parse_args()
     try:report=run(args)
     except Exception as exc:

@@ -1,7 +1,7 @@
 name: SMELTER offline verification
 on:
   push:
-    branches: [SMELTERV1, codex/uiux-overhaul-20261021, 'codex/opencode-skills-mcp-*']
+    branches: [SMELTERV1, codex/uiux-overhaul-20261021, 'codex/opencode-skills-mcp-*', 'codex/home-smoke-*']
     paths-ignore: ['docs/**', 'design-system/**', 'README.md', 'CHANGELOG.md']
   pull_request:
     branches: [SMELTERV1]
@@ -23,6 +23,16 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install -r tools/dashboard/requirements-mcp.txt
+      - name: Read the pinned ECC verification instruction fixture
+        uses: actions/checkout@v4
+        with:
+          repository: affaan-m/ECC
+          ref: 90606c8315ee09cafc303515c5f33024db6b9882
+          path: .smelter/ecc-reference
+          sparse-checkout: skills/verification-loop
+          persist-credentials: false
+      - name: Verify ECC fixture bytes
+        run: python -c "import hashlib;from pathlib import Path;assert hashlib.sha256(Path('.smelter/ecc-reference/skills/verification-loop/SKILL.md').read_bytes()).hexdigest()=='5b06be54d4852f60e6cf1b04c6e9a4748554334eb3e41af6c0959b544e6464ae'"
       - name: Build the explicit pinned-version OpenCode test image
         shell: bash
         run: docker build --iidfile "$RUNNER_TEMP/smelter-opencode-image" -f tools/dashboard/Dockerfile.opencode .
@@ -30,7 +40,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p .smelter/bridge-checks
-          python tools/analysis/smoke_agent_bridge.py --image "$(cat "$RUNNER_TEMP/smelter-opencode-image")" --fixture-delay 12 | tee .smelter/bridge-checks/managed-smoke.json
+          python tools/analysis/smoke_agent_bridge.py --image "$(cat "$RUNNER_TEMP/smelter-opencode-image")" --fixture-delay 12 --skill-manifest .smelter/ecc-reference/skills/verification-loop/SKILL.md --skill-id ecc-verification-loop --evidence-dir .smelter/bridge-checks/runtime-evidence | tee .smelter/bridge-checks/managed-smoke.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

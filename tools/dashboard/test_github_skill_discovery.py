@@ -76,6 +76,8 @@ class GitHubSkillTests(unittest.TestCase):
             url = request.full_url
             if url.endswith("/repos/org/repo"):
                 payload = {"default_branch": "main"}
+            elif '/git/ref/heads/' in url:
+                payload = {'object': {'sha': 'a' * 40}}
             else:
                 payload = {"truncated": False, "tree": [
                     {"path": "skills/a/SKILL.md", "type": "blob"},
@@ -85,10 +87,32 @@ class GitHubSkillTests(unittest.TestCase):
         result = discover_github_repository("https://github.com/org/repo", opener)
         self.assertEqual(result["count"], 2)
         self.assertEqual(result["skills"][0]["path"], "skills/a/SKILL.md")
+        self.assertIn('/blob/' + 'a' * 40 + '/', result['skills'][0]['url'])
+
+    def test_large_catalogue_is_discovered_without_fetching_or_installing_manifests(self):
+        requests = []
+        def opener(request, timeout):
+            requests.append(request.full_url)
+            if request.full_url.endswith('/repos/org/repo'):
+                payload = {'default_branch': 'main'}
+            elif '/git/ref/heads/' in request.full_url:
+                payload = {'object': {'sha': 'b' * 40}}
+            else:
+                payload = {'truncated': False, 'sha': 'c' * 40, 'tree': [
+                    {'path': 'skills/skill-%d/SKILL.md' % n, 'type': 'blob'} for n in range(1062)]}
+            return FakeResponse(json.dumps(payload).encode())
+        result = discover_github_repository('https://github.com/org/repo', opener)
+        self.assertEqual(result['count'], 1062)
+        self.assertEqual(len(requests), 3)
+        self.assertEqual(result['ref'], 'b' * 40)  # never the tree object SHA
+        self.assertEqual(result['import_batch_limit'], 40)
+        self.assertFalse(result['execution_allowed'])
 
     def test_truncated_repository_rejected(self):
         def opener(request, timeout):
-            payload = {"default_branch": "main"} if request.full_url.endswith("/repos/org/repo") else {"truncated": True, "tree": []}
+            payload = ({"default_branch": "main"} if request.full_url.endswith("/repos/org/repo") else
+                       {'object': {'sha': 'a' * 40}} if '/git/ref/heads/' in request.full_url else
+                       {"truncated": True, "tree": []})
             return FakeResponse(json.dumps(payload).encode())
         with self.assertRaises(ValueError):
             discover_github_repository("https://github.com/org/repo", opener)

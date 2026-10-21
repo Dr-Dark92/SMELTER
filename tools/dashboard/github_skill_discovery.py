@@ -105,8 +105,9 @@ def install_discovered_skill(root, name, url, sha256, approval=False, opener=url
     return {**result, "enabled": False, "source": "github", "source_url": url, "sha256": sha256}
 
 
-MAX_TREE_BYTES = 1024 * 1024
-MAX_DISCOVERED = 40
+MAX_TREE_BYTES = 8 * 1024 * 1024
+# Discovery is metadata only. Reviewed imports remain capped at 40 manifests.
+MAX_DISCOVERED = 2048
 
 
 def discover_github_repository(url, opener=urlopen):
@@ -136,7 +137,11 @@ def discover_github_repository(url, opener=urlopen):
     branch = metadata.get("default_branch")
     if not isinstance(branch, str) or not branch or len(branch) > 150:
         raise ValueError("GitHub repository has no valid default branch")
-    tree_endpoint = repo_endpoint + "/git/trees/" + quote(branch, safe="") + "?recursive=1"
+    reference = get_json(repo_endpoint + '/git/ref/heads/' + quote(branch, safe=''), MAX_API)
+    revision = reference.get('object', {}).get('sha') if isinstance(reference.get('object'), dict) else None
+    if not isinstance(revision, str) or not re.fullmatch(r'[a-f0-9]{40}', revision):
+        raise ValueError('GitHub branch did not resolve to an immutable commit')
+    tree_endpoint = repo_endpoint + "/git/trees/" + revision + "?recursive=1"
     tree = get_json(tree_endpoint, MAX_TREE_BYTES)
     if tree.get("truncated") is True:
         raise ValueError("Repository tree is truncated; cannot guarantee complete discovery")
@@ -153,13 +158,16 @@ def discover_github_repository(url, opener=urlopen):
         if len(candidate) > 500 or any(not SEG.fullmatch(p) for p in candidate.split("/")):
             continue
         paths.append(candidate)
-    paths.sort()
+    paths.sort(key=lambda p: (not p.startswith('skills/'), p))
     if len(paths) > MAX_DISCOVERED:
-        raise ValueError("Too many skills; narrow the repository before discovery")
+        raise ValueError("Repository exceeds the 2,048-manifest discovery limit; use individual skill URLs")
+    # A tree's SHA is not a commit SHA. Use the resolved branch commit above
+    # so every later Contents API request reads the same repository revision.
     return {
-        "owner": owner, "repository": repo, "ref": branch,
+        "owner": owner, "repository": repo, "ref": revision, "branch": branch,
         "skills": [{"path": p, "url": "https://github.com/{}/{}/blob/{}/{}".format(
-            owner, repo, quote(branch, safe=""), p)} for p in paths],
+            owner, repo, quote(revision, safe=""), p)} for p in paths],
         "count": len(paths), "discovery_only": True,
-        "execution_allowed": False,
+        "execution_allowed": False, "import_batch_limit": 40,
+        "installation_mode": "SKILL.md instructions only; scripts, hooks, plugins and dependencies are not installed",
     }

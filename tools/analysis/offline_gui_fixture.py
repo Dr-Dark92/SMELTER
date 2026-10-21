@@ -49,6 +49,10 @@ def serve(port=18771,viewer_root=None):
             name=path.split('/')[-2] if '/' in path else 'layout';text=imported[name]
             return {'url':url,'owner':owner,'repository':repository,'ref':ref,'path':path,'content':text,'sha256':hashlib.sha256(text.encode()).hexdigest(),'warnings':[]}
         def discovery_repository(url):
+            if url=='https://github.com/offline/catalogue':
+                rows=[{'path':f'skills/catalogue-{i:03d}/SKILL.md',
+                       'url':url+f'/blob/{"a"*40}/skills/catalogue-{i:03d}/SKILL.md'} for i in range(311)]
+                return {'owner':'offline','repository':'catalogue','ref':'a'*40,'skills':rows,'count':len(rows)}
             if url!='https://github.com/offline/design':raise ValueError('Offline import demo uses https://github.com/offline/design')
             rows=[{'path':'skills/'+name+'/SKILL.md','url':url+'/blob/main/skills/'+name+'/SKILL.md'} for name in imported]
             return {'owner':'offline','repository':'design','ref':'main','skills':rows,'count':len(rows)}

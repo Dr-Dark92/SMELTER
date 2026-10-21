@@ -51,6 +51,12 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 
 An enabled skill, detected executable, open port, successful save, or completed model explanation proves only that specific observation. Tool receipts are evidence of tool results, not independent verification of every AI statement.
 
+## Home acceptance and ECC
+
+Use the [home smoke test and GUI demo](docs/HOME_SMOKE_TEST.md) for exact PowerShell commands, known inputs, expected results and retained evidence. The default runner uses no live model; `--live --ecc --prepare-demo` opts into the existing home Qwen and creates a separate demo without overwriting the original V2.
+
+[ECC compatibility](docs/ECC_COMPATIBILITY.md) distinguishes supported selected instructions from its currently unconnected executable plugin, hooks, delegation and memory. Preview a commit-pinned three-skill pack with `python tools/dashboard/install_ecc_skills.py`; no installer or dependency code is executed.
+
 ## Documentation
 
 See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. General multi-file coding and arbitrary external MCP remain future work.

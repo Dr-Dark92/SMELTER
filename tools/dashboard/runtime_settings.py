@@ -38,7 +38,7 @@ def load_runtime(root):
     if settings['max_output_tokens'] >= settings['context_tokens']:
         raise ValueError('Response limit must be smaller than the context length')
     return {'settings': settings, 'sources': sources, 'profiles': PROFILES,
-            'applies_to': 'New SMELTER chat requests only; active jobs and OpenCode are unchanged'}
+            'applies_to': 'New direct and managed OpenCode tasks; active tasks keep their admitted settings'}
 
 
 def save_runtime(root, value):

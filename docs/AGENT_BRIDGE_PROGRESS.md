@@ -36,3 +36,9 @@ applies to tool calls. The bridge now gives the existing 120-second host MCP
 operation a 150-second RPC envelope. The final real Docker smoke delays the
 action by 12 seconds and checks that OpenCode acknowledges the successful result,
 as well as checking disk bytes, audits and cleanup.
+
+## Home acceptance and ECC follow-up
+
+The operator runner, known inventory/two-animation GLB inputs, new isolated GUI demo, retained audit/chat evidence, and pinned ECC instruction preview/import are implemented. See [home smoke](HOME_SMOKE_TEST.md) and [ECC scope](ECC_COMPATIBILITY.md). The large-catalogue discovery defect is fixed; metadata discovery is bounded separately from the 40-manifest reviewed import limit and uses immutable commit URLs. The GUI no longer claims that skills/MCP are not forwarded.
+
+Local contracts passed with 372 dashboard tests, 32 setup tests, 13 analysis tests and 15 JavaScript tests. Real OpenCode with the pinned ECC verification-loop instruction and actual Python MCP passed the explicit process fixture; this is not Docker or live Qwen evidence. Native Windows, Chromium and the updated production Docker smoke must be checked in the new CI run before promotion. Live Qwen and manual GUI acceptance remain pending on the home rig.
