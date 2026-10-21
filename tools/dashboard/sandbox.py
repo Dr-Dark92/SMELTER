@@ -188,7 +188,7 @@ fs.writeFileSync(reporter,`module.exports=async function* (source){
  }
  yield 'SMELTER_NODE_FAILURES|'+JSON.stringify({assertion_failures,errors})+'\\n';
 };`,{flag:'wx'});
-const child=cp.spawn(process.execPath,['--test','--test-reporter=tap','--test-reporter='+reporter,
+const child=cp.spawn(process.execPath,['--test','--test-reporter=tap','--test-reporter='+require('node:url').pathToFileURL(reporter).href,
  '--test-reporter-destination=stdout','--test-reporter-destination=stdout',
  ...files.map(n=>'tools/dashboard/'+n)],{stdio:'inherit'});
 const timer=setTimeout(()=>process.exit(124),60000);
