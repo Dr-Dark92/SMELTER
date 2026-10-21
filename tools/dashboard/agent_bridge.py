@@ -85,4 +85,3 @@ class AgentBridge:
         # Closing never waits for a fixed, already-running tool while holding
         # the UI cancellation path. Subsequent calls are rejected.
         with self.state_lock:self.closed = True
-

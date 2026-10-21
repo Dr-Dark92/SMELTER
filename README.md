@@ -54,6 +54,7 @@ An enabled skill, detected executable, open port, successful save, or completed 
 ## Documentation
 
 See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. General multi-file coding and arbitrary external MCP remain future work.
+The [agent bridge handover](docs/AGENT_BRIDGE_HANDOVER_20261021.md) records the verified source, smoke evidence and remaining live-rig checks.
 
 | File | Contents |
 | --- | --- |

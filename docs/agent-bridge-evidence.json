@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-21",
+  "application_commit": "0d9950a75e1045a58bfbd90017ee3195d21533d9",
+  "ci_run": 39573778988,
+  "ci_url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39573778988",
+  "contracts": {
+    "linux": {
+      "dashboard": 371,
+      "skipped": 2,
+      "setup": 32,
+      "analysis": 4,
+      "javascript": 15
+    },
+    "windows": {
+      "dashboard": 371,
+      "skipped": 3,
+      "setup": 32,
+      "analysis": 4,
+      "javascript": 15
+    }
+  },
+  "smoke": {
+    "status": "passed",
+    "opencode_required_version": "1.19.3",
+    "model": "synthetic protocol fixture; no Qwen inference",
+    "boundary": "managed no-network Docker container",
+    "skills": [
+      {
+        "id": "documentation",
+        "sha256": "35215426634c019bee0897ba4cd78806833b4d31e08940b4c1092b0d922e27fe",
+        "hash_scope": "loaded UTF-8 instruction text"
+      }
+    ],
+    "tool": "write_diagnostic_markdown",
+    "transport": "mcp",
+    "bytes": 68,
+    "sha256": "dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1",
+    "independent_saved_bytes_check": true,
+    "mcp_server_audit_checked": true,
+    "chat_persistence_checked": true,
+    "unapproved_write_denied": true,
+    "cleanup_confirmed": true,
+    "fixture_model_requests": 2,
+    "disposable_state_removed_on_exit": true
+  },
+  "browser": {
+    "liveInference": false,
+    "liveDocker": false,
+    "syntheticAssets": true,
+    "pageErrors": [],
+    "externalRequests": [],
+    "openCodeGuiForwarding": true,
+    "result": "passed",
+    "settingsSearch": true,
+    "registeredLocations": true,
+    "folderBrowse": true,
+    "skillsBulk": true,
+    "titledChat": true,
+    "attachmentMenu": true,
+    "glbRender": true,
+    "animationPlaybackAndLabels": true,
+    "png": true,
+    "webm": true,
+    "releaseDuringExport": true,
+    "lateLoadIgnored": true,
+    "latePngIgnored": true,
+    "errorReload": true,
+    "widths": [
+      375,
+      768,
+      1024,
+      1440
+    ],
+    "reducedMotion": true
+  },
+  "limits": [
+    "No real Qwen inference",
+    "No user-rig Docker Desktop verification",
+    "Generic multi-file editing and arbitrary external MCP remain disabled",
+    "Generated source explorer remains pinned to the earlier overhaul commit"
+  ]
+}

@@ -2,6 +2,9 @@
 
 Date: 2026-10-21. Starting revision: bed7255ebe0d5b0f93dce7c6308beaf972345d3f.
 
+Milestone 1 is implemented and smoke-tested. See [progress](AGENT_BRIDGE_PROGRESS.md)
+and [handover](AGENT_BRIDGE_HANDOVER_20261021.md) for exact evidence and remaining work.
+
 ## Goal
 
 GUI -> SMELTER admission/controller -> OpenCode -> Ollama -> Qwen. Selected
@@ -39,7 +42,7 @@ own patch/review and confined execution design after this bridge is verified.
 - OpenCode discovers only approved tool schemas through its real MCP client.
 - A real MCP report write is independently checked on disk and recorded in chat.
 - An unapproved tool and an out-of-scope path cannot cause an action.
-- No tool actions run during readiness checks or after cancellation.
+- No tool actions run during readiness checks; no new operation is admitted after cancellation.
 - Completed actions survive a failed model follow-up or interrupted task.
 - Production execution still requires the managed container; test fixtures are
   explicitly injected and never become an automatic host fallback.
