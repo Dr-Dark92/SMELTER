@@ -1,177 +1,345 @@
 [
   {
     "source": "tools/dashboard/dashboard.py",
-    "target": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/dashboard_shell.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "POST /api/chats ask/start calls JOBS.start"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
-    "source": "tools/dashboard/chat_jobs.py",
-    "target": "tools/dashboard/chat_inference.py",
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/settings_ui.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "Jobs._run chooses the default direct worker"
-  },
-  {
-    "source": "tools/dashboard/chat_jobs.py",
-    "target": "tools/dashboard/opencode_runtime.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "Jobs.start chooses the read-only external worker"
-  },
-  {
-    "source": "tools/dashboard/chat_inference.py",
-    "target": "tools/dashboard/python_tools.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "ask creates ToolSession and dispatches approved calls"
-  },
-  {
-    "source": "tools/dashboard/python_tools.py",
-    "target": "tools/dashboard/tool_registry.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "ToolSession._execute dispatches fixed local built-ins"
-  },
-  {
-    "source": "tools/dashboard/python_tools.py",
-    "target": "tools/dashboard/mcp_connections.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "ToolSession._execute routes built-in MCP calls"
-  },
-  {
-    "source": "tools/dashboard/mcp_connections.py",
-    "target": "tools/dashboard/mcp_server.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "_server constructs stdio launcher argv/environment"
-  },
-  {
-    "source": "tools/dashboard/mcp_server.py",
-    "target": "tools/dashboard/python_tools.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "serve creates inherited-policy child ToolSession"
-  },
-  {
-    "source": "tools/dashboard/tool_registry.py",
-    "target": "tools/dashboard/frontend_workspace.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "execute_builtin dispatches the CSS workbench"
-  },
-  {
-    "source": "tools/dashboard/tool_registry.py",
-    "target": "tools/dashboard/rea_connection.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "execute_builtin dispatches fixed REA operations"
-  },
-  {
-    "source": "tools/dashboard/tool_registry.py",
-    "target": "tools/dashboard/model_assets.py",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "execute_builtin dispatches approved attachment inspection"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/access_ui.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "asset route and script initialization mount Settings/access UI"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/operations_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/chat_renderer.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "script initialization and message rendering"
-  },
-  {
-    "source": "tools/dashboard/dashboard.py",
-    "target": "tools/dashboard/model_preview.js",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "script initialization and GLB preview controls"
-  },
-  {
-    "source": "tools/dashboard/model_preview.js",
-    "target": "tools/dashboard/model_animations.js",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "animation selector integration"
-  },
-  {
-    "source": "tools/dashboard/model_preview.js",
-    "target": "tools/dashboard/turntable.js",
-    "type": "runtime",
-    "confidence": "manual-source-review",
-    "evidence": "turntable/frame export integration"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/mcp_ui.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "MCP Settings mount and APIs"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
+  },
+  {
+    "source": "tools/dashboard/dashboard.py",
+    "target": "tools/dashboard/model_preview.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/opencode_agent_ui.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "OpenCode check controls mount"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/session_auth.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "session token recovery helper"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
     "source": "tools/dashboard/dashboard.py",
     "target": "tools/dashboard/file_activity.js",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "file activity card rendering"
+    "evidence": "HTML loads the fixed browser asset; browser shell mounts controls"
   },
   {
-    "source": "tools/dashboard/chat_inference.py",
-    "target": "tools/dashboard/chats.py",
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/chat_jobs.py",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "read transcript and use execution/table helpers"
+    "evidence": "Authenticated resource handler dispatches this fixed controller"
   },
   {
-    "source": "tools/dashboard/opencode_runtime.py",
-    "target": "tools/dashboard/chats.py",
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/maintenance.py",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "bounded prior text and transcript persistence"
+    "evidence": "Authenticated resource handler dispatches this fixed controller"
+  },
+  {
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/sandbox.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Authenticated resource handler dispatches this fixed controller"
+  },
+  {
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/capability_catalog.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Authenticated resource handler dispatches this fixed controller"
+  },
+  {
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/project_contract.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Authenticated resource handler dispatches this fixed controller"
   },
   {
     "source": "tools/dashboard/dashboard.py",
-    "target": "tools/dashboard/resource_metrics.py",
+    "target": "tools/dashboard/dashboard_api.py",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "system status footer via system_status.resource_status"
+    "evidence": "Handler composes ApiRoutes using injected composition-root Context"
   },
   {
-    "source": "tools/dashboard/access_policy.py",
-    "target": "tools/dashboard/config_store.py",
+    "source": "tools/dashboard/dashboard_shell.js",
+    "target": "tools/dashboard/dashboard_api.py",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "load/save authoritative policy snapshot"
+    "evidence": "Browser API calls and job polling reach authenticated route table"
+  },
+  {
+    "source": "tools/dashboard/operations_ui.js",
+    "target": "tools/dashboard/dashboard_api.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Operator sandbox, maintenance and project/capability API calls"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/chat_inference.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Jobs._run chooses default direct Ollama worker"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/opencode_runtime.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Explicit engine selection chooses bounded read-only agent worker"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/job_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Atomic admission and terminal lifecycle persistence; no replay"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/ollama_turn.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Turn transport and model request handling"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Creates policy-bound ToolSession and dispatches requested fixed tools"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/execution_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Shared atomic transcript/outcome finalization under Control lock"
+  },
+  {
+    "source": "tools/dashboard/opencode_runtime.py",
+    "target": "tools/dashboard/execution_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Shared atomic transcript/outcome finalization under Control lock"
+  },
+  {
+    "source": "tools/dashboard/python_tools.py",
+    "target": "tools/dashboard/tool_registry.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed direct dispatch; preview launch stays with dashboard owner"
+  },
+  {
+    "source": "tools/dashboard/python_tools.py",
+    "target": "tools/dashboard/mcp_connections.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Optional built-in MCP transport with same grants and snapshots"
+  },
+  {
+    "source": "tools/dashboard/mcp_connections.py",
+    "target": "tools/dashboard/mcp_server.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed transient stdio launcher; parent policy/skill fingerprint transfer"
+  },
+  {
+    "source": "tools/dashboard/mcp_server.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Child ToolSession reconstructs parent authority"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/frontend_workspace.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed registered operation dispatch"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/rea_connection.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed registered operation dispatch"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/model_assets.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed registered operation dispatch"
+  },
+  {
+    "source": "tools/dashboard/frontend_workspace.py",
+    "target": "tools/dashboard/sandbox.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Validation/preview require confined runner; no host fallback"
+  },
+  {
+    "source": "tools/dashboard/sandbox.py",
+    "target": "tools/dashboard/sandbox_preview.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Dashboard-owned loopback relay to no-network preview worker"
+  },
+  {
+    "source": "tools/dashboard/opencode_runtime.py",
+    "target": "tools/dashboard/opencode_sandbox.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Production uses managed owned container; legacy Client only explicitly injectable"
+  },
+  {
+    "source": "tools/dashboard/opencode_sandbox.py",
+    "target": "tools/dashboard/chat_jobs.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Admitted native Ollama relay uses cancellable Control.infer"
+  },
+  {
+    "source": "tools/dashboard/sandbox.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
+  },
+  {
+    "source": "tools/dashboard/opencode_sandbox.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
+  },
+  {
+    "source": "tools/dashboard/rea_connection.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
+  },
+  {
+    "source": "tools/dashboard/execution.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
+  },
+  {
+    "source": "tools/dashboard/media.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
+  },
+  {
+    "source": "tools/dashboard/blender.py",
+    "target": "tools/dashboard/process_runner.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed argv, bounded stdout/stderr, deadlines and owned process cleanup"
   },
   {
     "source": "tools/dashboard/skill_runtime.py",
     "target": "tools/dashboard/skills_catalog.py",
     "type": "runtime",
     "confidence": "manual-source-review",
-    "evidence": "scan current manifests against startup baseline"
+    "evidence": "Shared four-source identity and fingerprint scan"
+  },
+  {
+    "source": "tools/core/smelter_registry.py",
+    "target": "tools/dashboard/skills_catalog.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Legacy Registry delegates skill discovery to shared catalog"
+  },
+  {
+    "source": "tools/core/smelter_registry.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Explicit connect_dashboard constructs scoped audited ToolSession bridge"
+  },
+  {
+    "source": "tools/dashboard/maintenance.py",
+    "target": "tools/dashboard/job_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Idle/recovery checks and durable history; no action replay"
+  },
+  {
+    "source": "tools/dashboard/maintenance.py",
+    "target": "tools/dashboard/storage_budget.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Owned artifact inventory, quota and reviewed retention"
+  },
+  {
+    "source": "tools/dashboard/model_preview.js",
+    "target": "tools/dashboard/model_animations.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Animation selector integration"
+  },
+  {
+    "source": "tools/dashboard/model_preview.js",
+    "target": "tools/dashboard/turntable.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Frame/turntable export integration"
   }
 ]

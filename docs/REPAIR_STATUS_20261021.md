@@ -1,5 +1,7 @@
 # Repair status and work handover — 2026-10-21
 
+Application repair commit: [`a3e3f854934ed90f36d49478eb336b86dd93948b`](https://github.com/Dr-Dark92/SMELTER/commit/a3e3f854934ed90f36d49478eb336b86dd93948b).
+
 This repair addresses F01–F11 from the review of application commit `c9e541e9e0d53fcaba109170f8e5a201b500340d`. The historical review remains available; it is not the current defect inventory. Source was restored and Git-blob verified against branch head `9ee0f6dbd6c4bd790ef3bf31421f1b6f9573baf3` before editing. User-local files, the Windows rig, game assets and existing V2 were not accessed.
 
 ## Finding disposition

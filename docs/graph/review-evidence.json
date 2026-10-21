@@ -1,16 +1,16 @@
 {
-  "source_revision": "c9e541e9e0d53fcaba109170f8e5a201b500340d",
+  "source_revision": "a3e3f854934ed90f36d49478eb336b86dd93948b",
   "glb_lifecycle": {
     "chat_deleted": true,
-    "asset_file_still_exists": true
+    "asset_file_still_exists": false
   },
   "opencode_completion_cancel_race": {
     "control_cancelled": true,
-    "worker_status": "completed",
-    "stored_cancelled": false
+    "worker_status": "cancelled",
+    "stored_cancelled": true
   },
   "frontend_runtime_override": {
     "saved_output_tokens": 128,
-    "actual_num_predict": 4096
+    "actual_num_predict": 128
   }
 }

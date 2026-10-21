@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## V1.7 operational repair — 2026-10-21
 
+Application commit: `a3e3f854934ed90f36d49478eb336b86dd93948b`. Graph follow-up pins that source and records 233 scripts, 1,400 declarations/callbacks, 2,169 static edges and 49 reviewed runtime links.
+
 - Addressed review findings F01–F11; see [repair handover](docs/REPAIR_STATUS_20261021.md) for evidence and deployment conditions. Corrected the earlier F06 top-level-object assertion.
 - Added fail-closed owned Docker execution for tests, temporary preview and read-only OpenCode, with local immutable images and a narrow approved-model relay. No host fallback or arbitrary external MCP execution.
 - Added bounded process IO/tree cleanup, shared atomic engine outcomes, admitted model/runtime snapshots, attachment cleanup, durable interrupted-task records, artifact quotas, reviewed retention and verified backup/offline restore.

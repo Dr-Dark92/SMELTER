@@ -1,0 +1,24 @@
+{
+  "source_revision": "a3e3f854934ed90f36d49478eb336b86dd93948b",
+  "environment": "Linux/Python 3.12/Chromium, desktop 1500x1000 and mobile 390x844",
+  "fixtures": "Local HTTP dashboard, synthetic model stream, real SQLite/temp diagnostic-file tool execution",
+  "checks": [
+    "settings_navigation",
+    "policy_save",
+    "unavailable_confinement",
+    "maintenance_status",
+    "explicit_integrity",
+    "capability_catalog",
+    "chat_create_title",
+    "reply_rendering",
+    "diagnostic_receipt",
+    "stop",
+    "history_reload",
+    "mobile_overflow",
+    "offline_graph_load"
+  ],
+  "page_errors": [],
+  "live_model": false,
+  "docker": false,
+  "windows": false
+}
