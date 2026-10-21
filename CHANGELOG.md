@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## Registered locations GUI — 2026-10-21
 
+Application commit: `e27036e0da3a3052273bca938faa4cb185f4aaba`. Refreshed graph pins this revision (242 scripts).
+
 - Replaced location cards with a searchable permission table and Add / Remove / Enable / Disable / Apply / Revert toolbar.
 - Added an authenticated directory browser for operator selection, with no model-tool grant or process launch. Add starts read-only; roots, links and traversal remain restricted.
 - Keep edits in a draft, preserve it across settings navigation, and atomically reject stale Apply revisions. Applied task choices and admitted active tasks retain their respective policies.

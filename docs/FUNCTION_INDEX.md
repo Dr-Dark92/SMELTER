@@ -1,6 +1,6 @@
 # Function and script index
 
-Pinned application source: `92e14fe0bb098b4a02712b1cc88f196324b4b9db`. 238 scripts and 1500 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.
+Pinned application source: `e27036e0da3a3052273bca938faa4cb185f4aaba`. 242 scripts and 1564 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.
 
 ## automation/github-sync/Get-RepositoryState.ps1
 
@@ -848,19 +848,19 @@ Central application path policy. Registered operations only; not an OS sandbox.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `defaults` | [L13](../tools/dashboard/access_policy.py#L13) | 10 | 1 | 8 / 0 |
-| `plain` | [L25](../tools/dashboard/access_policy.py#L25) | 8 | 6 | 2 / 0 |
+| `defaults` | [L13](../tools/dashboard/access_policy.py#L13) | 10 | 1 | 14 / 0 |
+| `plain` | [L25](../tools/dashboard/access_policy.py#L25) | 8 | 6 | 4 / 0 |
 | `validate` | [L35](../tools/dashboard/access_policy.py#L35) | 32 | 39 | 2 / 0 |
 | `load` | [L69](../tools/dashboard/access_policy.py#L69) | 3 | 1 | 1 / 0 |
-| `save` | [L74](../tools/dashboard/access_policy.py#L74) | 5 | 1 | 5 / 0 |
-| `Policy.__init__` | [L82](../tools/dashboard/access_policy.py#L82) | 3 | 1 | 0 / 0 |
-| `Policy.authorize` | [L86](../tools/dashboard/access_policy.py#L86) | 16 | 17 | 0 / 0 |
-| `Policy.report` | [L103](../tools/dashboard/access_policy.py#L103) | 5 | 1 | 0 / 0 |
-| `current` | [L110](../tools/dashboard/access_policy.py#L110) | 3 | 2 | 16 / 0 |
-| `check_grants` | [L115](../tools/dashboard/access_policy.py#L115) | 8 | 5 | 3 / 0 |
-| `using` | [L130](../tools/dashboard/access_policy.py#L130) | 4 | 1 | 5 / 0 |
-| `require` | [L135](../tools/dashboard/access_policy.py#L135) | 3 | 2 | 10 / 0 |
-| `allowed` | [L139](../tools/dashboard/access_policy.py#L139) | 3 | 2 | 1 / 0 |
+| `save` | [L74](../tools/dashboard/access_policy.py#L74) | 16 | 6 | 9 / 0 |
+| `Policy.__init__` | [L93](../tools/dashboard/access_policy.py#L93) | 3 | 1 | 0 / 0 |
+| `Policy.authorize` | [L97](../tools/dashboard/access_policy.py#L97) | 16 | 17 | 0 / 0 |
+| `Policy.report` | [L114](../tools/dashboard/access_policy.py#L114) | 5 | 1 | 0 / 0 |
+| `current` | [L121](../tools/dashboard/access_policy.py#L121) | 3 | 2 | 23 / 0 |
+| `check_grants` | [L126](../tools/dashboard/access_policy.py#L126) | 8 | 5 | 3 / 0 |
+| `using` | [L141](../tools/dashboard/access_policy.py#L141) | 4 | 1 | 5 / 0 |
+| `require` | [L146](../tools/dashboard/access_policy.py#L146) | 3 | 2 | 10 / 0 |
+| `allowed` | [L150](../tools/dashboard/access_policy.py#L150) | 3 | 2 | 1 / 0 |
 
 ## tools/dashboard/access_ui.js
 
@@ -868,23 +868,13 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `<callback>` | [L2](../tools/dashboard/access_ui.js#L2) | 77 | 1 | 0 / 0 |
-| `mount` | [L3](../tools/dashboard/access_ui.js#L3) | 74 | 1 | 0 / 1 |
-| `render` | [L23](../tools/dashboard/access_ui.js#L23) | 26 | 6 | 4 / 0 |
-| `input.oninput` | [L30](../tools/dashboard/access_ui.js#L30) | 1 | 1 | 0 / 0 |
-| `input.onchange` | [L35](../tools/dashboard/access_ui.js#L35) | 1 | 3 | 0 / 0 |
-| `input.onchange` | [L41](../tools/dashboard/access_ui.js#L41) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L41](../tools/dashboard/access_ui.js#L41) | 1 | 1 | 0 / 0 |
-| `exclude.oninput` | [L45](../tools/dashboard/access_ui.js#L45) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L45](../tools/dashboard/access_ui.js#L45) | 1 | 1 | 0 / 0 |
-| `remove.onclick` | [L46](../tools/dashboard/access_ui.js#L46) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L46](../tools/dashboard/access_ui.js#L46) | 1 | 1 | 0 / 0 |
-| `updateSummary` | [L49](../tools/dashboard/access_ui.js#L49) | 12 | 13 | 1 / 1 |
-| `load` | [L61](../tools/dashboard/access_ui.js#L61) | 9 | 3 | 3 / 1 |
-| `<callback>` | [L66](../tools/dashboard/access_ui.js#L66) | 1 | 2 | 0 / 0 |
-| `nav.onclick` | [L70](../tools/dashboard/access_ui.js#L70) | 1 | 1 | 0 / 0 |
-| `add.onclick` | [L70](../tools/dashboard/access_ui.js#L70) | 1 | 1 | 0 / 0 |
-| `save.onclick` | [L71](../tools/dashboard/access_ui.js#L71) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L2](../tools/dashboard/access_ui.js#L2) | 43 | 1 | 0 / 0 |
+| `mount` | [L3](../tools/dashboard/access_ui.js#L3) | 40 | 1 | 0 / 1 |
+| `updateSummary` | [L17](../tools/dashboard/access_ui.js#L17) | 12 | 13 | 1 / 1 |
+| `applyContext` | [L29](../tools/dashboard/access_ui.js#L29) | 7 | 2 | 0 / 1 |
+| `<callback>` | [L33](../tools/dashboard/access_ui.js#L33) | 1 | 2 | 0 / 0 |
+| `nav.onclick` | [L37](../tools/dashboard/access_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `window.reloadTaskContext` | [L39](../tools/dashboard/access_ui.js#L39) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/aero_classifier.py
 
@@ -1000,7 +990,7 @@ V1.6.2: SQLite-backed configuration with validated one-time legacy import.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `_db` | [L11](../tools/dashboard/config_store.py#L11) | 5 | 2 | 2 / 0 |
+| `_db` | [L11](../tools/dashboard/config_store.py#L11) | 5 | 2 | 3 / 0 |
 | `load_config` | [L17](../tools/dashboard/config_store.py#L17) | 18 | 7 | 10 / 0 |
 | `_validate` | [L36](../tools/dashboard/config_store.py#L36) | 22 | 18 | 3 / 0 |
 | `save_config` | [L59](../tools/dashboard/config_store.py#L59) | 7 | 2 | 9 / 0 |
@@ -1020,11 +1010,11 @@ SMELTER local dashboard with explicit per-message tool permissions.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `handler` | [L103](../tools/dashboard/dashboard.py#L103) | 28 | 1 | 4 / 0 |
-| `handler.Handler.handle` | [L107](../tools/dashboard/dashboard.py#L107) | 5 | 2 | 0 / 0 |
-| `handler.Handler.reply` | [L112](../tools/dashboard/dashboard.py#L112) | 13 | 4 | 0 / 0 |
-| `handler.Handler.authorized` | [L125](../tools/dashboard/dashboard.py#L125) | 5 | 4 | 0 / 0 |
-| `main` | [L132](../tools/dashboard/dashboard.py#L132) | 18 | 3 | 1 / 0 |
+| `handler` | [L106](../tools/dashboard/dashboard.py#L106) | 28 | 1 | 5 / 0 |
+| `handler.Handler.handle` | [L110](../tools/dashboard/dashboard.py#L110) | 5 | 2 | 0 / 0 |
+| `handler.Handler.reply` | [L115](../tools/dashboard/dashboard.py#L115) | 13 | 4 | 0 / 0 |
+| `handler.Handler.authorized` | [L128](../tools/dashboard/dashboard.py#L128) | 5 | 4 | 0 / 0 |
+| `main` | [L135](../tools/dashboard/dashboard.py#L135) | 18 | 3 | 1 / 0 |
 
 ## tools/dashboard/dashboard_api.py
 
@@ -1060,29 +1050,30 @@ Resource-sized HTTP handlers with one auth, schema and error boundary.
 | `ApiRoutes._get_api_workflows_reports` | [L197](../tools/dashboard/dashboard_api.py#L197) | 2 | 1 | 0 / 0 |
 | `ApiRoutes._get_api_workflows` | [L200](../tools/dashboard/dashboard_api.py#L200) | 2 | 1 | 0 / 0 |
 | `ApiRoutes._get_api_extensions` | [L203](../tools/dashboard/dashboard_api.py#L203) | 5 | 3 | 0 / 0 |
-| `ApiRoutes._post_api_access_policy` | [L209](../tools/dashboard/dashboard_api.py#L209) | 4 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_mcp` | [L214](../tools/dashboard/dashboard_api.py#L214) | 17 | 5 | 0 / 0 |
-| `ApiRoutes._post_api_models` | [L232](../tools/dashboard/dashboard_api.py#L232) | 2 | 2 | 0 / 0 |
-| `ApiRoutes._post_api_skills_collection_preview` | [L235](../tools/dashboard/dashboard_api.py#L235) | 6 | 4 | 0 / 0 |
-| `ApiRoutes._post_api_skills_discover_repository` | [L242](../tools/dashboard/dashboard_api.py#L242) | 2 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_skills_discover` | [L245](../tools/dashboard/dashboard_api.py#L245) | 2 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_skills_manage` | [L248](../tools/dashboard/dashboard_api.py#L248) | 19 | 7 | 0 / 0 |
-| `ApiRoutes._post_api_aero_classify` | [L268](../tools/dashboard/dashboard_api.py#L268) | 2 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_chats` | [L271](../tools/dashboard/dashboard_api.py#L271) | 20 | 8 | 0 / 0 |
-| `ApiRoutes._post_api_database_select` | [L292](../tools/dashboard/dashboard_api.py#L292) | 3 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_opencode_deploy` | [L296](../tools/dashboard/dashboard_api.py#L296) | 11 | 3 | 0 / 0 |
-| `ApiRoutes._post_api_ollama_preferences` | [L308](../tools/dashboard/dashboard_api.py#L308) | 13 | 7 | 0 / 0 |
-| `ApiRoutes._post_api_blender_inspect` | [L322](../tools/dashboard/dashboard_api.py#L322) | 11 | 2 | 0 / 0 |
-| `ApiRoutes._post_api_media_inspect` | [L334](../tools/dashboard/dashboard_api.py#L334) | 12 | 2 | 0 / 0 |
-| `ApiRoutes._post_api_archive_inspect` | [L347](../tools/dashboard/dashboard_api.py#L347) | 12 | 2 | 0 / 0 |
-| `ApiRoutes._post_api_workflows_plan` | [L360](../tools/dashboard/dashboard_api.py#L360) | 5 | 1 | 0 / 0 |
-| `ApiRoutes._post_api_extensions` | [L366](../tools/dashboard/dashboard_api.py#L366) | 5 | 1 | 0 / 0 |
-| `ApiRoutes._get_capabilities` | [L372](../tools/dashboard/dashboard_api.py#L372) | 3 | 1 | 0 / 0 |
-| `ApiRoutes._get_maintenance` | [L376](../tools/dashboard/dashboard_api.py#L376) | 3 | 1 | 0 / 0 |
-| `ApiRoutes._post_maintenance` | [L380](../tools/dashboard/dashboard_api.py#L380) | 15 | 7 | 0 / 0 |
-| `ApiRoutes._get_sandbox` | [L396](../tools/dashboard/dashboard_api.py#L396) | 3 | 1 | 0 / 0 |
-| `ApiRoutes._post_sandbox` | [L400](../tools/dashboard/dashboard_api.py#L400) | 9 | 3 | 0 / 0 |
-| `ApiRoutes._post_project_contract` | [L410](../tools/dashboard/dashboard_api.py#L410) | 7 | 1 | 0 / 0 |
+| `ApiRoutes._get_location_browser` | [L209](../tools/dashboard/dashboard_api.py#L209) | 7 | 5 | 0 / 0 |
+| `ApiRoutes._post_api_access_policy` | [L217](../tools/dashboard/dashboard_api.py#L217) | 4 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_mcp` | [L222](../tools/dashboard/dashboard_api.py#L222) | 17 | 5 | 0 / 0 |
+| `ApiRoutes._post_api_models` | [L240](../tools/dashboard/dashboard_api.py#L240) | 2 | 2 | 0 / 0 |
+| `ApiRoutes._post_api_skills_collection_preview` | [L243](../tools/dashboard/dashboard_api.py#L243) | 6 | 4 | 0 / 0 |
+| `ApiRoutes._post_api_skills_discover_repository` | [L250](../tools/dashboard/dashboard_api.py#L250) | 2 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_skills_discover` | [L253](../tools/dashboard/dashboard_api.py#L253) | 2 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_skills_manage` | [L256](../tools/dashboard/dashboard_api.py#L256) | 19 | 7 | 0 / 0 |
+| `ApiRoutes._post_api_aero_classify` | [L276](../tools/dashboard/dashboard_api.py#L276) | 2 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_chats` | [L279](../tools/dashboard/dashboard_api.py#L279) | 20 | 8 | 0 / 0 |
+| `ApiRoutes._post_api_database_select` | [L300](../tools/dashboard/dashboard_api.py#L300) | 3 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_opencode_deploy` | [L304](../tools/dashboard/dashboard_api.py#L304) | 11 | 3 | 0 / 0 |
+| `ApiRoutes._post_api_ollama_preferences` | [L316](../tools/dashboard/dashboard_api.py#L316) | 13 | 7 | 0 / 0 |
+| `ApiRoutes._post_api_blender_inspect` | [L330](../tools/dashboard/dashboard_api.py#L330) | 11 | 2 | 0 / 0 |
+| `ApiRoutes._post_api_media_inspect` | [L342](../tools/dashboard/dashboard_api.py#L342) | 12 | 2 | 0 / 0 |
+| `ApiRoutes._post_api_archive_inspect` | [L355](../tools/dashboard/dashboard_api.py#L355) | 12 | 2 | 0 / 0 |
+| `ApiRoutes._post_api_workflows_plan` | [L368](../tools/dashboard/dashboard_api.py#L368) | 5 | 1 | 0 / 0 |
+| `ApiRoutes._post_api_extensions` | [L374](../tools/dashboard/dashboard_api.py#L374) | 5 | 1 | 0 / 0 |
+| `ApiRoutes._get_capabilities` | [L380](../tools/dashboard/dashboard_api.py#L380) | 3 | 1 | 0 / 0 |
+| `ApiRoutes._get_maintenance` | [L384](../tools/dashboard/dashboard_api.py#L384) | 3 | 1 | 0 / 0 |
+| `ApiRoutes._post_maintenance` | [L388](../tools/dashboard/dashboard_api.py#L388) | 15 | 7 | 0 / 0 |
+| `ApiRoutes._get_sandbox` | [L404](../tools/dashboard/dashboard_api.py#L404) | 3 | 1 | 0 / 0 |
+| `ApiRoutes._post_sandbox` | [L408](../tools/dashboard/dashboard_api.py#L408) | 9 | 3 | 0 / 0 |
+| `ApiRoutes._post_project_contract` | [L418](../tools/dashboard/dashboard_api.py#L418) | 7 | 1 | 0 / 0 |
 
 ## tools/dashboard/dashboard_shell.js
 
@@ -1193,7 +1184,7 @@ SMELTER V1.6.1 bootstrap: user-selected SQLite location and readiness gate.
 | --- | ---: | ---: | ---: | ---: |
 | `marker_path` | [L22](../tools/dashboard/database.py#L22) | 2 | 1 | 2 / 0 |
 | `chosen_database` | [L25](../tools/dashboard/database.py#L25) | 14 | 9 | 15 / 0 |
-| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 26 / 0 |
+| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 27 / 0 |
 | `inspect_database` | [L85](../tools/dashboard/database.py#L85) | 15 | 10 | 13 / 0 |
 
 ## tools/dashboard/execution.py
@@ -1312,6 +1303,88 @@ Durable job status; interrupted actions are never replayed automatically.
 | `list_jobs` | [L98](../tools/dashboard/job_store.py#L98) | 5 | 2 | 2 / 0 |
 | `admit` | [L105](../tools/dashboard/job_store.py#L105) | 2 | 1 | 3 / 0 |
 | `finalize_in_transaction` | [L109](../tools/dashboard/job_store.py#L109) | 11 | 2 | 1 / 0 |
+
+## tools/dashboard/location_browser.js
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `<callback>` | [L2](../tools/dashboard/location_browser.js#L2) | 23 | 1 | 0 / 0 |
+| `choose` | [L3](../tools/dashboard/location_browser.js#L3) | 20 | 1 | 0 / 1 |
+| `<callback>` | [L4](../tools/dashboard/location_browser.js#L4) | 18 | 1 | 0 / 0 |
+| `el` | [L5](../tools/dashboard/location_browser.js#L5) | 1 | 3 | 3 / 0 |
+| `render` | [L12](../tools/dashboard/location_browser.js#L12) | 1 | 5 | 1 / 1 |
+| `<callback>` | [L12](../tools/dashboard/location_browser.js#L12) | 1 | 1 | 0 / 0 |
+| `button.onclick` | [L12](../tools/dashboard/location_browser.js#L12) | 1 | 1 | 0 / 0 |
+| `load` | [L13](../tools/dashboard/location_browser.js#L13) | 6 | 16 | 8 / 0 |
+| `button.onclick` | [L15](../tools/dashboard/location_browser.js#L15) | 1 | 1 | 0 / 0 |
+| `button.onclick` | [L15](../tools/dashboard/location_browser.js#L15) | 1 | 1 | 0 / 0 |
+| `cancel.onclick` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 1 | 0 / 0 |
+| `select.onclick` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 2 | 0 / 0 |
+| `up.onclick` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 2 | 0 / 0 |
+| `go.onclick` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 1 | 0 / 0 |
+| `address.onkeydown` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 2 | 0 / 0 |
+| `hidden.onchange` | [L19](../tools/dashboard/location_browser.js#L19) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L20](../tools/dashboard/location_browser.js#L20) | 1 | 2 | 0 / 0 |
+
+## tools/dashboard/location_browser.py
+
+Authenticated operator folder navigation; metadata only, no grants or execution.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `_roots` | [L14](../tools/dashboard/location_browser.py#L14) | 22 | 11 | 1 / 0 |
+| `browse` | [L38](../tools/dashboard/location_browser.py#L38) | 29 | 19 | 0 / 0 |
+
+## tools/dashboard/locations_ui.js
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `<callback>` | [L2](../tools/dashboard/locations_ui.js#L2) | 47 | 1 | 0 / 0 |
+| `mount` | [L3](../tools/dashboard/locations_ui.js#L3) | 44 | 4 | 0 / 1 |
+| `<callback>` | [L3](../tools/dashboard/locations_ui.js#L3) | 1 | 1 | 0 / 0 |
+| `el` | [L4](../tools/dashboard/locations_ui.js#L4) | 1 | 3 | 4 / 0 |
+| `dirty` | [L6](../tools/dashboard/locations_ui.js#L6) | 1 | 1 | 4 / 0 |
+| `copy` | [L6](../tools/dashboard/locations_ui.js#L6) | 1 | 1 | 4 / 0 |
+| `matches` | [L14](../tools/dashboard/locations_ui.js#L14) | 1 | 1 | 0 / 3 |
+| `controls` | [L15](../tools/dashboard/locations_ui.js#L15) | 1 | 20 | 4 / 0 |
+| `<callback>` | [L15](../tools/dashboard/locations_ui.js#L15) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L15](../tools/dashboard/locations_ui.js#L15) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L15](../tools/dashboard/locations_ui.js#L15) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L15](../tools/dashboard/locations_ui.js#L15) | 1 | 1 | 0 / 0 |
+| `changed` | [L16](../tools/dashboard/locations_ui.js#L16) | 1 | 1 | 4 / 0 |
+| `toggle` | [L17](../tools/dashboard/locations_ui.js#L17) | 1 | 1 | 1 / 0 |
+| `box.onchange` | [L17](../tools/dashboard/locations_ui.js#L17) | 1 | 6 | 0 / 0 |
+| `render` | [L18](../tools/dashboard/locations_ui.js#L18) | 5 | 8 | 9 / 0 |
+| `checkbox.onchange` | [L18](../tools/dashboard/locations_ui.js#L18) | 1 | 2 | 0 / 0 |
+| `edit.onclick` | [L19](../tools/dashboard/locations_ui.js#L19) | 1 | 1 | 0 / 0 |
+| `refresh` | [L23](../tools/dashboard/locations_ui.js#L23) | 5 | 11 | 1 / 1 |
+| `<callback>` | [L25](../tools/dashboard/locations_ui.js#L25) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L25](../tools/dashboard/locations_ui.js#L25) | 1 | 1 | 0 / 0 |
+| `editor` | [L28](../tools/dashboard/locations_ui.js#L28) | 14 | 8 | 3 / 0 |
+| `boxes.execute.onchange` | [L34](../tools/dashboard/locations_ui.js#L34) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L34](../tools/dashboard/locations_ui.js#L34) | 1 | 2 | 0 / 0 |
+| `browse.onclick` | [L37](../tools/dashboard/locations_ui.js#L37) | 1 | 4 | 0 / 0 |
+| `cancel.onclick` | [L37](../tools/dashboard/locations_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `save.onclick` | [L37](../tools/dashboard/locations_ui.js#L37) | 4 | 12 | 0 / 0 |
+| `<callback>` | [L37](../tools/dashboard/locations_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L37](../tools/dashboard/locations_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L37](../tools/dashboard/locations_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `normalize` | [L39](../tools/dashboard/locations_ui.js#L39) | 1 | 2 | 1 / 0 |
+| `<callback>` | [L39](../tools/dashboard/locations_ui.js#L39) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L40](../tools/dashboard/locations_ui.js#L40) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L40](../tools/dashboard/locations_ui.js#L40) | 1 | 1 | 0 / 0 |
+| `buttons.add.onclick` | [L42](../tools/dashboard/locations_ui.js#L42) | 1 | 1 | 0 / 0 |
+| `buttons.remove.onclick` | [L42](../tools/dashboard/locations_ui.js#L42) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L42](../tools/dashboard/locations_ui.js#L42) | 1 | 1 | 0 / 0 |
+| `buttons[key].onclick` | [L42](../tools/dashboard/locations_ui.js#L42) | 1 | 3 | 0 / 0 |
+| `buttons.revert.onclick` | [L43](../tools/dashboard/locations_ui.js#L43) | 1 | 3 | 0 / 0 |
+| `buttons.apply.onclick` | [L44](../tools/dashboard/locations_ui.js#L44) | 1 | 6 | 0 / 0 |
+| `search.oninput` | [L45](../tools/dashboard/locations_ui.js#L45) | 1 | 1 | 0 / 0 |
+| `all.onchange` | [L45](../tools/dashboard/locations_ui.js#L45) | 1 | 3 | 0 / 0 |
 
 ## tools/dashboard/maintenance.py
 
@@ -1616,7 +1689,7 @@ Small Python capabilities for explicitly approved local chat turns.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `_linked` | [L28](../tools/dashboard/python_tools.py#L28) | 4 | 2 | 3 / 0 |
+| `_linked` | [L28](../tools/dashboard/python_tools.py#L28) | 4 | 2 | 4 / 0 |
 | `_plain_path` | [L34](../tools/dashboard/python_tools.py#L34) | 6 | 5 | 42 / 0 |
 | `permissions` | [L42](../tools/dashboard/python_tools.py#L42) | 48 | 35 | 7 / 0 |
 | `schemas` | [L92](../tools/dashboard/python_tools.py#L92) | 3 | 1 | 1 / 0 |
@@ -2246,6 +2319,25 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `GitHubSkillTests.test_repository_discovery_requires_root` | [L96](../tools/dashboard/test_github_skill_discovery.py#L96) | 3 | 1 | 0 / 0 |
 | `GitHubSkillTests.test_duplicate_content_import_is_skipped_without_copying` | [L100](../tools/dashboard/test_github_skill_discovery.py#L100) | 7 | 1 | 0 / 0 |
 | `GitHubSkillTests.test_failed_disable_rolls_back_new_import` | [L108](../tools/dashboard/test_github_skill_discovery.py#L108) | 7 | 1 | 0 / 0 |
+
+## tools/dashboard/test_locations.py
+
+Directory navigation and optimistic policy Apply, without model/service use.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `LocationTests.setUp` | [L19](../tools/dashboard/test_locations.py#L19) | 7 | 2 | 0 / 0 |
+| `LocationTests.test_directory_names_only_sorted_and_hidden_is_explicit` | [L27](../tools/dashboard/test_locations.py#L27) | 7 | 4 | 0 / 0 |
+| `LocationTests.test_browse_does_not_register_or_grant_location` | [L35](../tools/dashboard/test_locations.py#L35) | 5 | 1 | 0 / 0 |
+| `LocationTests.test_links_traversal_files_and_relative_paths_rejected` | [L41](../tools/dashboard/test_locations.py#L41) | 8 | 4 | 0 / 0 |
+| `LocationTests.test_metadata_budget_reports_truncation` | [L50](../tools/dashboard/test_locations.py#L50) | 3 | 1 | 0 / 0 |
+| `LocationTests.test_root_navigation_never_selects_whole_filesystem` | [L54](../tools/dashboard/test_locations.py#L54) | 7 | 1 | 0 / 0 |
+| `LocationTests.test_conditional_apply_and_stale_revision_preserve_current_policy` | [L62](../tools/dashboard/test_locations.py#L62) | 5 | 1 | 0 / 0 |
+| `LocationTests.test_two_concurrent_applies_have_only_one_winner` | [L68](../tools/dashboard/test_locations.py#L68) | 11 | 5 | 0 / 0 |
+| `LocationTests.test_two_concurrent_applies_have_only_one_winner.worker` | [L70](../tools/dashboard/test_locations.py#L70) | 5 | 3 | 0 / 0 |
+| `LocationTests.test_invalid_revision_does_not_mutate_state` | [L80](../tools/dashboard/test_locations.py#L80) | 5 | 2 | 0 / 0 |
+| `LocationTests.test_authenticated_http_browser_and_apply_contract` | [L86](../tools/dashboard/test_locations.py#L86) | 21 | 1 | 0 / 0 |
+| `LocationTests.test_authenticated_http_browser_and_apply_contract.request` | [L91](../tools/dashboard/test_locations.py#L91) | 5 | 4 | 0 / 0 |
 
 ## tools/dashboard/test_mcp_connections.py
 

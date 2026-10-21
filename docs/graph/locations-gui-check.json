@@ -1,0 +1,42 @@
+{
+  "application_commit": "e27036e0da3a3052273bca938faa4cb185f4aaba",
+  "mode": "offline temporary fixture; synthetic inference",
+  "dashboard_tests": {
+    "ran": 347,
+    "skipped": 2,
+    "result": "OK"
+  },
+  "javascript_tests": 15,
+  "setup_tests": 32,
+  "analysis_tests": 4,
+  "location_browser_checks": [
+    "table",
+    "directory navigation",
+    "files not listed",
+    "staged add",
+    "applied task options",
+    "draft preserved across navigation",
+    "Apply",
+    "bulk disable",
+    "Revert",
+    "concurrent revision conflict",
+    "staged Remove",
+    "whole-root selection blocked",
+    "mobile no page overflow"
+  ],
+  "regression_browser_checks": [
+    "skills table and bulk controls",
+    "duplicate imports",
+    "image attach/remove",
+    "GLB upload",
+    "retention",
+    "chat reconnect and Stop"
+  ],
+  "page_errors": [],
+  "live_qwen": false,
+  "live_docker": false,
+  "limitations": [
+    "Windows fixed-drive enumeration requires native rig smoke test",
+    "Static graph relationships are not execution coverage"
+  ]
+}

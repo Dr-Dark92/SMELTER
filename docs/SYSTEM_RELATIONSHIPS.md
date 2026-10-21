@@ -2,7 +2,7 @@
 
 The generated graph/function index now describes the repaired application commit pinned by [source manifest](graph/source-manifest.json). The [historical review](DEEP_CODE_REVIEW.md) describes an older baseline; [repair status](REPAIR_STATUS_20261021.md) gives current defect disposition. The explorer is inspired by Graphify-style navigation; Graphify was not installed or run.
 
-Current inventory: **238 scripts, 1,500 declarations/callbacks, 2,370 static relationships, 8,630 unresolved call expressions and 53 manually reviewed runtime links**. Source commit: `92e14fe0bb098b4a02712b1cc88f196324b4b9db`. Unresolved expressions are not a defect count.
+Current inventory: **242 scripts, 1,564 declarations/callbacks, 2,474 static relationships, 8,880 unresolved call expressions and 56 manually reviewed runtime links**. Source commit: `e27036e0da3a3052273bca938faa4cb185f4aaba`. Unresolved expressions are not a defect count.
 
 ## Artifacts and meaning
 

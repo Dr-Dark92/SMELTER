@@ -369,5 +369,26 @@
     "type": "runtime",
     "confidence": "manual-source-review",
     "evidence": "Reviewed batch skips canonical identity and normalized content duplicates before writing unique children"
+  },
+  {
+    "source": "tools/dashboard/access_ui.js",
+    "target": "tools/dashboard/locations_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Applied policy context delegates draft editing and conditional Apply to the location table"
+  },
+  {
+    "source": "tools/dashboard/locations_ui.js",
+    "target": "tools/dashboard/location_browser.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Operator editor opens metadata-only folder navigation; selection changes the draft only"
+  },
+  {
+    "source": "tools/dashboard/dashboard_api.py",
+    "target": "tools/dashboard/location_browser.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Authenticated GET dispatches operator directory navigation; not a registered model tool"
   }
 ]

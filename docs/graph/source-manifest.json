@@ -1,5 +1,5 @@
 {
-  "commit": "92e14fe0bb098b4a02712b1cc88f196324b4b9db",
+  "commit": "e27036e0da3a3052273bca938faa4cb185f4aaba",
   "repository": "Dr-Dark92/SMELTER",
   "files": [
     {
@@ -396,11 +396,11 @@
     },
     {
       "path": "tools/dashboard/access_policy.py",
-      "sha": "3194e7cd74dba77f894bf2436437c445a67b7234"
+      "sha": "979a6495f29cc590e3e344e7939e788b90ae1b35"
     },
     {
       "path": "tools/dashboard/access_ui.js",
-      "sha": "272f87f40f8b2de22cee41754b2cd56574848d73"
+      "sha": "614f6d1520c9644c58b7810db728414c96f769a7"
     },
     {
       "path": "tools/dashboard/aero_classifier.py",
@@ -444,11 +444,11 @@
     },
     {
       "path": "tools/dashboard/dashboard.py",
-      "sha": "688da08b1b3a16dc7f14cf0d5d8ec48aceda748b"
+      "sha": "d8000960baa88a6b02db5f441b673d0e43c2261a"
     },
     {
       "path": "tools/dashboard/dashboard_api.py",
-      "sha": "2c51eeb9aede6b53c230fc64f19408b871f559c0"
+      "sha": "b7984cd712a2108573c9987ece1b789a0ed05fea"
     },
     {
       "path": "tools/dashboard/dashboard_shell.js",
@@ -493,6 +493,18 @@
     {
       "path": "tools/dashboard/job_store.py",
       "sha": "3f0cf1531e6b7fd1db65fab613c353a49d8ac5da"
+    },
+    {
+      "path": "tools/dashboard/location_browser.js",
+      "sha": "98c5a51e09d7afb9a41dc799103ffac49630621a"
+    },
+    {
+      "path": "tools/dashboard/location_browser.py",
+      "sha": "183ad462b269bed05a4462e5b3626e8201fc6dc5"
+    },
+    {
+      "path": "tools/dashboard/locations_ui.js",
+      "sha": "67fbb1925319e74713cb9ea9bf2262d2587a44b5"
     },
     {
       "path": "tools/dashboard/maintenance.py",
@@ -733,6 +745,10 @@
     {
       "path": "tools/dashboard/test_github_skill_discovery.py",
       "sha": "4dae3a335b845a710b062aa6a04695917a3289a9"
+    },
+    {
+      "path": "tools/dashboard/test_locations.py",
+      "sha": "728be8ebfcf3991c38a2616c18854003c9c7e5e8"
     },
     {
       "path": "tools/dashboard/test_mcp_connections.py",
