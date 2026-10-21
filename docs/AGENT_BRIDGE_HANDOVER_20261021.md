@@ -5,8 +5,8 @@ OpenCode agent route, forwarding selected skills and per-message tool grants.
 Direct Ollama chat remains selectable. The backend's legacy incoming engine
 default remains compatible; new GUI agent requests carry engine=opencode.
 
-Tested application: **0d9950a75e1045a58bfbd90017ee3195d21533d9**.
-[CI](https://github.com/Dr-Dark92/SMELTER/actions/runs/39573778988),
+Tested application: **6217ea7a39fd73aeaf460997286066d116c60dcc**.
+[CI](https://github.com/Dr-Dark92/SMELTER/actions/runs/39575344467),
 [progress](AGENT_BRIDGE_PROGRESS.md), [plan](AGENT_BRIDGE_PLAN.md),
 [evidence](agent-bridge-evidence.json),
 [runtime instructions](../tools/dashboard/OPENCODE_RUNTIME.md).
@@ -46,6 +46,7 @@ Blender instructions still need an actual modeling tool before they can act.
   `dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1`.
 - MCP audit and SQLite execution metadata exist. An unapproved write is denied.
 - Managed container cleanup is confirmed. No game/user production data is used.
+- A 12-second delayed real MCP action succeeds and OpenCode acknowledges its result. The MCP RPC envelope is 150 seconds around the existing 120-second host operation bound.
 - Changed skills, out-of-scope paths, exclusions, output bounds, cancellation,
   duplicate writes and follow-up failure retention have regressions.
 

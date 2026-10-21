@@ -1,8 +1,8 @@
 {
   "date": "2026-10-21",
-  "application_commit": "0d9950a75e1045a58bfbd90017ee3195d21533d9",
-  "ci_run": 39573778988,
-  "ci_url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39573778988",
+  "application_commit": "6217ea7a39fd73aeaf460997286066d116c60dcc",
+  "ci_run": 39575344467,
+  "ci_url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39575344467",
   "contracts": {
     "linux": {
       "dashboard": 371,
@@ -39,6 +39,8 @@
     "mcp_server_audit_checked": true,
     "chat_persistence_checked": true,
     "unapproved_write_denied": true,
+    "opencode_mcp_result_acknowledged": true,
+    "fixture_tool_delay_seconds": 12,
     "cleanup_confirmed": true,
     "fixture_model_requests": 2,
     "disposable_state_removed_on_exit": true

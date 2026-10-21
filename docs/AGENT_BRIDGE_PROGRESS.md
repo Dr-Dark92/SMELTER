@@ -1,8 +1,8 @@
 # Agent bridge progress — 2026-10-21
 
 Milestone 1 is implemented and smoke-tested. Application source:
-`0d9950a75e1045a58bfbd90017ee3195d21533d9`. Verified
-[CI run 39573778988](https://github.com/Dr-Dark92/SMELTER/actions/runs/39573778988).
+`6217ea7a39fd73aeaf460997286066d116c60dcc`. Verified
+[CI run 39575344467](https://github.com/Dr-Dark92/SMELTER/actions/runs/39575344467).
 See [plan](AGENT_BRIDGE_PLAN.md), [handover](AGENT_BRIDGE_HANDOVER_20261021.md)
 and [machine-readable evidence](agent-bridge-evidence.json).
 
@@ -30,3 +30,9 @@ the exact loaded CRLF instruction hash.
 The generated function explorer is still explicitly pinned to the earlier
 overhaul source. The manually maintained system diagram includes this bridge.
 Subsequent documentation/whitespace commits do not imply additional behavior.
+
+A pinned OpenCode source review confirmed that the configured MCP timeout also
+applies to tool calls. The bridge now gives the existing 120-second host MCP
+operation a 150-second RPC envelope. The final real Docker smoke delays the
+action by 12 seconds and checks that OpenCode acknowledges the successful result,
+as well as checking disk bytes, audits and cleanup.
