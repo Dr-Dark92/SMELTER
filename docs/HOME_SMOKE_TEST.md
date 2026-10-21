@@ -253,9 +253,7 @@ one owned preview on **8770** with a recorded URL/token and bounded lifetime.
 Open that URL and verify the amber Send button yourself. The preview can use
 synthetic responses; it is not proof of another live Qwen task.
 
-Missing Python/Node images means validation/preview **BLOCKED**. General HTML/JS
-rewrites and arbitrary multi-file coding are **UNSUPPORTED**, not a smoke-test
-requirement. More ambitious prompts will not create missing tool capabilities.
+Missing Python/Node images means validation/preview **BLOCKED**. The frontend permission remains CSS-only. For general source replacements use the separate [ECC coding workspace](ECC_CODING_WORKSPACE.md) permission and tools; they create a new copy and do not launch a general code preview.
 Do not delete or reset the original `C:\SMELTERV2` to bypass a baseline error.
 
 ### H. Optional existing REA connection
@@ -291,3 +289,7 @@ forms; review diagnostic content before sharing it.
 
 See [ECC compatibility](ECC_COMPATIBILITY.md), [agent bridge plan](AGENT_BRIDGE_PLAN.md)
 and [runtime operations](../tools/dashboard/OPENCODE_RUNTIME.md).
+
+## Optional ECC coding acceptance
+
+Use `python tools/analysis/home_smoke.py --live --ecc --coding --prepare-demo` to add the pinned ECC TDD instruction and an actual isolated RED/fix/GREEN test. The Python test image is required. This profile uses 32K context / 1,024 output / 300 seconds / thinking off; the earlier report smoke keeps its own smaller profile. Expect nine coding MCP calls for the deterministic synthetic fixture, two saved code files, an assertion failure before the fix, passing tests afterward, a current-tree review and confirmed cleanup. A real model may use a different number of permitted calls. Audits, proposals, original/fixed hashes, RED/GREEN logs and saved code are retained in `coding-runtime-evidence/`. Live model quality remains a local acceptance item.

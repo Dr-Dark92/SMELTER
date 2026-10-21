@@ -81,3 +81,7 @@ python tools/analysis/reproduce_review_findings.py --revision <actual-applicatio
 ```
 
 Create a fresh Git-derived manifest for new source; never relabel old hashes. Fixture reproductions print current observations rather than asserting buggy behavior must persist. The graph defaults to file dependencies; select a declaration to inspect its neighborhood. Edge filters and source links do not execute application code. Current browsers need DecompressionStream for the embedded explorer; JSON/index remain readable independently.
+
+## Coding branch of the shared MCP path
+
+`dashboard_shell.js` sends the one-message coding flag through `Jobs.start` and `AgentBridge` into `ToolSession`. `tool_registry` supplies fixed schemas; `mcp_server` dispatches to `coding_workspace`. Proposals and file hashes feed `coding_activity` and the existing GUI cards. Test requests use `sandbox.coding_test` with an immutable read-only copy and a fixed Python/Node profile; test evidence returns to the same audited chat receipt. The managed OpenCode agent keeps native edits/shell denied and reads current coding files through MCP. This is a tool branch shared by selected skills, not a separate connector for ECC. The generated committed explorer remains at its explicitly stated pinned revision; CI produces a new graph artifact for each tested source.

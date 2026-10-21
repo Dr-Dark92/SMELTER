@@ -69,7 +69,7 @@ connectors. A capability needs a real registered backend implementation.
 
 The frontend workspace grant still permits CSS-only destination changes, listed
 reads, fixed sandbox validation and preview launch. It does not grant generic
-multi-file editing. The snapshot does not refresh after host edits; the agent
+multi-file editing under that frontend permission. The separate coding permission now provides [new code copies, hash-checked proposals/apply and fixed test/review](../../docs/ECC_CODING_WORKSPACE.md) through MCP. The snapshot does not refresh after host edits; the agent
 must use read_frontend_file to inspect current destination content.
 
 OpenCode-reported native activity is labelled as reported activity. Controller
@@ -116,3 +116,7 @@ The legacy incoming engine ID opencode_readonly remains accepted for inspection
 clients. New GUI tasks use opencode and forward selected skills and grants.
 The production adapter does not connect to a manually started host OpenCode
 server. Its HTTP Client remains available for injected tests only.
+
+## ECC coding workflow
+
+The optional coding grant exposes prepare/list/read/propose/apply/test/review MCP tools for a new registered V2/coding/UUID copy. It never grants native shell or edits to the original. Code cards carry actual proposed/saved text. The fixed Python/Node test profile records RED/GREEN/ERROR with counts, exact tree/image hashes, retained logs and owned cleanup; later edits invalidate current GREEN. Coverage, Git checkpoints and ECC plugin hooks/delegation/memory remain unavailable. The coding test process is bounded at 70 seconds (60-second inner guard), leaving headroom inside the existing 120-second host MCP / 150-second RPC envelope.

@@ -1,0 +1,130 @@
+{
+  "application_source": "bab265817bd3e63fb82669327ac36d461b9372c3",
+  "ci": {
+    "id": 39620302505,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39620302505",
+    "conclusion": "success",
+    "jobs": {
+      "windows": 119291692714,
+      "linux": 119291693195,
+      "browser": 119291693150,
+      "managed_smokes": 119291693070
+    }
+  },
+  "contracts_per_os": {
+    "dashboard": 390,
+    "dashboard_skips": {
+      "linux": 2,
+      "windows": 3
+    },
+    "setup": 32,
+    "analysis": 17,
+    "javascript": 15
+  },
+  "coding_contract": {
+    "tools": [
+      "prepare_coding_workspace",
+      "list_coding_files",
+      "read_coding_file",
+      "propose_coding_patch",
+      "apply_coding_patch",
+      "run_coding_tests",
+      "review_coding_workspace"
+    ],
+    "grant": "coding_workspace",
+    "copied_location": "registered sibling V2/coding/UUID",
+    "max_files_per_patch": 6,
+    "max_file_bytes": 131072,
+    "max_patch_content_bytes": 524288,
+    "tool_call_limit": 32,
+    "test_inner_timeout_seconds": 60,
+    "test_process_timeout_seconds": 70,
+    "host_mcp_timeout_seconds": 120,
+    "opencode_mcp_timeout_seconds": 150,
+    "native_shell_or_edit_granted": false,
+    "source_merge_supported": false
+  },
+  "ecc": {
+    "upstream": "https://github.com/affaan-m/ECC",
+    "revision": "90606c8315ee09cafc303515c5f33024db6b9882",
+    "selected_skill": "tdd-workflow",
+    "sha256": "8887afa786ef30de834e7567115d3df71934b343c3d9d849714f8ea43f979ee0",
+    "executable_plugin_loaded": false
+  },
+  "coding_smoke": {
+    "status": "passed",
+    "model": "synthetic protocol fixture; no Qwen inference",
+    "boundary": "real no-network OpenCode and Python test containers",
+    "controller_mcp_calls": 9,
+    "model_requests": 10,
+    "test_stages": [
+      "RED",
+      "GREEN"
+    ],
+    "red": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "green": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "file_cards": 2,
+    "all_current_tests_passed": true,
+    "saved_bytes_independently_checked": true,
+    "mcp_audits_checked": true,
+    "source_unchanged": true,
+    "cleanup_confirmed": true,
+    "node_coding_container_exercised": false,
+    "coverage": "not measured"
+  },
+  "saved_files": [
+    {
+      "path": "tools/dashboard/example.py",
+      "before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+      "after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772"
+    },
+    {
+      "path": "tools/dashboard/test_example.py",
+      "before_sha256": null,
+      "after_sha256": "4cfa50adebf4caf3674df11d691d1c83680007a0561b1fe9d023916f364a486b"
+    }
+  ],
+  "baseline_report_smoke": {
+    "status": "passed",
+    "bytes": 68,
+    "fixture_tool_delay_seconds": 12,
+    "opencode_result_acknowledged": true,
+    "cleanup_confirmed": true
+  },
+  "browser": {
+    "passed": true,
+    "coding_grant_forwarded": true,
+    "coding_grant_consumed_after_send": true,
+    "page_errors": [],
+    "external_http_requests": [],
+    "synthetic_inference": true
+  },
+  "retained_artifact": {
+    "id": 12353804514,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39620302505/artifacts/12353804514",
+    "files": 32,
+    "retention_days": 14
+  },
+  "home_acceptance": {
+    "live_qwen": "pending",
+    "command": "python tools/analysis/home_smoke.py --live --ecc --coding --prepare-demo"
+  },
+  "remaining": [
+    "Full ECC executable plugin, hooks/custom tools",
+    "Scoped persistent memory and delegation",
+    "Coverage and Git checkpoints",
+    "Confined external MCP adapters",
+    "Live Qwen quality/performance acceptance",
+    "Safe explicit source merge and existing V2 refresh"
+  ]
+}

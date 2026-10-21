@@ -57,3 +57,7 @@ replaying actions.
 ## ECC and home acceptance
 
 The commit-pinned instruction pack and large-catalogue import fix are implemented and verified through the existing universal bridge. The [home runbook](HOME_SMOKE_TEST.md) provides retained evidence and exact manual demos. Full ECC executable-plugin integration is a separate blocked capability; the staged implementation order and compatibility matrix are in [ECC_COMPATIBILITY.md](ECC_COMPATIBILITY.md). The next substantive coding gap is a confined general patch/test/review contract; enabling a larger catalogue cannot supply that operation.
+
+## Scoped ECC coding milestone
+
+The general patch/test/review contract described above is now implemented as a separate coding grant. Remaining steps are full executable-plugin auditing/isolation, coverage support, scoped memory, optional delegation, external MCP confinement and live-rig quality acceptance. Existing V2 refresh/merge remains explicit future work; coding copies do not silently merge into the source or frontend copy.

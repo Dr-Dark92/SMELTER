@@ -43,6 +43,7 @@ Older `test_*` core/bootstrap programs may invoke real models, Blender or Docker
 | `process_runner.py` | Fixed argv, simultaneous bounded pipe capture, deadlines/cancellation and process-group/Windows-job cleanup |
 | `skills_catalog.py`, runtime/context/manager modules | One identity/catalog, startup fingerprints, bounded instructions and explicit install/enable operations |
 | `capability_catalog.py`, core `Registry` | Common descriptors; explicitly scoped/audited bridge for registered dashboard tools; other adapters library-only |
+| `coding_workspace.py`, `coding_activity.py` | Separate new code copies, hash-checked 1–6-file proposals/apply, fixed container tests, current-tree review and actual file cards |
 | `frontend_workspace.py`, file activity modules | Managed V2, CSS-only exact/hash edits, confined validation/preview, six-card-style file progress |
 | `database.py`, `config_store.py`, `chats.py`, `model_assets.py` | SQLite/configuration/transcripts and separately owned attachment bytes |
 | `storage_budget.py`, `maintenance.py` | Conservative artifacts quota, reviewed retention, verified backup and offline restore |
@@ -174,3 +175,7 @@ Do not publish raw audits, databases, credentials, launch tokens or game assets.
 The settings rail/mobile picker, table-based bulk skill management, single + attachment menu and duplicate-skipping imports are documented in [GUI behavior](GUI_SKILLS_AND_ATTACHMENTS.md). New browser modules are settings_ui, skills_ui and attachments_ui. Bulk skill operations add `action=bulk` to the existing operator API; other chat/asset/API contracts are preserved.
 
 Registered locations now use a staged permission table with folder browsing and atomic Apply. See [location controls](REGISTERED_LOCATIONS.md).
+
+## Scoped coding operations
+
+The existing `/api/chats` task contract now accepts optional boolean `tool_permissions.coding_workspace`. Admission freezes and validates registered V2 read/write/test-execution scope; the GUI consumes the checkbox on Send. The universal registry exposes seven fixed coding tools over built-in MCP. No new HTTP endpoint, production database schema or native shell permission is added. Ownership/proposals/test metadata live in application-owned `.smelter/coding-workspaces`; editable copies live in registered `V2/coding/UUID`. Cross-process SQLite serialization protects snapshot/patch operations, and exact hashes reject stale writes. Source remains unchanged; successful tests must match the current copy before final review claims GREEN. See [coding contract](ECC_CODING_WORKSPACE.md).
