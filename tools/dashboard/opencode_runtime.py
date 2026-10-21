@@ -388,9 +388,8 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         bridge.close()
         bridge.session.file_activity.settle(cancelled)
         events=list(observed.values())[-100:]+[dict(event,source='controller') for event in bridge.session.events]
-        failed=failed or any(event.get('result',{}).get('status') in
-                            {'error','rea_failed','mcp_failed','workspace_validation_failed'}
-                            for event in bridge.session.events)
+        from tool_contract import result_failed
+        failed=failed or any(result_failed(event.get('result')) for event in bridge.session.events)
     if cleanup_confirmed is False:
         failed=True
         answer+='\nOwned container cleanup was not confirmed; inspect the managed container before another task.'

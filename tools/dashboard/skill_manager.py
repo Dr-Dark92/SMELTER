@@ -63,6 +63,10 @@ def add_skill(root, name, content, approval=False):
         raise ValueError("Invalid skill content or size")
     if not parse_skill_manifest(content)["valid"]:
         raise ValueError("SKILL.md requires recognizable name and description")
+    from skills_catalog import catalog_skills
+    catalog=catalog_skills(root)
+    if catalog['capacity_used']>=catalog['capacity']:
+        raise ValueError('Installed skill catalogue is full (256 manifests); no skill was created')
     state_path, base = _paths(root)
     bundled = Path(root) / "skills" / name
     if bundled.exists() or bundled.is_symlink():

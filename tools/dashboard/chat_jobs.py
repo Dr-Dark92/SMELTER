@@ -64,6 +64,8 @@ class Control:
         self.access_policy = None
         self.context_budget = None
         self.configuration = None
+        self.tool_session = None
+        self.skill_selection = None
         self.terminal_result = None
         self.job_id = None
         self.admitted_at = None
@@ -203,6 +205,17 @@ class Jobs:
         if engine not in ('ollama', 'opencode', 'opencode_readonly'):
             raise ValueError('Unknown execution engine')
         bridge=None
+        tool_session=None
+        skill_selection=None
+        if engine == 'ollama':
+            from python_tools import ToolSession
+            from skill_context import selected_context
+            tool_session=ToolSession(root,supplied,data['id'],policy=policy)
+            skill_selection=selected_context(root,prompt,data.get('skills'),data.get('auto_skills',False),
+                                             tool_session.grants.get('rea_analysis',False))
+            if data.get('image') is not None:
+                from vision import validate_image
+                validate_image(data['image'])
         if engine in ('opencode','opencode_readonly'):
             if data.get('opencode_approval') is not True:
                 raise ValueError('Approve this OpenCode session before sending')
@@ -235,6 +248,8 @@ class Jobs:
             job['control'].admitted_at=job['started']
             job['control'].access_policy = policy
             job['control'].configuration = effective
+            job['control'].tool_session = tool_session
+            job['control'].skill_selection = skill_selection
             if bridge:
                 bridge.control=job['control']
                 job['control'].file_activity=bridge.session.file_activity

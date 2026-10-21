@@ -156,3 +156,19 @@ class FrontendWorkspaceTests(unittest.TestCase):
         with patch('sandbox.status',return_value={'ready':False,'reason':'fixture unavailable'}),patch('subprocess.Popen') as spawn:
             with self.assertRaisesRegex(ValueError,'Confined tests unavailable'):workspace.validate(self.root,{})
             spawn.assert_not_called()
+
+    def test_new_css_edit_cannot_replay_an_old_successful_preview_url(self):
+        self.prepare()
+        session = ToolSession(self.root, {'frontend_workspace': True})
+        checks = [{'command': ['python'], 'exit_code': 0, 'output': b'fixture', 'sandbox': 'docker-no-network'}]
+        with patch('sandbox.tests', return_value=checks):
+            workspace.validate(self.root, {})
+        request = {'function': {'name': 'launch_frontend_preview', 'arguments': {}}}
+        with patch('sandbox.preview', return_value={'url': 'http://127.0.0.1:8770/#token=fixture'}) as preview:
+            self.assertEqual(session.execute(request)['status'], 'workspace_launched')
+            self.edit()
+            result = session.execute(request)
+        self.assertEqual(result['status'], 'error')
+        self.assertIn('validation', result['error'])
+        self.assertFalse(session.events[-1]['reused'])
+        preview.assert_called_once()

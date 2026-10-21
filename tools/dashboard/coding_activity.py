@@ -16,6 +16,7 @@ class CodingActivity:
 
     def _changes(self, call):
         function = call.get('function', {}) if isinstance(call, dict) else {}
+        if not isinstance(function, dict):return []
         name, args = function.get('name'), function.get('arguments', {})
         if isinstance(args, str):
             try:args = json.loads(args)

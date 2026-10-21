@@ -89,7 +89,7 @@ def inspect_database(root: Path, *, integrity=False) -> dict:
     if not db.is_file():
         return {"status": "database_missing", "database": str(db), "ready": False}
     try:
-        with closing(sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=3)) as connection:
+        with closing(sqlite3.connect(db.resolve().as_uri()+'?mode=ro', uri=True, timeout=3)) as connection:
             schema = connection.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()
             integrity_result = connection.execute("PRAGMA quick_check").fetchone() if integrity else ("not_requested",)
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}

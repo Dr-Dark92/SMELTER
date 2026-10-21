@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 from process_runner import run
 from sandbox import _flags,_remove,snapshot,status,record_owner
+from tool_contract import BRIDGE_RPC_TIMEOUT
 
 BOOT=r'''
 const fs=require('node:fs'),http=require('node:http'),crypto=require('node:crypto'),cp=require('node:child_process');
@@ -31,9 +32,8 @@ const proxy=http.createServer((req,res)=>{
 });
 proxy.listen(11434,'127.0.0.1',()=>{
  const config={provider:{local:{npm:'@ai-sdk/openai-compatible',name:'SMELTER confined local model',options:{baseURL:'http://127.0.0.1:11434/v1',apiKey:'local'},models:{[process.env.SMELTER_MODEL]:{name:process.env.SMELTER_MODEL}}}}};
- // OpenCode uses this for tool calls too. The host MCP call is bounded at
- // 120s; allow its receipt/transport cleanup rather than cutting it off at 10s.
- if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:150000}};
+ // The RPC envelope includes the longest registered host operation and cleanup.
+ if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:__SMELTER_MCP_RPC_TIMEOUT_MS__}};
  const child=cp.spawn('/usr/local/bin/opencode',['serve','--pure','--hostname','127.0.0.1','--port','4096'],{cwd:'/workspace',env:{...process.env,OPENCODE_CONFIG_CONTENT:JSON.stringify(config),OPENCODE_SERVER_PASSWORD:process.env.SMELTER_AGENT_PASSWORD},stdio:'inherit'});
  child.on('error',()=>process.exit(1));child.on('exit',code=>process.exit(code??1));
  setTimeout(()=>process.exit(124),(Number(process.env.SMELTER_TIMEOUT)+30)*1000).unref();
@@ -61,9 +61,9 @@ class ManagedClient:
         ready=status(root,operation='opencode')
         if not ready['ready']:raise ValueError('Confined OpenCode unavailable: '+ready['reason'])
         from access_policy import using
-        from frontend_workspace import target_path
-        coding = bridge is not None and bridge.session.grants.get('coding_workspace')
-        self.host_directory=Path(root).resolve() if coding or not allow_inference else target_path(root)
+        # Readiness and every task use the current checkout as their immutable
+        # source reference. Live destinations are read through approved tools.
+        self.host_directory=Path(root).resolve()
         with using(policy):self.folder,self.code=snapshot(root,self.host_directory)
         self.docker=ready['docker'];self.name='smelter-opencode-'+__import__('uuid').uuid4().hex
         self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference
@@ -80,7 +80,8 @@ class ManagedClient:
             flags+=['--mount','type=bind,source='+str(assets)+',target=/opt/smelter-bridge,readonly']
             environment['SMELTER_BRIDGE']='1'
         else:environment['SMELTER_BRIDGE']='0'
-        command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',BOOT]
+        boot=BOOT.replace('__SMELTER_MCP_RPC_TIMEOUT_MS__', str(BRIDGE_RPC_TIMEOUT*1000))
+        command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',boot]
         self.image=ready['configured']['opencode_image']
         record_owner(self.folder,self.name,self.image,'opencode')
         try:
@@ -252,7 +253,7 @@ class ManagedClient:
             # MCP operation already admitted before Stop has its own 120s
             # transport bound; retain its final receipt before persistence.
             active=bool(getattr(self,'bridge',None) and self.bridge.active.is_set())
-            self.thread.join(timeout=150 if active else 15)
+            self.thread.join(timeout=self.bridge.cleanup_wait_timeout() if active else 15)
             if self.thread.is_alive():self.cleanup_confirmed=False
         import shutil
         if self.cleanup_confirmed:shutil.rmtree(self.folder,ignore_errors=True)

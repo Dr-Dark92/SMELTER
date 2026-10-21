@@ -386,7 +386,9 @@ class ToolSession:
                 raise ValueError("Tool arguments must be a JSON object")
             self.file_activity.begin(call)
             key = json.dumps([name, arguments], sort_keys=True)
-            cacheable = name not in self.external_tools and name in {'prepare_frontend_workspace', 'write_diagnostic_markdown', 'replace_frontend_css', 'launch_frontend_preview'}
+            # A preview must recheck current validation on every request. Its
+            # previous URL cannot authorize a later, unvalidated CSS revision.
+            cacheable = name not in self.external_tools and name in {'prepare_frontend_workspace', 'write_diagnostic_markdown', 'replace_frontend_css'}
             if cacheable and key in self.cache:
                 result = self.cache[key]
                 event["reused"] = True

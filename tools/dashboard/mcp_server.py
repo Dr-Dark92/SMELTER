@@ -35,9 +35,10 @@ async def serve(root, grants):
         # Run fixed operations off the protocol event loop; ToolSession audits,
         # validates scopes, limits calls and denies unapproved operations.
         result = await asyncio.to_thread(session.execute, {'function': {'name': name, 'arguments': arguments}})
+        from tool_contract import result_failed
         envelope = {'tool_result': result, 'audit_path': str(session.audit_path)}
         return types.CallToolResult(content=[types.TextContent(type='text', text=json.dumps(envelope))],
-                                    structuredContent=envelope, isError=result.get('status') == 'error')
+                                    structuredContent=envelope, isError=result_failed(result))
 
     async with stdio_server() as (read, write):
         await server.run(read, write, InitializationOptions(server_name='smelter-python-tools',

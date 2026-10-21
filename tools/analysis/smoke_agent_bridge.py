@@ -254,14 +254,15 @@ def run(args):
     if not parse_skill_manifest(reference)['valid']:
         raise ValueError('Invalid smoke skill manifest')
     with smoke_state(getattr(args, 'evidence_dir', None)) as base:
-        root=base/'SMELTER';root.mkdir();target=base/'SMELTERV2';target.mkdir()
+        root=base/'SMELTER';root.mkdir();target=base/'SMELTERV2'
+        if args.process_fixture:target.mkdir()
         (root/'README.md').write_text('# Disposable smoke source\n')
-        (target/'README.md').write_text('# Disposable smoke snapshot\n')
-        for folder in (root,target):
+        if args.process_fixture:(target/'README.md').write_text('# Disposable smoke snapshot\n')
+        for folder in ((root,target) if args.process_fixture else (root,)):
             (folder/'tools/dashboard').mkdir(parents=True);(folder/'skills'/skill_id).mkdir(parents=True)
             (folder/'tools/dashboard/dashboard.py').write_text('HTML="<style>body{color:red}</style>"\n')
         (root/'skills'/skill_id/'SKILL.md').write_bytes(reference.encode('utf-8'))
-        (target/'skills'/skill_id/'SKILL.md').write_bytes(reference.encode('utf-8'))
+        if args.process_fixture:(target/'skills'/skill_id/'SKILL.md').write_bytes(reference.encode('utf-8'))
         select_database(root,str(base/'data'))
         if args.image:save_config(root,'sandbox.json',{'schema_version':1,'python_image':None,'node_image':None,'opencode_image':args.image})
         save_config(root,'runtime_settings.json',{'schema_version':1,'settings':{

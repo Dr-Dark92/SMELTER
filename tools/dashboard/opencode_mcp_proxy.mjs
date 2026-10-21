@@ -40,7 +40,9 @@ async function call(name,argumentsValue){
     if(Buffer.byteLength(raw)>maximum) throw Error('Tool arguments exceed budget');
     const pending=input+'.pending';
     fs.writeFileSync(pending,raw,{flag:'wx'});fs.renameSync(pending,input);
-    const end=Date.now()+timeout;
+    const fixed=manifest.tool_timeouts?.[name];
+    const operationTimeout=Number.isInteger(fixed)&&fixed>0&&fixed<=440?fixed*1000:timeout;
+    const end=Date.now()+operationTimeout;
     while(Date.now()<end){
       if(fs.existsSync(output)){
         if(fs.statSync(output).size>maximum) throw Error('Tool result exceeds budget');

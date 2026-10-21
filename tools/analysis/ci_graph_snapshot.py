@@ -20,7 +20,7 @@ def main():
         if not entry:continue
         metadata,encoded=entry.split(b'\t',1);mode,kind,sha=metadata.decode().split()
         name=encoded.decode('utf-8')
-        if kind!='blob' or not name.startswith(('tools/','automation/')) or name.startswith('tools/analysis/') or Path(name).suffix not in {'.py','.js','.ps1','.sh'}:continue
+        if kind!='blob' or not name.startswith(('tools/','automation/')) or Path(name).suffix not in {'.py','.js','.mjs','.cjs','.ps1','.sh'}:continue
         rows.append({'path':name,'sha':sha})
     manifest=root/'docs/graph/source-manifest.json'
     manifest.write_text(json.dumps({'commit':revision,'repository':'Dr-Dark92/SMELTER','files':rows},indent=2)+'\n',encoding='utf-8')

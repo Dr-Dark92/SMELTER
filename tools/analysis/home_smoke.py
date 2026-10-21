@@ -135,9 +135,10 @@ def contracts(root, node):
             ('javascript', [node, '--test', *[str(path.relative_to(root)) for path in sorted((root / 'tools/dashboard').glob('test_*.js'))]])]
 
 
-def phase(directory, name, argv, *, root=REPO, timeout=900, command=run):
+def phase(directory, name, argv, *, root=REPO, timeout=900, command=run, extra_env=None):
     start = time.monotonic()
     environment = dict(os.environ, SMELTER_VISION_LIVE='0', SMELTER_TEST_DOCKER='0', PYTHONUTF8='1')
+    environment.update(extra_env or {})
     print('RUN ' + name, flush=True)
     try:
         result = command(argv, cwd=root, env=environment, timeout=timeout, max_output=8 * 1024 * 1024, text=True)
@@ -178,20 +179,39 @@ def write_report(directory, report):
 
 
 def execute(args, *, root=REPO, command=run):
-    coding = getattr(args, 'coding', False)
+    full = getattr(args, 'full', False)
+    coding = getattr(args, 'coding', False) or full and (args.live or args.fixture)
     directory = Path(args.output).resolve() if args.output else root / 'diagnostics' / (
         'home-smoke-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ-') + uuid4().hex[:8])
     directory.mkdir(parents=True, exist_ok=False)
     print('Evidence: ' + str(directory), flush=True)
     report = {'status': 'FAIL', 'mode': 'live' if args.live else 'fixture' if args.fixture else 'preflight' if args.preflight_only else 'offline',
               'live_qwen': 'NOT_RUN', 'gui': 'MANUAL_PENDING', 'checks': [], 'phases': [],
-              'smoke_profile': PROFILE, 'evidence_directory': str(directory), 'services_started_automatically': False}
+              'smoke_profile': PROFILE, 'evidence_directory': str(directory), 'services_started_automatically': False,
+              'scope': 'full automated layer smoke' if full else 'baseline contracts and requested runtime',
+              'manual_acceptance': 'PENDING', 'live_direct_ollama': 'NOT_RUN', 'coding_profiles': 'NOT_RUN',
+              'browser': 'NOT_RUN'}
     try:
         fixtures = create_fixtures(directory / 'inputs')
         report['inputs'] = fixtures
         checks, images = preflight(root, runtime=args.live or args.fixture or args.preflight_only,
                                    live=args.live or args.preflight_only, image=args.opencode_image, command=command)
         report['checks'] = checks
+        browser_module = os.environ.get('SMELTER_TEST_PLAYWRIGHT') or str(root / '.smelter/tooling/browser/node_modules/playwright')
+        if full:
+            try:
+                command([shutil.which('node'), '-e', "const fs=require('node:fs');const p=require(process.argv[1]);if(!fs.existsSync(p.chromium.executablePath()))process.exit(2);", browser_module],
+                        timeout=10, text=True, check=True)
+                from model_assets import viewer_bundle
+                viewer_bundle(root)
+                checks.append({'name': 'Browser + local GLB viewer', 'status': 'PASS', 'detail': 'Existing Playwright Chromium and model-viewer 4.1.0'})
+            except Exception as exc:
+                checks.append({'name': 'Browser + local GLB viewer', 'status': 'BLOCKED',
+                               'detail': 'Full GUI smoke needs reviewed local browser/viewer dependencies; no installation was attempted. ' + redact(exc)})
+            if args.live or args.fixture:
+                for key in ('python_image', 'node_image'):
+                    checks.append({'name': 'Full smoke ' + key, 'status': 'PASS' if images.get(key) else 'BLOCKED',
+                                   'detail': images.get(key) or 'Both fixed coding profiles require their local immutable images'})
         if coding:
             checks.append({'name': 'Python coding image', 'status': 'PASS' if images.get('python_image') else 'BLOCKED',
                            'detail': images.get('python_image') or 'Install/configure the local Python test image'})
@@ -217,6 +237,35 @@ def execute(args, *, root=REPO, command=run):
                 report['phases'].append(result)
                 if result['status'] != 'PASS':
                     break
+            if full and all(item['status'] == 'PASS' for item in report['phases']):
+                report['phases'].append(phase(directory, 'workflow-http-mcp', [sys.executable,
+                    str(root / 'tools/analysis/smoke_workflows.py'), '--output', str(directory / 'workflow-evidence')],
+                    root=root, timeout=90, command=command))
+                if report['phases'][-1]['status'] == 'PASS':
+                    result = phase(directory, 'browser-ui-glb', [shutil.which('node'),
+                        str(root / 'tools/analysis/check_workbench_browser.mjs'), '--output', str(directory / 'browser-evidence')],
+                        root=root, timeout=300, command=command,
+                        extra_env={'SMELTER_TEST_PLAYWRIGHT': browser_module, 'SMELTER_TEST_PYTHON': sys.executable})
+                    report['phases'].append(result)
+                    report['browser'] = result['status']
+            if full and (args.live or args.fixture) and all(item['status'] == 'PASS' for item in report['phases']):
+                result = phase(directory, 'python-node-confined-profiles', [sys.executable,
+                    str(root / 'tools/analysis/smoke_coding_profiles.py'), '--output', str(directory / 'profile-evidence'),
+                    '--python-image', images['python_image'], '--node-image', images['node_image']],
+                    root=root, timeout=600, command=command)
+                report['phases'].append(result)
+                report['coding_profiles'] = result['status']
+                if result['status'] == 'PASS':
+                    report['phases'].append(phase(directory, 'frontend-css-tests-preview', [sys.executable,
+                        str(root / 'tools/analysis/smoke_frontend_workspace.py'), '--output', str(directory / 'frontend-evidence'),
+                        '--python-image', images['python_image'], '--node-image', images['node_image']],
+                        root=root, timeout=600, command=command))
+            if full and args.live and all(item['status'] == 'PASS' for item in report['phases']):
+                result = phase(directory, 'direct-ollama-live', [sys.executable,
+                    str(root / 'tools/analysis/smoke_direct_chat.py'), '--live', '--output', str(directory / 'direct-live-evidence')],
+                    root=root, timeout=180, command=command)
+                report['phases'].append(result)
+                report['live_direct_ollama'] = result['status']
             if all(item['status'] == 'PASS' for item in report['phases']) and (args.live or args.fixture):
                 argv = [sys.executable, str(root / 'tools/analysis/smoke_agent_bridge.py'), '--image', images['opencode_image'],
                         '--evidence-dir', str(directory / 'runtime-evidence')]
@@ -263,6 +312,7 @@ def main():
     parser.add_argument('--prepare-demo', action='store_true', help='Create fresh GUI source/V2 and separate databases; do not launch')
     parser.add_argument('--ecc', action='store_true', help='Fetch three pinned ECC manifests; test verification-loop if runtime is requested')
     parser.add_argument('--coding', action='store_true', help='Also test ECC RED/fix/GREEN; requires --live or --fixture and a Python image')
+    parser.add_argument('--full', action='store_true', help='Also exercise real HTTP/MCP workflows and Chromium/GLB; with runtime, add both confined coding profiles; with --live, add direct Qwen')
     parser.add_argument('--opencode-image', help='Override with existing immutable sha256 ID; never pull/build')
     parser.add_argument('--output', help='New evidence directory; existing paths are rejected')
     args = parser.parse_args()

@@ -1,6 +1,14 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {parseBlocks, render} = require('./chat_renderer.js');
+const {toolState} = require('./chat_renderer.js');
+
+test('coding errors, expected RED and stale review have distinct visual states', () => {
+  assert.equal(toolState({status:'coding_tests_failed',stage:'ERROR'}),'error');
+  assert.equal(toolState({status:'coding_tests_failed',stage:'RED'}),'warning');
+  assert.equal(toolState({status:'coding_workspace_reviewed',all_current_tests_passed:false}),'warning');
+  assert.equal(toolState({status:'coding_tests_passed',stage:'GREEN'}),'success');
+});
 
 // Tiny inert DOM: HTML assignments are intentionally unsupported.
 class Node {

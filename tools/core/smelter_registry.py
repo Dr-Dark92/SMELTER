@@ -90,7 +90,8 @@ class Registry:
         self._dashboard_modules()
         from python_tools import ToolSession
         session=ToolSession(self.root,grants,conversation_id)
-        read_only={'frontend_workspace_info','read_frontend_file','read_enabled_design_skill','inventory_directory','inspect_model_attachment','rea_capabilities','rea_inspect_pe_resources'}
+        read_only={'frontend_workspace_info','read_frontend_file','read_enabled_design_skill','inventory_directory','inspect_model_attachment','rea_capabilities','rea_inspect_pe_resources',
+                   'list_coding_files','read_coding_file','review_coding_workspace'}
         for tool in session.tools:
             function=tool['function'];name=function['name']
             def handler(value,name=name):

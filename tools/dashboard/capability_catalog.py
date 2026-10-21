@@ -5,7 +5,7 @@ from skills_catalog import catalog_skills
 
 
 def catalog(root):
-    grants={'frontend_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
+    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
     tools=[]
     from sandbox import status as sandbox_status
     confined=sandbox_status(root)
@@ -20,6 +20,11 @@ def catalog(root):
         if name in ('validate_frontend_workspace','launch_frontend_preview'):
             tools[-1].update(availability='requires_per_message_grants' if confined['ready'] else 'blocked',dependency='confined Docker runner',reason=confined['reason'])
         if name=='launch_frontend_preview':tools[-1]['transports']=['python (dashboard owner)']
+        if name=='run_coding_tests':
+            profiles={profile:sandbox_status(root,operation='coding_'+profile) for profile in ('python','node')}
+            tools[-1]['profiles']={profile:{'availability':'requires_per_message_grants' if report['ready'] else 'blocked',
+                                           'reason':report['reason']} for profile,report in profiles.items()}
+            tools[-1]['availability']='requires_per_message_grants' if any(r['ready'] for r in profiles.values()) else 'blocked'
         if name.startswith('rea_') and rea['status']!='installed':tools[-1].update(availability='blocked',dependency='rea-agents',reason=rea['reason'])
     # These operations are discoverable library adapters, not implicitly executable
     # GUI tools. Their core callers must use explicit trusted registration.

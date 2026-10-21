@@ -6,9 +6,11 @@ The container receives descriptors, never host credentials or writable mounts.
 import copy
 import json
 import threading
+import time
 
 from python_tools import ToolSession
 from skill_context import selected_context
+from tool_contract import operation_timeout, result_failed, BRIDGE_RELAY_HEADROOM
 
 
 class AgentBridge:
@@ -27,6 +29,7 @@ class AgentBridge:
         self.lock = threading.Lock()
         self.state_lock = threading.Lock()
         self.active = threading.Event()
+        self.active_deadline = 0
         self.closed = False
         self.tools = [{'name': item['function']['name'],
                        'description': item['function']['description'],
@@ -34,7 +37,14 @@ class AgentBridge:
                       for item in self.session.tools]
 
     def manifest(self, timeout=300):
-        return {'tools': copy.deepcopy(self.tools), 'timeout_seconds': timeout}
+        return {'tools': copy.deepcopy(self.tools),
+                'timeout_seconds': max(timeout, operation_timeout(None) + BRIDGE_RELAY_HEADROOM),
+                'tool_timeouts': {item['name']: operation_timeout(item['name']) + BRIDGE_RELAY_HEADROOM
+                                  for item in self.tools}}
+
+    def cleanup_wait_timeout(self):
+        with self.state_lock:
+            return max(15, self.active_deadline - time.monotonic() + BRIDGE_RELAY_HEADROOM)
 
     def summary(self):
         return {'skills': self.skills['snapshots'],
@@ -72,6 +82,7 @@ class AgentBridge:
                 if self.closed:
                     raise ValueError('Agent bridge is closed')
                 if self.control:self.control.check()
+                self.active_deadline = time.monotonic() + operation_timeout(name)
                 self.active.set()
             try:
                 if self.control:self.control.file_activity = self.session.file_activity
@@ -83,9 +94,7 @@ class AgentBridge:
                             'audit_path': str(self.session.audit_path) if self.session.audit_path else None}
                 return {'content': [{'type': 'text', 'text': json.dumps(envelope)}],
                         'structuredContent': envelope,
-                        'isError': result.get('status') in
-                        {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed'} or
-                        result.get('status') == 'coding_tests_failed' and result.get('stage') != 'RED'}
+                        'isError': result_failed(result)}
             finally:self.active.clear()
 
     def close(self):

@@ -55,6 +55,8 @@ def discover_github_skill(url, opener=urlopen):
         raise ValueError("GitHub response too large")
     try:
         data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError('Expected a GitHub file object')
         if data.get("type") != "file" or data.get("encoding") != "base64":
             raise ValueError("Expected a GitHub SKILL.md file")
         content = base64.b64decode(data["content"], validate=False).decode("utf-8")

@@ -1,5 +1,13 @@
 /* Small text-only Markdown renderer. Never interprets raw HTML or URLs. */
 const SmelterChat = (() => {
+  function toolState(result = {}) {
+    if (['error','rea_failed','mcp_failed','workspace_validation_failed'].includes(result.status) ||
+        result.status === 'coding_tests_failed' && result.stage !== 'RED') return 'error';
+    if (result.status === 'coding_tests_failed' && result.stage === 'RED' ||
+        result.status === 'coding_workspace_reviewed' && !result.all_current_tests_passed) return 'warning';
+    return 'success';
+  }
+
   function parseBlocks(text) {
     const lines = String(text).replace(/\r\n/g, '\n').split('\n');
     const blocks = [];
@@ -90,6 +98,6 @@ const SmelterChat = (() => {
       }
     }
   }
-  return {parseBlocks, render, copyButton};
+  return {parseBlocks, render, copyButton, toolState};
 })();
 if (typeof module !== 'undefined') module.exports = SmelterChat;

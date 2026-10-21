@@ -1,7 +1,7 @@
 name: SMELTER offline verification
 on:
   push:
-    branches: [SMELTERV1, codex/uiux-overhaul-20261021, 'codex/opencode-skills-mcp-*', 'codex/home-smoke-*', 'codex/ecc-*']
+    branches: [SMELTERV1, codex/uiux-overhaul-20261021, 'codex/opencode-skills-mcp-*', 'codex/home-smoke-*', 'codex/ecc-*', 'codex/workflow-*']
     paths-ignore: ['docs/**', 'design-system/**', 'README.md', 'CHANGELOG.md']
   pull_request:
     branches: [SMELTERV1]
@@ -40,12 +40,23 @@ jobs:
         run: docker build --iidfile "$RUNNER_TEMP/smelter-opencode-image" -f tools/dashboard/Dockerfile.opencode .
       - name: Prepare the explicit Python test image
         shell: bash
-        run: docker pull python:3.12-alpine
+        run: |
+          docker pull python:3.12-alpine
+          docker pull node:22-alpine
+      - name: Exercise both real confined coding profiles and mixed failure classification
+        shell: bash
+        run: |
+          mkdir -p .smelter/bridge-checks
+          python tools/analysis/smoke_coding_profiles.py --python-image "$(docker image inspect --format '{{.Id}}' python:3.12-alpine)" --node-image "$(docker image inspect --format '{{.Id}}' node:22-alpine)" --output .smelter/bridge-checks/profile-evidence | tee .smelter/bridge-checks/profiles.json
       - name: Exercise real OpenCode, skills, MCP and saved bytes in confinement
         shell: bash
         run: |
           mkdir -p .smelter/bridge-checks
           python tools/analysis/smoke_agent_bridge.py --image "$(cat "$RUNNER_TEMP/smelter-opencode-image")" --fixture-delay 12 --skill-manifest .smelter/ecc-reference/skills/verification-loop/SKILL.md --skill-id ecc-verification-loop --evidence-dir .smelter/bridge-checks/runtime-evidence | tee .smelter/bridge-checks/managed-smoke.json
+      - name: Exercise actual frontend CSS validation and owned preview
+        shell: bash
+        run: |
+          python tools/analysis/smoke_frontend_workspace.py --python-image "$(docker image inspect --format '{{.Id}}' python:3.12-alpine)" --node-image "$(docker image inspect --format '{{.Id}}' node:22-alpine)" --output .smelter/bridge-checks/frontend-evidence | tee .smelter/bridge-checks/frontend.json
       - name: Exercise ECC TDD through real OpenCode, MCP, code patches and isolated tests
         shell: bash
         run: |
@@ -79,6 +90,13 @@ jobs:
       - run: python -m unittest discover -s tools/dashboard -p "test_*.py"
       - run: python -m unittest discover -s tools/setup -p "test_*.py"
       - run: python -m unittest discover -s tools/analysis -p "test_*.py"
+      - run: python tools/analysis/smoke_workflows.py --output .smelter/workflow-smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-smoke-${{ matrix.os }}
+          path: .smelter/workflow-smoke
+          retention-days: 14
       - shell: bash
         run: node --test tools/dashboard/test_*.js
 

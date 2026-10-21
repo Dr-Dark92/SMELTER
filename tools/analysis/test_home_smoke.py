@@ -130,6 +130,20 @@ class HomeSmokeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'integrity mismatch'):
             preview(lambda url: {'sha256': '0' * 64})
 
+    def test_full_smoke_requires_browser_before_running_models(self):
+        with tempfile.TemporaryDirectory() as temp:
+            images = {key: 'sha256:' + 'a' * 64 for key in ('python_image', 'node_image', 'opencode_image')}
+            command = unittest.mock.Mock(side_effect=OSError('fixture browser is missing'))
+            with patch.object(home_smoke, 'preflight', return_value=([{'name': 'Base', 'status': 'PASS'}], images)), \
+                 patch('install_ecc_skills.preview', return_value=[]):
+                code = home_smoke.execute(self.options(Path(temp) / 'report', full=True, live=True), command=command)
+            self.assertEqual(code, 2)
+            summary = json.loads((Path(temp) / 'report/summary.json').read_text())
+            self.assertEqual(summary['status'], 'BLOCKED')
+            self.assertEqual(summary['live_direct_ollama'], 'NOT_RUN')
+            self.assertEqual(summary['phases'], [])
+            self.assertEqual(command.call_count, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

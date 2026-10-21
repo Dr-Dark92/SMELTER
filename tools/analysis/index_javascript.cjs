@@ -10,7 +10,7 @@ const traverse=bundle?require(path.resolve(bundle)).traverse:require('@babel/tra
 const manifest=JSON.parse(fs.readFileSync(manifestFile,'utf8'));
 const rows=[],units=[];
 for(const file of manifest.files){
- if(file.path.endsWith('.js'))units.push({path:file.path,source:fs.readFileSync(path.join(root,file.path),'utf8'),offset:0});
+ if(/\.(?:js|mjs|cjs)$/.test(file.path))units.push({path:file.path,source:fs.readFileSync(path.join(root,file.path),'utf8'),offset:0});
  if(file.path.endsWith('.py')){
   // Python AST decodes HTML literals correctly; regex on source would misread escapes.
   const script=`import ast,json,sys,re\nt=ast.parse(open(sys.argv[1],encoding='utf-8-sig').read())\nr=[]\nfor n in ast.walk(t):\n if isinstance(n,ast.Constant) and isinstance(n.value,str) and '<script' in n.value:\n  for m in re.finditer(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',n.value):\n   if m.group(1).strip():r.append({'source':m.group(1),'offset':n.lineno-1+n.value[:m.start(1)].count('\\n')})\nprint(json.dumps(r))`;

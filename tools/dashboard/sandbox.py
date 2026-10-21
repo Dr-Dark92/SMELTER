@@ -171,13 +171,46 @@ timer.cancel()
 sys.exit(0 if result.wasSuccessful() and result.testsRun>len(result.skipped) else 1)
 '''
 CODING_NODE = r'''
-const fs=require('node:fs'),cp=require('node:child_process');
+const fs=require('node:fs'),cp=require('node:child_process'),os=require('node:os'),path=require('node:path');
 const files=fs.readdirSync('tools/dashboard').filter(n=>/^test_[A-Za-z0-9_.-]+\.js$/.test(n)).sort();
 if(!files.length||files.length>64)process.exit(2);
-const child=cp.spawn(process.execPath,['--test',...files.map(n=>'tools/dashboard/'+n)],{stdio:'inherit'});
+// A private reporter classifies actual test events. Finding ERR_ASSERTION in
+// prose cannot turn a simultaneous missing import or runner failure into RED.
+const reporter=path.join(os.tmpdir(),'smelter-reporter-'+require('node:crypto').randomUUID()+'.cjs');
+fs.writeFileSync(reporter,`module.exports=async function* (source){
+ let assertion_failures=0,errors=0;
+ for await(const event of source){
+  if(event.type!=='test:fail'||event.data.todo)continue;
+  const error=event.data.details?.error;
+  if(error?.failureType==='subtestsFailed')continue;
+  if(error?.code==='ERR_ASSERTION'||error?.cause?.code==='ERR_ASSERTION')assertion_failures++;
+  else errors++;
+ }
+ yield 'SMELTER_NODE_FAILURES|'+JSON.stringify({assertion_failures,errors})+'\\n';
+};`,{flag:'wx'});
+const child=cp.spawn(process.execPath,['--test','--test-reporter=tap','--test-reporter='+reporter,
+ '--test-reporter-destination=stdout','--test-reporter-destination=stdout',
+ ...files.map(n=>'tools/dashboard/'+n)],{stdio:'inherit'});
 const timer=setTimeout(()=>process.exit(124),60000);
-child.on('error',()=>process.exit(2));child.on('exit',code=>{clearTimeout(timer);process.exit(code??2)});
+child.on('error',()=>process.exit(2));child.on('exit',code=>{clearTimeout(timer);fs.unlinkSync(reporter);process.exit(code??2)});
 '''
+
+
+def node_test_result(exit_code, output):
+    counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped) (\d+)\s*$',output,re.M)}
+    packets=re.findall(r'^SMELTER_NODE_FAILURES\|(\{[^\n]+\})\s*$',output,re.M)
+    failures={}
+    if len(packets)==1:
+        try:failures=json.loads(packets[0])
+        except ValueError:pass
+    valid=set(failures)=={'assertion_failures','errors'} and all(type(n)is int and n>=0 for n in failures.values())
+    if not valid or counts.get('cancelled',0) or failures['errors']:
+        return 'ERROR',counts
+    if exit_code==0 and counts.get('pass',0)>0 and counts.get('fail')==0 and failures['assertion_failures']==0:
+        return 'GREEN',counts
+    if exit_code==1 and counts.get('fail',0)>0 and failures['assertion_failures']>0:
+        return 'RED',counts
+    return 'ERROR',counts
 
 
 def coding_test(root,target,profile):
@@ -208,9 +241,7 @@ def coding_test(root,target,profile):
             stage=('GREEN' if result.returncode==0 and counts['tests']>counts['skipped'] and not counts['errors'] and not counts['failures'] else
                    'RED' if result.returncode==1 and counts['failures']>0 and counts['errors']==0 else 'ERROR') if valid else 'ERROR'
         else:
-            counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped) (\d+)\s*$',output,re.M)}
-            stage=('GREEN' if result.returncode==0 and counts.get('pass',0)>0 and counts.get('fail')==0 and counts.get('cancelled',0)==0 else
-                   'RED' if result.returncode==1 and counts.get('fail',0)>0 and 'ERR_ASSERTION' in output else 'ERROR')
+            stage,counts=node_test_result(result.returncode,output)
         evidence={'exit_code':result.returncode,'stage':stage,'counts':counts,'image':image,
                   'sandbox':'docker-no-network','profile':profile,'coverage':'not measured',
                   'log_tail':output[-6000:],'_raw_output':raw}

@@ -39,7 +39,10 @@ def status(root):
     return {'runtime_snapshots':owned_runs(root),'artifact_bytes':sum(r['bytes'] for r in rows),'artifact_files':len(rows),
             'max_bytes':MAX_BYTES,'max_files':MAX_FILES,'jobs':list_jobs(root),
             'cleanup':'Operator-approved dry-run plan only; no automatic deletion',
-            'backup_scope':'SQLite snapshot, skill state and managed manifests, GLBs, reports, audits and REA evidence. Code/tool installations/model weights are reinstalled separately.'}
+            'backup_scope':'SQLite snapshot, skill state and managed manifests, GLBs, reports, audits and REA evidence.',
+            'backup_exclusions':['Source code and external V2/coding copies', 'Coding workspace metadata/proposals/test logs',
+                                 'MCP connection JSON, tool installations and model weights'],
+            'restore_note':'Review restored absolute access locations and image IDs before admitting tasks on a new checkout.'}
 
 
 def _referenced(root):
@@ -169,7 +172,7 @@ def restore(backup_directory,root,data_directory,approval):
         if total>MAX_BYTES+512*1024*1024 or source.stat().st_size!=row.get('bytes') or _digest(source)!=row.get('sha256'):raise ValueError('Backup file verification failed')
         seen.add(relative)
     if 'database.sqlite3' not in seen:raise ValueError('Backup has no database')
-    with closing(sqlite3.connect('file:'+(backup_root/'database.sqlite3').as_posix()+'?mode=ro',uri=True)) as conn:
+    with closing(sqlite3.connect((backup_root/'database.sqlite3').resolve().as_uri()+'?mode=ro',uri=True)) as conn:
         if conn.execute('PRAGMA quick_check').fetchone()!=('ok',):raise ValueError('Backup database integrity failed')
     state=root/'.smelter';data.mkdir(mode=0o700);state.mkdir(mode=0o700)
     try:

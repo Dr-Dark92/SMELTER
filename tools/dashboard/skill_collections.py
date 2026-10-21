@@ -56,6 +56,10 @@ def install_collection(root, repo_url, selected, approval=False, discover=discov
             skipped.append({'id':item['id'],'reason':'duplicate_content','existing_id':contents[fingerprint]});continue
         contents[fingerprint]=identity;checked.append((item['id'],manifest['content']))
     if checked:
+        from skills_catalog import catalog_skills
+        catalog=catalog_skills(root)
+        if catalog['capacity_used']+len(checked)>catalog['capacity']:
+            raise ValueError('Collection would exceed the 256-manifest installed catalogue; select a smaller batch. Nothing was imported.')
         collections.mkdir(parents=True,exist_ok=True);created_group=not folder.exists();folder.mkdir(exist_ok=True);created=[]
         try:
             for name,content in checked:

@@ -196,8 +196,10 @@ def approved_tools(root, selected):
 
 
 def call(root, grants, name, arguments, external=None):
+    from tool_contract import operation_timeout
     result = exchange(root, external['server'] if external else 'smelter', grants,
-                      external['name'] if external else name, arguments, expected=external)
+                      external['name'] if external else name, arguments, expected=external,
+                      timeout=operation_timeout(name) if not external else operation_timeout(None))
     if external:
         return {'status': 'mcp_failed' if result.get('isError') else 'mcp_completed',
                 'server': external['server'], 'tool': external['name'], 'mcp_result': result}

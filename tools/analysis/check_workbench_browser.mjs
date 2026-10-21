@@ -8,7 +8,11 @@ import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.SMELTER_TEST_PLAYWRIGHT||'playwright');
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const output=path.join(repo,'.smelter/ui-checks');fs.mkdirSync(output,{recursive:true});
+const args=process.argv.slice(2);
+if(args.length&&(args.length!==2||args[0]!=='--output'))throw Error('Use --output with a new evidence directory');
+const output=args.length?path.resolve(args[1]):path.join(repo,'.smelter/ui-checks');
+if(args.length&&fs.existsSync(output))throw Error('Browser evidence directory already exists; no overwrite');
+fs.mkdirSync(output,{recursive:true});
 const fixture=spawn(process.env.SMELTER_TEST_PYTHON||'python',['tools/analysis/offline_gui_fixture.py','--port','0','--viewer-root',repo],{cwd:repo,stdio:['ignore','pipe','pipe']});
 let logs='',url,phase='fixture startup',browser,page;
 const ready=new Promise((resolve,reject)=>{fixture.stdout.on('data',chunk=>{logs+=chunk.toString();const found=logs.match(/http:\/\/127\.0\.0\.1:\d+\/#token=[A-Za-z0-9_-]+/);if(found){url=found[0];resolve(url)}});fixture.on('error',reject);fixture.on('exit',code=>{if(!url)reject(Error('Fixture exited: '+code))})});
@@ -44,6 +48,48 @@ try{
  phase='large skill catalogue';await page.getByRole('button',{name:'+ Add',exact:true}).click();const importer=page.getByRole('dialog',{name:'Import skills',exact:true});await importer.getByLabel('GitHub skill or repository URL',{exact:true}).fill('https://github.com/offline/catalogue');await importer.getByRole('button',{name:'Discover',exact:true}).click();await importer.getByText(/311 manifests found/).waitFor();assert.equal(await importer.locator('.import-candidates input:checked').count(),0);assert.equal(await importer.locator('.import-candidates input').count(),311);await importer.getByLabel('Filter discovered skills',{exact:true}).fill('catalogue-007');assert.equal(await importer.locator('.import-candidates label:visible').count(),1);await importer.getByLabel('Filter discovered skills',{exact:true}).fill('');await importer.locator('.import-candidates input').evaluateAll(nodes=>nodes.slice(0,41).forEach(node=>{node.checked=true;node.dispatchEvent(new Event('change',{bubbles:true}))}));await importer.getByRole('button',{name:'Review selected manifests',exact:true}).click();await importer.getByText('Select at most 40 manifests per reviewed import.',{exact:true}).waitFor();assert.equal(await importer.getByRole('button',{name:'Import reviewed skills',exact:true}).isDisabled(),true);await importer.getByRole('button',{name:'Close',exact:true}).click();findings.largeSkillCatalogue=true;
  await page.getByRole('button',{name:'Close settings',exact:true}).click();
  phase='titled chat and offline send';await page.getByRole('button',{name:'New chat',exact:true}).click();await page.getByLabel('Conversation title',{exact:true}).fill('Offline workbench review');await page.getByRole('dialog',{name:'New conversation',exact:true}).getByRole('button',{name:'Create conversation',exact:true}).click();await page.locator('.chat-dialog').waitFor({state:'detached'});assert.equal(await page.locator('#chatEngine').inputValue(),'opencode');await page.getByLabel('Message',{exact:true}).fill('Hello fixture');await page.getByRole('button',{name:'Send via OpenCode',exact:true}).click();assert.match(await page.locator('#requestStatus').innerText(),/approve this session/);await page.locator('#chatEngine').selectOption('ollama');await page.getByRole('button',{name:'Send',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#requestStatus').textContent.startsWith('Completed'));await page.getByText('Offline fixture response. No model was called.',{exact:true}).waitFor();
+ phase='startup retry does not duplicate workflow choices';
+ const workflowChoices=await page.locator('#workflow option').count();
+ const workflowReload=page.waitForResponse(response=>response.url().endsWith('/api/workflows'));
+ await page.evaluate(()=>startup());
+ await workflowReload;
+ await page.waitForFunction(expected=>document.querySelectorAll('#workflow option').length===expected,workflowChoices);
+ assert.equal(await page.locator('#workflow option').count(),workflowChoices);
+ phase='Stop and refresh recovery';
+ await page.getByLabel('Message',{exact:true}).fill('slow fixture');
+ await page.getByRole('button',{name:'Send',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#requestStatus').textContent.includes('Offline fixture waiting for Stop'));
+ const savedTask=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('smelterActiveJob')).id);
+ await page.reload();
+ await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Stop'&&!node.disabled));
+ await page.getByRole('button',{name:'Stop',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#requestStatus').textContent.startsWith('Stopped'));
+ const recovered=await page.evaluate(async id=>{
+  const response=await fetch('/api/chat-jobs/'+id,{headers:{'X-Smelter-Token':SmelterAuth.token()}});
+  return response.json();
+ },savedTask);
+ assert.equal(recovered.state,'cancelled');findings.stopAndRefreshRecovery=true;
+ phase='coding receipt presentation';
+ const states=await page.evaluate(()=>{
+  const section=executionCards({events:[
+   {tool:'run_coding_tests',result:{status:'coding_tests_failed',stage:'ERROR',profile:'node',exit_code:1}},
+   {tool:'run_coding_tests',result:{status:'coding_tests_failed',stage:'RED',profile:'python',exit_code:1}},
+   {tool:'review_coding_workspace',result:{status:'coding_workspace_reviewed',all_current_tests_passed:false}}
+  ]});
+  return [...section.querySelectorAll('.execution-card')].map(node=>({className:node.className,text:node.textContent}));
+ });
+ assert.match(states[0].className,/execution-error/);assert.match(states[0].text,/Runner\/import failure/);
+ assert.match(states[1].className,/execution-warning/);assert.match(states[1].text,/Expected failing assertion/);
+ assert.match(states[2].className,/execution-warning/);assert.match(states[2].text,/incomplete or stale/);
+ findings.codingReceiptStates=true;
+ // A reload intentionally clears the previous task-skill selection. Select
+ // the same enabled fixture again before checking the outgoing payload.
+ await page.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByRole('button',{name:'Skills',exact:true}).click();
+ await page.getByRole('button',{name:'Expand demo-design',exact:true}).click();
+ await page.getByRole('checkbox',{name:'Select demo-design/spacing',exact:true}).check();
+ await page.getByRole('button',{name:'Use in next task',exact:true}).click();
+ await page.getByRole('button',{name:'Close settings',exact:true}).click();
  phase='OpenCode GUI forwarding';
  await page.route('**/api/opencode/agent',route=>route.fulfill({json:{endpoint:'fixture only',version:'1.19.3',directory:'fixture',expected_directory:'fixture',agent_ready:true,models:[{key:'local/qwen3.5:9b'}],reason:'Synthetic readiness response; no runtime started'}}));
  await page.locator('#chatEngine').selectOption('opencode');await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Next-task tool access',exact:true}).click();await page.getByRole('button',{name:'Check managed OpenCode',exact:true}).click();await page.locator('#opencodeAgentApprove').check();await page.locator('#approveDiagnostics').check();await page.locator('#approveCodingWorkspace').check();await page.getByRole('button',{name:'Close settings',exact:true}).click();

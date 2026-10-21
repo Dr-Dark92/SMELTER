@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-EXTENSIONS = {'.py', '.js', '.ps1', '.sh'}
+EXTENSIONS = {'.py', '.js', '.mjs', '.cjs', '.ps1', '.sh'}
 
 
 def is_test(path):
@@ -160,7 +160,7 @@ def build(root, paths, revision, js_index=None):
 
 
 def write_index(graph, destination):
-    lines=['# Function and script index\n\nPinned application source: `'+graph['revision']+'`. '+str(graph['counts']['files'])+' scripts and '+str(graph['counts']['symbols'])+' function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.\n\n']
+    lines=['# Function and script index\n\nPinned source: `'+graph['revision']+'`. '+str(graph['counts']['files'])+' scripts and '+str(graph['counts']['symbols'])+' function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded programs are not independently parsed. The source manifest defines the exact included application, legacy and analysis scripts.\n\n']
     for file in graph['files']:
         path=file['path'];functions=[s for s in graph['symbols'] if s['path'].split(' [inline')[0]==path]
         lines+=['## '+path+'\n\n'+(file.get('purpose') or 'Script/module inventory; inspect pinned source for complete behavior.')+'\n\n']
@@ -190,7 +190,7 @@ def main():
             raw=(root/row['path']).read_bytes();actual=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
             if actual!=row['sha']:raise ValueError('Pinned source mismatch: '+row['path'])
     else:
-        paths=[p.relative_to(root).as_posix() for base in ('tools','automation') for p in (root/base).rglob('*') if p.is_file() and p.suffix in EXTENSIONS and '__pycache__' not in p.parts and 'analysis' not in p.relative_to(root).parts];revision=args.revision
+        paths=[p.relative_to(root).as_posix() for base in ('tools','automation') for p in (root/base).rglob('*') if p.is_file() and p.suffix in EXTENSIONS and '__pycache__' not in p.parts];revision=args.revision
     graph=build(root,paths,revision,json.loads(args.js_index.read_text()) if args.js_index else None)
     if args.runtime_links:
         graph['runtime_links']=json.loads(args.runtime_links.read_text())

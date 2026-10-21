@@ -25,8 +25,6 @@ def catalog_skills(root):
         if not base.is_dir() or base.is_symlink():
             continue
         for folder in sorted(base.iterdir(), key=lambda p: p.name.casefold()):
-            if len(found) >= MAX_SKILLS:
-                break
             if folder.is_symlink() or not folder.is_dir() or folder.name.startswith("."):
                 continue
             manifest = folder / "SKILL.md"
@@ -34,6 +32,8 @@ def catalog_skills(root):
                 continue
             try:_plain_path(manifest)
             except ValueError:continue
+            if len(found) >= MAX_SKILLS:
+                raise ValueError('Installed skill catalogue exceeds 256 manifests; review/remove excess folders before use. Nothing was silently omitted.')
             size = manifest.stat().st_size
             status = "ready"
             name = folder.name
@@ -66,8 +66,6 @@ def catalog_skills(root):
             if group.is_symlink() or not group.is_dir():
                 continue
             for folder in sorted(group.iterdir()):
-                if len(found) >= MAX_SKILLS:
-                    break
                 if folder.is_symlink() or not folder.is_dir():
                     continue
                 manifest = folder / "SKILL.md"
@@ -75,6 +73,8 @@ def catalog_skills(root):
                     continue
                 try:_plain_path(manifest)
                 except ValueError:continue
+                if len(found) >= MAX_SKILLS:
+                    raise ValueError('Installed skill catalogue exceeds 256 manifests; review/remove excess folders before use. Nothing was silently omitted.')
                 skill_id = group.name + "/" + folder.name
                 size = manifest.stat().st_size
                 status = "ready" if size <= MAX_SKILL_BYTES else "oversized"
@@ -101,5 +101,6 @@ def catalog_skills(root):
         if counts[skill['id']]>1:
             skill={**skill,'conflicting_sources':sorted(x['source'] for x in found if x['id']==skill['id']),'status':'identity_conflict','enabled':False,'error':'Duplicate skill identity across source locations; review before use'}
         unique.setdefault(skill['id'],skill)
+    capacity_used=len(found)
     found=list(unique.values())
-    return {"skills":found,"count":len(found),"read_only":True}
+    return {"skills":found,"count":len(found),"read_only":True,"capacity":MAX_SKILLS,"capacity_used":capacity_used}
