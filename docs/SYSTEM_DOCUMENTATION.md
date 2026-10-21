@@ -1,6 +1,6 @@
 # SMELTER system documentation
 
-This document describes the V1.7 operational repair on SMELTERV1, based on `9ee0f6dbd6c4bd790ef3bf31421f1b6f9573baf3`. The graph manifest pins the exact repaired application commit. Read [repair status](REPAIR_STATUS_20261021.md) for evidence and unverified platform paths. Installed models, Windows processes, container images and game assets are not verified by source review.
+This document describes the audited SMELTERV1 application `cee565b24726a9c217eab21c8a75bac88cad8c9c`. The graph manifest pins that source. The [current audit](reviews/2026-10-21/workflow-audit/REVIEW.md) and [machine evidence](reviews/2026-10-21/workflow-audit/evidence.json) distinguish source checks, native Windows/Linux contracts, real Chromium/containers and pending live-rig acceptance. Source review alone does not verify installed models, native tools or game assets.
 
 ## Start and operating model
 
@@ -76,9 +76,9 @@ Tests/preview/OpenCode get a read-only filtered source snapshot, UID/GID 65534, 
 
 Frontend tests run fixed Python/JS commands. Preview uses temporary container state and a fixed dashboard-owned relay on loopback 8770, no container published port, one-hour lifetime, request/reply limits 2/6 MiB. It is a small-fixture UI preview; large asset transfers are outside that relay's contract. Old unconfined validation markers cannot launch it. Existing V2 is preserved and must be archived explicitly before preparing a fresh copy after source changes.
 
-OpenCode is also a managed container with a read-only source snapshot. The host polls a tmpfs queue through fixed Docker exec commands. Admitted model requests reach fixed loopback Ollama; approved MCP calls reach the host-owned AgentBridge and existing ToolSession/Python MCP server. Selected skill instructions and exact text hashes are frozen for the task. Native translation enforces context/output settings and request limits. Check sessions cannot prompt a model or invoke host tools. Native shell/edit/delegation remain denied; exact approved smelter_ tool names receive session permissions and host calls are revalidated. This supports existing narrowly granted reports, inspections and frontend CSS work; it does not add generic code editing. Images are not forwarded. Approved saved GLBs are accessible only through the metadata tool. Session rules are default-deny and must be echoed before prompt submission. Prior conversation is bounded; sessions are fresh. Source directory checks alone are not the OS boundary. See [current runtime and smoke instructions](../tools/dashboard/OPENCODE_RUNTIME.md).
+OpenCode is also a managed container with a read-only source snapshot. The host polls a tmpfs queue through fixed Docker exec commands. Admitted model requests reach fixed loopback Ollama; approved MCP calls reach the host-owned AgentBridge and existing ToolSession/Python MCP server. Selected skill instructions and exact text hashes are frozen for the task. Native translation enforces context/output settings and request limits. Check sessions cannot prompt a model or invoke host tools. Native shell/edit/delegation remain denied; exact approved smelter_ tool names receive session permissions and host calls are revalidated. This supports narrowly granted reports, inspections and frontend CSS work. A separate coding grant provides new copies, hash-checked proposals/apply, fixed tests and current-tree review; it does not grant native edits or shell. Images are not forwarded. Approved saved GLBs are accessible only through the metadata tool. Session rules are default-deny and must be echoed before prompt submission. Prior conversation is bounded; sessions are fresh. Source directory checks alone are not the OS boundary. See [current runtime and smoke instructions](../tools/dashboard/OPENCODE_RUNTIME.md).
 
-**Not all host processes are confined.** Fixed native REA/7z/FFprobe/Blender checks remain trusted approved host processes, with bounded output and owned process cleanup. Built-in MCP is app-controlled transport. Arbitrary external MCP remains blocked. Low-level explicitly invoked library helpers are not a third-party sandbox. See repair status for unverified Docker/Windows paths.
+**Not all host processes are confined.** Fixed native REA/7z/FFprobe/Blender checks remain trusted approved host processes, with bounded output and owned process cleanup. Built-in MCP is app-controlled transport. Arbitrary external MCP remains blocked. Low-level explicitly invoked library helpers are not a third-party sandbox. Native Windows contracts and real Linux-container checks passed the current CI; installed native tools and live rig acceptance remain separate.
 
 ## Catalog and model tools
 
@@ -136,7 +136,7 @@ Full route paths/action names live in `dashboard_api.ApiRoutes` and the generate
 
 Retention previews server-side hash/size/mtime plans, expires after ten minutes and requires explicit approval. It protects referenced GLBs, skips changed files and targets recognized UUID artifacts only. No blanket startup deletion. Newest 100 workflow reports are retained unless older age policy selects them. Backup/retention/reconcile require idle recorded jobs.
 
-Backup uses SQLite.backup plus verified managed manifests, skill-state, GLBs, reports, audits and REA evidence. It rejects existing destinations and concurrent observed changes. A manifest records byte hashes. Source, legacy skill directories, dependencies, weights and running containers are outside this backup. Restore is offline/create-only, verifies hashes/paths/schema/integrity, and never replays actions.
+Backup uses SQLite.backup plus verified managed manifests, skill-state, GLBs, reports, audits and REA evidence. It rejects existing destinations and concurrent observed changes. A manifest records byte hashes. Source/V2/coding copies, coding metadata/proposals/test logs, MCP connection JSON, legacy skill directories, dependencies, weights and running containers are outside this backup. Preserve excluded work separately. Restore is offline/create-only, verifies hashes/paths/schema/integrity, and never replays actions. Review restored absolute registered locations and immutable image IDs before use.
 
 ```powershell
 python tools/dashboard/maintenance.py status --root C:\SMELTER
@@ -179,3 +179,32 @@ Registered locations now use a staged permission table with folder browsing and 
 ## Scoped coding operations
 
 The existing `/api/chats` task contract now accepts optional boolean `tool_permissions.coding_workspace`. Admission freezes and validates registered V2 read/write/test-execution scope; the GUI consumes the checkbox on Send. The universal registry exposes seven fixed coding tools over built-in MCP. No new HTTP endpoint, production database schema or native shell permission is added. Ownership/proposals/test metadata live in application-owned `.smelter/coding-workspaces`; editable copies live in registered `V2/coding/UUID`. Cross-process SQLite serialization protects snapshot/patch operations, and exact hashes reject stale writes. Source remains unchanged; successful tests must match the current copy before final review claims GREEN. See [coding contract](ECC_CODING_WORKSPACE.md).
+
+## Audited cross-layer contracts
+
+Both direct Ollama and OpenCode validate and freeze selected skill text, hashes,
+ToolSession, grants and policy before starting a worker. A disabled or changed
+skill cannot silently change an admitted task. Readiness and managed tasks use
+the same current original-source snapshot; destination changes are read through
+approved tools. New manifests still require review and a server restart.
+
+`tool_contract.result_failed` is shared by direct inference, OpenCode, MCP and
+the bridge. Coding RED is expected assertion evidence; ERROR is failure. Node
+uses TAP plus a trusted event reporter, so a simultaneous assertion and import
+error is ERROR. GREEN/review must match the current tree and every detected fixed
+test profile. A completed model request does not establish an accepted patch.
+
+Normal MCP operations are bounded at 120s with a 135s proxy wait. Frontend
+validation is bounded at 420s with a 435s proxy wait. OpenCode uses a 450s RPC
+envelope; active cleanup follows the admitted operation. This does not increase
+the task's model timeout or authorize later actions after Stop. Every frontend
+preview launch rechecks current validation, including repeated launch requests.
+
+Catalogue discovery (2,048 entries), reviewed import (40) and installed manifest
+capacity (256) are different bounds. Import rejects insufficient capacity before
+writing. Catalogue overflow is explicit rather than silently omitting skills.
+
+Run the [full smoke](FULL_SMOKE_TEST.md) for native contracts, actual HTTP/MCP/DB
+workflows, Chromium/GLB, both container test profiles, CSS preview and opt-in live
+Qwen/OpenCode. See [progress](reviews/2026-10-21/workflow-audit/PROGRESS.md) for
+what actually ran; fixed fixture inference is never reported as Qwen evidence.

@@ -1,8 +1,16 @@
 # System relationships and graph provenance
 
-The generated graph/function index describes the overhaul commit pinned by [source manifest](graph/source-manifest.json), before the subsequent [agent bridge](AGENT_BRIDGE_PLAN.md). The manually maintained runtime diagram below includes that bridge; the generated explorer has not yet been regenerated for it. The [historical review](DEEP_CODE_REVIEW.md) describes an older baseline. The explorer is inspired by Graphify-style navigation; Graphify was not installed or run.
+The generated graph/function index pins audited application
+`cee565b24726a9c217eab21c8a75bac88cad8c9c`, including the universal OpenCode/MCP
+bridge, coding workspace and analysis utilities. The [source manifest](graph/source-manifest.json)
+records exact Git blob identities. See the [current audit](reviews/2026-10-21/workflow-audit/REVIEW.md)
+for workflow findings and [evidence](reviews/2026-10-21/workflow-audit/evidence.json)
+for actual execution checks. Graphify itself was not installed or run.
 
-Pinned overhaul inventory: **244 scripts, 1,626 declarations/callbacks, 2,603 static relationships, 9,207 unresolved call expressions and 59 manually reviewed runtime links**. Source commit: `43ff086bac02a42c6257c91db983a307ff345f15`. Unresolved expressions are not a defect count.
+Pinned inventory: **272 scripts, 1,917 declarations/callbacks, 3,260 static
+relationships, 11,363 unresolved call expressions and 74 manually reviewed runtime
+links**. Unresolved expressions are not a defect count; static no-caller symbols
+are not an automatic deletion list.
 
 ## Artifacts and meaning
 
@@ -15,7 +23,7 @@ Pinned overhaul inventory: **244 scripts, 1,626 declarations/callbacks, 2,603 st
 | [Function index](FUNCTION_INDEX.md) | Per-file declarations, complexity estimates, pinned source links |
 | [Review evidence](graph/review-evidence.json) | Fixture observations at the repaired revision; no real model/game |
 
-Calls are resolved lexical/self/import candidates, not proof of execution. References represent callback/value use. Imports are module dependencies, not calls to every function. Runtime links are explicitly reviewed architecture records. Unresolved calls remain unresolved rather than receiving invented targets. No-static-incoming symbols include framework hooks and externally invoked compatibility APIs; they are not an automatic deletion list. Embedded runtime programs and PowerShell control flow are not fully parsed. Analysis utilities are outside the application inventory.
+Calls are resolved lexical/self/import candidates, not proof of execution. References represent callback/value use. Imports are module dependencies, not calls to every function. Runtime links are explicitly reviewed architecture records. Unresolved calls remain unresolved rather than receiving invented targets. No-static-incoming symbols include framework hooks and externally invoked compatibility APIs; they are not an automatic deletion list. Analysis utilities are included in this manifest. Embedded/generated runtime programs and PowerShell control flow still require separate review.
 
 ## Active controller and ownership
 
@@ -25,7 +33,7 @@ flowchart TD
   API --> JOB["Admission and durable jobs"]
   JOB --> DIRECT["Ollama turn"]
   JOB --> AGENT["Managed OpenCode agent"]
-  SKILLS["Selected skill snapshots"] --> AGENT
+  SKILLS["Selected skill snapshots"] --> JOB
   AGENT --> BRIDGE["Task MCP proxy and host bridge"]
   BRIDGE --> TOOLS
   DIRECT --> TOOLS["ToolSession and receipts"]
@@ -35,6 +43,7 @@ flowchart TD
   REG --> BOX["Confined tests and preview"]
   AGENT --> BOX
   AGENT --> MODEL["Admitted local-model relay"]
+  DIRECT --> MODEL
   DIRECT --> FINAL["Atomic transcript and outcome"]
   AGENT --> FINAL
   FINAL --> SQL["SQLite"]
@@ -66,7 +75,8 @@ flowchart TD
 | SQLite snapshots | Model/runtime/access/sandbox configuration; authoritative dashboard state |
 | JSON compatibility helpers | Legacy import/explicit callers; not current configuration truth |
 | Durable task_jobs | Admission/recovery without replay; live output chunks remain memory-only |
-| Owned artifact files | Separate from SQLite; verified backup/restore and approved retention account for them |
+| Owned artifact files | Separate from SQLite; only explicitly listed backup/retention areas are covered |
+| Coding copies/metadata, MCP JSON | Excluded from current backup; require separate preservation/export and restored path review |
 
 ## Regeneration
 
@@ -84,4 +94,4 @@ Create a fresh Git-derived manifest for new source; never relabel old hashes. Fi
 
 ## Coding branch of the shared MCP path
 
-`dashboard_shell.js` sends the one-message coding flag through `Jobs.start` and `AgentBridge` into `ToolSession`. `tool_registry` supplies fixed schemas; `mcp_server` dispatches to `coding_workspace`. Proposals and file hashes feed `coding_activity` and the existing GUI cards. Test requests use `sandbox.coding_test` with an immutable read-only copy and a fixed Python/Node profile; test evidence returns to the same audited chat receipt. The managed OpenCode agent keeps native edits/shell denied and reads current coding files through MCP. This is a tool branch shared by selected skills, not a separate connector for ECC. The generated committed explorer remains at its explicitly stated pinned revision; CI produces a new graph artifact for each tested source.
+`dashboard_shell.js` sends the one-message coding flag through `Jobs.start` and `AgentBridge` into `ToolSession`. `tool_registry` supplies fixed schemas; `mcp_server` dispatches to `coding_workspace`. Proposals and file hashes feed `coding_activity` and the existing GUI cards. Test requests use `sandbox.coding_test` with an immutable read-only copy and a fixed Python/Node profile; test evidence returns to the same audited chat receipt. The managed OpenCode agent keeps native edits/shell denied and reads current coding files through MCP. This is a tool branch shared by selected skills, not a separate connector for ECC. The committed explorer now includes this branch and the task proxy. CI also produces a graph artifact for each tested source; reviewed runtime links remain distinct from static call candidates.

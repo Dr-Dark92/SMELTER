@@ -54,14 +54,16 @@ An enabled skill, detected executable, open port, successful save, or completed 
 
 ## Home acceptance and ECC
 
-Use the [home smoke test and GUI demo](docs/HOME_SMOKE_TEST.md) for exact PowerShell commands, known inputs, expected results and retained evidence. The default runner uses no live model; `--live --ecc --prepare-demo` opts into the existing home Qwen and creates a separate demo without overwriting the original V2.
+Use the [full smoke test](docs/FULL_SMOKE_TEST.md) for prerequisites, exact PowerShell commands, known inputs, expected results and retained evidence. Run `python tools/analysis/home_smoke.py --full --live --ecc --coding --prepare-demo` on the home rig to include direct Qwen, managed OpenCode/MCP/ECC coding, both fixed container test profiles, real HTTP/storage workflows, Chromium/GLB and CSS validation/preview. The default runner uses no live model. The [earlier home demo](docs/HOME_SMOKE_TEST.md) retains additional manual prompts. Existing V2 and production history are preserved.
+
+The audited application `cee565b24726a9c217eab21c8a75bac88cad8c9c` passed [Windows, Linux, browser and managed-container CI](https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827): 405 dashboard tests per OS, 32 setup, 18 analysis and 16 JS tests per OS, plus actual workflow/container/browser smokes. Model replies in CI were synthetic. Live Qwen, vision, native REA/Blender/media installations and rig performance remain local acceptance checks. See the [current audit progress](docs/reviews/2026-10-21/workflow-audit/PROGRESS.md).
 
 [ECC compatibility](docs/ECC_COMPATIBILITY.md) distinguishes supported selected instructions from its currently unconnected executable plugin, hooks, delegation and memory. Preview a commit-pinned three-skill pack with `python tools/dashboard/install_ecc_skills.py`; no installer or dependency code is executed.
 
 ## Documentation
 
 See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. The [ECC coding workspace](docs/ECC_CODING_WORKSPACE.md) adds separately approved multi-file patch/test/review copies. Arbitrary external MCP and the full ECC plugin remain future work.
-The [agent bridge handover](docs/AGENT_BRIDGE_HANDOVER_20261021.md) records the verified source, smoke evidence and remaining live-rig checks.
+The [current workflow handover](docs/reviews/2026-10-21/workflow-audit/HANDOVER.md) records the verified source, smoke evidence and remaining live-rig checks. The [earlier agent bridge handover](docs/AGENT_BRIDGE_HANDOVER_20261021.md) preserves milestone history.
 
 | File | Contents |
 | --- | --- |
@@ -72,6 +74,9 @@ The [agent bridge handover](docs/AGENT_BRIDGE_HANDOVER_20261021.md) records the 
 | [Function index](docs/FUNCTION_INDEX.md) | Every indexed application function/callback and script, source links and complexity estimates |
 | [Repair status / handover](docs/REPAIR_STATUS_20261021.md) | F01–F11 disposition, evidence, deployment limits and Windows rollout |
 | [Deep review](docs/DEEP_CODE_REVIEW.md) | Historical baseline findings, unused candidates and complexity analysis |
+| [Current workflow audit](docs/reviews/2026-10-21/workflow-audit/REVIEW.md) | W01–W13 repairs, layer coverage, function/call review and remaining limitations |
+| [Action plan](docs/reviews/2026-10-21/workflow-audit/ACTION_PLAN.md) | Remaining work with explicit acceptance criteria |
+| [Full smoke test](docs/FULL_SMOKE_TEST.md) | Home/office commands, automated expectations, manual demos and failure triage |
 | [Changelog](CHANGELOG.md) | Verified revision history and documentation scope |
 | [Patch notes](tools/dashboard/REVISION_PATCHES.md) | Configuration/access repair details and rollout constraints |
 
@@ -115,7 +120,7 @@ Settings now uses a navigation rail, a selectable skills table with expandable c
 
 Settings now includes confined execution, storage/recovery/backup and capabilities/project checks. Tasks keep an admitted model/settings/policy snapshot and durable lifecycle record; interrupted work is reported without replay. Artifact storage has conservative quotas and an explicitly reviewed retention plan. Database integrity checks are operator-triggered; dependency probes have a short timestamped cache.
 
-**Docker is optional for ordinary chat and existing fixed native inspections, but mandatory for frontend tests/preview and managed OpenCode.** There is no automatic image pull or unconfined fallback. Live Docker/Windows execution remains to be validated on the rig. See the [repair handover](docs/REPAIR_STATUS_20261021.md).
+**Docker is optional for ordinary chat and existing fixed native inspections, but mandatory for frontend tests/preview, coding tests and managed OpenCode.** There is no automatic image pull or unconfined fallback. Actual Linux containers and native Windows contracts passed the current CI; the home rig still needs live-model and driver/performance acceptance. See the [current handover](docs/reviews/2026-10-21/workflow-audit/HANDOVER.md).
 
 ## Office GUI work without Qwen
 

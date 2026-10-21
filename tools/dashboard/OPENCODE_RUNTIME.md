@@ -1,5 +1,9 @@
 # OpenCode agent: selected skills and approved MCP tools
 
+Verified application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`. See the
+[full smoke runbook](../../docs/FULL_SMOKE_TEST.md) and
+[current audit](../../docs/reviews/2026-10-21/workflow-audit/REVIEW.md).
+
 The primary GUI agent route is:
 
 GUI -> SMELTER admission/controller -> confined OpenCode -> local Ollama -> Qwen.
@@ -51,7 +55,10 @@ tool. No visual interpretation of GLB bytes is implied.
 ## Execution boundary
 
 The container has no network, host credentials or Docker socket. Its code
-snapshot stays read-only. Native source reads are scoped to README.md, tools/
+snapshot stays read-only. Readiness and every managed task snapshot the current
+original checkout; a plain task no longer depends on an existing V2. Live coding
+or frontend destination reads go through the approved MCP tools. Native source
+reads are scoped to README.md, tools/
 and skills/ with registered exclusions. Native edits, shell commands, subagents,
 external directories and unapproved MCP tools remain denied. Only exact
 `smelter_<tool>` permissions are admitted for the selected built-in descriptors.
@@ -59,8 +66,10 @@ external directories and unapproved MCP tools remain denied. Only exact
 A bounded Node stdio proxy inside the container passes MCP calls through a tmpfs
 queue. The host relay uses the existing ToolSession -> built-in Python MCP server
 path, with frozen location policy, grants, skill fingerprints, call budgets,
-write deduplication and audits. OpenCode's MCP RPC timeout is 150 seconds around
-the existing 120-second host MCP operation bound. CI delays the real tool call
+write deduplication and audits. Normal host operations have a 120-second bound
+and 135-second proxy wait. Frontend validation has a fixed 420-second host bound
+and 435-second proxy wait; the OpenCode MCP RPC envelope is 450 seconds. Active
+cleanup wait follows the admitted operation deadline. CI delays the real tool call
 by 12 seconds and verifies OpenCode acknowledges its completed result, guarding
 against a short RPC timeout silently losing the tool response.
 Preview launch remains owned by the dashboard;
@@ -119,4 +128,4 @@ server. Its HTTP Client remains available for injected tests only.
 
 ## ECC coding workflow
 
-The optional coding grant exposes prepare/list/read/propose/apply/test/review MCP tools for a new registered V2/coding/UUID copy. It never grants native shell or edits to the original. Code cards carry actual proposed/saved text. The fixed Python/Node test profile records RED/GREEN/ERROR with counts, exact tree/image hashes, retained logs and owned cleanup; later edits invalidate current GREEN. Coverage, Git checkpoints and ECC plugin hooks/delegation/memory remain unavailable. The coding test process is bounded at 70 seconds (60-second inner guard), leaving headroom inside the existing 120-second host MCP / 150-second RPC envelope.
+The optional coding grant exposes prepare/list/read/propose/apply/test/review MCP tools for a new registered V2/coding/UUID copy. It never grants native shell or edits to the original. Code cards carry actual proposed/saved text. The fixed Python/Node test profile records RED/GREEN/ERROR with counts, exact tree/image hashes, retained logs and owned cleanup; later edits invalidate current GREEN. Coverage, Git checkpoints and ECC plugin hooks/delegation/memory remain unavailable. The coding test process is bounded at 70 seconds (60-second inner guard), leaving headroom inside the 120-second host MCP / 135-second proxy operation and 450-second RPC envelope.

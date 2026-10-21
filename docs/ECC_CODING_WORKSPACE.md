@@ -1,5 +1,11 @@
 # ECC coding workspace
 
+Current verified application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`.
+Both Python and Node container profiles now have actual RED/GREEN/mixed-ERROR
+smoke evidence. See [full prerequisites and acceptance](FULL_SMOKE_TEST.md) and
+[current evidence](reviews/2026-10-21/workflow-audit/evidence.json). Live Qwen
+quality remains pending on the rig.
+
 This connects selected ECC coding instructions to real, scoped editing and
 testing tools. It does not load ECC's executable OpenCode plugin or expand native
 shell/delegation permissions.
@@ -84,9 +90,14 @@ capabilities, a non-root user, resource limits, no network, and owned cleanup.
 
 | Result | Meaning |
 |---|---|
-| RED | A real assertion failed; Python import/runner errors are excluded |
+| RED | A real assertion failed; Python and Node import/runner errors are excluded |
 | GREEN | Nonempty, non-skipped tests passed with an actual successful exit |
 | ERROR | Import error, missing dependency/runner, timeout, empty/all-skipped suite or invalid result |
+
+The trusted Node event reporter distinguishes assertion failures from import or
+runner errors. Any mixed assertion/import failure is ERROR, even if assertion
+text also appears in the log. The same result semantics are used by direct chat,
+OpenCode, built-in MCP and the GUI.
 
 RED is a completed test observation, not a transport failure. Both RED and GREEN
 logs are retained. Results record the exact tested tree, image ID, counts, exit
@@ -104,7 +115,7 @@ security. Review the actual test and implementation diff.
 With Docker, images, Ollama and the existing Qwen ready:
 
 ```powershell
-python tools\analysis\home_smoke.py --live --ecc --coding --prepare-demo
+python tools\analysis\home_smoke.py --full --live --ecc --coding --prepare-demo
 ```
 
 This adds a disposable coding task to the earlier bridge smoke. The task adds an

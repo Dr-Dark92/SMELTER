@@ -1,5 +1,17 @@
 # Home smoke test and demo — SMELTERV1
 
+For the complete current acceptance pack, use [FULL_SMOKE_TEST.md](FULL_SMOKE_TEST.md):
+
+```powershell
+python tools\analysis\home_smoke.py --full --live --ecc --coding --prepare-demo
+```
+
+It adds actual HTTP/MCP/storage workflows, Chromium/GLB, both coding profiles,
+CSS validation/preview and direct Qwen to the earlier bridge/coding smoke below.
+Read its prerequisite block first. This document retains the detailed manual
+prompts; the current verification record is in
+[workflow progress](reviews/2026-10-21/workflow-audit/PROGRESS.md).
+
 This tests **GUI → SMELTER → managed OpenCode → Ollama/Qwen**, with selected
 instructions and approved built-in tools carried through MCP. It separates
 transport correctness from model quality. A model's success claim is never a pass.

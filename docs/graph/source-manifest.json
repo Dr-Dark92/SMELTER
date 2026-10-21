@@ -1,10 +1,86 @@
 {
-  "commit": "43ff086bac02a42c6257c91db983a307ff345f15",
+  "commit": "cee565b24726a9c217eab21c8a75bac88cad8c9c",
   "repository": "Dr-Dark92/SMELTER",
   "files": [
     {
       "path": "automation/github-sync/Get-RepositoryState.ps1",
       "sha": "fe302c8a76dea801df7d31d4ee40b5677486e84a"
+    },
+    {
+      "path": "tools/analysis/build_system_graph.py",
+      "sha": "bd9ed4bf771fb628d9e356ea627ee590df717108"
+    },
+    {
+      "path": "tools/analysis/check_workbench_browser.mjs",
+      "sha": "2e35479566d250c066f6dd5f8e5159770ed73d8e"
+    },
+    {
+      "path": "tools/analysis/ci_graph_snapshot.py",
+      "sha": "79b28b6431a8f67b5dacc493069941e1edc1180a"
+    },
+    {
+      "path": "tools/analysis/home_demo.py",
+      "sha": "f6ecfc09c03d14429aa4642288b3e2e0a7987aca"
+    },
+    {
+      "path": "tools/analysis/home_smoke.py",
+      "sha": "4e93f4a294fdca0e5adf2077ff3d67b9110e607c"
+    },
+    {
+      "path": "tools/analysis/index_javascript.cjs",
+      "sha": "a1b787099822b0d6acc77a50ad19cab0dd90bbbd"
+    },
+    {
+      "path": "tools/analysis/offline_gui_fixture.py",
+      "sha": "17ddabda1ec9241f9e43f107c2e0c2b038a11b7c"
+    },
+    {
+      "path": "tools/analysis/render_system_graph.py",
+      "sha": "e34829e71c67820f2742f100a7f82b2a619a6345"
+    },
+    {
+      "path": "tools/analysis/reproduce_review_findings.py",
+      "sha": "9b853eefa7f27779df77c337fa9dae0ed56c9a33"
+    },
+    {
+      "path": "tools/analysis/review_runtime_layers.py",
+      "sha": "0c74957079ab1f062d799c6f27e0b2c4356031d6"
+    },
+    {
+      "path": "tools/analysis/smoke_agent_bridge.py",
+      "sha": "5dcb37fce2dc4bb948abe4d9dc0da0737ae5bfe8"
+    },
+    {
+      "path": "tools/analysis/smoke_coding_profiles.py",
+      "sha": "89d42f3cdfc54640141fc3b32054465905ebeb96"
+    },
+    {
+      "path": "tools/analysis/smoke_direct_chat.py",
+      "sha": "07b0bfce7e10eab9ec175b59815734ebc8f1aa85"
+    },
+    {
+      "path": "tools/analysis/smoke_ecc_coding.py",
+      "sha": "0f70b441a9ac90fa2096f894a3488cae7e95e298"
+    },
+    {
+      "path": "tools/analysis/smoke_frontend_workspace.py",
+      "sha": "8f068427751e46b8a16f02e63679987ac76b0e8b"
+    },
+    {
+      "path": "tools/analysis/smoke_workflows.py",
+      "sha": "2933acc69d60f5aaae3ab449b16c6148f245e063"
+    },
+    {
+      "path": "tools/analysis/test_ecc_coding_smoke.py",
+      "sha": "43678ef2f69bd7084330ef3bdea8478315d9fd7c"
+    },
+    {
+      "path": "tools/analysis/test_home_smoke.py",
+      "sha": "86133666db273b4d283f5d8af272bc8379cf491e"
+    },
+    {
+      "path": "tools/analysis/test_system_graph.py",
+      "sha": "0f80202ad27baf5e4419368b3ee56c53a8ae89a3"
     },
     {
       "path": "tools/bootstraps/Configure-Smelter-GpuProfile.ps1",
@@ -348,7 +424,7 @@
     },
     {
       "path": "tools/core/smelter_registry.py",
-      "sha": "385270045bd94387319fd7b2154ca272342349f0"
+      "sha": "64776bbc1d6948ba8a6ffcbc22042b6c82d04abc"
     },
     {
       "path": "tools/core/test_artifact_review_round15.py",
@@ -396,15 +472,19 @@
     },
     {
       "path": "tools/dashboard/access_policy.py",
-      "sha": "fc94a267f442195f2f26018f023065f2747b9de3"
+      "sha": "3b342f0767e1842d1e286bca3042db00d47b8792"
     },
     {
       "path": "tools/dashboard/access_ui.js",
-      "sha": "3651098b8bb3f5828af868543ca06bc150ac95f3"
+      "sha": "8007ea58781dc4d388bd290cdacc76f17f71772c"
     },
     {
       "path": "tools/dashboard/aero_classifier.py",
       "sha": "6535aedc17bb2bba6454358c4e339173e0fb9acd"
+    },
+    {
+      "path": "tools/dashboard/agent_bridge.py",
+      "sha": "b985930f2954b540f4a3a4b897500c3afdf86aa8"
     },
     {
       "path": "tools/dashboard/attachments_ui.js",
@@ -416,23 +496,31 @@
     },
     {
       "path": "tools/dashboard/capability_catalog.py",
-      "sha": "66bccd5c86d1c53ad9ca8c2963404d5754f7fa96"
+      "sha": "4134e21ebbe79043cee71ab11612a90c23f36167"
     },
     {
       "path": "tools/dashboard/chat_inference.py",
-      "sha": "218456a1f5b24fdba7053c22f91a1a33198c4ef9"
+      "sha": "c1d81f70408a4ef799dffbc5508aca8dd6389ce6"
     },
     {
       "path": "tools/dashboard/chat_jobs.py",
-      "sha": "f733cc08942397d8ed32e7608c6cb26ab8b471a1"
+      "sha": "882386b405a430620e48205f19c7c425a96a97b8"
     },
     {
       "path": "tools/dashboard/chat_renderer.js",
-      "sha": "94976d8eb3b7b4dbfa858a822ec8136f10f7d789"
+      "sha": "3ab4d80a63856e28fec9ccb43e64a0fa20865670"
     },
     {
       "path": "tools/dashboard/chats.py",
       "sha": "7442374d296f4bf36b36eb851c61e642e514b342"
+    },
+    {
+      "path": "tools/dashboard/coding_activity.py",
+      "sha": "b1cb87ebc27082c8cf6b644122b5bb3a8c3c920d"
+    },
+    {
+      "path": "tools/dashboard/coding_workspace.py",
+      "sha": "d3b3155768e2e8cdaaea63d0c97c83bfb6dc7a37"
     },
     {
       "path": "tools/dashboard/config_store.py",
@@ -444,7 +532,7 @@
     },
     {
       "path": "tools/dashboard/dashboard.py",
-      "sha": "5d7a2cdd458981a3036dcec9268fddf952ce8803"
+      "sha": "97bed3aedfbfec3e604a4ed83d7b513191c88875"
     },
     {
       "path": "tools/dashboard/dashboard_api.py",
@@ -452,11 +540,11 @@
     },
     {
       "path": "tools/dashboard/dashboard_shell.js",
-      "sha": "723d0803d8836be8c8efb1bdeb9728e7c4199bda"
+      "sha": "390dde3c495c17f573896d70bf1a9d5a55d563c1"
     },
     {
       "path": "tools/dashboard/database.py",
-      "sha": "6b4f897d1f21f70e1f3018a4c4d43bb4d072e98e"
+      "sha": "d23e6836393fbce3beea4141ca1fe0db6afe34f9"
     },
     {
       "path": "tools/dashboard/execution.py",
@@ -472,7 +560,7 @@
     },
     {
       "path": "tools/dashboard/file_activity.js",
-      "sha": "4e7a0996d8bc6ee4407448a4a19fc2eab89cfe3e"
+      "sha": "09d4fe7ddff1acd8eda8e5b4537d498dee147d51"
     },
     {
       "path": "tools/dashboard/file_activity.py",
@@ -484,7 +572,11 @@
     },
     {
       "path": "tools/dashboard/github_skill_discovery.py",
-      "sha": "3febf7ab7c4cf1ab21281890082ebfad9689f9cb"
+      "sha": "c082543c98e67519c03c82e739441220598c28ff"
+    },
+    {
+      "path": "tools/dashboard/install_ecc_skills.py",
+      "sha": "80e41aef9716d62cb7183d0f002aa6d29aad3f8e"
     },
     {
       "path": "tools/dashboard/install_war_skills.py",
@@ -508,19 +600,19 @@
     },
     {
       "path": "tools/dashboard/maintenance.py",
-      "sha": "8c3766ada96934c3a0babbe7935f051a341f1e7c"
+      "sha": "80d382c928707eacf1aab43d2a7ee0dc598423ba"
     },
     {
       "path": "tools/dashboard/mcp_connections.py",
-      "sha": "e8aed24fae7f8402de99573802dd333a44202699"
+      "sha": "d864233539e9bcb0d4b425e0d3c011686c0f70bb"
     },
     {
       "path": "tools/dashboard/mcp_server.py",
-      "sha": "655ba7f3e3001037479ff10d028b8923c2a19669"
+      "sha": "e4d30924b79d3fc216bd18dc106a372b352528de"
     },
     {
       "path": "tools/dashboard/mcp_ui.js",
-      "sha": "49d27b4ccb6950028fd6108a78d3d5e532519506"
+      "sha": "796c8595dfdde7440d41a26059662433935ab88b"
     },
     {
       "path": "tools/dashboard/media.py",
@@ -556,11 +648,15 @@
     },
     {
       "path": "tools/dashboard/opencode_agent_ui.js",
-      "sha": "5fc3af00d16a537b6a520010cfc5ee544f287758"
+      "sha": "f452a31079d988471a0a71419b2d10c85efc559b"
     },
     {
       "path": "tools/dashboard/opencode_deploy.py",
       "sha": "d23c34e6f7fe828467d9b36de9fee218acf1e66d"
+    },
+    {
+      "path": "tools/dashboard/opencode_mcp_proxy.mjs",
+      "sha": "f97be68118cbbad44b4c05f4c88403ba49c47977"
     },
     {
       "path": "tools/dashboard/opencode_provider.py",
@@ -568,11 +664,11 @@
     },
     {
       "path": "tools/dashboard/opencode_runtime.py",
-      "sha": "9beb6407da9b70de57c579d5d3fd94a0321adf37"
+      "sha": "11453e39d08675e7ff77f2ee1681b4a6772ba054"
     },
     {
       "path": "tools/dashboard/opencode_sandbox.py",
-      "sha": "b1e94bef8310408df7b84eaf0fc94ab6cac4f328"
+      "sha": "a8e2d755becd8a2bc9ab2aabdd014d810cc78136"
     },
     {
       "path": "tools/dashboard/opencode_validate.py",
@@ -580,7 +676,7 @@
     },
     {
       "path": "tools/dashboard/operations_ui.js",
-      "sha": "acd063ac6e5c4837380c91fff2794d19cc143062"
+      "sha": "3b6dea8417fe70e8e647e7d17ddec64bd85e9d6c"
     },
     {
       "path": "tools/dashboard/process_runner.py",
@@ -592,7 +688,7 @@
     },
     {
       "path": "tools/dashboard/python_tools.py",
-      "sha": "8020978b860da6ea81978bd149aefb0b07e77389"
+      "sha": "8d47f750ed97705ea078437832e2f15879ef8b1e"
     },
     {
       "path": "tools/dashboard/rea_connection.py",
@@ -608,11 +704,11 @@
     },
     {
       "path": "tools/dashboard/runtime_settings.py",
-      "sha": "8bddca1849f60272fc100404fdb78e7979cdc78a"
+      "sha": "250c9bebeb4fe81ba712018188ace80a9052d93a"
     },
     {
       "path": "tools/dashboard/sandbox.py",
-      "sha": "8ef9f94e8c9836c317731c7ee5c2bdf6669fadf7"
+      "sha": "06f2ecbab08866568738735f2a1821d051fd1631"
     },
     {
       "path": "tools/dashboard/sandbox_preview.py",
@@ -628,11 +724,11 @@
     },
     {
       "path": "tools/dashboard/skill_collections.py",
-      "sha": "976784e2356b3eee55dc50893a6f046f3a0689e0"
+      "sha": "209476c22bd98e036ca0e4cc5ecb3b81ac83bd75"
     },
     {
       "path": "tools/dashboard/skill_context.py",
-      "sha": "e922f674e967fbe6e3ef2b656f77d3fce6d2451c"
+      "sha": "6515c6241cd8b2f3fcf31ce3dccafc2a634b15b1"
     },
     {
       "path": "tools/dashboard/skill_duplicates.py",
@@ -640,7 +736,7 @@
     },
     {
       "path": "tools/dashboard/skill_manager.py",
-      "sha": "4ea8df9ff4f7ea25e39210959478c385021b925d"
+      "sha": "b313f650bf9f7c0d5f4fa243c63cf82d57c24835"
     },
     {
       "path": "tools/dashboard/skill_manifest.py",
@@ -656,11 +752,11 @@
     },
     {
       "path": "tools/dashboard/skills_catalog.py",
-      "sha": "51c605ffe9a08e5ad45677f1e4b07dab3505ba95"
+      "sha": "8d34063194b13a6bf9d55d93aaf6e3ef7e31cc89"
     },
     {
       "path": "tools/dashboard/skills_ui.js",
-      "sha": "14cccb954906136799f7e706cc1296d3a0667588"
+      "sha": "ee7425e2fa4cbbeba447ba07b698e691787c289d"
     },
     {
       "path": "tools/dashboard/start_dashboard.ps1",
@@ -687,6 +783,10 @@
       "sha": "eb08f04973599312e10373ec90b8870e9f2e8519"
     },
     {
+      "path": "tools/dashboard/test_agent_bridge.py",
+      "sha": "b4ec34dc0a1ab0688525bf95545b61362fdb93f4"
+    },
+    {
       "path": "tools/dashboard/test_blender.py",
       "sha": "4e1d3e5ea0120f2bd23df607073291d265dc436b"
     },
@@ -700,11 +800,15 @@
     },
     {
       "path": "tools/dashboard/test_chat_renderer.js",
-      "sha": "2a08d295a3f2ab0316dc0130577b3ccc662ee586"
+      "sha": "a77682b77c4d65f08f35bd22767c23c39c6aa0cf"
     },
     {
       "path": "tools/dashboard/test_chats.py",
       "sha": "ae6e03ff418382ed4dc1ada33dd61e0b358f5ae2"
+    },
+    {
+      "path": "tools/dashboard/test_coding_workspace.py",
+      "sha": "371fa059e3f4d3d025e13a896507466c9514cc56"
     },
     {
       "path": "tools/dashboard/test_config_store.py",
@@ -740,11 +844,11 @@
     },
     {
       "path": "tools/dashboard/test_frontend_workspace.py",
-      "sha": "c7e64834dad1bca012bb51954be6b3ca69174b51"
+      "sha": "761b5d19f5efa569b3f5f49489feb07e8af27526"
     },
     {
       "path": "tools/dashboard/test_github_skill_discovery.py",
-      "sha": "4dae3a335b845a710b062aa6a04695917a3289a9"
+      "sha": "927cea418aa80f494413702568829b046a9cdc85"
     },
     {
       "path": "tools/dashboard/test_locations.py",
@@ -887,12 +991,20 @@
       "sha": "1fd870e17c653898d50e93a1ac4c146f969679e6"
     },
     {
+      "path": "tools/dashboard/test_workflow_audit.py",
+      "sha": "126fb375179b69b5051984436d6dc0c5c402cfc7"
+    },
+    {
       "path": "tools/dashboard/test_workflows.py",
       "sha": "37cc2f93d77998a9cfc5de88a3107830be09e8e4"
     },
     {
+      "path": "tools/dashboard/tool_contract.py",
+      "sha": "d5569640cb7fba8fd9c4ae871fe60c49a5a658df"
+    },
+    {
       "path": "tools/dashboard/tool_registry.py",
-      "sha": "edfcb23a750100f194975da435fac73321519ab8"
+      "sha": "3585cb2158098f240d9f1ad478f1f5a5de00a846"
     },
     {
       "path": "tools/dashboard/turntable.js",

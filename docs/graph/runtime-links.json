@@ -411,5 +411,110 @@
     "type": "runtime",
     "confidence": "manual-source-review",
     "evidence": "Applied configuration refreshes the configured-model chip and keeps full next-task context in Settings"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/skill_context.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Direct admission resolves and freezes selected instruction text and hashes before worker start"
+  },
+  {
+    "source": "tools/dashboard/chat_jobs.py",
+    "target": "tools/dashboard/agent_bridge.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "OpenCode admission constructs the per-task frozen skills, descriptors and authority bridge"
+  },
+  {
+    "source": "tools/dashboard/opencode_sandbox.py",
+    "target": "tools/dashboard/opencode_mcp_proxy.mjs",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Managed runtime copies the fixed stdio proxy and its bounded manifest into the no-network container"
+  },
+  {
+    "source": "tools/dashboard/opencode_mcp_proxy.mjs",
+    "target": "tools/dashboard/agent_bridge.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed tmpfs request/reply queue relays approved MCP calls with per-operation deadlines"
+  },
+  {
+    "source": "tools/dashboard/agent_bridge.py",
+    "target": "tools/dashboard/python_tools.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Host bridge reuses the admitted ToolSession for policy, audit and actual built-in dispatch"
+  },
+  {
+    "source": "tools/dashboard/agent_bridge.py",
+    "target": "tools/dashboard/skill_context.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Bridge snapshots actual selected instruction text and records exact hashes"
+  },
+  {
+    "source": "tools/dashboard/tool_registry.py",
+    "target": "tools/dashboard/coding_workspace.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Seven fixed schemas dispatch prepare/list/read/propose/apply/test/review to the shared coding controller"
+  },
+  {
+    "source": "tools/dashboard/coding_workspace.py",
+    "target": "tools/dashboard/sandbox.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Fixed Python/Node tests use an immutable read-only tree, installed image IDs and owned no-network containers"
+  },
+  {
+    "source": "tools/dashboard/python_tools.py",
+    "target": "tools/dashboard/coding_activity.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Coding grant wraps file activity with actual proposal/apply previews and confirmed saved hashes"
+  },
+  {
+    "source": "tools/dashboard/coding_activity.py",
+    "target": "tools/dashboard/file_activity.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Controller coding file-state events are rendered as existing expandable original/proposed/saved cards"
+  },
+  {
+    "source": "tools/dashboard/chat_inference.py",
+    "target": "tools/dashboard/tool_contract.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Direct completion uses shared result failure semantics; expected RED differs from runner ERROR"
+  },
+  {
+    "source": "tools/dashboard/opencode_runtime.py",
+    "target": "tools/dashboard/tool_contract.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Managed completion uses the same controller tool result semantics"
+  },
+  {
+    "source": "tools/dashboard/mcp_server.py",
+    "target": "tools/dashboard/tool_contract.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "MCP isError uses the same fixed result classification as both engines"
+  },
+  {
+    "source": "tools/dashboard/agent_bridge.py",
+    "target": "tools/dashboard/tool_contract.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Bridge operation deadlines and failure classification use the shared contract"
+  },
+  {
+    "source": "tools/dashboard/chat_renderer.js",
+    "target": "tools/dashboard/dashboard_shell.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Tool-state classification drives ERROR, expected RED and stale-review presentation"
   }
 ]

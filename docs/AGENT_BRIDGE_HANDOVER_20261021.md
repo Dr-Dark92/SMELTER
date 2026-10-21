@@ -1,5 +1,13 @@
 # OpenCode / skills / MCP handover — 2026-10-21
 
+**Current handover:** [workflow audit handover](reviews/2026-10-21/workflow-audit/HANDOVER.md).
+Application `cee565b24726a9c217eab21c8a75bac88cad8c9c` passed the final Windows,
+Linux, Chromium and actual container run. Use [FULL_SMOKE_TEST.md](FULL_SMOKE_TEST.md)
+for home acceptance. The milestone sections below preserve their original
+versions, counts and timeout observations; they are historical, not current
+configuration. Current MCP bounds are 120s/135s normally, 420s/435s for frontend
+validation, within a 450s OpenCode RPC envelope.
+
 The first bridge milestone is implemented. The GUI now defaults to the explicit
 OpenCode agent route, forwarding selected skills and per-message tool grants.
 Direct Ollama chat remains selectable. The backend's legacy incoming engine

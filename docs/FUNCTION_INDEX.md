@@ -1,12 +1,313 @@
 # Function and script index
 
-Pinned application source: `43ff086bac02a42c6257c91db983a307ff345f15`. 244 scripts and 1626 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.
+Pinned source: `cee565b24726a9c217eab21c8a75bac88cad8c9c`. 272 scripts and 1917 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded programs are not independently parsed. The source manifest defines the exact included application, legacy and analysis scripts.
 
 ## automation/github-sync/Get-RepositoryState.ps1
 
 Script/module inventory; inspect pinned source for complete behavior.
 
 No named declarations indexed; inspect top-level script flow.
+
+## tools/analysis/build_system_graph.py
+
+Static source inventory, lexical Python relationships, and review metrics.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `is_test` | [L17](../tools/analysis/build_system_graph.py#L17) | 2 | 1 | 2 / 0 |
+| `owned_walk` | [L21](../tools/analysis/build_system_graph.py#L21) | 6 | 3 | 3 / 0 |
+| `build` | [L29](../tools/analysis/build_system_graph.py#L29) | 131 | 47 | 5 / 0 |
+| `build.visit` | [L43](../tools/analysis/build_system_graph.py#L43) | 17 | 9 | 1 / 0 |
+| `build.module_path` | [L66](../tools/analysis/build_system_graph.py#L66) | 4 | 4 | 0 / 0 |
+| `build.add` | [L85](../tools/analysis/build_system_graph.py#L85) | 4 | 2 | 0 / 0 |
+| `build.resolve` | [L99](../tools/analysis/build_system_graph.py#L99) | 22 | 21 | 0 / 0 |
+| `write_index` | [L162](../tools/analysis/build_system_graph.py#L162) | 12 | 8 | 1 / 0 |
+| `main` | [L176](../tools/analysis/build_system_graph.py#L176) | 25 | 13 | 1 / 0 |
+
+## tools/analysis/check_workbench_browser.mjs
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `<callback>` | [L18](../tools/analysis/check_workbench_browser.mjs#L18) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L18](../tools/analysis/check_workbench_browser.mjs#L18) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L18](../tools/analysis/check_workbench_browser.mjs#L18) | 1 | 2 | 0 / 0 |
+| `delay` | [L19](../tools/analysis/check_workbench_browser.mjs#L19) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L19](../tools/analysis/check_workbench_browser.mjs#L19) | 1 | 1 | 0 / 0 |
+| `syntheticGlb` | [L20](../tools/analysis/check_workbench_browser.mjs#L20) | 14 | 1 | 0 / 0 |
+| `<callback>` | [L28](../tools/analysis/check_workbench_browser.mjs#L28) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L36](../tools/analysis/check_workbench_browser.mjs#L36) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L36](../tools/analysis/check_workbench_browser.mjs#L36) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L40](../tools/analysis/check_workbench_browser.mjs#L40) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L40](../tools/analysis/check_workbench_browser.mjs#L40) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L47](../tools/analysis/check_workbench_browser.mjs#L47) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L47](../tools/analysis/check_workbench_browser.mjs#L47) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L48](../tools/analysis/check_workbench_browser.mjs#L48) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L48](../tools/analysis/check_workbench_browser.mjs#L48) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L50](../tools/analysis/check_workbench_browser.mjs#L50) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L53](../tools/analysis/check_workbench_browser.mjs#L53) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L54](../tools/analysis/check_workbench_browser.mjs#L54) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L56](../tools/analysis/check_workbench_browser.mjs#L56) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L61](../tools/analysis/check_workbench_browser.mjs#L61) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L62](../tools/analysis/check_workbench_browser.mjs#L62) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L64](../tools/analysis/check_workbench_browser.mjs#L64) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L64](../tools/analysis/check_workbench_browser.mjs#L64) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L66](../tools/analysis/check_workbench_browser.mjs#L66) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L67](../tools/analysis/check_workbench_browser.mjs#L67) | 4 | 1 | 0 / 0 |
+| `<callback>` | [L73](../tools/analysis/check_workbench_browser.mjs#L73) | 8 | 1 | 0 / 0 |
+| `<callback>` | [L79](../tools/analysis/check_workbench_browser.mjs#L79) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L94](../tools/analysis/check_workbench_browser.mjs#L94) | 1 | 1 | 0 / 0 |
+| `intercept` | [L97](../tools/analysis/check_workbench_browser.mjs#L97) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L98](../tools/analysis/check_workbench_browser.mjs#L98) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L102](../tools/analysis/check_workbench_browser.mjs#L102) | 1 | 1 | 0 / 0 |
+| `load` | [L103](../tools/analysis/check_workbench_browser.mjs#L103) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L104](../tools/analysis/check_workbench_browser.mjs#L104) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L105](../tools/analysis/check_workbench_browser.mjs#L105) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L107](../tools/analysis/check_workbench_browser.mjs#L107) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L109](../tools/analysis/check_workbench_browser.mjs#L109) | 1 | 1 | 0 / 0 |
+| `v.toBlob` | [L109](../tools/analysis/check_workbench_browser.mjs#L109) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L109](../tools/analysis/check_workbench_browser.mjs#L109) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L109](../tools/analysis/check_workbench_browser.mjs#L109) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L109](../tools/analysis/check_workbench_browser.mjs#L109) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L110](../tools/analysis/check_workbench_browser.mjs#L110) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L111](../tools/analysis/check_workbench_browser.mjs#L111) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L111](../tools/analysis/check_workbench_browser.mjs#L111) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L112](../tools/analysis/check_workbench_browser.mjs#L112) | 1 | 1 | 0 / 0 |
+| `v.toBlob` | [L112](../tools/analysis/check_workbench_browser.mjs#L112) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L112](../tools/analysis/check_workbench_browser.mjs#L112) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L112](../tools/analysis/check_workbench_browser.mjs#L112) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L112](../tools/analysis/check_workbench_browser.mjs#L112) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L113](../tools/analysis/check_workbench_browser.mjs#L113) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L114](../tools/analysis/check_workbench_browser.mjs#L114) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L114](../tools/analysis/check_workbench_browser.mjs#L114) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L114](../tools/analysis/check_workbench_browser.mjs#L114) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L114](../tools/analysis/check_workbench_browser.mjs#L114) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L115](../tools/analysis/check_workbench_browser.mjs#L115) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L119](../tools/analysis/check_workbench_browser.mjs#L119) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L120](../tools/analysis/check_workbench_browser.mjs#L120) | 1 | 1 | 0 / 0 |
+
+## tools/analysis/ci_graph_snapshot.py
+
+Build a Git-pinned source graph in CI; never import analyzed application code.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `main` | [L11](../tools/analysis/ci_graph_snapshot.py#L11) | 35 | 12 | 1 / 0 |
+| `main.run` | [L31](../tools/analysis/ci_graph_snapshot.py#L31) | 1 | 1 | 0 / 0 |
+
+## tools/analysis/home_demo.py
+
+Known inputs and isolated GUI workspace for an operator-run home demo.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `animated_glb` | [L13](../tools/analysis/home_demo.py#L13) | 31 | 3 | 2 / 0 |
+| `create_fixtures` | [L46](../tools/analysis/home_demo.py#L46) | 22 | 2 | 4 / 0 |
+| `prepare_demo` | [L70](../tools/analysis/home_demo.py#L70) | 47 | 8 | 2 / 0 |
+
+## tools/analysis/home_smoke.py
+
+Operator smoke runner. Default is offline contracts; --live opts into Qwen.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `redact` | [L28](../tools/analysis/home_smoke.py#L28) | 4 | 1 | 5 / 0 |
+| `read_local_json` | [L34](../tools/analysis/home_smoke.py#L34) | 9 | 3 | 2 / 0 |
+| `configured_images` | [L45](../tools/analysis/home_smoke.py#L45) | 4 | 2 | 1 / 0 |
+| `preflight` | [L51](../tools/analysis/home_smoke.py#L51) | 79 | 36 | 1 / 0 |
+| `preflight.record` | [L53](../tools/analysis/home_smoke.py#L53) | 2 | 1 | 0 / 0 |
+| `contracts` | [L132](../tools/analysis/home_smoke.py#L132) | 4 | 3 | 1 / 0 |
+| `phase` | [L138](../tools/analysis/home_smoke.py#L138) | 19 | 4 | 1 / 0 |
+| `write_report` | [L159](../tools/analysis/home_smoke.py#L159) | 20 | 3 | 1 / 0 |
+| `execute` | [L181](../tools/analysis/home_smoke.py#L181) | 123 | 65 | 5 / 0 |
+| `main` | [L306](../tools/analysis/home_smoke.py#L306) | 20 | 5 | 1 / 0 |
+
+## tools/analysis/index_javascript.cjs
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `<callback>` | [L8](../tools/analysis/index_javascript.cjs#L8) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L8](../tools/analysis/index_javascript.cjs#L8) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L18](../tools/analysis/index_javascript.cjs#L18) | 1 | 1 | 0 / 0 |
+| `Function` | [L23](../tools/analysis/index_javascript.cjs#L23) | 6 | 8 | 0 / 0 |
+| `owner` | [L29](../tools/analysis/index_javascript.cjs#L29) | 1 | 4 | 3 / 0 |
+| `target` | [L30](../tools/analysis/index_javascript.cjs#L30) | 1 | 5 | 2 / 0 |
+| `IfStatement\|ConditionalExpression\|ForStatement\|WhileStatement\|DoWhileStatement\|ForInStatement\|ForOfStatement\|CatchClause\|LogicalExpression\|SwitchCase` | [L32](../tools/analysis/index_javascript.cjs#L32) | 1 | 2 | 0 / 0 |
+| `CallExpression` | [L33](../tools/analysis/index_javascript.cjs#L33) | 4 | 3 | 0 / 0 |
+| `ReferencedIdentifier` | [L37](../tools/analysis/index_javascript.cjs#L37) | 1 | 5 | 0 / 0 |
+
+## tools/analysis/offline_gui_fixture.py
+
+Temporary GUI fixture: synthetic replies, no Ollama/OpenCode/Docker service use.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `serve` | [L24](../tools/analysis/offline_gui_fixture.py#L24) | 97 | 11 | 1 / 0 |
+| `serve.discovery` | [L45](../tools/analysis/offline_gui_fixture.py#L45) | 6 | 3 | 0 / 0 |
+| `serve.discovery_repository` | [L51](../tools/analysis/offline_gui_fixture.py#L51) | 8 | 5 | 0 / 0 |
+| `serve.fixture_opener` | [L59](../tools/analysis/offline_gui_fixture.py#L59) | 3 | 1 | 0 / 0 |
+| `serve.scan` | [L67](../tools/analysis/offline_gui_fixture.py#L67) | 1 | 2 | 0 / 0 |
+| `serve.system` | [L68](../tools/analysis/offline_gui_fixture.py#L68) | 1 | 1 | 0 / 0 |
+| `serve.infer` | [L69](../tools/analysis/offline_gui_fixture.py#L69) | 10 | 9 | 0 / 0 |
+| `serve.FixtureHandler._get_page` | [L105](../tools/analysis/offline_gui_fixture.py#L105) | 3 | 1 | 0 / 0 |
+| `stop` | [L125](../tools/analysis/offline_gui_fixture.py#L125) | 1 | 1 | 0 / 1 |
+
+## tools/analysis/render_system_graph.py
+
+Render the static graph into a self-contained, offline relationship explorer.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `main` | [L8](../tools/analysis/render_system_graph.py#L8) | 6 | 1 | 1 / 0 |
+
+## tools/analysis/reproduce_review_findings.py
+
+Opt-in, fixture-only evidence for documented review findings; no real model.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `main` | [L15](../tools/analysis/reproduce_review_findings.py#L15) | 39 | 1 | 1 / 0 |
+| `main.cancelled_at_final` | [L39](../tools/analysis/reproduce_review_findings.py#L39) | 4 | 2 | 0 / 0 |
+| `main.opener` | [L49](../tools/analysis/reproduce_review_findings.py#L49) | 1 | 1 | 0 / 0 |
+
+## tools/analysis/review_runtime_layers.py
+
+Reproduce runtime-review findings in disposable fixtures; no model/Docker calls.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `review` | [L18](../tools/analysis/review_runtime_layers.py#L18) | 92 | 10 | 1 / 0 |
+| `review.denied` | [L40](../tools/analysis/review_runtime_layers.py#L40) | 3 | 2 | 0 / 0 |
+| `review.Stream.log_message` | [L50](../tools/analysis/review_runtime_layers.py#L50) | 1 | 1 | 0 / 0 |
+| `review.Stream.do_POST` | [L51](../tools/analysis/review_runtime_layers.py#L51) | 2 | 1 | 0 / 0 |
+| `review.fake_infer` | [L63](../tools/analysis/review_runtime_layers.py#L63) | 5 | 2 | 0 / 0 |
+| `review.fail_marker` | [L78](../tools/analysis/review_runtime_layers.py#L78) | 3 | 2 | 0 / 0 |
+| `review.worker` | [L91](../tools/analysis/review_runtime_layers.py#L91) | 2 | 1 | 0 / 0 |
+| `review.probe` | [L94](../tools/analysis/review_runtime_layers.py#L94) | 1 | 1 | 0 / 0 |
+| `review.post` | [L97](../tools/analysis/review_runtime_layers.py#L97) | 4 | 3 | 0 / 0 |
+
+## tools/analysis/smoke_agent_bridge.py
+
+Exercise real OpenCode + stdio MCP + saved bytes in disposable state.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `smoke_state` | [L42](../tools/analysis/smoke_agent_bridge.py#L42) | 61 | 20 | 3 / 0 |
+| `ModelFixture.log_message` | [L108](../tools/analysis/smoke_agent_bridge.py#L108) | 1 | 1 | 0 / 0 |
+| `ModelFixture.respond` | [L109](../tools/analysis/smoke_agent_bridge.py#L109) | 4 | 3 | 2 / 0 |
+| `ModelFixture.do_GET` | [L113](../tools/analysis/smoke_agent_bridge.py#L113) | 3 | 2 | 0 / 0 |
+| `ModelFixture.do_POST` | [L116](../tools/analysis/smoke_agent_bridge.py#L116) | 31 | 13 | 0 / 0 |
+| `port_free` | [L149](../tools/analysis/smoke_agent_bridge.py#L149) | 11 | 4 | 5 / 0 |
+| `model_fixture` | [L163](../tools/analysis/smoke_agent_bridge.py#L163) | 8 | 2 | 1 / 0 |
+| `process_fixture` | [L174](../tools/analysis/smoke_agent_bridge.py#L174) | 65 | 16 | 1 / 0 |
+| `process_fixture.dispatch` | [L194](../tools/analysis/smoke_agent_bridge.py#L194) | 11 | 5 | 0 / 0 |
+| `run` | [L241](../tools/analysis/smoke_agent_bridge.py#L241) | 73 | 39 | 1 / 0 |
+| `run.delayed` | [L279](../tools/analysis/smoke_agent_bridge.py#L279) | 3 | 1 | 0 / 0 |
+| `main` | [L316](../tools/analysis/smoke_agent_bridge.py#L316) | 15 | 2 | 1 / 0 |
+
+## tools/analysis/smoke_coding_profiles.py
+
+Real MCP + Python/Node no-network container profiles; no model inference.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `smoke` | [L21](../tools/analysis/smoke_coding_profiles.py#L21) | 69 | 10 | 1 / 0 |
+| `smoke.call` | [L43](../tools/analysis/smoke_coding_profiles.py#L43) | 4 | 2 | 2 / 0 |
+| `smoke.change` | [L50](../tools/analysis/smoke_coding_profiles.py#L50) | 8 | 3 | 0 / 0 |
+| `smoke.test` | [L58](../tools/analysis/smoke_coding_profiles.py#L58) | 6 | 4 | 0 / 0 |
+| `main` | [L92](../tools/analysis/smoke_coding_profiles.py#L92) | 9 | 2 | 1 / 0 |
+
+## tools/analysis/smoke_direct_chat.py
+
+Explicit live direct-Ollama tool smoke in disposable state. Never starts services.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `smoke` | [L14](../tools/analysis/smoke_direct_chat.py#L14) | 41 | 8 | 1 / 0 |
+| `main` | [L57](../tools/analysis/smoke_direct_chat.py#L57) | 8 | 2 | 1 / 0 |
+
+## tools/analysis/smoke_ecc_coding.py
+
+Real confined OpenCode/MCP RED -> fix -> GREEN with pinned ECC instructions.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `tool_results` | [L35](../tools/analysis/smoke_ecc_coding.py#L35) | 19 | 2 | 2 / 0 |
+| `tool_results.find` | [L37](../tools/analysis/smoke_ecc_coding.py#L37) | 16 | 12 | 1 / 0 |
+| `next_call` | [L56](../tools/analysis/smoke_ecc_coding.py#L56) | 22 | 16 | 3 / 0 |
+| `CodingFixture.do_POST` | [L83](../tools/analysis/smoke_ecc_coding.py#L83) | 33 | 12 | 0 / 0 |
+| `model_fixture` | [L119](../tools/analysis/smoke_ecc_coding.py#L119) | 10 | 2 | 1 / 0 |
+| `run` | [L131](../tools/analysis/smoke_ecc_coding.py#L131) | 60 | 26 | 1 / 0 |
+| `main` | [L193](../tools/analysis/smoke_ecc_coding.py#L193) | 12 | 2 | 1 / 0 |
+
+## tools/analysis/smoke_frontend_workspace.py
+
+Actual CSS/MCP/test/preview smoke, with disposable code/DB and existing images.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `smoke` | [L16](../tools/analysis/smoke_frontend_workspace.py#L16) | 83 | 19 | 1 / 0 |
+| `smoke.call` | [L42](../tools/analysis/smoke_frontend_workspace.py#L42) | 5 | 2 | 0 / 0 |
+| `main` | [L101](../tools/analysis/smoke_frontend_workspace.py#L101) | 9 | 2 | 1 / 0 |
+
+## tools/analysis/smoke_workflows.py
+
+Actual loopback HTTP, MCP, SQLite, GLB and recovery smoke without model inference.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `smoke` | [L29](../tools/analysis/smoke_workflows.py#L29) | 169 | 32 | 1 / 0 |
+| `smoke.checked` | [L35](../tools/analysis/smoke_workflows.py#L35) | 3 | 3 | 0 / 0 |
+| `smoke.infer` | [L59](../tools/analysis/smoke_workflows.py#L59) | 18 | 12 | 0 / 0 |
+| `smoke.http` | [L88](../tools/analysis/smoke_workflows.py#L88) | 13 | 5 | 1 / 0 |
+| `smoke.ask` | [L101](../tools/analysis/smoke_workflows.py#L101) | 9 | 3 | 0 / 0 |
+| `main` | [L200](../tools/analysis/smoke_workflows.py#L200) | 7 | 2 | 1 / 0 |
+
+## tools/analysis/test_ecc_coding_smoke.py
+
+Deterministic driver accepts real MCP results, never model success prose.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `EccCodingFixtureTests.test_decodes_text_and_list_mcp_envelopes` | [L12](../tools/analysis/test_ecc_coding_smoke.py#L12) | 6 | 1 | 0 / 0 |
+| `EccCodingFixtureTests.test_implementation_is_blocked_without_actual_red` | [L19](../tools/analysis/test_ecc_coding_smoke.py#L19) | 8 | 1 | 0 / 0 |
+| `EccCodingFixtureTests.test_final_answer_requires_observed_current_green_review` | [L28](../tools/analysis/test_ecc_coding_smoke.py#L28) | 6 | 1 | 0 / 0 |
+| `EccCodingFixtureTests.test_consecutive_fixture_checks_reject_a_listener_and_allow_closed_server` | [L35](../tools/analysis/test_ecc_coding_smoke.py#L35) | 15 | 1 | 0 / 0 |
+| `EccCodingFixtureTests.test_consecutive_fixture_checks_reject_a_listener_and_allow_closed_server.Handler.log_message` | [L37](../tools/analysis/test_ecc_coding_smoke.py#L37) | 1 | 1 | 0 / 0 |
+| `EccCodingFixtureTests.test_consecutive_fixture_checks_reject_a_listener_and_allow_closed_server.Handler.do_GET` | [L38](../tools/analysis/test_ecc_coding_smoke.py#L38) | 2 | 1 | 0 / 0 |
+
+## tools/analysis/test_home_smoke.py
+
+Verify home smoke isolation, evidence and failure gates without inference.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `HomeSmokeTests.options` | [L22](../tools/analysis/test_home_smoke.py#L22) | 4 | 1 | 4 / 0 |
+| `HomeSmokeTests.test_glb_fixture_has_real_embedded_animation_times` | [L27](../tools/analysis/test_home_smoke.py#L27) | 14 | 3 | 0 / 0 |
+| `HomeSmokeTests.test_inventory_expected_values_match_disk` | [L42](../tools/analysis/test_home_smoke.py#L42) | 8 | 3 | 0 / 0 |
+| `HomeSmokeTests.test_existing_report_folder_is_not_overwritten` | [L51](../tools/analysis/test_home_smoke.py#L51) | 9 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_failed_contract_stops_before_any_runtime_request` | [L61](../tools/analysis/test_home_smoke.py#L61) | 15 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_failed_contract_stops_before_any_runtime_request.command` | [L64](../tools/analysis/test_home_smoke.py#L64) | 5 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_missing_prerequisite_blocks_all_processes` | [L77](../tools/analysis/test_home_smoke.py#L77) | 7 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_evidence_survives_failure_and_only_smoke_temp_is_removed` | [L85](../tools/analysis/test_home_smoke.py#L85) | 16 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_demo_does_not_reuse_existing_v2_or_database` | [L102](../tools/analysis/test_home_smoke.py#L102) | 20 | 2 | 0 / 0 |
+| `HomeSmokeTests.test_token_urls_are_redacted_from_logs` | [L123](../tools/analysis/test_home_smoke.py#L123) | 4 | 2 | 0 / 0 |
+| `HomeSmokeTests.test_ecc_pin_mismatch_fails_before_install` | [L128](../tools/analysis/test_home_smoke.py#L128) | 4 | 1 | 0 / 0 |
+| `HomeSmokeTests.test_full_smoke_requires_browser_before_running_models` | [L133](../tools/analysis/test_home_smoke.py#L133) | 13 | 2 | 0 / 0 |
+
+## tools/analysis/test_system_graph.py
+
+Graph resolution tests: avoid inventing calls or including nested bodies.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `GraphTests.test_nested_ownership_aliases_and_shadowed_parameters` | [L9](../tools/analysis/test_system_graph.py#L9) | 12 | 2 | 0 / 0 |
+| `GraphTests.test_duplicate_module_names_prefer_importing_directory` | [L22](../tools/analysis/test_system_graph.py#L22) | 8 | 4 | 0 / 0 |
+| `GraphTests.test_powershell_does_not_confuse_java_function_type_with_declaration` | [L31](../tools/analysis/test_system_graph.py#L31) | 5 | 2 | 0 / 0 |
+| `GraphTests.test_framework_hook_is_candidate_not_deleted` | [L37](../tools/analysis/test_system_graph.py#L37) | 6 | 1 | 0 / 0 |
 
 ## tools/bootstraps/Configure-Smelter-GpuProfile.ps1
 
@@ -707,8 +1008,8 @@ SMELTER reusable capability and skill registry (standard library only).
 | `Registry._dashboard_modules` | [L63](../tools/core/smelter_registry.py#L63) | 5 | 2 | 3 / 0 |
 | `Registry.skills` | [L69](../tools/core/smelter_registry.py#L69) | 5 | 2 | 1 / 0 |
 | `Registry.skill_instructions` | [L75](../tools/core/smelter_registry.py#L75) | 8 | 3 | 0 / 0 |
-| `Registry.connect_dashboard` | [L84](../tools/core/smelter_registry.py#L84) | 16 | 2 | 0 / 0 |
-| `Registry.connect_dashboard.handler` | [L96](../tools/core/smelter_registry.py#L96) | 2 | 1 | 0 / 0 |
+| `Registry.connect_dashboard` | [L84](../tools/core/smelter_registry.py#L84) | 17 | 2 | 0 / 0 |
+| `Registry.connect_dashboard.handler` | [L97](../tools/core/smelter_registry.py#L97) | 2 | 1 | 0 / 0 |
 
 ## tools/core/test_artifact_review_round15.py
 
@@ -848,7 +1149,7 @@ Central application path policy. Registered operations only; not an OS sandbox.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `defaults` | [L13](../tools/dashboard/access_policy.py#L13) | 10 | 1 | 20 / 0 |
+| `defaults` | [L13](../tools/dashboard/access_policy.py#L13) | 10 | 1 | 22 / 0 |
 | `plain` | [L25](../tools/dashboard/access_policy.py#L25) | 8 | 6 | 4 / 0 |
 | `validate` | [L35](../tools/dashboard/access_policy.py#L35) | 32 | 39 | 2 / 0 |
 | `load` | [L69](../tools/dashboard/access_policy.py#L69) | 3 | 1 | 1 / 0 |
@@ -856,11 +1157,11 @@ Central application path policy. Registered operations only; not an OS sandbox.
 | `Policy.__init__` | [L93](../tools/dashboard/access_policy.py#L93) | 3 | 1 | 0 / 0 |
 | `Policy.authorize` | [L97](../tools/dashboard/access_policy.py#L97) | 16 | 17 | 0 / 0 |
 | `Policy.report` | [L114](../tools/dashboard/access_policy.py#L114) | 5 | 1 | 0 / 0 |
-| `current` | [L121](../tools/dashboard/access_policy.py#L121) | 3 | 2 | 23 / 0 |
-| `check_grants` | [L126](../tools/dashboard/access_policy.py#L126) | 8 | 5 | 3 / 0 |
-| `using` | [L141](../tools/dashboard/access_policy.py#L141) | 4 | 1 | 8 / 0 |
-| `require` | [L146](../tools/dashboard/access_policy.py#L146) | 3 | 2 | 10 / 0 |
-| `allowed` | [L150](../tools/dashboard/access_policy.py#L150) | 3 | 2 | 1 / 0 |
+| `current` | [L121](../tools/dashboard/access_policy.py#L121) | 3 | 2 | 30 / 0 |
+| `check_grants` | [L126](../tools/dashboard/access_policy.py#L126) | 16 | 6 | 3 / 0 |
+| `using` | [L149](../tools/dashboard/access_policy.py#L149) | 4 | 1 | 12 / 0 |
+| `require` | [L154](../tools/dashboard/access_policy.py#L154) | 3 | 2 | 16 / 0 |
+| `allowed` | [L158](../tools/dashboard/access_policy.py#L158) | 3 | 2 | 1 / 0 |
 
 ## tools/dashboard/access_ui.js
 
@@ -868,13 +1169,13 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `<callback>` | [L2](../tools/dashboard/access_ui.js#L2) | 44 | 1 | 0 / 0 |
-| `mount` | [L3](../tools/dashboard/access_ui.js#L3) | 41 | 1 | 0 / 1 |
-| `updateSummary` | [L17](../tools/dashboard/access_ui.js#L17) | 13 | 15 | 1 / 1 |
-| `applyContext` | [L30](../tools/dashboard/access_ui.js#L30) | 7 | 2 | 0 / 1 |
-| `<callback>` | [L34](../tools/dashboard/access_ui.js#L34) | 1 | 2 | 0 / 0 |
-| `nav.onclick` | [L38](../tools/dashboard/access_ui.js#L38) | 1 | 1 | 0 / 0 |
-| `window.reloadTaskContext` | [L40](../tools/dashboard/access_ui.js#L40) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L2](../tools/dashboard/access_ui.js#L2) | 45 | 1 | 0 / 0 |
+| `mount` | [L3](../tools/dashboard/access_ui.js#L3) | 42 | 1 | 0 / 1 |
+| `updateSummary` | [L17](../tools/dashboard/access_ui.js#L17) | 14 | 16 | 1 / 1 |
+| `applyContext` | [L31](../tools/dashboard/access_ui.js#L31) | 7 | 2 | 0 / 1 |
+| `<callback>` | [L35](../tools/dashboard/access_ui.js#L35) | 1 | 2 | 0 / 0 |
+| `nav.onclick` | [L39](../tools/dashboard/access_ui.js#L39) | 1 | 1 | 0 / 0 |
+| `window.reloadTaskContext` | [L41](../tools/dashboard/access_ui.js#L41) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/aero_classifier.py
 
@@ -883,6 +1184,20 @@ AERO V0.1: deterministic task classification, preview only.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `classify_task` | [L23](../tools/dashboard/aero_classifier.py#L23) | 33 | 16 | 10 / 0 |
+
+## tools/dashboard/agent_bridge.py
+
+One task's skill references and approved SMELTER MCP capabilities.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `AgentBridge.__init__` | [L17](../tools/dashboard/agent_bridge.py#L17) | 21 | 6 | 0 / 0 |
+| `AgentBridge.manifest` | [L39](../tools/dashboard/agent_bridge.py#L39) | 5 | 2 | 0 / 0 |
+| `AgentBridge.cleanup_wait_timeout` | [L45](../tools/dashboard/agent_bridge.py#L45) | 3 | 1 | 0 / 0 |
+| `AgentBridge.summary` | [L49](../tools/dashboard/agent_bridge.py#L49) | 6 | 2 | 0 / 0 |
+| `AgentBridge.instructions` | [L56](../tools/dashboard/agent_bridge.py#L56) | 21 | 4 | 0 / 0 |
+| `AgentBridge.call` | [L78](../tools/dashboard/agent_bridge.py#L78) | 21 | 6 | 0 / 0 |
+| `AgentBridge.close` | [L100](../tools/dashboard/agent_bridge.py#L100) | 4 | 1 | 0 / 0 |
 
 ## tools/dashboard/attachments_ui.js
 
@@ -917,7 +1232,7 @@ One descriptor vocabulary for GUI, fixed model tools and legacy adapters.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `catalog` | [L7](../tools/dashboard/capability_catalog.py#L7) | 32 | 10 | 1 / 0 |
+| `catalog` | [L7](../tools/dashboard/capability_catalog.py#L7) | 37 | 16 | 2 / 0 |
 
 ## tools/dashboard/chat_inference.py
 
@@ -925,9 +1240,9 @@ Direct local chat: context, bounded tool loop and shared outcome finalization.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `_messages` | [L15](../tools/dashboard/chat_inference.py#L15) | 27 | 14 | 1 / 0 |
-| `_tool_loop` | [L43](../tools/dashboard/chat_inference.py#L43) | 43 | 23 | 1 / 0 |
-| `ask` | [L87](../tools/dashboard/chat_inference.py#L87) | 36 | 33 | 31 / 1 |
+| `_messages` | [L14](../tools/dashboard/chat_inference.py#L14) | 20 | 7 | 1 / 0 |
+| `_tool_loop` | [L35](../tools/dashboard/chat_inference.py#L35) | 43 | 23 | 1 / 0 |
+| `ask` | [L79](../tools/dashboard/chat_inference.py#L79) | 41 | 38 | 36 / 1 |
 
 ## tools/dashboard/chat_jobs.py
 
@@ -940,20 +1255,20 @@ Bounded in-memory chat jobs and cancellable local inference transport.
 | `_CancellableReader.readinto` | [L25](../tools/dashboard/chat_jobs.py#L25) | 16 | 5 | 0 / 0 |
 | `_ResponseSocket.__init__` | [L44](../tools/dashboard/chat_jobs.py#L44) | 2 | 1 | 0 / 0 |
 | `_ResponseSocket.makefile` | [L47](../tools/dashboard/chat_jobs.py#L47) | 4 | 2 | 0 / 0 |
-| `Control.__init__` | [L54](../tools/dashboard/chat_jobs.py#L54) | 17 | 1 | 0 / 0 |
-| `Control.check` | [L72](../tools/dashboard/chat_jobs.py#L72) | 3 | 2 | 2 / 0 |
-| `Control.update` | [L76](../tools/dashboard/chat_jobs.py#L76) | 4 | 1 | 1 / 0 |
-| `Control.cancel` | [L81](../tools/dashboard/chat_jobs.py#L81) | 12 | 4 | 0 / 0 |
-| `Control.infer` | [L94](../tools/dashboard/chat_jobs.py#L94) | 84 | 25 | 0 / 0 |
-| `Jobs.__init__` | [L181](../tools/dashboard/chat_jobs.py#L181) | 3 | 1 | 0 / 0 |
-| `Jobs.start` | [L185](../tools/dashboard/chat_jobs.py#L185) | 53 | 22 | 0 / 0 |
-| `Jobs._run` | [L239](../tools/dashboard/chat_jobs.py#L239) | 21 | 10 | 0 / 1 |
-| `Jobs._finish` | [L261](../tools/dashboard/chat_jobs.py#L261) | 12 | 5 | 2 / 0 |
-| `Jobs._persist` | [L274](../tools/dashboard/chat_jobs.py#L274) | 7 | 2 | 3 / 0 |
-| `Jobs.retry_persistence` | [L282](../tools/dashboard/chat_jobs.py#L282) | 6 | 4 | 1 / 0 |
-| `Jobs._snapshot` | [L289](../tools/dashboard/chat_jobs.py#L289) | 10 | 4 | 2 / 0 |
-| `Jobs.status` | [L300](../tools/dashboard/chat_jobs.py#L300) | 10 | 4 | 2 / 0 |
-| `Jobs.cancel` | [L311](../tools/dashboard/chat_jobs.py#L311) | 8 | 3 | 0 / 0 |
+| `Control.__init__` | [L54](../tools/dashboard/chat_jobs.py#L54) | 19 | 1 | 0 / 0 |
+| `Control.check` | [L74](../tools/dashboard/chat_jobs.py#L74) | 3 | 2 | 2 / 0 |
+| `Control.update` | [L78](../tools/dashboard/chat_jobs.py#L78) | 4 | 1 | 1 / 0 |
+| `Control.cancel` | [L83](../tools/dashboard/chat_jobs.py#L83) | 12 | 4 | 0 / 0 |
+| `Control.infer` | [L96](../tools/dashboard/chat_jobs.py#L96) | 84 | 25 | 0 / 0 |
+| `Jobs.__init__` | [L183](../tools/dashboard/chat_jobs.py#L183) | 3 | 1 | 0 / 0 |
+| `Jobs.start` | [L187](../tools/dashboard/chat_jobs.py#L187) | 77 | 27 | 0 / 0 |
+| `Jobs._run` | [L265](../tools/dashboard/chat_jobs.py#L265) | 21 | 10 | 0 / 1 |
+| `Jobs._finish` | [L287](../tools/dashboard/chat_jobs.py#L287) | 12 | 5 | 2 / 0 |
+| `Jobs._persist` | [L300](../tools/dashboard/chat_jobs.py#L300) | 7 | 2 | 3 / 0 |
+| `Jobs.retry_persistence` | [L308](../tools/dashboard/chat_jobs.py#L308) | 6 | 4 | 1 / 0 |
+| `Jobs._snapshot` | [L315](../tools/dashboard/chat_jobs.py#L315) | 10 | 4 | 2 / 0 |
+| `Jobs.status` | [L326](../tools/dashboard/chat_jobs.py#L326) | 10 | 4 | 2 / 0 |
+| `Jobs.cancel` | [L337](../tools/dashboard/chat_jobs.py#L337) | 8 | 3 | 0 / 0 |
 
 ## tools/dashboard/chat_renderer.js
 
@@ -961,13 +1276,14 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `<callback>` | [L2](../tools/dashboard/chat_renderer.js#L2) | 93 | 1 | 0 / 0 |
-| `parseBlocks` | [L3](../tools/dashboard/chat_renderer.js#L3) | 38 | 17 | 1 / 1 |
-| `inline` | [L42](../tools/dashboard/chat_renderer.js#L42) | 12 | 5 | 1 / 0 |
-| `copyButton` | [L55](../tools/dashboard/chat_renderer.js#L55) | 16 | 1 | 1 / 1 |
-| `button.onclick` | [L59](../tools/dashboard/chat_renderer.js#L59) | 10 | 2 | 0 / 0 |
-| `<callback>` | [L67](../tools/dashboard/chat_renderer.js#L67) | 1 | 1 | 0 / 0 |
-| `render` | [L72](../tools/dashboard/chat_renderer.js#L72) | 21 | 9 | 0 / 1 |
+| `<callback>` | [L2](../tools/dashboard/chat_renderer.js#L2) | 101 | 1 | 0 / 0 |
+| `toolState` | [L3](../tools/dashboard/chat_renderer.js#L3) | 7 | 8 | 0 / 1 |
+| `parseBlocks` | [L11](../tools/dashboard/chat_renderer.js#L11) | 38 | 17 | 1 / 1 |
+| `inline` | [L50](../tools/dashboard/chat_renderer.js#L50) | 12 | 5 | 1 / 0 |
+| `copyButton` | [L63](../tools/dashboard/chat_renderer.js#L63) | 16 | 1 | 1 / 1 |
+| `button.onclick` | [L67](../tools/dashboard/chat_renderer.js#L67) | 10 | 2 | 0 / 0 |
+| `<callback>` | [L75](../tools/dashboard/chat_renderer.js#L75) | 1 | 1 | 0 / 0 |
+| `render` | [L80](../tools/dashboard/chat_renderer.js#L80) | 21 | 9 | 0 / 1 |
 
 ## tools/dashboard/chats.py
 
@@ -977,12 +1293,57 @@ Persistent conversation notes in SMELTER's selected SQLite database.
 | --- | ---: | ---: | ---: | ---: |
 | `_db` | [L18](../tools/dashboard/chats.py#L18) | 4 | 2 | 11 / 0 |
 | `_id` | [L23](../tools/dashboard/chats.py#L23) | 5 | 2 | 8 / 0 |
-| `list_chats` | [L29](../tools/dashboard/chats.py#L29) | 4 | 2 | 2 / 0 |
-| `create_chat` | [L34](../tools/dashboard/chats.py#L34) | 7 | 4 | 22 / 0 |
-| `read_chat` | [L42](../tools/dashboard/chats.py#L42) | 27 | 18 | 35 / 0 |
+| `list_chats` | [L29](../tools/dashboard/chats.py#L29) | 4 | 2 | 3 / 0 |
+| `create_chat` | [L34](../tools/dashboard/chats.py#L34) | 7 | 4 | 31 / 0 |
+| `read_chat` | [L42](../tools/dashboard/chats.py#L42) | 27 | 18 | 46 / 0 |
 | `add_note` | [L70](../tools/dashboard/chats.py#L70) | 10 | 5 | 3 / 0 |
 | `rename_chat` | [L81](../tools/dashboard/chats.py#L81) | 8 | 5 | 1 / 0 |
-| `delete_chat` | [L90](../tools/dashboard/chats.py#L90) | 20 | 7 | 4 / 0 |
+| `delete_chat` | [L90](../tools/dashboard/chats.py#L90) | 20 | 7 | 5 / 0 |
+
+## tools/dashboard/coding_activity.py
+
+Controller file cards for coding proposals and confirmed applied bytes.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `CodingActivity.__init__` | [L12](../tools/dashboard/coding_activity.py#L12) | 4 | 1 | 0 / 0 |
+| `CodingActivity._changes` | [L17](../tools/dashboard/coding_activity.py#L17) | 32 | 16 | 3 / 0 |
+| `CodingActivity._card` | [L50](../tools/dashboard/coding_activity.py#L50) | 8 | 3 | 3 / 0 |
+| `CodingActivity.propose` | [L59](../tools/dashboard/coding_activity.py#L59) | 7 | 5 | 1 / 0 |
+| `CodingActivity.begin` | [L67](../tools/dashboard/coding_activity.py#L67) | 9 | 7 | 0 / 0 |
+| `CodingActivity.finish` | [L77](../tools/dashboard/coding_activity.py#L77) | 15 | 11 | 0 / 0 |
+| `CodingActivity.settle` | [L93](../tools/dashboard/coding_activity.py#L93) | 6 | 4 | 0 / 0 |
+| `CodingActivity.snapshot` | [L100](../tools/dashboard/coding_activity.py#L100) | 3 | 1 | 0 / 0 |
+
+## tools/dashboard/coding_workspace.py
+
+Scoped code proposals, transactional edits and fixed confined tests.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `digest` | [L30](../tools/dashboard/coding_workspace.py#L30) | 2 | 1 | 8 / 0 |
+| `identifier` | [L34](../tools/dashboard/coding_workspace.py#L34) | 10 | 4 | 3 / 0 |
+| `relative_path` | [L46](../tools/dashboard/coding_workspace.py#L46) | 14 | 18 | 5 / 0 |
+| `base_path` | [L62](../tools/dashboard/coding_workspace.py#L62) | 2 | 1 | 8 / 0 |
+| `reserve_metadata` | [L66](../tools/dashboard/coding_workspace.py#L66) | 5 | 4 | 3 / 0 |
+| `workspace_path` | [L73](../tools/dashboard/coding_workspace.py#L73) | 3 | 1 | 2 / 0 |
+| `locked` | [L79](../tools/dashboard/coding_workspace.py#L79) | 12 | 1 | 7 / 0 |
+| `_save` | [L93](../tools/dashboard/coding_workspace.py#L93) | 9 | 1 | 4 / 0 |
+| `load` | [L104](../tools/dashboard/coding_workspace.py#L104) | 11 | 6 | 7 / 0 |
+| `_file` | [L117](../tools/dashboard/coding_workspace.py#L117) | 6 | 4 | 5 / 0 |
+| `_scan` | [L125](../tools/dashboard/coding_workspace.py#L125) | 15 | 5 | 3 / 0 |
+| `tree_digest` | [L142](../tools/dashboard/coding_workspace.py#L142) | 2 | 1 | 4 / 0 |
+| `prepare` | [L146](../tools/dashboard/coding_workspace.py#L146) | 51 | 10 | 1 / 1 |
+| `read` | [L199](../tools/dashboard/coding_workspace.py#L199) | 17 | 8 | 1 / 1 |
+| `list_files` | [L218](../tools/dashboard/coding_workspace.py#L218) | 13 | 7 | 0 / 1 |
+| `_changes` | [L233](../tools/dashboard/coding_workspace.py#L233) | 33 | 20 | 2 / 0 |
+| `propose` | [L268](../tools/dashboard/coding_workspace.py#L268) | 15 | 4 | 11 / 1 |
+| `proposal` | [L285](../tools/dashboard/coding_workspace.py#L285) | 9 | 5 | 4 / 0 |
+| `apply` | [L296](../tools/dashboard/coding_workspace.py#L296) | 67 | 25 | 9 / 1 |
+| `test_profiles` | [L365](../tools/dashboard/coding_workspace.py#L365) | 4 | 2 | 2 / 0 |
+| `test` | [L371](../tools/dashboard/coding_workspace.py#L371) | 35 | 5 | 3 / 1 |
+| `review` | [L408](../tools/dashboard/coding_workspace.py#L408) | 20 | 7 | 2 / 1 |
+| `execute` | [L430](../tools/dashboard/coding_workspace.py#L430) | 9 | 4 | 0 / 0 |
 
 ## tools/dashboard/config_store.py
 
@@ -993,7 +1354,7 @@ V1.6.2: SQLite-backed configuration with validated one-time legacy import.
 | `_db` | [L11](../tools/dashboard/config_store.py#L11) | 5 | 2 | 3 / 0 |
 | `load_config` | [L17](../tools/dashboard/config_store.py#L17) | 18 | 7 | 10 / 0 |
 | `_validate` | [L36](../tools/dashboard/config_store.py#L36) | 22 | 18 | 3 / 0 |
-| `save_config` | [L59](../tools/dashboard/config_store.py#L59) | 7 | 2 | 9 / 0 |
+| `save_config` | [L59](../tools/dashboard/config_store.py#L59) | 7 | 2 | 15 / 0 |
 
 ## tools/dashboard/context_budget.py
 
@@ -1010,7 +1371,7 @@ SMELTER local dashboard with explicit per-message tool permissions.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `handler` | [L242](../tools/dashboard/dashboard.py#L242) | 28 | 1 | 6 / 0 |
+| `handler` | [L242](../tools/dashboard/dashboard.py#L242) | 28 | 1 | 9 / 0 |
 | `handler.Handler.handle` | [L246](../tools/dashboard/dashboard.py#L246) | 5 | 2 | 0 / 0 |
 | `handler.Handler.reply` | [L251](../tools/dashboard/dashboard.py#L251) | 13 | 4 | 0 / 0 |
 | `handler.Handler.authorized` | [L264](../tools/dashboard/dashboard.py#L264) | 5 | 4 | 0 / 0 |
@@ -1083,105 +1444,107 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `initShell` | [L5](../tools/dashboard/dashboard_shell.js#L5) | 136 | 3 | 0 / 0 |
+| `initShell` | [L5](../tools/dashboard/dashboard_shell.js#L5) | 139 | 3 | 0 / 0 |
 | `newChat.onclick` | [L12](../tools/dashboard/dashboard_shell.js#L12) | 1 | 1 | 0 / 0 |
 | `reaCheck.onclick` | [L29](../tools/dashboard/dashboard_shell.js#L29) | 1 | 3 | 0 / 0 |
-| `selectedModelIds` | [L33](../tools/dashboard/dashboard_shell.js#L33) | 1 | 1 | 2 / 0 |
-| `<callback>` | [L33](../tools/dashboard/dashboard_shell.js#L33) | 1 | 1 | 0 / 0 |
-| `window.setChatModelGrants` | [L34](../tools/dashboard/dashboard_shell.js#L34) | 1 | 2 | 0 / 0 |
-| `reconnect.onclick` | [L42](../tools/dashboard/dashboard_shell.js#L42) | 1 | 1 | 0 / 0 |
-| `jobMessage` | [L43](../tools/dashboard/dashboard_shell.js#L43) | 1 | 7 | 2 / 0 |
-| `engineChoice.onchange` | [L47](../tools/dashboard/dashboard_shell.js#L47) | 1 | 2 | 0 / 0 |
-| `showFileActivity` | [L50](../tools/dashboard/dashboard_shell.js#L50) | 1 | 4 | 2 / 0 |
-| `showAgentActivity` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 8 | 2 / 0 |
-| `<callback>` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 2 | 0 / 0 |
-| `renderPending` | [L53](../tools/dashboard/dashboard_shell.js#L53) | 1 | 1 | 1 / 0 |
-| `stop.onclick` | [L54](../tools/dashboard/dashboard_shell.js#L54) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L55](../tools/dashboard/dashboard_shell.js#L55) | 1 | 5 | 0 / 0 |
-| `send.onclick` | [L56](../tools/dashboard/dashboard_shell.js#L56) | 18 | 21 | 0 / 0 |
-| `<callback>` | [L60](../tools/dashboard/dashboard_shell.js#L60) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
-| `reader.onload` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
-| `reader.onerror` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L68](../tools/dashboard/dashboard_shell.js#L68) | 1 | 1 | 0 / 0 |
-| `resumeJob` | [L74](../tools/dashboard/dashboard_shell.js#L74) | 12 | 10 | 1 / 1 |
-| `<callback>` | [L79](../tools/dashboard/dashboard_shell.js#L79) | 1 | 1 | 0 / 0 |
-| `canAttach` | [L89](../tools/dashboard/dashboard_shell.js#L89) | 1 | 1 | 0 / 0 |
-| `onError` | [L89](../tools/dashboard/dashboard_shell.js#L89) | 1 | 1 | 0 / 0 |
-| `modelFile.onchange` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 6 | 0 / 0 |
-| `<callback>` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
-| `reader.onload` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
-| `reader.onerror` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
-| `window.showChatWorkspace` | [L100](../tools/dashboard/dashboard_shell.js#L100) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L100](../tools/dashboard/dashboard_shell.js#L100) | 1 | 1 | 0 / 0 |
-| `showSkills` | [L101](../tools/dashboard/dashboard_shell.js#L101) | 1 | 1 | 0 / 1 |
-| `<callback>` | [L103](../tools/dashboard/dashboard_shell.js#L103) | 1 | 4 | 0 / 0 |
-| `dismissNotice.onclick` | [L106](../tools/dashboard/dashboard_shell.js#L106) | 1 | 1 | 0 / 0 |
-| `refreshSkillNotice` | [L107](../tools/dashboard/dashboard_shell.js#L107) | 1 | 6 | 1 / 1 |
-| `runtimeNav.onclick` | [L111](../tools/dashboard/dashboard_shell.js#L111) | 11 | 4 | 0 / 0 |
-| `<callback>` | [L118](../tools/dashboard/dashboard_shell.js#L118) | 1 | 1 | 0 / 0 |
-| `apply.onclick` | [L119](../tools/dashboard/dashboard_shell.js#L119) | 1 | 2 | 0 / 0 |
-| `save.onclick` | [L120](../tools/dashboard/dashboard_shell.js#L120) | 1 | 5 | 0 / 0 |
-| `aeroButton.onclick` | [L129](../tools/dashboard/dashboard_shell.js#L129) | 1 | 2 | 0 / 0 |
-| `aeroNav.onclick` | [L132](../tools/dashboard/dashboard_shell.js#L132) | 1 | 1 | 0 / 0 |
-| `get` | [L134](../tools/dashboard/dashboard_shell.js#L134) | 1 | 1 | 0 / 0 |
-| `set` | [L134](../tools/dashboard/dashboard_shell.js#L134) | 1 | 1 | 0 / 0 |
-| `skillsNav.onclick` | [L135](../tools/dashboard/dashboard_shell.js#L135) | 1 | 1 | 0 / 0 |
-| `statusNav.onclick` | [L137](../tools/dashboard/dashboard_shell.js#L137) | 1 | 1 | 0 / 0 |
-| `showEmpty` | [L138](../tools/dashboard/dashboard_shell.js#L138) | 1 | 1 | 0 / 1 |
-| `onNew` | [L138](../tools/dashboard/dashboard_shell.js#L138) | 1 | 1 | 0 / 0 |
-| `onSettings` | [L138](../tools/dashboard/dashboard_shell.js#L138) | 1 | 1 | 0 / 0 |
-| `onAttach` | [L138](../tools/dashboard/dashboard_shell.js#L138) | 1 | 2 | 0 / 0 |
-| `onAttach` | [L139](../tools/dashboard/dashboard_shell.js#L139) | 1 | 1 | 0 / 0 |
-| `refreshSystem` | [L142](../tools/dashboard/dashboard_shell.js#L142) | 13 | 10 | 3 / 0 |
-| `gb` | [L144](../tools/dashboard/dashboard_shell.js#L144) | 1 | 1 | 1 / 0 |
-| `<callback>` | [L148](../tools/dashboard/dashboard_shell.js#L148) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L155](../tools/dashboard/dashboard_shell.js#L155) | 1 | 3 | 0 / 0 |
-| `localTimestamp` | [L157](../tools/dashboard/dashboard_shell.js#L157) | 1 | 4 | 2 / 0 |
-| `highlightChat` | [L158](../tools/dashboard/dashboard_shell.js#L158) | 1 | 3 | 2 / 0 |
-| `editConversationTitle` | [L159](../tools/dashboard/dashboard_shell.js#L159) | 11 | 5 | 2 / 0 |
-| `cancel.onclick` | [L164](../tools/dashboard/dashboard_shell.js#L164) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L164](../tools/dashboard/dashboard_shell.js#L164) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L164](../tools/dashboard/dashboard_shell.js#L164) | 1 | 1 | 0 / 0 |
-| `form.onsubmit` | [L165](../tools/dashboard/dashboard_shell.js#L165) | 3 | 8 | 0 / 0 |
-| `renderChatHistory` | [L170](../tools/dashboard/dashboard_shell.js#L170) | 9 | 6 | 1 / 1 |
-| `<callback>` | [L171](../tools/dashboard/dashboard_shell.js#L171) | 1 | 1 | 0 / 0 |
-| `open.onclick` | [L174](../tools/dashboard/dashboard_shell.js#L174) | 1 | 2 | 0 / 0 |
-| `rename.onclick` | [L175](../tools/dashboard/dashboard_shell.js#L175) | 1 | 1 | 0 / 0 |
-| `del.onclick` | [L176](../tools/dashboard/dashboard_shell.js#L176) | 1 | 5 | 0 / 0 |
-| `refreshChats` | [L179](../tools/dashboard/dashboard_shell.js#L179) | 1 | 1 | 6 / 0 |
-| `executionCards` | [L180](../tools/dashboard/dashboard_shell.js#L180) | 16 | 40 | 1 / 0 |
-| `openChat` | [L196](../tools/dashboard/dashboard_shell.js#L196) | 8 | 17 | 7 / 0 |
-| `<callback>` | [L197](../tools/dashboard/dashboard_shell.js#L197) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L197](../tools/dashboard/dashboard_shell.js#L197) | 1 | 1 | 0 / 0 |
-| `older.onclick` | [L198](../tools/dashboard/dashboard_shell.js#L198) | 1 | 1 | 0 / 0 |
-| `latest.onclick` | [L198](../tools/dashboard/dashboard_shell.js#L198) | 1 | 1 | 0 / 0 |
-| `el` | [L205](../tools/dashboard/dashboard_shell.js#L205) | 1 | 1 | 17 / 0 |
-| `api` | [L209](../tools/dashboard/dashboard_shell.js#L209) | 1 | 4 | 30 / 1 |
-| `refresh` | [L210](../tools/dashboard/dashboard_shell.js#L210) | 1 | 8 | 3 / 0 |
-| `b.onclick` | [L210](../tools/dashboard/dashboard_shell.js#L210) | 1 | 2 | 0 / 0 |
-| `loadWorkflows` | [L211](../tools/dashboard/dashboard_shell.js#L211) | 1 | 3 | 1 / 0 |
-| `history` | [L212](../tools/dashboard/dashboard_shell.js#L212) | 1 | 2 | 3 / 0 |
-| `<callback>` | [L212](../tools/dashboard/dashboard_shell.js#L212) | 1 | 1 | 0 / 0 |
-| `el('plan').onclick` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 1 | 0 / 0 |
-| `el('inspect').onclick` | [L215](../tools/dashboard/dashboard_shell.js#L215) | 1 | 3 | 0 / 0 |
-| `el('mediainspect').onclick` | [L216](../tools/dashboard/dashboard_shell.js#L216) | 1 | 4 | 0 / 0 |
-| `el('blenderinspect').onclick` | [L217](../tools/dashboard/dashboard_shell.js#L217) | 1 | 3 | 0 / 0 |
-| `loadModels` | [L218](../tools/dashboard/dashboard_shell.js#L218) | 1 | 4 | 0 / 0 |
+| `selectedModelIds` | [L35](../tools/dashboard/dashboard_shell.js#L35) | 1 | 1 | 2 / 0 |
+| `<callback>` | [L35](../tools/dashboard/dashboard_shell.js#L35) | 1 | 1 | 0 / 0 |
+| `window.setChatModelGrants` | [L36](../tools/dashboard/dashboard_shell.js#L36) | 1 | 2 | 0 / 0 |
+| `reconnect.onclick` | [L44](../tools/dashboard/dashboard_shell.js#L44) | 1 | 1 | 0 / 0 |
+| `jobMessage` | [L45](../tools/dashboard/dashboard_shell.js#L45) | 1 | 7 | 2 / 0 |
+| `engineChoice.onchange` | [L49](../tools/dashboard/dashboard_shell.js#L49) | 1 | 2 | 0 / 0 |
+| `showFileActivity` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 4 | 2 / 0 |
+| `showAgentActivity` | [L54](../tools/dashboard/dashboard_shell.js#L54) | 1 | 8 | 2 / 0 |
+| `<callback>` | [L54](../tools/dashboard/dashboard_shell.js#L54) | 1 | 2 | 0 / 0 |
+| `renderPending` | [L55](../tools/dashboard/dashboard_shell.js#L55) | 1 | 1 | 1 / 0 |
+| `stop.onclick` | [L56](../tools/dashboard/dashboard_shell.js#L56) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L57](../tools/dashboard/dashboard_shell.js#L57) | 1 | 5 | 0 / 0 |
+| `send.onclick` | [L58](../tools/dashboard/dashboard_shell.js#L58) | 19 | 22 | 0 / 0 |
+| `<callback>` | [L62](../tools/dashboard/dashboard_shell.js#L62) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L65](../tools/dashboard/dashboard_shell.js#L65) | 1 | 1 | 0 / 0 |
+| `reader.onload` | [L65](../tools/dashboard/dashboard_shell.js#L65) | 1 | 1 | 0 / 0 |
+| `reader.onerror` | [L65](../tools/dashboard/dashboard_shell.js#L65) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L71](../tools/dashboard/dashboard_shell.js#L71) | 1 | 1 | 0 / 0 |
+| `resumeJob` | [L77](../tools/dashboard/dashboard_shell.js#L77) | 12 | 10 | 1 / 1 |
+| `<callback>` | [L82](../tools/dashboard/dashboard_shell.js#L82) | 1 | 1 | 0 / 0 |
+| `canAttach` | [L92](../tools/dashboard/dashboard_shell.js#L92) | 1 | 1 | 0 / 0 |
+| `onError` | [L92](../tools/dashboard/dashboard_shell.js#L92) | 1 | 1 | 0 / 0 |
+| `modelFile.onchange` | [L93](../tools/dashboard/dashboard_shell.js#L93) | 1 | 6 | 0 / 0 |
+| `<callback>` | [L93](../tools/dashboard/dashboard_shell.js#L93) | 1 | 1 | 0 / 0 |
+| `reader.onload` | [L93](../tools/dashboard/dashboard_shell.js#L93) | 1 | 1 | 0 / 0 |
+| `reader.onerror` | [L93](../tools/dashboard/dashboard_shell.js#L93) | 1 | 1 | 0 / 0 |
+| `window.showChatWorkspace` | [L103](../tools/dashboard/dashboard_shell.js#L103) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L103](../tools/dashboard/dashboard_shell.js#L103) | 1 | 1 | 0 / 0 |
+| `showSkills` | [L104](../tools/dashboard/dashboard_shell.js#L104) | 1 | 1 | 0 / 1 |
+| `<callback>` | [L106](../tools/dashboard/dashboard_shell.js#L106) | 1 | 4 | 0 / 0 |
+| `dismissNotice.onclick` | [L109](../tools/dashboard/dashboard_shell.js#L109) | 1 | 1 | 0 / 0 |
+| `refreshSkillNotice` | [L110](../tools/dashboard/dashboard_shell.js#L110) | 1 | 6 | 1 / 1 |
+| `runtimeNav.onclick` | [L114](../tools/dashboard/dashboard_shell.js#L114) | 11 | 4 | 0 / 0 |
+| `<callback>` | [L121](../tools/dashboard/dashboard_shell.js#L121) | 1 | 1 | 0 / 0 |
+| `apply.onclick` | [L122](../tools/dashboard/dashboard_shell.js#L122) | 1 | 2 | 0 / 0 |
+| `save.onclick` | [L123](../tools/dashboard/dashboard_shell.js#L123) | 1 | 5 | 0 / 0 |
+| `aeroButton.onclick` | [L132](../tools/dashboard/dashboard_shell.js#L132) | 1 | 2 | 0 / 0 |
+| `aeroNav.onclick` | [L135](../tools/dashboard/dashboard_shell.js#L135) | 1 | 1 | 0 / 0 |
+| `get` | [L137](../tools/dashboard/dashboard_shell.js#L137) | 1 | 1 | 0 / 0 |
+| `set` | [L137](../tools/dashboard/dashboard_shell.js#L137) | 1 | 1 | 0 / 0 |
+| `skillsNav.onclick` | [L138](../tools/dashboard/dashboard_shell.js#L138) | 1 | 1 | 0 / 0 |
+| `statusNav.onclick` | [L140](../tools/dashboard/dashboard_shell.js#L140) | 1 | 1 | 0 / 0 |
+| `showEmpty` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 1 | 0 / 1 |
+| `onNew` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 1 | 0 / 0 |
+| `onSettings` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 1 | 0 / 0 |
+| `onAttach` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 2 | 0 / 0 |
+| `onAttach` | [L142](../tools/dashboard/dashboard_shell.js#L142) | 1 | 1 | 0 / 0 |
+| `refreshSystem` | [L145](../tools/dashboard/dashboard_shell.js#L145) | 13 | 10 | 3 / 0 |
+| `gb` | [L147](../tools/dashboard/dashboard_shell.js#L147) | 1 | 1 | 1 / 0 |
+| `<callback>` | [L151](../tools/dashboard/dashboard_shell.js#L151) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L158](../tools/dashboard/dashboard_shell.js#L158) | 1 | 3 | 0 / 0 |
+| `localTimestamp` | [L160](../tools/dashboard/dashboard_shell.js#L160) | 1 | 4 | 2 / 0 |
+| `highlightChat` | [L161](../tools/dashboard/dashboard_shell.js#L161) | 1 | 3 | 2 / 0 |
+| `editConversationTitle` | [L162](../tools/dashboard/dashboard_shell.js#L162) | 11 | 5 | 2 / 0 |
+| `cancel.onclick` | [L167](../tools/dashboard/dashboard_shell.js#L167) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L167](../tools/dashboard/dashboard_shell.js#L167) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L167](../tools/dashboard/dashboard_shell.js#L167) | 1 | 1 | 0 / 0 |
+| `form.onsubmit` | [L168](../tools/dashboard/dashboard_shell.js#L168) | 3 | 8 | 0 / 0 |
+| `renderChatHistory` | [L173](../tools/dashboard/dashboard_shell.js#L173) | 9 | 6 | 1 / 1 |
+| `<callback>` | [L174](../tools/dashboard/dashboard_shell.js#L174) | 1 | 1 | 0 / 0 |
+| `open.onclick` | [L177](../tools/dashboard/dashboard_shell.js#L177) | 1 | 2 | 0 / 0 |
+| `rename.onclick` | [L178](../tools/dashboard/dashboard_shell.js#L178) | 1 | 1 | 0 / 0 |
+| `del.onclick` | [L179](../tools/dashboard/dashboard_shell.js#L179) | 1 | 5 | 0 / 0 |
+| `refreshChats` | [L182](../tools/dashboard/dashboard_shell.js#L182) | 1 | 1 | 6 / 0 |
+| `executionCards` | [L183](../tools/dashboard/dashboard_shell.js#L183) | 18 | 46 | 1 / 0 |
+| `<callback>` | [L188](../tools/dashboard/dashboard_shell.js#L188) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L188](../tools/dashboard/dashboard_shell.js#L188) | 1 | 1 | 0 / 0 |
+| `openChat` | [L201](../tools/dashboard/dashboard_shell.js#L201) | 8 | 17 | 7 / 0 |
+| `<callback>` | [L202](../tools/dashboard/dashboard_shell.js#L202) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L202](../tools/dashboard/dashboard_shell.js#L202) | 1 | 1 | 0 / 0 |
+| `older.onclick` | [L203](../tools/dashboard/dashboard_shell.js#L203) | 1 | 1 | 0 / 0 |
+| `latest.onclick` | [L203](../tools/dashboard/dashboard_shell.js#L203) | 1 | 1 | 0 / 0 |
+| `el` | [L210](../tools/dashboard/dashboard_shell.js#L210) | 1 | 1 | 17 / 0 |
+| `api` | [L214](../tools/dashboard/dashboard_shell.js#L214) | 1 | 4 | 30 / 1 |
+| `refresh` | [L215](../tools/dashboard/dashboard_shell.js#L215) | 1 | 8 | 3 / 0 |
+| `b.onclick` | [L215](../tools/dashboard/dashboard_shell.js#L215) | 1 | 2 | 0 / 0 |
+| `loadWorkflows` | [L216](../tools/dashboard/dashboard_shell.js#L216) | 1 | 3 | 1 / 0 |
+| `history` | [L217](../tools/dashboard/dashboard_shell.js#L217) | 1 | 2 | 3 / 0 |
+| `<callback>` | [L217](../tools/dashboard/dashboard_shell.js#L217) | 1 | 1 | 0 / 0 |
+| `el('plan').onclick` | [L218](../tools/dashboard/dashboard_shell.js#L218) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L218](../tools/dashboard/dashboard_shell.js#L218) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L218](../tools/dashboard/dashboard_shell.js#L218) | 1 | 2 | 0 / 0 |
-| `el('modelsave').onclick` | [L220](../tools/dashboard/dashboard_shell.js#L220) | 1 | 2 | 0 / 0 |
-| `el('opencodecheck').onclick` | [L221](../tools/dashboard/dashboard_shell.js#L221) | 1 | 3 | 0 / 0 |
-| `el('providerpreview').onclick` | [L222](../tools/dashboard/dashboard_shell.js#L222) | 1 | 2 | 0 / 0 |
-| `el('providerdeploy').onclick` | [L223](../tools/dashboard/dashboard_shell.js#L223) | 1 | 3 | 0 / 0 |
-| `el('providervalidate').onclick` | [L224](../tools/dashboard/dashboard_shell.js#L224) | 1 | 2 | 0 / 0 |
-| `startup` | [L225](../tools/dashboard/dashboard_shell.js#L225) | 9 | 7 | 3 / 0 |
-| `el('sessionReconnect').onclick` | [L234](../tools/dashboard/dashboard_shell.js#L234) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L235](../tools/dashboard/dashboard_shell.js#L235) | 1 | 1 | 0 / 0 |
-| `el('dbselect').onclick` | [L236](../tools/dashboard/dashboard_shell.js#L236) | 4 | 2 | 0 / 0 |
-| `el('refresh').onclick` | [L241](../tools/dashboard/dashboard_shell.js#L241) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L218](../tools/dashboard/dashboard_shell.js#L218) | 1 | 1 | 0 / 0 |
+| `el('inspect').onclick` | [L220](../tools/dashboard/dashboard_shell.js#L220) | 1 | 3 | 0 / 0 |
+| `el('mediainspect').onclick` | [L221](../tools/dashboard/dashboard_shell.js#L221) | 1 | 4 | 0 / 0 |
+| `el('blenderinspect').onclick` | [L222](../tools/dashboard/dashboard_shell.js#L222) | 1 | 3 | 0 / 0 |
+| `loadModels` | [L223](../tools/dashboard/dashboard_shell.js#L223) | 1 | 4 | 0 / 0 |
+| `<callback>` | [L223](../tools/dashboard/dashboard_shell.js#L223) | 1 | 2 | 0 / 0 |
+| `el('modelsave').onclick` | [L225](../tools/dashboard/dashboard_shell.js#L225) | 1 | 2 | 0 / 0 |
+| `el('opencodecheck').onclick` | [L226](../tools/dashboard/dashboard_shell.js#L226) | 1 | 3 | 0 / 0 |
+| `el('providerpreview').onclick` | [L227](../tools/dashboard/dashboard_shell.js#L227) | 1 | 2 | 0 / 0 |
+| `el('providerdeploy').onclick` | [L228](../tools/dashboard/dashboard_shell.js#L228) | 1 | 3 | 0 / 0 |
+| `el('providervalidate').onclick` | [L229](../tools/dashboard/dashboard_shell.js#L229) | 1 | 2 | 0 / 0 |
+| `startup` | [L230](../tools/dashboard/dashboard_shell.js#L230) | 9 | 7 | 3 / 0 |
+| `el('sessionReconnect').onclick` | [L239](../tools/dashboard/dashboard_shell.js#L239) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L240](../tools/dashboard/dashboard_shell.js#L240) | 1 | 1 | 0 / 0 |
+| `el('dbselect').onclick` | [L241](../tools/dashboard/dashboard_shell.js#L241) | 4 | 2 | 0 / 0 |
+| `el('refresh').onclick` | [L246](../tools/dashboard/dashboard_shell.js#L246) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/database.py
 
@@ -1191,8 +1554,8 @@ SMELTER V1.6.1 bootstrap: user-selected SQLite location and readiness gate.
 | --- | ---: | ---: | ---: | ---: |
 | `marker_path` | [L22](../tools/dashboard/database.py#L22) | 2 | 1 | 2 / 0 |
 | `chosen_database` | [L25](../tools/dashboard/database.py#L25) | 14 | 9 | 15 / 0 |
-| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 28 / 0 |
-| `inspect_database` | [L85](../tools/dashboard/database.py#L85) | 15 | 10 | 13 / 0 |
+| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 44 / 0 |
+| `inspect_database` | [L85](../tools/dashboard/database.py#L85) | 15 | 10 | 17 / 0 |
 
 ## tools/dashboard/execution.py
 
@@ -1230,7 +1593,7 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `<callback>` | [L2](../tools/dashboard/file_activity.js#L2) | 66 | 1 | 0 / 0 |
 | `mount` | [L6](../tools/dashboard/file_activity.js#L6) | 60 | 1 | 0 / 1 |
 | `make` | [L14](../tools/dashboard/file_activity.js#L14) | 19 | 1 | 1 / 0 |
-| `update` | [L33](../tools/dashboard/file_activity.js#L33) | 30 | 22 | 1 / 1 |
+| `update` | [L33](../tools/dashboard/file_activity.js#L33) | 30 | 23 | 1 / 1 |
 
 ## tools/dashboard/file_activity.py
 
@@ -1254,15 +1617,15 @@ Isolated CSS redesign workbench. No arbitrary commands or source writes.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `target_path` | [L18](../tools/dashboard/frontend_workspace.py#L18) | 3 | 1 | 23 / 0 |
+| `target_path` | [L18](../tools/dashboard/frontend_workspace.py#L18) | 3 | 1 | 22 / 0 |
 | `_digest` | [L23](../tools/dashboard/frontend_workspace.py#L23) | 2 | 1 | 7 / 0 |
 | `_files` | [L27](../tools/dashboard/frontend_workspace.py#L27) | 12 | 7 | 4 / 0 |
-| `_source_files` | [L41](../tools/dashboard/frontend_workspace.py#L41) | 22 | 8 | 4 / 0 |
+| `_source_files` | [L41](../tools/dashboard/frontend_workspace.py#L41) | 22 | 8 | 9 / 0 |
 | `_marker` | [L65](../tools/dashboard/frontend_workspace.py#L65) | 2 | 1 | 3 / 0 |
 | `_load` | [L69](../tools/dashboard/frontend_workspace.py#L69) | 8 | 6 | 4 / 0 |
 | `_design_skills` | [L79](../tools/dashboard/frontend_workspace.py#L79) | 4 | 5 | 2 / 0 |
 | `info` | [L85](../tools/dashboard/frontend_workspace.py#L85) | 16 | 3 | 2 / 1 |
-| `prepare` | [L103](../tools/dashboard/frontend_workspace.py#L103) | 72 | 20 | 5 / 1 |
+| `prepare` | [L103](../tools/dashboard/frontend_workspace.py#L103) | 72 | 20 | 7 / 1 |
 | `_html` | [L177](../tools/dashboard/frontend_workspace.py#L177) | 7 | 8 | 4 / 0 |
 | `_styles` | [L186](../tools/dashboard/frontend_workspace.py#L186) | 5 | 2 | 3 / 0 |
 | `_check` | [L193](../tools/dashboard/frontend_workspace.py#L193) | 38 | 13 | 5 / 0 |
@@ -1270,9 +1633,9 @@ Isolated CSS redesign workbench. No arbitrary commands or source writes.
 | `read_file` | [L233](../tools/dashboard/frontend_workspace.py#L233) | 26 | 14 | 4 / 1 |
 | `read_skill` | [L261](../tools/dashboard/frontend_workspace.py#L261) | 10 | 6 | 1 / 1 |
 | `replace_css` | [L273](../tools/dashboard/frontend_workspace.py#L273) | 35 | 12 | 3 / 1 |
-| `validate` | [L310](../tools/dashboard/frontend_workspace.py#L310) | 20 | 7 | 3 / 1 |
+| `validate` | [L310](../tools/dashboard/frontend_workspace.py#L310) | 20 | 7 | 4 / 1 |
 | `launch` | [L332](../tools/dashboard/frontend_workspace.py#L332) | 12 | 5 | 3 / 1 |
-| `execute` | [L352](../tools/dashboard/frontend_workspace.py#L352) | 6 | 3 | 2 / 0 |
+| `execute` | [L352](../tools/dashboard/frontend_workspace.py#L352) | 6 | 3 | 1 / 0 |
 
 ## tools/dashboard/github_skill_discovery.py
 
@@ -1280,11 +1643,20 @@ Discover GitHub SKILL.md before approved, pinned-content installation.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `parse_github_skill` | [L20](../tools/dashboard/github_skill_discovery.py#L20) | 19 | 21 | 6 / 0 |
-| `discover_github_skill` | [L41](../tools/dashboard/github_skill_discovery.py#L41) | 39 | 12 | 8 / 1 |
-| `install_discovered_skill` | [L82](../tools/dashboard/github_skill_discovery.py#L82) | 24 | 10 | 5 / 0 |
-| `discover_github_repository` | [L112](../tools/dashboard/github_skill_discovery.py#L112) | 54 | 18 | 3 / 0 |
-| `discover_github_repository.get_json` | [L119](../tools/dashboard/github_skill_discovery.py#L119) | 16 | 5 | 0 / 0 |
+| `parse_github_skill` | [L20](../tools/dashboard/github_skill_discovery.py#L20) | 19 | 21 | 7 / 0 |
+| `discover_github_skill` | [L41](../tools/dashboard/github_skill_discovery.py#L41) | 41 | 13 | 9 / 2 |
+| `install_discovered_skill` | [L84](../tools/dashboard/github_skill_discovery.py#L84) | 24 | 10 | 5 / 0 |
+| `discover_github_repository` | [L115](../tools/dashboard/github_skill_discovery.py#L115) | 61 | 21 | 4 / 0 |
+| `discover_github_repository.get_json` | [L122](../tools/dashboard/github_skill_discovery.py#L122) | 16 | 5 | 0 / 0 |
+
+## tools/dashboard/install_ecc_skills.py
+
+Preview or import a small, commit-pinned ECC instruction pack.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `preview` | [L23](../tools/dashboard/install_ecc_skills.py#L23) | 11 | 5 | 3 / 0 |
+| `main` | [L36](../tools/dashboard/install_ecc_skills.py#L36) | 22 | 8 | 1 / 0 |
 
 ## tools/dashboard/install_war_skills.py
 
@@ -1401,15 +1773,15 @@ Operator-only retention and complete database/application-state backup.
 | --- | ---: | ---: | ---: | ---: |
 | `_idle` | [L23](../tools/dashboard/maintenance.py#L23) | 3 | 2 | 4 / 0 |
 | `_digest` | [L28](../tools/dashboard/maintenance.py#L28) | 5 | 2 | 4 / 0 |
-| `status` | [L35](../tools/dashboard/maintenance.py#L35) | 8 | 2 | 1 / 0 |
-| `_referenced` | [L45](../tools/dashboard/maintenance.py#L45) | 4 | 3 | 2 / 0 |
-| `plan` | [L51](../tools/dashboard/maintenance.py#L51) | 25 | 21 | 4 / 0 |
-| `prune` | [L78](../tools/dashboard/maintenance.py#L78) | 16 | 12 | 4 / 0 |
-| `_state_files` | [L96](../tools/dashboard/maintenance.py#L96) | 6 | 2 | 1 / 0 |
-| `_signature` | [L104](../tools/dashboard/maintenance.py#L104) | 1 | 2 | 1 / 0 |
-| `backup` | [L107](../tools/dashboard/maintenance.py#L107) | 43 | 25 | 4 / 0 |
-| `restore` | [L152](../tools/dashboard/maintenance.py#L152) | 35 | 37 | 3 / 0 |
-| `main` | [L189](../tools/dashboard/maintenance.py#L189) | 22 | 9 | 1 / 0 |
+| `status` | [L35](../tools/dashboard/maintenance.py#L35) | 11 | 2 | 1 / 0 |
+| `_referenced` | [L48](../tools/dashboard/maintenance.py#L48) | 4 | 3 | 2 / 0 |
+| `plan` | [L54](../tools/dashboard/maintenance.py#L54) | 25 | 21 | 4 / 0 |
+| `prune` | [L81](../tools/dashboard/maintenance.py#L81) | 16 | 12 | 4 / 0 |
+| `_state_files` | [L99](../tools/dashboard/maintenance.py#L99) | 6 | 2 | 1 / 0 |
+| `_signature` | [L107](../tools/dashboard/maintenance.py#L107) | 1 | 2 | 1 / 0 |
+| `backup` | [L110](../tools/dashboard/maintenance.py#L110) | 43 | 25 | 4 / 0 |
+| `restore` | [L155](../tools/dashboard/maintenance.py#L155) | 35 | 37 | 4 / 0 |
+| `main` | [L192](../tools/dashboard/maintenance.py#L192) | 22 | 9 | 1 / 0 |
 
 ## tools/dashboard/mcp_connections.py
 
@@ -1417,7 +1789,7 @@ Optional MCP stdio client. Only operator-configured local processes are launched
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `sdk_status` | [L17](../tools/dashboard/mcp_connections.py#L17) | 7 | 3 | 4 / 0 |
+| `sdk_status` | [L17](../tools/dashboard/mcp_connections.py#L17) | 7 | 3 | 7 / 0 |
 | `validate_config` | [L26](../tools/dashboard/mcp_connections.py#L26) | 32 | 38 | 3 / 0 |
 | `config_path` | [L60](../tools/dashboard/mcp_connections.py#L60) | 2 | 1 | 3 / 0 |
 | `load_config` | [L64](../tools/dashboard/mcp_connections.py#L64) | 7 | 3 | 3 / 0 |
@@ -1429,7 +1801,7 @@ Optional MCP stdio client. Only operator-configured local processes are launched
 | `_exchange` | [L117](../tools/dashboard/mcp_connections.py#L117) | 43 | 20 | 1 / 0 |
 | `exchange` | [L162](../tools/dashboard/mcp_connections.py#L162) | 15 | 11 | 7 / 0 |
 | `approved_tools` | [L179](../tools/dashboard/mcp_connections.py#L179) | 17 | 13 | 3 / 0 |
-| `call` | [L198](../tools/dashboard/mcp_connections.py#L198) | 10 | 7 | 4 / 0 |
+| `call` | [L198](../tools/dashboard/mcp_connections.py#L198) | 12 | 8 | 5 / 0 |
 
 ## tools/dashboard/mcp_server.py
 
@@ -1437,10 +1809,10 @@ SMELTER's stdio MCP server. Grants come from its launcher, never tool text.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `serve` | [L10](../tools/dashboard/mcp_server.py#L10) | 36 | 4 | 1 / 0 |
+| `serve` | [L10](../tools/dashboard/mcp_server.py#L10) | 37 | 4 | 1 / 0 |
 | `serve.list_tools` | [L29](../tools/dashboard/mcp_server.py#L29) | 3 | 2 | 0 / 0 |
-| `serve.call_tool` | [L34](../tools/dashboard/mcp_server.py#L34) | 7 | 1 | 0 / 0 |
-| `main` | [L48](../tools/dashboard/mcp_server.py#L48) | 6 | 1 | 1 / 0 |
+| `serve.call_tool` | [L34](../tools/dashboard/mcp_server.py#L34) | 8 | 1 | 0 / 0 |
+| `main` | [L49](../tools/dashboard/mcp_server.py#L49) | 6 | 1 | 1 / 0 |
 
 ## tools/dashboard/mcp_ui.js
 
@@ -1448,23 +1820,23 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `<callback>` | [L2](../tools/dashboard/mcp_ui.js#L2) | 91 | 1 | 0 / 0 |
-| `mount` | [L3](../tools/dashboard/mcp_ui.js#L3) | 88 | 1 | 0 / 1 |
-| `refreshApprovals` | [L26](../tools/dashboard/mcp_ui.js#L26) | 12 | 13 | 3 / 1 |
-| `<callback>` | [L33](../tools/dashboard/mcp_ui.js#L33) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L33](../tools/dashboard/mcp_ui.js#L33) | 1 | 1 | 0 / 0 |
-| `clearSelections` | [L39](../tools/dashboard/mcp_ui.js#L39) | 1 | 1 | 1 / 0 |
-| `load` | [L40](../tools/dashboard/mcp_ui.js#L40) | 11 | 4 | 2 / 1 |
-| `<callback>` | [L45](../tools/dashboard/mcp_ui.js#L45) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L45](../tools/dashboard/mcp_ui.js#L45) | 1 | 1 | 0 / 0 |
-| `button.onclick` | [L52](../tools/dashboard/mcp_ui.js#L52) | 1 | 1 | 0 / 0 |
-| `save.onclick` | [L54](../tools/dashboard/mcp_ui.js#L54) | 9 | 2 | 0 / 0 |
-| `probe.onclick` | [L63](../tools/dashboard/mcp_ui.js#L63) | 20 | 9 | 0 / 0 |
-| `<callback>` | [L72](../tools/dashboard/mcp_ui.js#L72) | 1 | 2 | 0 / 0 |
-| `collect` | [L85](../tools/dashboard/mcp_ui.js#L85) | 5 | 2 | 0 / 0 |
-| `<callback>` | [L87](../tools/dashboard/mcp_ui.js#L87) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L87](../tools/dashboard/mcp_ui.js#L87) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L2](../tools/dashboard/mcp_ui.js#L2) | 92 | 1 | 0 / 0 |
+| `mount` | [L3](../tools/dashboard/mcp_ui.js#L3) | 89 | 1 | 0 / 1 |
+| `refreshApprovals` | [L26](../tools/dashboard/mcp_ui.js#L26) | 13 | 14 | 3 / 1 |
+| `<callback>` | [L34](../tools/dashboard/mcp_ui.js#L34) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L34](../tools/dashboard/mcp_ui.js#L34) | 1 | 1 | 0 / 0 |
+| `clearSelections` | [L40](../tools/dashboard/mcp_ui.js#L40) | 1 | 1 | 1 / 0 |
+| `load` | [L41](../tools/dashboard/mcp_ui.js#L41) | 11 | 4 | 2 / 1 |
+| `<callback>` | [L46](../tools/dashboard/mcp_ui.js#L46) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L46](../tools/dashboard/mcp_ui.js#L46) | 1 | 1 | 0 / 0 |
+| `button.onclick` | [L53](../tools/dashboard/mcp_ui.js#L53) | 1 | 1 | 0 / 0 |
+| `save.onclick` | [L55](../tools/dashboard/mcp_ui.js#L55) | 9 | 2 | 0 / 0 |
+| `probe.onclick` | [L64](../tools/dashboard/mcp_ui.js#L64) | 20 | 9 | 0 / 0 |
+| `<callback>` | [L73](../tools/dashboard/mcp_ui.js#L73) | 1 | 2 | 0 / 0 |
+| `collect` | [L86](../tools/dashboard/mcp_ui.js#L86) | 5 | 2 | 0 / 0 |
 | `<callback>` | [L88](../tools/dashboard/mcp_ui.js#L88) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L88](../tools/dashboard/mcp_ui.js#L88) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L89](../tools/dashboard/mcp_ui.js#L89) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/media.py
 
@@ -1504,12 +1876,12 @@ Bounded GLB attachments for local browser preview, independent of inference.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `inspect_glb` | [L20](../tools/dashboard/model_assets.py#L20) | 63 | 48 | 5 / 0 |
-| `viewer_bundle` | [L85](../tools/dashboard/model_assets.py#L85) | 12 | 7 | 1 / 0 |
+| `viewer_bundle` | [L85](../tools/dashboard/model_assets.py#L85) | 12 | 7 | 4 / 0 |
 | `viewer_status` | [L99](../tools/dashboard/model_assets.py#L99) | 6 | 2 | 0 / 0 |
-| `attach_model` | [L107](../tools/dashboard/model_assets.py#L107) | 36 | 12 | 6 / 0 |
-| `model_path` | [L145](../tools/dashboard/model_assets.py#L145) | 9 | 5 | 10 / 0 |
+| `attach_model` | [L107](../tools/dashboard/model_assets.py#L107) | 36 | 12 | 8 / 0 |
+| `model_path` | [L145](../tools/dashboard/model_assets.py#L145) | 9 | 5 | 12 / 0 |
 | `rename_animation` | [L156](../tools/dashboard/model_assets.py#L156) | 20 | 11 | 2 / 0 |
-| `inspect_attachment` | [L178](../tools/dashboard/model_assets.py#L178) | 100 | 40 | 4 / 0 |
+| `inspect_attachment` | [L178](../tools/dashboard/model_assets.py#L178) | 100 | 40 | 6 / 0 |
 | `inspect_attachment.time_bounds` | [L200](../tools/dashboard/model_assets.py#L200) | 34 | 28 | 0 / 0 |
 
 ## tools/dashboard/model_preferences.py
@@ -1582,7 +1954,7 @@ Script/module inventory; inspect pinned source for complete behavior.
 | --- | ---: | ---: | ---: | ---: |
 | `<callback>` | [L2](../tools/dashboard/opencode_agent_ui.js#L2) | 21 | 1 | 0 / 0 |
 | `mount` | [L3](../tools/dashboard/opencode_agent_ui.js#L3) | 18 | 1 | 0 / 1 |
-| `button.onclick` | [L9](../tools/dashboard/opencode_agent_ui.js#L9) | 11 | 4 | 0 / 0 |
+| `button.onclick` | [L9](../tools/dashboard/opencode_agent_ui.js#L9) | 11 | 5 | 0 / 0 |
 
 ## tools/dashboard/opencode_deploy.py
 
@@ -1591,6 +1963,26 @@ V1.5.4: isolated, explicitly approved OpenCode provider config deployment.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `deploy_isolated_config` | [L11](../tools/dashboard/opencode_deploy.py#L11) | 26 | 12 | 6 / 0 |
+
+## tools/dashboard/opencode_mcp_proxy.mjs
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `reply` | [L23](../tools/dashboard/opencode_mcp_proxy.mjs#L23) | 6 | 3 | 1 / 0 |
+| `cleanup` | [L29](../tools/dashboard/opencode_mcp_proxy.mjs#L29) | 1 | 4 | 4 / 0 |
+| `<callback>` | [L30](../tools/dashboard/opencode_mcp_proxy.mjs#L30) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L31](../tools/dashboard/opencode_mcp_proxy.mjs#L31) | 1 | 1 | 0 / 0 |
+| `call` | [L33](../tools/dashboard/opencode_mcp_proxy.mjs#L33) | 25 | 15 | 1 / 0 |
+| `<callback>` | [L34](../tools/dashboard/opencode_mcp_proxy.mjs#L34) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L53](../tools/dashboard/opencode_mcp_proxy.mjs#L53) | 1 | 1 | 0 / 0 |
+| `handle` | [L59](../tools/dashboard/opencode_mcp_proxy.mjs#L59) | 20 | 14 | 1 / 0 |
+| `<callback>` | [L81](../tools/dashboard/opencode_mcp_proxy.mjs#L81) | 9 | 4 | 0 / 0 |
+| `<callback>` | [L87](../tools/dashboard/opencode_mcp_proxy.mjs#L87) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L87](../tools/dashboard/opencode_mcp_proxy.mjs#L87) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L90](../tools/dashboard/opencode_mcp_proxy.mjs#L90) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L90](../tools/dashboard/opencode_mcp_proxy.mjs#L90) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/opencode_provider.py
 
@@ -1606,19 +1998,19 @@ Explicit read-only agent sessions in an owned, no-network OpenCode container.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `session_rules` | [L35](../tools/dashboard/opencode_runtime.py#L35) | 29 | 19 | 4 / 0 |
-| `_NoRedirect.redirect_request` | [L67](../tools/dashboard/opencode_runtime.py#L67) | 2 | 1 | 0 / 0 |
-| `Client.__init__` | [L72](../tools/dashboard/opencode_runtime.py#L72) | 3 | 1 | 0 / 0 |
-| `Client.request` | [L76](../tools/dashboard/opencode_runtime.py#L76) | 21 | 10 | 0 / 0 |
-| `_resolve` | [L99](../tools/dashboard/opencode_runtime.py#L99) | 11 | 8 | 1 / 0 |
-| `_session_contract` | [L112](../tools/dashboard/opencode_runtime.py#L112) | 11 | 4 | 2 / 0 |
-| `status` | [L125](../tools/dashboard/opencode_runtime.py#L125) | 65 | 32 | 5 / 0 |
-| `_sid` | [L192](../tools/dashboard/opencode_runtime.py#L192) | 4 | 3 | 1 / 0 |
-| `_progress` | [L198](../tools/dashboard/opencode_runtime.py#L198) | 38 | 20 | 2 / 0 |
-| `conversation_prompt` | [L238](../tools/dashboard/opencode_runtime.py#L238) | 21 | 8 | 2 / 0 |
-| `ask` | [L261](../tools/dashboard/opencode_runtime.py#L261) | 112 | 44 | 5 / 1 |
-| `ask.record` | [L292](../tools/dashboard/opencode_runtime.py#L292) | 4 | 1 | 0 / 0 |
-| `ask.update` | [L296](../tools/dashboard/opencode_runtime.py#L296) | 3 | 2 | 0 / 0 |
+| `session_rules` | [L35](../tools/dashboard/opencode_runtime.py#L35) | 31 | 20 | 7 / 0 |
+| `_NoRedirect.redirect_request` | [L69](../tools/dashboard/opencode_runtime.py#L69) | 2 | 1 | 0 / 0 |
+| `Client.__init__` | [L74](../tools/dashboard/opencode_runtime.py#L74) | 3 | 1 | 0 / 0 |
+| `Client.request` | [L78](../tools/dashboard/opencode_runtime.py#L78) | 24 | 12 | 0 / 0 |
+| `_resolve` | [L104](../tools/dashboard/opencode_runtime.py#L104) | 11 | 8 | 1 / 0 |
+| `_session_contract` | [L117](../tools/dashboard/opencode_runtime.py#L117) | 11 | 4 | 2 / 0 |
+| `status` | [L130](../tools/dashboard/opencode_runtime.py#L130) | 66 | 33 | 5 / 0 |
+| `_sid` | [L198](../tools/dashboard/opencode_runtime.py#L198) | 4 | 3 | 1 / 0 |
+| `_progress` | [L204](../tools/dashboard/opencode_runtime.py#L204) | 39 | 20 | 3 / 0 |
+| `conversation_prompt` | [L245](../tools/dashboard/opencode_runtime.py#L245) | 21 | 8 | 2 / 0 |
+| `ask` | [L268](../tools/dashboard/opencode_runtime.py#L268) | 145 | 71 | 10 / 1 |
+| `ask.record` | [L315](../tools/dashboard/opencode_runtime.py#L315) | 4 | 1 | 0 / 0 |
+| `ask.update` | [L319](../tools/dashboard/opencode_runtime.py#L319) | 3 | 2 | 0 / 0 |
 
 ## tools/dashboard/opencode_sandbox.py
 
@@ -1626,13 +2018,13 @@ Managed no-network OpenCode container with a narrow local-model relay.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `ManagedClient.__init__` | [L55](../tools/dashboard/opencode_sandbox.py#L55) | 26 | 6 | 0 / 0 |
-| `ManagedClient._exec` | [L82](../tools/dashboard/opencode_sandbox.py#L82) | 3 | 3 | 2 / 0 |
-| `ManagedClient.request` | [L86](../tools/dashboard/opencode_sandbox.py#L86) | 12 | 11 | 1 / 0 |
-| `ManagedClient._response` | [L99](../tools/dashboard/opencode_sandbox.py#L99) | 36 | 17 | 1 / 0 |
-| `ManagedClient._native_response` | [L136](../tools/dashboard/opencode_sandbox.py#L136) | 58 | 47 | 1 / 0 |
-| `ManagedClient._relay` | [L195](../tools/dashboard/opencode_sandbox.py#L195) | 13 | 10 | 0 / 1 |
-| `ManagedClient.close` | [L209](../tools/dashboard/opencode_sandbox.py#L209) | 20 | 11 | 1 / 0 |
+| `ManagedClient.__init__` | [L58](../tools/dashboard/opencode_sandbox.py#L58) | 39 | 9 | 0 / 0 |
+| `ManagedClient._exec` | [L98](../tools/dashboard/opencode_sandbox.py#L98) | 3 | 3 | 2 / 0 |
+| `ManagedClient.request` | [L102](../tools/dashboard/opencode_sandbox.py#L102) | 14 | 13 | 1 / 0 |
+| `ManagedClient._response` | [L117](../tools/dashboard/opencode_sandbox.py#L117) | 45 | 22 | 1 / 0 |
+| `ManagedClient._native_response` | [L163](../tools/dashboard/opencode_sandbox.py#L163) | 58 | 47 | 1 / 0 |
+| `ManagedClient._relay` | [L222](../tools/dashboard/opencode_sandbox.py#L222) | 13 | 10 | 0 / 1 |
+| `ManagedClient.close` | [L236](../tools/dashboard/opencode_sandbox.py#L236) | 25 | 14 | 1 / 0 |
 
 ## tools/dashboard/opencode_validate.py
 
@@ -1681,7 +2073,7 @@ Bounded fixed-command subprocesses; not a filesystem/network sandbox.
 | --- | ---: | ---: | ---: | ---: |
 | `_WindowsJob.__init__` | [L20](../tools/dashboard/process_runner.py#L20) | 19 | 4 | 0 / 0 |
 | `_WindowsJob.close` | [L40](../tools/dashboard/process_runner.py#L40) | 2 | 2 | 1 / 0 |
-| `run` | [L44](../tools/dashboard/process_runner.py#L44) | 67 | 47 | 11 / 4 |
+| `run` | [L44](../tools/dashboard/process_runner.py#L44) | 67 | 47 | 12 / 7 |
 | `run.terminate` | [L58](../tools/dashboard/process_runner.py#L58) | 6 | 5 | 0 / 0 |
 | `run.drain` | [L64](../tools/dashboard/process_runner.py#L64) | 13 | 7 | 0 / 0 |
 | `run.feed` | [L81](../tools/dashboard/process_runner.py#L81) | 3 | 2 | 0 / 0 |
@@ -1701,18 +2093,18 @@ Small Python capabilities for explicitly approved local chat turns.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `_linked` | [L28](../tools/dashboard/python_tools.py#L28) | 4 | 2 | 4 / 0 |
-| `_plain_path` | [L34](../tools/dashboard/python_tools.py#L34) | 6 | 5 | 42 / 0 |
-| `permissions` | [L42](../tools/dashboard/python_tools.py#L42) | 48 | 35 | 7 / 0 |
-| `schemas` | [L92](../tools/dashboard/python_tools.py#L92) | 3 | 1 | 1 / 0 |
-| `inventory` | [L97](../tools/dashboard/python_tools.py#L97) | 98 | 42 | 6 / 0 |
-| `write_markdown` | [L197](../tools/dashboard/python_tools.py#L197) | 40 | 16 | 4 / 0 |
-| `ToolSession.__init__` | [L241](../tools/dashboard/python_tools.py#L241) | 49 | 22 | 0 / 0 |
-| `ToolSession.context` | [L291](../tools/dashboard/python_tools.py#L291) | 38 | 6 | 0 / 0 |
-| `ToolSession._audit` | [L330](../tools/dashboard/python_tools.py#L330) | 8 | 3 | 1 / 0 |
-| `ToolSession.execute` | [L339](../tools/dashboard/python_tools.py#L339) | 4 | 1 | 0 / 0 |
-| `ToolSession._invoke` | [L344](../tools/dashboard/python_tools.py#L344) | 11 | 6 | 1 / 0 |
-| `ToolSession._execute` | [L356](../tools/dashboard/python_tools.py#L356) | 43 | 16 | 1 / 0 |
-| `ToolSession.receipt` | [L400](../tools/dashboard/python_tools.py#L400) | 32 | 14 | 0 / 0 |
+| `_plain_path` | [L34](../tools/dashboard/python_tools.py#L34) | 6 | 5 | 50 / 0 |
+| `permissions` | [L42](../tools/dashboard/python_tools.py#L42) | 51 | 37 | 8 / 0 |
+| `schemas` | [L95](../tools/dashboard/python_tools.py#L95) | 3 | 1 | 1 / 0 |
+| `inventory` | [L100](../tools/dashboard/python_tools.py#L100) | 98 | 42 | 6 / 0 |
+| `write_markdown` | [L200](../tools/dashboard/python_tools.py#L200) | 40 | 16 | 4 / 0 |
+| `ToolSession.__init__` | [L244](../tools/dashboard/python_tools.py#L244) | 52 | 24 | 0 / 0 |
+| `ToolSession.context` | [L297](../tools/dashboard/python_tools.py#L297) | 40 | 7 | 0 / 0 |
+| `ToolSession._audit` | [L338](../tools/dashboard/python_tools.py#L338) | 8 | 3 | 1 / 0 |
+| `ToolSession.execute` | [L347](../tools/dashboard/python_tools.py#L347) | 4 | 1 | 0 / 0 |
+| `ToolSession._invoke` | [L352](../tools/dashboard/python_tools.py#L352) | 11 | 6 | 1 / 0 |
+| `ToolSession._execute` | [L364](../tools/dashboard/python_tools.py#L364) | 45 | 16 | 1 / 0 |
+| `ToolSession.receipt` | [L410](../tools/dashboard/python_tools.py#L410) | 32 | 14 | 0 / 0 |
 
 ## tools/dashboard/rea_connection.py
 
@@ -1743,8 +2135,8 @@ Read host counters and Ollama allocation without launching programs/models.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `_cpu_times` | [L13](../tools/dashboard/resource_metrics.py#L13) | 8 | 4 | 1 / 0 |
-| `cpu_status` | [L23](../tools/dashboard/resource_metrics.py#L23) | 12 | 4 | 2 / 0 |
-| `memory_status` | [L37](../tools/dashboard/resource_metrics.py#L37) | 20 | 5 | 2 / 0 |
+| `cpu_status` | [L23](../tools/dashboard/resource_metrics.py#L23) | 12 | 4 | 3 / 0 |
+| `memory_status` | [L37](../tools/dashboard/resource_metrics.py#L37) | 20 | 5 | 3 / 0 |
 | `model_status` | [L59](../tools/dashboard/resource_metrics.py#L59) | 20 | 9 | 3 / 0 |
 | `resource_status` | [L81](../tools/dashboard/resource_metrics.py#L81) | 7 | 1 | 1 / 0 |
 
@@ -1756,7 +2148,7 @@ Local chat runtime settings. Saving does not load or execute a model.
 | --- | ---: | ---: | ---: | ---: |
 | `validate` | [L14](../tools/dashboard/runtime_settings.py#L14) | 9 | 8 | 2 / 0 |
 | `load_runtime` | [L25](../tools/dashboard/runtime_settings.py#L25) | 17 | 7 | 5 / 0 |
-| `save_runtime` | [L44](../tools/dashboard/runtime_settings.py#L44) | 8 | 3 | 6 / 0 |
+| `save_runtime` | [L44](../tools/dashboard/runtime_settings.py#L44) | 8 | 3 | 7 / 0 |
 
 ## tools/dashboard/sandbox.py
 
@@ -1765,17 +2157,19 @@ Fail-closed Docker execution for tests and preview. Never pull images.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `validate` | [L22](../tools/dashboard/sandbox.py#L22) | 7 | 9 | 1 / 0 |
-| `config` | [L31](../tools/dashboard/sandbox.py#L31) | 5 | 2 | 1 / 0 |
-| `status` | [L38](../tools/dashboard/sandbox.py#L38) | 29 | 16 | 4 / 0 |
-| `_flags` | [L69](../tools/dashboard/sandbox.py#L69) | 15 | 3 | 5 / 0 |
-| `snapshot` | [L86](../tools/dashboard/sandbox.py#L86) | 33 | 17 | 3 / 0 |
-| `_remove` | [L121](../tools/dashboard/sandbox.py#L121) | 11 | 7 | 7 / 0 |
-| `tests` | [L134](../tools/dashboard/sandbox.py#L134) | 26 | 6 | 1 / 0 |
-| `preview` | [L182](../tools/dashboard/sandbox.py#L182) | 21 | 4 | 1 / 0 |
-| `preview.cleanup` | [L192](../tools/dashboard/sandbox.py#L192) | 5 | 2 | 0 / 0 |
-| `owned_runs` | [L205](../tools/dashboard/sandbox.py#L205) | 15 | 10 | 2 / 0 |
-| `reconcile` | [L222](../tools/dashboard/sandbox.py#L222) | 14 | 8 | 1 / 0 |
-| `record_owner` | [L238](../tools/dashboard/sandbox.py#L238) | 6 | 2 | 5 / 0 |
+| `config` | [L31](../tools/dashboard/sandbox.py#L31) | 5 | 2 | 2 / 0 |
+| `status` | [L38](../tools/dashboard/sandbox.py#L38) | 30 | 15 | 5 / 0 |
+| `_flags` | [L70](../tools/dashboard/sandbox.py#L70) | 15 | 3 | 6 / 0 |
+| `snapshot` | [L87](../tools/dashboard/sandbox.py#L87) | 33 | 17 | 4 / 0 |
+| `_remove` | [L122](../tools/dashboard/sandbox.py#L122) | 11 | 7 | 8 / 0 |
+| `tests` | [L135](../tools/dashboard/sandbox.py#L135) | 26 | 6 | 1 / 0 |
+| `node_test_result` | [L199](../tools/dashboard/sandbox.py#L199) | 15 | 17 | 2 / 0 |
+| `coding_test` | [L216](../tools/dashboard/sandbox.py#L216) | 38 | 19 | 2 / 0 |
+| `preview` | [L276](../tools/dashboard/sandbox.py#L276) | 21 | 4 | 1 / 0 |
+| `preview.cleanup` | [L286](../tools/dashboard/sandbox.py#L286) | 5 | 2 | 0 / 0 |
+| `owned_runs` | [L299](../tools/dashboard/sandbox.py#L299) | 15 | 10 | 4 / 0 |
+| `reconcile` | [L316](../tools/dashboard/sandbox.py#L316) | 14 | 8 | 1 / 0 |
+| `record_owner` | [L332](../tools/dashboard/sandbox.py#L332) | 6 | 2 | 6 / 0 |
 
 ## tools/dashboard/sandbox_preview.py
 
@@ -1786,7 +2180,7 @@ Loopback HTTP proxy through fixed Docker exec, without container networking.
 | `start` | [L30](../tools/dashboard/sandbox_preview.py#L30) | 42 | 6 | 1 / 0 |
 | `start.Handler.log_message` | [L35](../tools/dashboard/sandbox_preview.py#L35) | 1 | 1 | 0 / 0 |
 | `start.Handler.relay` | [L36](../tools/dashboard/sandbox_preview.py#L36) | 19 | 12 | 0 / 0 |
-| `stop` | [L74](../tools/dashboard/sandbox_preview.py#L74) | 9 | 4 | 2 / 2 |
+| `stop` | [L74](../tools/dashboard/sandbox_preview.py#L74) | 9 | 4 | 3 / 2 |
 
 ## tools/dashboard/session_auth.js
 
@@ -1833,7 +2227,7 @@ GitHub collection installation: preview all selected manifests, then approve bat
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `_validate` | [L15](../tools/dashboard/skill_collections.py#L15) | 18 | 18 | 1 / 0 |
-| `install_collection` | [L35](../tools/dashboard/skill_collections.py#L35) | 40 | 20 | 10 / 0 |
+| `install_collection` | [L35](../tools/dashboard/skill_collections.py#L35) | 44 | 21 | 13 / 0 |
 
 ## tools/dashboard/skill_context.py
 
@@ -1841,7 +2235,8 @@ Bounded, read-only skill context for local Qwen conversations.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `build_skill_context` | [L18](../tools/dashboard/skill_context.py#L18) | 30 | 18 | 13 / 0 |
+| `build_skill_context` | [L19](../tools/dashboard/skill_context.py#L19) | 30 | 18 | 13 / 0 |
+| `selected_context` | [L51](../tools/dashboard/skill_context.py#L51) | 20 | 10 | 4 / 0 |
 
 ## tools/dashboard/skill_duplicates.py
 
@@ -1863,11 +2258,11 @@ Persistent SMELTER skill management.
 | `enabled_map` | [L37](../tools/dashboard/skill_manager.py#L37) | 2 | 1 | 1 / 0 |
 | `_write_state` | [L41](../tools/dashboard/skill_manager.py#L41) | 10 | 3 | 4 / 0 |
 | `_safe_id` | [L53](../tools/dashboard/skill_manager.py#L53) | 3 | 3 | 3 / 0 |
-| `add_skill` | [L58](../tools/dashboard/skill_manager.py#L58) | 21 | 11 | 8 / 0 |
-| `set_skill_enabled` | [L81](../tools/dashboard/skill_manager.py#L81) | 21 | 11 | 10 / 0 |
-| `_removal` | [L104](../tools/dashboard/skill_manager.py#L104) | 9 | 8 | 2 / 0 |
-| `remove_skill` | [L115](../tools/dashboard/skill_manager.py#L115) | 5 | 2 | 2 / 0 |
-| `manage_many` | [L122](../tools/dashboard/skill_manager.py#L122) | 23 | 22 | 4 / 0 |
+| `add_skill` | [L58](../tools/dashboard/skill_manager.py#L58) | 25 | 12 | 8 / 0 |
+| `set_skill_enabled` | [L85](../tools/dashboard/skill_manager.py#L85) | 21 | 11 | 11 / 0 |
+| `_removal` | [L108](../tools/dashboard/skill_manager.py#L108) | 9 | 8 | 2 / 0 |
+| `remove_skill` | [L119](../tools/dashboard/skill_manager.py#L119) | 5 | 2 | 2 / 0 |
+| `manage_many` | [L126](../tools/dashboard/skill_manager.py#L126) | 23 | 22 | 4 / 0 |
 
 ## tools/dashboard/skill_manifest.py
 
@@ -1875,7 +2270,7 @@ Conservative SKILL.md metadata extraction for bundled and third-party skills.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `parse_skill_manifest` | [L6](../tools/dashboard/skill_manifest.py#L6) | 29 | 20 | 9 / 0 |
+| `parse_skill_manifest` | [L6](../tools/dashboard/skill_manifest.py#L6) | 29 | 20 | 10 / 0 |
 
 ## tools/dashboard/skill_router.py
 
@@ -1898,7 +2293,7 @@ Startup skill snapshots and passive manifest change detection. No execution.
 | `SkillMonitor.status` | [L65](../tools/dashboard/skill_runtime.py#L65) | 21 | 15 | 1 / 0 |
 | `SkillMonitor.manifest` | [L87](../tools/dashboard/skill_runtime.py#L87) | 5 | 5 | 0 / 0 |
 | `SkillMonitor.review` | [L93](../tools/dashboard/skill_runtime.py#L93) | 5 | 4 | 0 / 0 |
-| `initialize` | [L100](../tools/dashboard/skill_runtime.py#L100) | 4 | 1 | 9 / 0 |
+| `initialize` | [L100](../tools/dashboard/skill_runtime.py#L100) | 4 | 1 | 12 / 0 |
 | `monitor` | [L106](../tools/dashboard/skill_runtime.py#L106) | 5 | 2 | 4 / 0 |
 | `runtime_manifest` | [L113](../tools/dashboard/skill_runtime.py#L113) | 3 | 2 | 2 / 0 |
 | `active_ids` | [L118](../tools/dashboard/skill_runtime.py#L118) | 5 | 3 | 1 / 0 |
@@ -1912,7 +2307,7 @@ Read-only discovery of SMELTER skills.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `catalog_skills` | [L15](../tools/dashboard/skills_catalog.py#L15) | 91 | 43 | 23 / 0 |
+| `catalog_skills` | [L15](../tools/dashboard/skills_catalog.py#L15) | 92 | 43 | 26 / 0 |
 
 ## tools/dashboard/skills_ui.js
 
@@ -1969,16 +2364,17 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `automatic.onchange` | [L51](../tools/dashboard/skills_ui.js#L51) | 1 | 1 | 0 / 0 |
 | `importDialog` | [L52](../tools/dashboard/skills_ui.js#L52) | 12 | 1 | 1 / 0 |
 | `reset` | [L57](../tools/dashboard/skills_ui.js#L57) | 1 | 1 | 3 / 1 |
+| `filter.oninput` | [L58](../tools/dashboard/skills_ui.js#L58) | 1 | 2 | 0 / 0 |
 | `url.oninput` | [L58](../tools/dashboard/skills_ui.js#L58) | 1 | 1 | 0 / 0 |
 | `close.onclick` | [L58](../tools/dashboard/skills_ui.js#L58) | 1 | 2 | 0 / 0 |
 | `<callback>` | [L58](../tools/dashboard/skills_ui.js#L58) | 1 | 2 | 0 / 0 |
 | `<callback>` | [L58](../tools/dashboard/skills_ui.js#L58) | 1 | 1 | 0 / 0 |
-| `reviewSelected` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 5 | 0 / 1 |
+| `reviewSelected` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 6 | 0 / 1 |
 | `<callback>` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L59](../tools/dashboard/skills_ui.js#L59) | 1 | 2 | 0 / 0 |
-| `discover.onclick` | [L60](../tools/dashboard/skills_ui.js#L60) | 1 | 10 | 0 / 0 |
+| `discover.onclick` | [L60](../tools/dashboard/skills_ui.js#L60) | 1 | 11 | 0 / 0 |
 | `approve.onclick` | [L61](../tools/dashboard/skills_ui.js#L61) | 1 | 9 | 0 / 0 |
 | `<callback>` | [L61](../tools/dashboard/skills_ui.js#L61) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L61](../tools/dashboard/skills_ui.js#L61) | 1 | 1 | 0 / 0 |
@@ -2003,7 +2399,7 @@ Conservative quotas for application-owned artifacts, not project files.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `inventory` | [L14](../tools/dashboard/storage_budget.py#L14) | 19 | 10 | 5 / 0 |
+| `inventory` | [L14](../tools/dashboard/storage_budget.py#L14) | 19 | 10 | 6 / 0 |
 | `require` | [L35](../tools/dashboard/storage_budget.py#L35) | 10 | 9 | 2 / 0 |
 | `invalidate` | [L47](../tools/dashboard/storage_budget.py#L47) | 2 | 1 | 2 / 0 |
 
@@ -2021,7 +2417,7 @@ One immutable admission configuration and terminal outcome for both engines.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `configuration` | [L7](../tools/dashboard/task_contract.py#L7) | 7 | 1 | 6 / 0 |
+| `configuration` | [L7](../tools/dashboard/task_contract.py#L7) | 7 | 1 | 9 / 0 |
 | `generation_limited` | [L19](../tools/dashboard/task_contract.py#L19) | 2 | 1 | 2 / 0 |
 | `outcome` | [L23](../tools/dashboard/task_contract.py#L23) | 3 | 6 | 1 / 0 |
 | `job_state` | [L28](../tools/dashboard/task_contract.py#L28) | 3 | 2 | 3 / 0 |
@@ -2042,6 +2438,29 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `AeroClassifierTests.test_complexity` | [L29](../tools/dashboard/test_aero_classifier.py#L29) | 2 | 1 | 0 / 0 |
 | `AeroClassifierTests.test_no_execution` | [L32](../tools/dashboard/test_aero_classifier.py#L32) | 4 | 1 | 0 / 0 |
 | `AeroClassifierTests.test_invalid_input` | [L37](../tools/dashboard/test_aero_classifier.py#L37) | 5 | 2 | 0 / 0 |
+
+## tools/dashboard/test_agent_bridge.py
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `BridgeTests.setUp` | [L20](../tools/dashboard/test_agent_bridge.py#L20) | 9 | 1 | 0 / 0 |
+| `BridgeTests.bridge` | [L30](../tools/dashboard/test_agent_bridge.py#L30) | 3 | 1 | 9 / 1 |
+| `BridgeTests.test_actual_selected_instruction_snapshot_and_no_implied_tools` | [L34](../tools/dashboard/test_agent_bridge.py#L34) | 8 | 1 | 0 / 0 |
+| `BridgeTests.test_snapshot_hash_describes_actual_crlf_instructions` | [L43](../tools/dashboard/test_agent_bridge.py#L43) | 6 | 1 | 0 / 0 |
+| `BridgeTests.test_auto_selection_and_explicit_selection_share_context` | [L50](../tools/dashboard/test_agent_bridge.py#L50) | 6 | 2 | 0 / 0 |
+| `BridgeTests.test_changed_skill_is_blocked_before_task_creation` | [L57](../tools/dashboard/test_agent_bridge.py#L57) | 5 | 1 | 0 / 0 |
+| `BridgeTests.test_cancel_and_closed_bridge_cannot_execute` | [L63](../tools/dashboard/test_agent_bridge.py#L63) | 7 | 1 | 0 / 0 |
+| `BridgeTests.test_close_admits_no_further_calls_and_retains_inflight_receipt` | [L71](../tools/dashboard/test_agent_bridge.py#L71) | 17 | 1 | 0 / 0 |
+| `BridgeTests.test_close_admits_no_further_calls_and_retains_inflight_receipt.invoke` | [L74](../tools/dashboard/test_agent_bridge.py#L74) | 4 | 2 | 0 / 0 |
+| `BridgeTests.test_unknown_skill_is_rejected_during_job_admission` | [L89](../tools/dashboard/test_agent_bridge.py#L89) | 5 | 1 | 0 / 0 |
+| `BridgeTests.test_exact_mcp_names_are_allowed_without_native_edit_or_shell` | [L95](../tools/dashboard/test_agent_bridge.py#L95) | 4 | 3 | 0 / 0 |
+| `BridgeTests.test_large_provider_catalogue_does_not_expand_message_limit` | [L100](../tools/dashboard/test_agent_bridge.py#L100) | 7 | 1 | 0 / 0 |
+| `BridgeTests.test_real_mcp_inventory_rejects_escape_and_freezes_registered_exclusions` | [L109](../tools/dashboard/test_agent_bridge.py#L109) | 14 | 3 | 0 / 0 |
+| `BridgeTests.test_runtime_forwards_skills_and_rejects_disconnected_mcp` | [L124](../tools/dashboard/test_agent_bridge.py#L124) | 20 | 3 | 0 / 0 |
+| `BridgeTests.test_actual_mcp_write_deduplicates_and_retains_receipt_after_model_error` | [L146](../tools/dashboard/test_agent_bridge.py#L146) | 23 | 1 | 0 / 0 |
+| `BridgeTests.test_actual_mcp_write_deduplicates_and_retains_receipt_after_model_error.request` | [L150](../tools/dashboard/test_agent_bridge.py#L150) | 8 | 4 | 0 / 0 |
 
 ## tools/dashboard/test_blender.py
 
@@ -2098,28 +2517,29 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `constructor` | [L7](../tools/dashboard/test_chat_renderer.js#L7) | 4 | 1 | 0 / 0 |
-| `add` | [L9](../tools/dashboard/test_chat_renderer.js#L9) | 1 | 1 | 0 / 0 |
-| `textContent` | [L11](../tools/dashboard/test_chat_renderer.js#L11) | 1 | 1 | 0 / 0 |
-| `textContent` | [L12](../tools/dashboard/test_chat_renderer.js#L12) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L12](../tools/dashboard/test_chat_renderer.js#L12) | 1 | 1 | 0 / 0 |
-| `append` | [L13](../tools/dashboard/test_chat_renderer.js#L13) | 1 | 1 | 0 / 0 |
-| `replaceChildren` | [L14](../tools/dashboard/test_chat_renderer.js#L14) | 1 | 1 | 0 / 0 |
-| `setAttribute` | [L15](../tools/dashboard/test_chat_renderer.js#L15) | 1 | 1 | 0 / 0 |
-| `createElement` | [L17](../tools/dashboard/test_chat_renderer.js#L17) | 1 | 1 | 0 / 0 |
-| `createTextNode` | [L17](../tools/dashboard/test_chat_renderer.js#L17) | 1 | 1 | 0 / 0 |
-| `flatten` | [L18](../tools/dashboard/test_chat_renderer.js#L18) | 1 | 1 | 3 / 1 |
-| `<callback>` | [L20](../tools/dashboard/test_chat_renderer.js#L20) | 6 | 1 | 0 / 0 |
-| `<callback>` | [L22](../tools/dashboard/test_chat_renderer.js#L22) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L27](../tools/dashboard/test_chat_renderer.js#L27) | 3 | 1 | 0 / 0 |
-| `<callback>` | [L31](../tools/dashboard/test_chat_renderer.js#L31) | 7 | 1 | 0 / 0 |
-| `<callback>` | [L36](../tools/dashboard/test_chat_renderer.js#L36) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L39](../tools/dashboard/test_chat_renderer.js#L39) | 6 | 2 | 0 / 0 |
-| `<callback>` | [L42](../tools/dashboard/test_chat_renderer.js#L42) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L46](../tools/dashboard/test_chat_renderer.js#L46) | 8 | 1 | 0 / 0 |
+| `<callback>` | [L6](../tools/dashboard/test_chat_renderer.js#L6) | 6 | 1 | 0 / 0 |
+| `constructor` | [L15](../tools/dashboard/test_chat_renderer.js#L15) | 4 | 1 | 0 / 0 |
+| `add` | [L17](../tools/dashboard/test_chat_renderer.js#L17) | 1 | 1 | 0 / 0 |
+| `textContent` | [L19](../tools/dashboard/test_chat_renderer.js#L19) | 1 | 1 | 0 / 0 |
+| `textContent` | [L20](../tools/dashboard/test_chat_renderer.js#L20) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L20](../tools/dashboard/test_chat_renderer.js#L20) | 1 | 1 | 0 / 0 |
+| `append` | [L21](../tools/dashboard/test_chat_renderer.js#L21) | 1 | 1 | 0 / 0 |
+| `replaceChildren` | [L22](../tools/dashboard/test_chat_renderer.js#L22) | 1 | 1 | 0 / 0 |
+| `setAttribute` | [L23](../tools/dashboard/test_chat_renderer.js#L23) | 1 | 1 | 0 / 0 |
+| `createElement` | [L25](../tools/dashboard/test_chat_renderer.js#L25) | 1 | 1 | 0 / 0 |
+| `createTextNode` | [L25](../tools/dashboard/test_chat_renderer.js#L25) | 1 | 1 | 0 / 0 |
+| `flatten` | [L26](../tools/dashboard/test_chat_renderer.js#L26) | 1 | 1 | 3 / 1 |
+| `<callback>` | [L28](../tools/dashboard/test_chat_renderer.js#L28) | 6 | 1 | 0 / 0 |
+| `<callback>` | [L30](../tools/dashboard/test_chat_renderer.js#L30) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L35](../tools/dashboard/test_chat_renderer.js#L35) | 3 | 1 | 0 / 0 |
+| `<callback>` | [L39](../tools/dashboard/test_chat_renderer.js#L39) | 7 | 1 | 0 / 0 |
+| `<callback>` | [L44](../tools/dashboard/test_chat_renderer.js#L44) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L47](../tools/dashboard/test_chat_renderer.js#L47) | 6 | 2 | 0 / 0 |
 | `<callback>` | [L50](../tools/dashboard/test_chat_renderer.js#L50) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L51](../tools/dashboard/test_chat_renderer.js#L51) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L52](../tools/dashboard/test_chat_renderer.js#L52) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L54](../tools/dashboard/test_chat_renderer.js#L54) | 8 | 1 | 0 / 0 |
+| `<callback>` | [L58](../tools/dashboard/test_chat_renderer.js#L58) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L59](../tools/dashboard/test_chat_renderer.js#L59) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L60](../tools/dashboard/test_chat_renderer.js#L60) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/test_chats.py
 
@@ -2133,6 +2553,36 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `ChatPersistenceTests.test_note_requires_existing_conversation` | [L27](../tools/dashboard/test_chats.py#L27) | 3 | 1 | 0 / 0 |
 | `ChatPersistenceTests.test_note_size_limit` | [L30](../tools/dashboard/test_chats.py#L30) | 4 | 1 | 0 / 0 |
 | `ChatPersistenceTests.test_title_required` | [L35](../tools/dashboard/test_chats.py#L35) | 5 | 2 | 0 / 0 |
+
+## tools/dashboard/test_coding_workspace.py
+
+Code isolation, hash admission, rollback, real MCP and evidence freshness.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `CodingWorkspaceTests.setUp` | [L18](../tools/dashboard/test_coding_workspace.py#L18) | 13 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.tearDown` | [L32](../tools/dashboard/test_coding_workspace.py#L32) | 3 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.prepare` | [L36](../tools/dashboard/test_coding_workspace.py#L36) | 3 | 1 | 15 / 0 |
+| `CodingWorkspaceTests.change` | [L40](../tools/dashboard/test_coding_workspace.py#L40) | 4 | 2 | 9 / 0 |
+| `CodingWorkspaceTests.test_copy_preserves_original_and_existing_v2` | [L45](../tools/dashboard/test_coding_workspace.py#L45) | 11 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_proposal_is_reviewable_but_does_not_edit_until_apply` | [L57](../tools/dashboard/test_coding_workspace.py#L57) | 8 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_six_file_patch_and_new_file_hash_contract` | [L66](../tools/dashboard/test_coding_workspace.py#L66) | 9 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_large_unicode_proposal_remains_readable_and_applicable` | [L76](../tools/dashboard/test_coding_workspace.py#L76) | 10 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_atomic_replacement_does_not_modify_hardlinked_original` | [L87](../tools/dashboard/test_coding_workspace.py#L87) | 10 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_stale_second_file_rejects_whole_patch_before_any_write` | [L98](../tools/dashboard/test_coding_workspace.py#L98) | 10 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_second_replace_failure_rolls_back_first_file` | [L109](../tools/dashboard/test_coding_workspace.py#L109) | 14 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_second_replace_failure_rolls_back_first_file.replace` | [L115](../tools/dashboard/test_coding_workspace.py#L115) | 4 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_replay_is_idempotent_and_never_overwrites_a_later_edit` | [L124](../tools/dashboard/test_coding_workspace.py#L124) | 10 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_portable_unsafe_paths_and_duplicate_case_are_rejected` | [L135](../tools/dashboard/test_coding_workspace.py#L135) | 12 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_cross_workspace_proposal_cannot_be_applied` | [L148](../tools/dashboard/test_coding_workspace.py#L148) | 6 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_full_sha_and_crlf_are_preserved` | [L155](../tools/dashboard/test_coding_workspace.py#L155) | 7 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_execution_requires_registered_test_scope` | [L163](../tools/dashboard/test_coding_workspace.py#L163) | 7 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_new_permission_is_boolean_and_tools_are_not_exposed_without_it` | [L171](../tools/dashboard/test_coding_workspace.py#L171) | 5 | 3 | 0 / 0 |
+| `CodingWorkspaceTests.test_current_green_evidence_is_invalidated_by_any_edit` | [L177](../tools/dashboard/test_coding_workspace.py#L177) | 11 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_review_requires_both_detected_profiles` | [L189](../tools/dashboard/test_coding_workspace.py#L189) | 10 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_command_arguments_are_rejected_before_a_runner_starts` | [L200](../tools/dashboard/test_coding_workspace.py#L200) | 5 | 1 | 0 / 0 |
+| `CodingWorkspaceTests.test_runner_classifies_assertions_separately_from_import_and_empty_errors` | [L206](../tools/dashboard/test_coding_workspace.py#L206) | 27 | 2 | 0 / 0 |
+| `CodingWorkspaceTests.test_real_mcp_patch_receipts_and_file_cards` | [L235](../tools/dashboard/test_coding_workspace.py#L235) | 15 | 2 | 0 / 0 |
 
 ## tools/dashboard/test_config_store.py
 
@@ -2293,8 +2743,8 @@ Script/module inventory; inspect pinned source for complete behavior.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `FrontendWorkspaceTests.setUp` | [L14](../tools/dashboard/test_frontend_workspace.py#L14) | 13 | 1 | 0 / 0 |
-| `FrontendWorkspaceTests.prepare` | [L28](../tools/dashboard/test_frontend_workspace.py#L28) | 2 | 1 | 10 / 0 |
-| `FrontendWorkspaceTests.edit` | [L31](../tools/dashboard/test_frontend_workspace.py#L31) | 4 | 1 | 3 / 0 |
+| `FrontendWorkspaceTests.prepare` | [L28](../tools/dashboard/test_frontend_workspace.py#L28) | 2 | 1 | 11 / 0 |
+| `FrontendWorkspaceTests.edit` | [L31](../tools/dashboard/test_frontend_workspace.py#L31) | 4 | 1 | 4 / 0 |
 | `FrontendWorkspaceTests.test_prepare_keeps_original_and_uses_a_separate_database` | [L36](../tools/dashboard/test_frontend_workspace.py#L36) | 8 | 1 | 0 / 0 |
 | `FrontendWorkspaceTests.test_unmanaged_destination_is_not_overwritten` | [L45](../tools/dashboard/test_frontend_workspace.py#L45) | 7 | 1 | 0 / 0 |
 | `FrontendWorkspaceTests.test_css_edit_preserves_backend_javascript_and_source` | [L53](../tools/dashboard/test_frontend_workspace.py#L53) | 14 | 1 | 0 / 0 |
@@ -2308,6 +2758,7 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `FrontendWorkspaceTests.test_failed_validation_invalidates_previous_pass.checks` | [L135](../tools/dashboard/test_frontend_workspace.py#L135) | 1 | 1 | 0 / 0 |
 | `FrontendWorkspaceTests.test_preview_uses_confined_runner_and_rejects_legacy_pass` | [L143](../tools/dashboard/test_frontend_workspace.py#L143) | 10 | 1 | 0 / 0 |
 | `FrontendWorkspaceTests.test_unavailable_confinement_has_no_host_fallback` | [L154](../tools/dashboard/test_frontend_workspace.py#L154) | 5 | 1 | 0 / 0 |
+| `FrontendWorkspaceTests.test_new_css_edit_cannot_replay_an_old_successful_preview_url` | [L160](../tools/dashboard/test_frontend_workspace.py#L160) | 15 | 1 | 0 / 0 |
 
 ## tools/dashboard/test_github_skill_discovery.py
 
@@ -2329,13 +2780,15 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `GitHubSkillTests.test_changed_content_rejected` | [L59](../tools/dashboard/test_github_skill_discovery.py#L59) | 6 | 1 | 0 / 0 |
 | `GitHubSkillTests.test_install_requires_approval` | [L66](../tools/dashboard/test_github_skill_discovery.py#L66) | 3 | 1 | 0 / 0 |
 | `GitHubSkillTests.test_bad_manifest_rejected` | [L70](../tools/dashboard/test_github_skill_discovery.py#L70) | 3 | 1 | 0 / 0 |
-| `GitHubSkillTests.test_repository_tree_discovery` | [L74](../tools/dashboard/test_github_skill_discovery.py#L74) | 14 | 1 | 0 / 0 |
-| `GitHubSkillTests.test_repository_tree_discovery.opener` | [L75](../tools/dashboard/test_github_skill_discovery.py#L75) | 10 | 2 | 0 / 0 |
-| `GitHubSkillTests.test_truncated_repository_rejected` | [L89](../tools/dashboard/test_github_skill_discovery.py#L89) | 6 | 1 | 0 / 0 |
-| `GitHubSkillTests.test_truncated_repository_rejected.opener` | [L90](../tools/dashboard/test_github_skill_discovery.py#L90) | 3 | 2 | 0 / 0 |
-| `GitHubSkillTests.test_repository_discovery_requires_root` | [L96](../tools/dashboard/test_github_skill_discovery.py#L96) | 3 | 1 | 0 / 0 |
-| `GitHubSkillTests.test_duplicate_content_import_is_skipped_without_copying` | [L100](../tools/dashboard/test_github_skill_discovery.py#L100) | 7 | 1 | 0 / 0 |
-| `GitHubSkillTests.test_failed_disable_rolls_back_new_import` | [L108](../tools/dashboard/test_github_skill_discovery.py#L108) | 7 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_repository_tree_discovery` | [L74](../tools/dashboard/test_github_skill_discovery.py#L74) | 17 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_repository_tree_discovery.opener` | [L75](../tools/dashboard/test_github_skill_discovery.py#L75) | 12 | 3 | 0 / 0 |
+| `GitHubSkillTests.test_large_catalogue_is_discovered_without_fetching_or_installing_manifests` | [L92](../tools/dashboard/test_github_skill_discovery.py#L92) | 18 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_large_catalogue_is_discovered_without_fetching_or_installing_manifests.opener` | [L94](../tools/dashboard/test_github_skill_discovery.py#L94) | 10 | 4 | 0 / 0 |
+| `GitHubSkillTests.test_truncated_repository_rejected` | [L111](../tools/dashboard/test_github_skill_discovery.py#L111) | 8 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_truncated_repository_rejected.opener` | [L112](../tools/dashboard/test_github_skill_discovery.py#L112) | 5 | 3 | 0 / 0 |
+| `GitHubSkillTests.test_repository_discovery_requires_root` | [L120](../tools/dashboard/test_github_skill_discovery.py#L120) | 3 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_duplicate_content_import_is_skipped_without_copying` | [L124](../tools/dashboard/test_github_skill_discovery.py#L124) | 7 | 1 | 0 / 0 |
+| `GitHubSkillTests.test_failed_disable_rolls_back_new_import` | [L132](../tools/dashboard/test_github_skill_discovery.py#L132) | 7 | 1 | 0 / 0 |
 
 ## tools/dashboard/test_locations.py
 
@@ -2933,6 +3386,30 @@ Vision integration coverage: real image -> chat -> Ollama payload -> SQLite.
 | `VisionEndToEndTests.test_text_chat_has_no_image_field.fake_ollama` | [L84](../tools/dashboard/test_vision_e2e.py#L84) | 4 | 1 | 0 / 0 |
 | `VisionEndToEndTests.test_live_qwen_recognizes_image_through_chat_pipeline` | [L93](../tools/dashboard/test_vision_e2e.py#L93) | 6 | 1 | 0 / 0 |
 
+## tools/dashboard/test_workflow_audit.py
+
+Cross-layer audit regressions. Disposable files and synthetic model responses only.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `WorkflowAuditTests.setUp` | [L18](../tools/dashboard/test_workflow_audit.py#L18) | 10 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_plain_opencode_task_does_not_require_or_read_an_existing_v2` | [L29](../tools/dashboard/test_workflow_audit.py#L29) | 11 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_direct_coding_infrastructure_error_is_saved_as_partial` | [L41](../tools/dashboard/test_workflow_audit.py#L41) | 17 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_direct_coding_infrastructure_error_is_saved_as_partial.opener` | [L48](../tools/dashboard/test_workflow_audit.py#L48) | 2 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_expected_tdd_red_is_not_an_infrastructure_failure` | [L59](../tools/dashboard/test_workflow_audit.py#L59) | 5 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_frontend_validation_receives_its_fixed_longer_mcp_deadline` | [L65](../tools/dashboard/test_workflow_audit.py#L65) | 6 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_bridge_deadlines_outlive_host_operation_and_cleanup` | [L72](../tools/dashboard/test_workflow_audit.py#L72) | 10 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_coding_cards_reject_malformed_function_before_touching_files` | [L83](../tools/dashboard/test_workflow_audit.py#L83) | 6 | 2 | 0 / 0 |
+| `WorkflowAuditTests.test_capability_catalog_exposes_coding_tools_and_separate_runner_readiness` | [L90](../tools/dashboard/test_workflow_audit.py#L90) | 10 | 2 | 0 / 0 |
+| `WorkflowAuditTests.test_database_directory_with_hash_character_is_readable` | [L101](../tools/dashboard/test_workflow_audit.py#L101) | 6 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_github_malformed_file_packet_is_a_validation_error` | [L108](../tools/dashboard/test_workflow_audit.py#L108) | 5 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_direct_admission_rejects_bad_skills_before_starting_a_worker` | [L114](../tools/dashboard/test_workflow_audit.py#L114) | 6 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_installed_catalogue_never_silently_hides_overflow` | [L121](../tools/dashboard/test_workflow_audit.py#L121) | 8 | 2 | 0 / 0 |
+| `WorkflowAuditTests.test_collection_capacity_is_checked_before_any_import` | [L130](../tools/dashboard/test_workflow_audit.py#L130) | 10 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_direct_task_uses_and_records_its_admitted_skill_snapshot` | [L141](../tools/dashboard/test_workflow_audit.py#L141) | 24 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_direct_task_uses_and_records_its_admitted_skill_snapshot.infer` | [L155](../tools/dashboard/test_workflow_audit.py#L155) | 3 | 1 | 0 / 0 |
+| `WorkflowAuditTests.test_real_node_reporter_separates_assertion_import_error_green_and_all_skipped` | [L167](../tools/dashboard/test_workflow_audit.py#L167) | 19 | 3 | 0 / 0 |
+
 ## tools/dashboard/test_workflows.py
 
 Script/module inventory; inspect pinned source for complete behavior.
@@ -2946,14 +3423,24 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `WorkflowTests.test_unknown_workflow_rejected` | [L23](../tools/dashboard/test_workflows.py#L23) | 3 | 1 | 0 / 0 |
 | `WorkflowTests.test_no_executable_commands_in_report` | [L26](../tools/dashboard/test_workflows.py#L26) | 4 | 2 | 0 / 0 |
 
+## tools/dashboard/tool_contract.py
+
+Controller-owned operation deadlines and result semantics shared by transports.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `operation_timeout` | [L9](../tools/dashboard/tool_contract.py#L9) | 4 | 2 | 4 / 0 |
+| `result_failed` | [L15](../tools/dashboard/tool_contract.py#L15) | 7 | 4 | 5 / 0 |
+
 ## tools/dashboard/tool_registry.py
 
 Shared tool definitions and fixed dispatch for direct and MCP transports.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `schemas` | [L5](../tools/dashboard/tool_registry.py#L5) | 51 | 7 | 2 / 0 |
-| `execute_builtin` | [L59](../tools/dashboard/tool_registry.py#L59) | 16 | 6 | 2 / 0 |
+| `schemas` | [L5](../tools/dashboard/tool_registry.py#L5) | 66 | 9 | 2 / 0 |
+| `schemas.parameters` | [L9](../tools/dashboard/tool_registry.py#L9) | 2 | 1 | 0 / 0 |
+| `execute_builtin` | [L74](../tools/dashboard/tool_registry.py#L74) | 20 | 7 | 2 / 0 |
 
 ## tools/dashboard/turntable.js
 
@@ -2994,7 +3481,7 @@ Validate image attachments for Ollama vision; no arbitrary filesystem reads.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `validate_image` | [L9](../tools/dashboard/vision.py#L9) | 19 | 16 | 5 / 0 |
+| `validate_image` | [L9](../tools/dashboard/vision.py#L9) | 19 | 16 | 6 / 0 |
 
 ## tools/dashboard/vision_pipeline_probe.py
 

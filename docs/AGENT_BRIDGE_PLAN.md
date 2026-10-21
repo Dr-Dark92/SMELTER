@@ -2,7 +2,11 @@
 
 Date: 2026-10-21. Starting revision: bed7255ebe0d5b0f93dce7c6308beaf972345d3f.
 
-Milestone 1 is implemented and smoke-tested. See [progress](AGENT_BRIDGE_PROGRESS.md)
+The universal bridge, ECC instructions and scoped coding contract are implemented
+and smoke-tested through application `cee565b24726a9c217eab21c8a75bac88cad8c9c`.
+See [current workflow audit](reviews/2026-10-21/workflow-audit/REVIEW.md) and
+[action plan](reviews/2026-10-21/workflow-audit/ACTION_PLAN.md) for current scope.
+Milestone history is in [progress](AGENT_BRIDGE_PROGRESS.md)
 and [handover](AGENT_BRIDGE_HANDOVER_20261021.md) for exact evidence and remaining work.
 
 ## Goal
@@ -33,8 +37,10 @@ audits each action. Protocol adapters belong to runtimes, not individual skills.
 No automatic installs, arbitrary external MCP servers, generic host shell,
 arbitrary source writes, additional model providers or scope expansion through
 skill text. Existing source/V2/data are preserved. The existing frontend grant
-permits CSS-only changes and fixed checks; generic workspace coding needs its
-own patch/review and confined execution design after this bridge is verified.
+permits CSS-only changes and fixed checks. The separate coding grant now
+provides new copies, hash-checked proposals/apply, fixed Python/Node tests and
+current-tree review. General builds, dependency installation, source merge and
+Git operations remain unavailable.
 
 ## Acceptance
 
@@ -49,14 +55,14 @@ own patch/review and confined execution design after this bridge is verified.
 
 ## Follow-up
 
-General confined multi-file coding, safe V2 refresh, arbitrary external MCP
+Deliverable acceptance, coding export/retention, safe V2 refresh, arbitrary external MCP
 adapters and model-quality benchmarks are separate milestones. Durable task
 records already exist; recovery must continue to mark interruption without
 replaying actions.
 
 ## ECC and home acceptance
 
-The commit-pinned instruction pack and large-catalogue import fix are implemented and verified through the existing universal bridge. The [home runbook](HOME_SMOKE_TEST.md) provides retained evidence and exact manual demos. Full ECC executable-plugin integration is a separate blocked capability; the staged implementation order and compatibility matrix are in [ECC_COMPATIBILITY.md](ECC_COMPATIBILITY.md). The next substantive coding gap is a confined general patch/test/review contract; enabling a larger catalogue cannot supply that operation.
+The commit-pinned instruction pack and large-catalogue import fix are implemented and verified through the existing universal bridge. The [home runbook](HOME_SMOKE_TEST.md) provides retained evidence and exact manual demos. Full ECC executable-plugin integration is a separate blocked capability; the staged implementation order and compatibility matrix are in [ECC_COMPATIBILITY.md](ECC_COMPATIBILITY.md). The scoped patch/test/review contract is implemented. The next product gaps are task-specific deliverable acceptance, coding export/retention and project profiles; enabling a larger catalogue cannot supply those operations.
 
 ## Scoped ECC coding milestone
 

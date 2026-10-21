@@ -1,0 +1,590 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-21T16:54:38.835Z",
+  "repository": "Dr-Dark92/SMELTER",
+  "baseline_sha": "c1bef027c0722dea73124c07f748915437c5aeac",
+  "verified_application_sha": "cee565b24726a9c217eab21c8a75bac88cad8c9c",
+  "verified_application_tree": "f22569889e08ee6ce5694d0f821b6ad1e76d2feb",
+  "published_branch": "SMELTERV1",
+  "ci": {
+    "run_id": 39634078827,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119339771470,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/job/119339771470"
+      },
+      {
+        "id": 119339771630,
+        "name": "contracts (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/job/119339771630"
+      },
+      {
+        "id": 119339771711,
+        "name": "agent-bridge-smoke",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/job/119339771711"
+      },
+      {
+        "id": 119339771852,
+        "name": "contracts (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/job/119339771852"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12361265543,
+        "name": "workflow-smoke-windows-latest",
+        "size_bytes": 2971,
+        "expires_at": "2026-11-04T16:24:01Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/artifacts/12361265543"
+      },
+      {
+        "id": 12359973520,
+        "name": "workflow-smoke-ubuntu-latest",
+        "size_bytes": 2862,
+        "expires_at": "2026-11-04T16:22:34Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/artifacts/12359973520"
+      },
+      {
+        "id": 12359744260,
+        "name": "workbench-browser-evidence",
+        "size_bytes": 1538029,
+        "expires_at": "2026-11-04T16:25:52Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/artifacts/12359744260"
+      },
+      {
+        "id": 12359509376,
+        "name": "agent-bridge-smoke-evidence",
+        "size_bytes": 98156,
+        "expires_at": "2026-11-04T16:24:10Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827/artifacts/12359509376"
+      }
+    ],
+    "native_contracts": {
+      "linux": {
+        "dashboard": 405,
+        "skipped": 2,
+        "dashboard_seconds": 26.055,
+        "setup": 32,
+        "analysis": 18,
+        "javascript": 16,
+        "javascript_failures": 0
+      },
+      "windows": {
+        "dashboard": 405,
+        "skipped": 3,
+        "dashboard_seconds": 72.39,
+        "setup": 32,
+        "analysis": 18,
+        "javascript": 16,
+        "javascript_failures": 0
+      }
+    }
+  },
+  "first_candidate": {
+    "sha": "f8b70ae17ae273f269488c052fbffc513a6b032b",
+    "run_id": 39633329869,
+    "conclusion": "failure",
+    "reason": "Windows rejected an absolute C: reporter import path; corrected to pathToFileURL(reporter).href and reran all jobs."
+  },
+  "workflows": {
+    "linux": {
+      "status": "PASS",
+      "mode": "real HTTP/files/SQLite/MCP; synthetic inference",
+      "live_qwen": false,
+      "docker": false,
+      "checks": [
+        {
+          "name": "auth, JSON shape, mandatory title and chat CRUD",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "database hash-path startup and integrity",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "policy compare-and-swap and unregistered admission denial",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "operator folder browser lists directories only",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "real MCP write, saved bytes/hash and durable outcome",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "admitted skill text and exact hash are recorded",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "next task receives no previous tool grants",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "read-only inventory returns known exact metadata",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "slow task begins",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "Stop and independent durable status agree",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "GLB structure, embedded durations and persistent labels",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "verified backup and offline restore preserve chat and GLB",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "retention preview and denied prune preserve files",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "approved prune removes only the reviewed old artifact",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "conversation deletion reconciles attachment bytes",
+          "status": "PASS",
+          "detail": null
+        }
+      ],
+      "host_observations": {
+        "cpu": {
+          "status": "sampling",
+          "logical_cpus": 4
+        },
+        "memory": {
+          "status": "ready",
+          "total_bytes": 16760344576,
+          "available_bytes": 15723831296,
+          "used_bytes": 1036513280,
+          "percent": 6.2
+        }
+      },
+      "synthetic_model_requests": 6,
+      "cleanup_confirmed": true
+    },
+    "windows": {
+      "status": "PASS",
+      "mode": "real HTTP/files/SQLite/MCP; synthetic inference",
+      "live_qwen": false,
+      "docker": false,
+      "checks": [
+        {
+          "name": "auth, JSON shape, mandatory title and chat CRUD",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "database hash-path startup and integrity",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "policy compare-and-swap and unregistered admission denial",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "operator folder browser lists directories only",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "real MCP write, saved bytes/hash and durable outcome",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "admitted skill text and exact hash are recorded",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "next task receives no previous tool grants",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "read-only inventory returns known exact metadata",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "slow task begins",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "Stop and independent durable status agree",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "GLB structure, embedded durations and persistent labels",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "verified backup and offline restore preserve chat and GLB",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "retention preview and denied prune preserve files",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "approved prune removes only the reviewed old artifact",
+          "status": "PASS",
+          "detail": null
+        },
+        {
+          "name": "conversation deletion reconciles attachment bytes",
+          "status": "PASS",
+          "detail": null
+        }
+      ],
+      "host_observations": {
+        "cpu": {
+          "status": "sampling",
+          "logical_cpus": 4
+        },
+        "memory": {
+          "status": "ready",
+          "total_bytes": 17174360064,
+          "available_bytes": 14392832000,
+          "used_bytes": 2781528064,
+          "percent": 16.2
+        }
+      },
+      "synthetic_model_requests": 6,
+      "cleanup_confirmed": true
+    }
+  },
+  "browser": {
+    "liveInference": false,
+    "liveDocker": false,
+    "syntheticAssets": true,
+    "pageErrors": [],
+    "externalRequests": [],
+    "largeSkillCatalogue": true,
+    "stopAndRefreshRecovery": true,
+    "codingReceiptStates": true,
+    "openCodeGuiForwarding": true,
+    "result": "passed",
+    "settingsSearch": true,
+    "registeredLocations": true,
+    "folderBrowse": true,
+    "skillsBulk": true,
+    "titledChat": true,
+    "attachmentMenu": true,
+    "glbRender": true,
+    "animationPlaybackAndLabels": true,
+    "png": true,
+    "webm": true,
+    "releaseDuringExport": true,
+    "lateLoadIgnored": true,
+    "latePngIgnored": true,
+    "errorReload": true,
+    "widths": [
+      375,
+      768,
+      1024,
+      1440
+    ],
+    "reducedMotion": true
+  },
+  "container_profiles": {
+    "status": "PASS",
+    "live_qwen": false,
+    "transport": "actual Python MCP",
+    "boundary": "real no-network Python and Node containers",
+    "cases": [
+      {
+        "profile": "python",
+        "stage": "RED",
+        "counts": {
+          "tests": 1,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "d03291e6d1ad9fcc88a457e788d0b04fe3a512bc1cfe8925f5efbdbd83fd77a3",
+        "log_sha256": "e602ba7e0ee08b8f1536f1fe0af7138291bfcab10d372b82f8a7ea37bb3b1615",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      },
+      {
+        "profile": "node",
+        "stage": "RED",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "d03291e6d1ad9fcc88a457e788d0b04fe3a512bc1cfe8925f5efbdbd83fd77a3",
+        "log_sha256": "86ab7b9e1679d0e20aa97239964ee6841bc79fba1a93a9c61469ec8d44294594",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "python",
+        "stage": "GREEN",
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "exit_code": 0,
+        "cleanup_confirmed": true,
+        "tree_sha256": "2f7379de77d51ba1b287e5ede3c65cafd4113f710a17f27855191dd5d0059473",
+        "log_sha256": "18185c1cf079fd2e678ae0bccb208cfaf6a9731b3df4ccde274c2bb736d74e9b",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      },
+      {
+        "profile": "node",
+        "stage": "GREEN",
+        "counts": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 0,
+        "cleanup_confirmed": true,
+        "tree_sha256": "2f7379de77d51ba1b287e5ede3c65cafd4113f710a17f27855191dd5d0059473",
+        "log_sha256": "670b15cd38e6087255164c70fd6822cbf592639650fe864e09ff2f1329d77e3a",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "node",
+        "stage": "ERROR",
+        "counts": {
+          "tests": 2,
+          "pass": 0,
+          "fail": 2,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "761573edafdcbeda333aafa9ec9ba5efc2f30a0559fa7231239fe728e31741f6",
+        "log_sha256": "686dc469fd6e760813d5485589f4e2e924fb3c6169aca2709f3af9723c7caa6a",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "python",
+        "stage": "ERROR",
+        "counts": {
+          "tests": 2,
+          "failures": 1,
+          "errors": 1,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "18cdbdb720d8ee3514dde59bb53f956afe87f21ee547986deab0821bb0aab85f",
+        "log_sha256": "86ce8f74ff089aff37016db6684fa1ac846d6bac94a0c062925b09a81e2b4983",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      }
+    ],
+    "current_green_review": true,
+    "stale_green_rejected": true,
+    "source_unchanged": true,
+    "cleanup_confirmed": true,
+    "tool_calls": 15
+  },
+  "managed_report": {
+    "status": "passed",
+    "opencode_required_version": "1.19.3",
+    "model": "synthetic protocol fixture; no Qwen inference",
+    "boundary": "managed no-network Docker container",
+    "skills": [
+      {
+        "id": "ecc-verification-loop",
+        "sha256": "5b06be54d4852f60e6cf1b04c6e9a4748554334eb3e41af6c0959b544e6464ae",
+        "hash_scope": "loaded UTF-8 instruction text"
+      }
+    ],
+    "tool": "write_diagnostic_markdown",
+    "transport": "mcp",
+    "bytes": 68,
+    "sha256": "dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1",
+    "independent_saved_bytes_check": true,
+    "mcp_server_audit_checked": true,
+    "chat_persistence_checked": true,
+    "unapproved_write_denied": true,
+    "opencode_mcp_result_acknowledged": true,
+    "fixture_tool_delay_seconds": 12,
+    "cleanup_confirmed": true,
+    "fixture_model_requests": 2,
+    "disposable_state_removed_on_exit": true
+  },
+  "frontend_preview": {
+    "status": "PASS",
+    "live_qwen": false,
+    "mode": "actual MCP, container tests and loopback preview",
+    "preview_css_verified": true,
+    "authenticated_empty_preview_db": true,
+    "stale_launch_rejected": true,
+    "source_unchanged": true,
+    "source_sha256": "725f68816257a4b81ee66d24579da258b46189b912e6498848f414e07b4ce74a",
+    "cleanup_confirmed": true,
+    "tests": [
+      {
+        "profile": "python",
+        "command": [
+          "python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools/dashboard",
+          "-p",
+          "test_*.py"
+        ],
+        "exit_code": 0,
+        "sandbox": "docker-no-network",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a",
+        "log_sha256": "3de7f286c0a0892137f260e5780dac34a27f0226a076874d04bee140136e52ee",
+        "counts": {
+          "tests": 405,
+          "skipped": 14
+        },
+        "note": "Dependency/opt-in skips inside the minimal Python container; native suites have 2 Linux/3 Windows skips."
+      },
+      {
+        "profile": "node",
+        "command": [
+          "node",
+          "--test",
+          "tools/dashboard/test_chat_renderer.js",
+          "tools/dashboard/test_session_auth.js",
+          "tools/dashboard/test_file_activity.js",
+          "tools/dashboard/test_operations_ui.js"
+        ],
+        "exit_code": 0,
+        "sandbox": "docker-no-network",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986",
+        "log_sha256": "860fd4dd15e8e8858e2d8c548487235b2b58c613b81bd23f540a55c5003d6323",
+        "counts": {
+          "tests": 16,
+          "failed": 0
+        }
+      }
+    ]
+  },
+  "ecc_coding": {
+    "status": "passed",
+    "model": "synthetic protocol fixture; no Qwen inference",
+    "selected_skill_sha256": "8887afa786ef30de834e7567115d3df71934b343c3d9d849714f8ea43f979ee0",
+    "boundary": "managed no-network OpenCode and Python test containers",
+    "controller_tool_calls": 9,
+    "test_stages": [
+      "RED",
+      "GREEN"
+    ],
+    "red_counts": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "green_counts": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "changed_files": [
+      {
+        "relative_path": "tools/dashboard/example.py",
+        "before_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+        "after_sha256": "ba1a531f581d2e6094e978ed6f7aca7a8d92eeb62c6e7ad73ee692f7f18bc772"
+      },
+      {
+        "relative_path": "tools/dashboard/test_example.py",
+        "before_sha256": null,
+        "after_sha256": "4cfa50adebf4caf3674df11d691d1c83680007a0561b1fe9d023916f364a486b"
+      }
+    ],
+    "all_current_tests_passed": true,
+    "coverage": "not measured",
+    "source_unchanged": true,
+    "mcp_audits_checked": true,
+    "cleanup_confirmed": true,
+    "fixture_model_requests": 10
+  },
+  "static_graph": {
+    "source_sha": "cee565b24726a9c217eab21c8a75bac88cad8c9c",
+    "files": 272,
+    "python": 204,
+    "javascript": 21,
+    "mjs": 2,
+    "cjs": 1,
+    "powershell": 44,
+    "symbols": 1917,
+    "relationships": 3260,
+    "unresolved_calls": 11363,
+    "runtime_links": 74,
+    "ci_runtime_links": 59,
+    "note": "Documentation refresh adds 15 manually reviewed cross-layer links; application source and static counts match final CI. PowerShell declarations only. Unresolved calls and symbols without static incoming references are not dead-code or defect counts."
+  },
+  "not_run": [
+    "Live Qwen model inference and image interpretation",
+    "Home RTX 5080/CachyOS Intel driver or performance acceptance",
+    "Actual installed REA/Blender/FFprobe/7z integrations",
+    "Legacy game/Blender/model-dependent scripts and setup installers",
+    "Full ECC executable plugin, hooks, delegation, memory, coverage and arbitrary external MCP"
+  ],
+  "backup_excludes": [
+    "source and V2/coding copies",
+    "coding proposals, metadata and test logs",
+    "MCP connection JSON",
+    "legacy skill directories",
+    "installed dependencies and model weights",
+    "running containers"
+  ],
+  "acceptance": "CI verifies actual tools, transports, saved bytes and container/browser behavior with synthetic inference. It does not establish model competence, hardware performance or accepted deliverables for every arbitrary task."
+}

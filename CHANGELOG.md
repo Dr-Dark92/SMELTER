@@ -2,6 +2,23 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Workflow audit, cross-layer repairs and full smoke pack — 2026-10-21
+
+Application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`, published to SMELTERV1.
+Final [CI run 39634078827](https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827)
+passed all four native Windows/Linux, browser and managed-container jobs.
+See [review](docs/reviews/2026-10-21/workflow-audit/REVIEW.md),
+[action plan](docs/reviews/2026-10-21/workflow-audit/ACTION_PLAN.md),
+[progress](docs/reviews/2026-10-21/workflow-audit/PROGRESS.md) and
+[handover](docs/reviews/2026-10-21/workflow-audit/HANDOVER.md).
+
+- Aligned readiness/task source snapshots; froze direct skill text/hashes at admission; unified coding ERROR/RED semantics across both engines, MCP and the GUI.
+- Added a trusted Node event reporter and corrected its Windows file URL. Mixed assertion/import failures remain ERROR. Fixed operation/proxy/RPC deadlines and stale preview result caching.
+- Fixed catalogue capacity/overflow, SQLite URI paths containing #, malformed coding/GitHub payloads, coding capability discovery and repeated startup workflow options. Explicitly disclosed backup exclusions; complete coding export/retention remains open.
+- Added the [full smoke pack](docs/FULL_SMOKE_TEST.md): real HTTP/MCP/storage, actual Chromium/GLB, both Python/Node containers, CSS tests/preview and explicit live direct/managed Qwen stages, with disposable state and retained evidence.
+- Verified per OS: 405 dashboard tests (2 Linux/3 Windows skips), 32 setup, 18 analysis and 16 JS. Actual workflow smokes passed 15 checks on each OS; real containers passed both profile outcomes, CSS preview and OpenCode/ECC RED/fix/GREEN with synthetic model replies. Live Qwen, installed native tools and rig performance remain operator acceptance.
+- Refreshed README/system/runtime documentation, review/action/progress/handover, function index and pinned graph, now including 272 scripts and the .mjs/.cjs/analysis sources. Static no-caller candidates were not deleted.
+
 ## UI/UX overhaul and R01–R07 repairs — 2026-10-21
 
 Application: `43ff086bac02a42c6257c91db983a307ff345f15`. Offline CI: [run 39561889060](https://github.com/Dr-Dark92/SMELTER/actions/runs/39561889060). See [implementation and rollout](docs/UI_UX_OVERHAUL.md).

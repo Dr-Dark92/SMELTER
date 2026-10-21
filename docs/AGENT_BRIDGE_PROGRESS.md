@@ -1,56 +1,51 @@
 # Agent bridge progress — 2026-10-21
 
-Milestone 1 is implemented and smoke-tested. Application source:
-`6217ea7a39fd73aeaf460997286066d116c60dcc`. Verified
-[CI run 39575344467](https://github.com/Dr-Dark92/SMELTER/actions/runs/39575344467).
-See [plan](AGENT_BRIDGE_PLAN.md), [handover](AGENT_BRIDGE_HANDOVER_20261021.md)
-and [machine-readable evidence](agent-bridge-evidence.json).
+Current audited application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`, published
+to **SMELTERV1**. All four jobs in [CI run 39634078827](https://github.com/Dr-Dark92/SMELTER/actions/runs/39634078827)
+passed. Read the [workflow audit](reviews/2026-10-21/workflow-audit/REVIEW.md),
+[progress](reviews/2026-10-21/workflow-audit/PROGRESS.md),
+[evidence](reviews/2026-10-21/workflow-audit/evidence.json) and
+[handover](reviews/2026-10-21/workflow-audit/HANDOVER.md) for the current record.
 
-| Work | State | Evidence |
+| Work | State | Evidence / boundary |
 | --- | --- | --- |
-| Shared selected/automatic skill resolution | Complete | Actual instruction text and hashes; explicit selection, CRLF and changed-manifest regressions |
-| OpenCode built-in MCP bridge | Complete | Real OpenCode 1.19.3 discovers/calls the stdio proxy; host Python MCP executes the action |
-| GUI forwarding | Complete | Chromium captures selected skill, write grant and one-session approval; approvals reset |
-| Scoped controller dispatch | Complete | Existing ToolSession/registry reused; unknown tools, traversal and exclusions denied |
-| Saved results and file activity | Complete | Controller receipts, saved-byte/hash check and existing CSS file tracker retained |
-| Cancellation/follow-up failure | Complete | New calls denied; active bounded operations settle before receipt finalization; completed writes survive follow-up failure |
-| Linux/Windows contracts | Passed | 371 dashboard tests each; 2 Linux/3 Windows opt-in/platform skips; 32 setup, 4 analysis, 15 JavaScript each |
-| Managed Docker smoke | Passed | Real no-network OpenCode/MCP, 68-byte report, exact SHA-256, SQLite/audits, denied write and confirmed cleanup |
-| Live Qwen inference | Pending on rig | Explicit --live command supplied; no real model was used here |
-| Generic multi-file coding | Planned | Existing frontend grant remains CSS-only |
-| Arbitrary external MCP | Planned | Remains blocked pending a confined server adapter |
-| Safe existing V2 refresh | Planned | No silent reset/rebase/delete added |
+| Shared selected instructions | Complete | Both engines freeze actual text/hashes at admission; changed manifests need restart |
+| Universal agent/tool bridge | Complete | Real OpenCode 1.19.3 and built-in Python MCP; existing shared registry and policy, no connector per skill |
+| Current source reference | Corrected | Readiness and every managed task use the same original checkout snapshot; live destinations are read through tools |
+| GUI forwarding/status | Verified | Chromium checks skill/grant forwarding, next-task reset, Stop/reload and ERROR/RED/stale review |
+| Scoped multi-file coding | Implemented | Separate UUID copies, hash-checked proposal/apply, fixed tests and current-tree review; no shell/deletion/merge/Git |
+| Python and Node runners | Verified in real containers | Both RED, GREEN and simultaneous assertion/import ERROR; stale GREEN rejected |
+| CSS validation/preview | Verified in real containers | Current CSS in authenticated preview; later edit prevents stale launch replay |
+| Operation lifetime | Corrected | 120s/135s normal host/proxy; 420s/435s frontend validation; 450s RPC envelope; active-call cleanup follows deadline |
+| Native contracts | Passed | Per OS: 405 dashboard (2 Linux/3 Windows skips), 32 setup, 18 analysis, 16 JS |
+| HTTP/MCP/storage smoke | Passed on both OS | 15 real workflow checks, six synthetic model replies, owned cleanup |
+| Managed report and ECC TDD | Passed with synthetic model | Actual OpenCode/MCP, exact saved hashes, delayed receipt acknowledgement, denied write, RED/fix/GREEN and cleanup |
+| Live Qwen / vision / rig performance | Pending on rig | [Full acceptance command](FULL_SMOKE_TEST.md); synthetic replies prove wiring only |
+| External MCP / full ECC plugin | Not connected | Needs separate confinement, hooks/tools, coverage, memory and any permitted delegation |
+| V2 refresh and coding export/retention | Open | Existing V2 remains preserved; backup excludes coding copies/metadata |
 
-The real smoke initially exposed a 7 MB provider catalogue exceeding the old
-4 MiB adapter cap. Only GET /provider now receives an 8 MiB cap; ordinary message
-responses remain capped at 4 MiB. Native Windows CI also caught an LF/CRLF test
-fixture assumption; fixtures now specify bytes and a separate regression checks
-the exact loaded CRLF instruction hash.
+## Operator acceptance
 
-The generated function explorer is still explicitly pinned to the earlier
-overhaul source. The manually maintained system diagram includes this bridge.
-Subsequent documentation/whitespace commits do not imply additional behavior.
+```powershell
+Set-Location C:\SMELTER -ErrorAction Stop
+git pull --ff-only origin SMELTERV1
+if ($LASTEXITCODE -ne 0) { throw "Update failed." }
+python tools\analysis\home_smoke.py --full --live --ecc --coding --prepare-demo
+if ($LASTEXITCODE -ne 0) { throw "Smoke failed or is blocked; inspect the printed evidence directory." }
+```
 
-A pinned OpenCode source review confirmed that the configured MCP timeout also
-applies to tool calls. The bridge now gives the existing 120-second host MCP
-operation a 150-second RPC envelope. The final real Docker smoke delays the
-action by 12 seconds and checks that OpenCode acknowledges the successful result,
-as well as checking disk bytes, audits and cleanup.
+Use [FULL_SMOKE_TEST.md](FULL_SMOKE_TEST.md) for explicit prerequisite installation,
+expected results, manual GUI scenarios, native-tool limits and failure triage.
+No services, model downloads, images or browser dependencies are installed by
+the runner. It creates new evidence and disposable state, never overwrites an
+existing V2 and prints rather than automatically starts the GUI demo.
 
-## Home acceptance and ECC follow-up
+## Earlier milestones
 
-The operator runner, known inventory/two-animation GLB inputs, new isolated GUI demo, retained audit/chat evidence, and pinned ECC instruction preview/import are implemented. See [home smoke](HOME_SMOKE_TEST.md) and [ECC scope](ECC_COMPATIBILITY.md). The large-catalogue discovery defect is fixed; metadata discovery is bounded separately from the 40-manifest reviewed import limit and uses immutable commit URLs. The GUI no longer claims that skills/MCP are not forwarded.
-
-Local contracts passed with 372 dashboard tests, 32 setup tests, 13 analysis tests and 15 JavaScript tests. Real OpenCode with the pinned ECC verification-loop instruction and actual Python MCP passed the explicit process fixture; this is not Docker or live Qwen evidence. Native Windows/Linux, Chromium and the updated production Docker smoke all passed in [CI run 39594834409](https://github.com/Dr-Dark92/SMELTER/actions/runs/39594834409), application source `baff8c4ebdfe1108521445fc4583435e2fccbff4`. The browser additionally verified the large-catalogue filter, empty initial selection and 40-item review guard. The Docker smoke selected ECC verification-loop, preserved its audits/chat/report evidence, acknowledged a 12-second tool delay and confirmed cleanup. Live Qwen and manual GUI acceptance remain pending on the home rig.
-
-Machine-readable follow-up evidence: [home-smoke-evidence.json](home-smoke-evidence.json). The new graph was generated as a CI artifact for the tested source; the committed explorer still identifies its earlier pinned snapshot.
-
-## ECC coding workflow — verified milestone
-
-Application source `bab265817bd3e63fb82669327ac36d461b9372c3` passed [CI run 39620302505](https://github.com/Dr-Dark92/SMELTER/actions/runs/39620302505). The universal registry now exposes seven coding tools behind a separate one-message flag. The agent can create a new registered V2/coding/UUID copy, inspect exact text/hashes, record and apply 1–6-file proposals, run fixed Python/Node tests in confined snapshots, and review evidence against the current tree. Original source and existing V2 are preserved; native shell/edits stay denied. The coding pack adds the pinned ECC TDD instruction.
-
-Native Linux/Windows: 390 dashboard tests each (2 Linux / 3 Windows skips), 32 setup, 17 analysis, and 15 JavaScript tests each. Actual Chromium verified coding-grant forwarding/reset, selected instructions and existing GLB behavior with zero page errors/external HTTP. Real OpenCode/MCP/Python containers completed nine coding calls and ten synthetic model exchanges: a saved failing assertion (RED), minimal implementation fix, passing test (GREEN), two confirmed file cards and a current-tree review. MCP audits, saved bytes, original-source preservation and owned cleanup were checked. The existing 12-second delayed report smoke also passed.
-
-The coding smoke exercises the Python container profile. The Node profile is implemented and contract-tested; this milestone does not claim a separate Node coding container smoke. Coverage, Git checkpoints, executable ECC plugin hooks/custom tools, delegation and memory remain unconnected. Live Qwen quality and performance remain pending on the home rig. See [coding guide](ECC_CODING_WORKSPACE.md) and [machine-readable evidence](ecc-coding-evidence.json).
-
-Follow-up order: complete live rig acceptance; extend fixed test profiles/coverage; audit an isolated ECC executable-plugin profile; add scoped memory and any explicitly allowed delegation; then design confined external MCP adapters. Skill text alone does not implement these layers.
+Historical evidence remains available: [initial bridge](agent-bridge-evidence.json),
+[home/ECC instruction smoke](home-smoke-evidence.json),
+[initial coding smoke](ecc-coding-evidence.json) and
+[bridge handover](AGENT_BRIDGE_HANDOVER_20261021.md). Their versions, counts and
+older timeout observations do not describe the current release. The refreshed
+function graph pins the current audited source and includes analysis scripts
+and the MCP .mjs proxy. Static reachability is not execution coverage.
