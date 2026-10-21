@@ -93,3 +93,12 @@ All 29 local analysis tests passed, including real MCP with synthetic responses
 for exact content and deliberately wrong final-newline content. Strict byte
 acceptance and stop-before-later-live-phases remain enforced. No local model
 quality, GPU performance or full desktop acceptance is claimed by those fixtures.
+
+The first follow-up CI run passed Windows/Linux contracts and actual confined
+OpenCode/MCP/CSS/ECC checks, but timed out waiting for advancing GLB animation.
+Its screenshot showed the animation controls in view and the stage above the
+chat viewport. Pinned model-viewer 4.1.0 intentionally suspends offscreen animation
+(`packages/model-viewer/src/features/animation.ts`, `$tick`). The browser fixture
+now scrolls the stage into view before the unchanged advancing-time assertion;
+no product render policy, timeout or retry was changed. Final CI evidence follows
+in `direct-live-followup.json` when that run completes.

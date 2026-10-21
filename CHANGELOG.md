@@ -8,6 +8,7 @@ This file records verified changes. Older research rounds are preserved in their
 - Preserve the actual saved marker before acceptance, including failed content, byte count/hash, bounded UTF-8 preview, transcript and audits. Report exact content, actual MCP execution, model outcome, receipt hash and receipt byte checks separately. Keep byte-exact acceptance; no whitespace repair, automatic retries or tolerance were added.
 - Correct the aggregate live headline to include a direct failure. Show direct, managed OpenCode and ECC live outcomes separately; partial completion cannot report a full live acceptance PASS.
 - Local validation: 29 analysis tests, including actual MCP writes with synthetic controlled responses. Missing-final-newline content remains FAIL with retained evidence; the exact argument passes. No live Qwen was run here.
+- Cross-platform contracts and actual container/OpenCode checks passed. The first browser run exposed a fixture viewport issue: clicking animation controls scrolled the viewer offscreen, where the viewer intentionally suspends animation. Bring the stage into view before requiring advancing playback time; keep the actual-animation assertion and timeout unchanged.
 
 ## Docker cleanup verification follow-up — 2026-10-21
 

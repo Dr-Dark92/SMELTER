@@ -102,7 +102,14 @@ try{
  phase='GLB upload and rendering';await page.locator('#modelFile').setInputFiles({name:'animated-fixture.glb',mimeType:'model/gltf-binary',buffer:syntheticGlb()});await page.waitForFunction(()=>document.querySelector('#requestStatus').textContent.startsWith('GLB saved'));
  const card=page.locator('.model-card');async function load(){await card.getByRole('button',{name:'Load 3D preview',exact:true}).click();await card.getByRole('status').filter({hasText:'Ready · drag'}).waitFor({timeout:60000})}
  await load();assert.equal(await card.locator('model-viewer').evaluate(v=>v.availableAnimations.length),2);
- await card.getByLabel('Animation clip',{exact:true}).selectOption('1');await card.getByRole('button',{name:'Play animation',exact:true}).click();await page.waitForFunction(()=>document.querySelector('model-viewer').currentTime>0);await card.getByRole('button',{name:'Pause animation',exact:true}).click();
+ phase='GLB animation playback';
+ await card.getByLabel('Animation clip',{exact:true}).selectOption('1');
+ await card.getByRole('button',{name:'Play animation',exact:true}).click();
+ // Selecting the controls can scroll the stage out of the chat viewport.
+ // model-viewer intentionally suspends offscreen animation; observe a visible stage.
+ await card.locator('model-viewer').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>document.querySelector('model-viewer').currentTime>0);
+ await card.getByRole('button',{name:'Pause animation',exact:true}).click();
  await card.getByLabel('Animation label',{exact:true}).fill('Verified fixture clip');await card.getByRole('button',{name:'Save animation name',exact:true}).click();await card.getByRole('status').filter({hasText:'Animation name saved.'}).waitFor();
  let downloads=0;page.on('download',()=>downloads++);const pngEvent=page.waitForEvent('download');await card.getByRole('button',{name:'Save PNG',exact:true}).click();await (await pngEvent).saveAs(path.join(output,'model-preview.png'));assert(fs.statSync(path.join(output,'model-preview.png')).size>100);
  const webmEvent=page.waitForEvent('download',{timeout:120000});await card.getByRole('button',{name:'Export turntable (WebM)',exact:true}).click();await (await webmEvent).saveAs(path.join(output,'model-turntable.webm'));assert(fs.statSync(path.join(output,'model-turntable.webm')).size>100);
