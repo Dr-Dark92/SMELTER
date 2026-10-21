@@ -1,0 +1,86 @@
+{
+  "application_source": "baff8c4ebdfe1108521445fc4583435e2fccbff4",
+  "ci": {
+    "id": 39594834409,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39594834409",
+    "conclusion": "success",
+    "jobs": {
+      "linux_contracts": 119204461684,
+      "windows_contracts": 119204462020,
+      "chromium": 119204461336,
+      "managed_smoke": 119204461824
+    }
+  },
+  "contracts_per_os": {
+    "dashboard": 372,
+    "dashboard_skipped": {
+      "linux": 2,
+      "windows": 3
+    },
+    "setup": 32,
+    "analysis": 13,
+    "javascript": 15
+  },
+  "browser": {
+    "passed": true,
+    "live_inference": false,
+    "synthetic_assets": true,
+    "page_errors": [],
+    "external_http_requests": [],
+    "large_catalogue_filter": true,
+    "large_catalogue_initial_selection_empty": true,
+    "review_batch_limit_40": true,
+    "opencode_gui_forwarding": true,
+    "glb_and_animation_exports": true,
+    "responsive_widths": [
+      375,
+      768,
+      1024,
+      1440
+    ]
+  },
+  "ecc": {
+    "upstream": "https://github.com/affaan-m/ECC",
+    "revision": "90606c8315ee09cafc303515c5f33024db6b9882",
+    "canonical_manifests_observed": 311,
+    "all_manifests_observed": 1062,
+    "live_github_discovery_verified": true,
+    "support": "selected instruction text only",
+    "smoke_skill": "ecc-verification-loop",
+    "loaded_sha256": "5b06be54d4852f60e6cf1b04c6e9a4748554334eb3e41af6c0959b544e6464ae",
+    "full_executable_plugin_integrated": false
+  },
+  "managed_smoke": {
+    "status": "passed",
+    "opencode_version": "1.19.3",
+    "model": "synthetic fixture; no Qwen inference",
+    "boundary": "managed no-network Docker container",
+    "mcp_tool": "write_diagnostic_markdown",
+    "bytes": 68,
+    "sha256": "dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1",
+    "mcp_audit_checked": true,
+    "chat_persistence_checked": true,
+    "independent_saved_bytes_check": true,
+    "unapproved_write_denied": true,
+    "tool_delay_seconds": 12,
+    "opencode_result_acknowledged": true,
+    "cleanup_confirmed": true,
+    "retained_evidence_files": 8,
+    "artifact_id": 12344340856,
+    "artifact_url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39594834409/artifacts/12344340856"
+  },
+  "home_acceptance": {
+    "automated_live_qwen": "pending on home rig",
+    "manual_gui": "pending",
+    "command": "python tools/analysis/home_smoke.py --live --ecc --prepare-demo",
+    "existing_v2_preserved": true,
+    "production_database_reused": false
+  },
+  "limitations": [
+    "No live Qwen inference performed here",
+    "Full ECC hooks, delegation, memory and custom tools remain unconnected",
+    "General source editing remains CSS-only",
+    "Arbitrary external MCP requires a confined adapter",
+    "Committed graph explorer remains at its explicitly recorded earlier revision"
+  ]
+}
