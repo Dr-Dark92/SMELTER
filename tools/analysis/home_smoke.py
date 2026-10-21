@@ -31,6 +31,17 @@ def redact(text):
     return re.sub(r'(?im)((?:authorization|api[_-]?key|password)\s*[:=]\s*)[^\s,}]+', r'\1[REDACTED]', text)
 
 
+def failure_detail(exc):
+    """Keep bounded, redacted native error output instead of only its exit code."""
+    detail = redact(exc)
+    error = getattr(exc, 'stderr', None)
+    if error:
+        if isinstance(error, bytes):
+            error = error.decode('utf-8', 'replace')
+        detail += '\nstderr: ' + redact(error).strip()
+    return detail[:4096]
+
+
 def read_local_json(path):
     with urlopen('http://127.0.0.1:11434' + path, timeout=5) as response:
         raw = response.read(4 * 1024 * 1024 + 1)
@@ -67,12 +78,12 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
             raise ValueError('Node 20 or newer is required for the host checks')
         record('Node', 'PASS', node_version)
     except Exception as exc:
-        record('Node', 'BLOCKED', redact(exc))
+        record('Node', 'BLOCKED', failure_detail(exc))
     try:
         images = configured_images(root)
     except Exception as exc:
         images = {key: None for key in ('python_image', 'node_image', 'opencode_image')}
-        record('Saved image configuration', 'BLOCKED', redact(exc))
+        record('Saved image configuration', 'BLOCKED', failure_detail(exc))
     if image:
         if not IMAGE.fullmatch(image):
             record('OpenCode image argument', 'BLOCKED', 'Use an immutable sha256 image ID')
@@ -89,10 +100,13 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
                               timeout=8, text=True, check=True).stdout.strip()
             if not context.startswith(('unix://', 'npipe://')):
                 raise ValueError('Select a local Docker engine')
-            fields = {'server': '.ServerVersion', 'os': '.OSType', 'memory': '.MemoryLimit',
-                      'swap': '.SwapLimit', 'cpu': '.CpuCfsQuota', 'pids': '.PidsLimit', 'security': '.SecurityOptions'}
-            template = '{' + ','.join('"' + key + '":{{json ' + value + '}}' for key, value in fields.items()) + '}'
-            info = json.loads(command([docker, 'info', '--format', template], timeout=8, text=True, check=True).stdout)
+            fields = {'server': 'ServerVersion', 'os': 'OSType', 'memory': 'MemoryLimit',
+                      'swap': 'SwapLimit', 'cpu': 'CpuCfsQuota', 'pids': 'PidsLimit', 'security': 'SecurityOptions'}
+            packet = json.loads(command([docker, 'info', '--format', '{{json .}}'],
+                                        timeout=8, text=True, check=True).stdout)
+            if not isinstance(packet, dict):
+                raise ValueError('Docker info must return a JSON object')
+            info = {key: packet.get(value) for key, value in fields.items()}
             if info['os'] != 'linux' or int(info['server'].split('.')[0]) < 28:
                 raise ValueError('Docker Engine 28+ with Linux containers is required')
             if not all(info[key] is True for key in ('memory', 'swap', 'cpu', 'pids')):
@@ -110,11 +124,13 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
                         raise ValueError('Image identity mismatch')
                     images[key] = actual
                     record(key, 'PASS', actual)
-                except Exception:
+                except Exception as exc:
                     record(key, 'BLOCKED' if key == 'opencode_image' else 'NOT_RUN',
-                           'Image not installed/valid: ' + wanted + ('; required for optional CSS validation' if key != 'opencode_image' else ''))
+                           'Image not installed/valid: ' + wanted +
+                           ('; required for optional CSS validation' if key != 'opencode_image' else '') +
+                           '\n' + failure_detail(exc))
         except Exception as exc:
-            record('Docker confinement prerequisites', 'BLOCKED', redact(exc))
+            record('Docker confinement prerequisites', 'BLOCKED', failure_detail(exc))
     if live:
         try:
             ollama = read_local_json('/api/version')
@@ -125,7 +141,7 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
             record('Ollama + installed Qwen', 'PASS', {'version': ollama.get('version'), 'model': 'qwen3.5:9b',
                                                       'loaded_models': read_local_json('/api/ps').get('models', [])})
         except Exception as exc:
-            record('Ollama + installed Qwen', 'BLOCKED', redact(exc))
+            record('Ollama + installed Qwen', 'BLOCKED', failure_detail(exc))
     return checks, images
 
 
@@ -146,7 +162,7 @@ def phase(directory, name, argv, *, root=REPO, timeout=900, command=run, extra_e
         status = 'PASS' if result.returncode == 0 else 'FAIL'
         code = result.returncode
     except Exception as exc:
-        output, status, code = redact(exc), 'FAIL', None
+        output, status, code = failure_detail(exc), 'FAIL', None
     log = directory / (name + '.log')
     with log.open('x', encoding='utf-8') as stream:
         stream.write(redact(output))
@@ -207,8 +223,8 @@ def execute(args, *, root=REPO, command=run):
                 checks.append({'name': 'Browser + local GLB viewer', 'status': 'PASS', 'detail': 'Existing Playwright Chromium and model-viewer 4.1.0'})
             except Exception as exc:
                 checks.append({'name': 'Browser + local GLB viewer', 'status': 'BLOCKED',
-                               'detail': 'Full GUI smoke needs reviewed local browser/viewer dependencies; no installation was attempted. ' + redact(exc)})
-            if args.live or args.fixture:
+                               'detail': 'Full GUI smoke needs reviewed local browser/viewer dependencies; no installation was attempted. ' + failure_detail(exc)})
+            if args.live or args.fixture or args.preflight_only:
                 for key in ('python_image', 'node_image'):
                     checks.append({'name': 'Full smoke ' + key, 'status': 'PASS' if images.get(key) else 'BLOCKED',
                                    'detail': images.get(key) or 'Both fixed coding profiles require their local immutable images'})
@@ -296,7 +312,7 @@ def execute(args, *, root=REPO, command=run):
                                                     'timeout_seconds': 300, 'thinking': False}
         report['status'] = ('BLOCKED' if blocked else 'FAIL' if any(item['status'] == 'FAIL' for item in report['phases']) else 'PASS')
     except Exception as exc:
-        report['error'] = redact(exc)
+        report['error'] = failure_detail(exc)
         report['status'] = 'FAIL'
     write_report(directory, report)
     print(report['status'] + ': ' + str(directory / 'SUMMARY.md'), flush=True)

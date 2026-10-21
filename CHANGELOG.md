@@ -2,6 +2,13 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Home preflight diagnostics follow-up — 2026-10-21
+
+- The first uploaded home report stopped at Docker preflight with no test phases or inference. Later operator diagnostics showed a reachable Linux engine; the original formatted probe's error was not retained, so its exact cause is unconfirmed.
+- Use the backend's standard JSON Docker info probe and retain bounded, redacted native stderr for failed probes, image inspection and smoke phases. A running Desktop window alone does not bypass resource/seccomp/image checks.
+- Make `--full --preflight-only` require both fixed test images as well as the existing OpenCode image. This checks the full prerequisite set without starting test phases or inference.
+- Validation: 22 analysis tests passed locally, including native-error redaction/bounds, every false resource flag, absent seccomp, image lookup gating and full preflight with missing images. Live desktop acceptance remains pending.
+
 ## Workflow audit, cross-layer repairs and full smoke pack — 2026-10-21
 
 Application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`, published to SMELTERV1.

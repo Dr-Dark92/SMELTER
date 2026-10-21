@@ -64,6 +64,20 @@ review and update that selection. There is no host execution fallback.
 
 ## One full home command
 
+Check all prerequisites first, without running any test phases or live inference:
+
+```powershell
+python tools\analysis\home_smoke.py --full --preflight-only
+```
+
+This checks Docker connectivity, Linux/resource/seccomp requirements, all three
+local runtime images, Ollama/model metadata and existing browser/viewer assets.
+A failed Docker probe retains bounded, redacted native stderr in `summary.json`.
+The probe uses the same standard `docker info --format '{{json .}}'` response as
+the backend. A running Desktop window or a raw image count alone does not prove
+that the required images and resource controls passed. If preflight is BLOCKED,
+read its exact reason before running the live command below.
+
 ```powershell
 python tools\analysis\home_smoke.py --full --live --ecc --coding --prepare-demo
 if ($LASTEXITCODE -ne 0) { throw "Smoke did not pass. Read its SUMMARY.md and failed phase log." }

@@ -31,3 +31,19 @@ CI artifacts expire on **2026-11-04**. Their exact job/artifact IDs, counts and
 limits are retained in [evidence.json](evidence.json). Current open work and
 acceptance criteria are in [ACTION_PLAN.md](ACTION_PLAN.md). A ready smoke pack
 is not a claim that the live desktop run already passed.
+
+## Home preflight follow-up
+
+The first operator report was BLOCKED before any test phase or inference. Python,
+MCP, Node, Ollama/model metadata and browser/viewer dependencies passed; Docker
+info returned exit 1, and the report omitted its stderr. Subsequent operator
+output showed a reachable Linux Docker engine with seccomp. That later success
+does not establish the original probe's cause or a completed smoke run.
+
+The follow-up runner uses the backend's standard JSON info probe, retains bounded
+redacted native errors, and requires both test images in full preflight-only
+mode. All 22 analysis tests passed locally. The comprehensive application CI
+above remains evidence for its exact audited source; new local test counts are
+not substituted into that historical run. The next operator action is
+`python tools/analysis/home_smoke.py --full --preflight-only`, then the live run
+only after prerequisite PASS. Manual and live acceptance remain pending.

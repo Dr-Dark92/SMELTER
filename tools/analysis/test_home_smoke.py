@@ -125,6 +125,71 @@ class HomeSmokeTests(unittest.TestCase):
         for secret in ('abc123', 'headersecret', 'password=secret'):
             self.assertNotIn(secret, result)
 
+    def test_failed_command_retains_bounded_redacted_native_error(self):
+        error = subprocess.CalledProcessError(1, ['docker', 'info'], stderr=(
+            'Cannot connect to dockerDesktopLinuxEngine\nAuthorization: Bearer secret\n' +
+            'x' * 10000).encode())
+        detail = home_smoke.failure_detail(error)
+        self.assertIn('Cannot connect to dockerDesktopLinuxEngine', detail)
+        self.assertNotIn('secret', detail)
+        self.assertLessEqual(len(detail), 4096)
+
+    def test_docker_preflight_uses_standard_json_and_keeps_resource_guards(self):
+        packet = dict(ServerVersion='29.8.2', OSType='linux', MemoryLimit=True,
+                      SwapLimit=True, CpuCfsQuota=True, PidsLimit=True,
+                      SecurityOptions=['name=seccomp,profile=builtin'],
+                      HttpProxy='private-proxy-setting')
+        for denied in (None, 'MemoryLimit', 'SwapLimit', 'CpuCfsQuota', 'PidsLimit', 'SecurityOptions'):
+            with self.subTest(denied=denied):
+                info = dict(packet)
+                if denied:
+                    info[denied] = [] if denied == 'SecurityOptions' else False
+                calls = []
+                def command(argv, **kwargs):
+                    calls.append(argv)
+                    if argv == ['node', '--version']:
+                        output = 'v24.20.0'
+                    elif argv[:3] == ['docker', 'context', 'inspect']:
+                        output = 'npipe:////./pipe/dockerDesktopLinuxEngine'
+                    elif argv[:2] == ['docker', 'info']:
+                        self.assertEqual(argv, ['docker', 'info', '--format', '{{json .}}'])
+                        output = json.dumps(info)
+                    elif argv[:3] == ['docker', 'image', 'inspect']:
+                        output = 'sha256:' + 'a' * 64
+                    else:
+                        self.fail('Unexpected process: ' + repr(argv))
+                    return subprocess.CompletedProcess(argv, 0, output, '')
+                with patch.object(home_smoke, 'configured_images', return_value={key: None for key in
+                            ('python_image', 'node_image', 'opencode_image')}), \
+                     patch.object(home_smoke, 'version', return_value='1.30.0'):
+                    checks, images = home_smoke.preflight(Path('.'), runtime=True, command=command,
+                                                          lookup=lambda name: name)
+                docker = next(row for row in checks if row['name'] == 'Docker confinement prerequisites')
+                self.assertEqual(docker['status'], 'BLOCKED' if denied else 'PASS')
+                self.assertNotIn('private-proxy-setting', json.dumps(checks))
+                image_calls = [argv for argv in calls if argv[:3] == ['docker', 'image', 'inspect']]
+                self.assertEqual(len(image_calls), 0 if denied else 3)
+                if not denied:
+                    self.assertTrue(all(value == 'sha256:' + 'a' * 64 for value in images.values()))
+
+    def test_docker_probe_failure_reports_stderr_and_never_inspects_images(self):
+        calls = []
+        def command(argv, **kwargs):
+            calls.append(argv)
+            if argv[:2] == ['docker', 'info']:
+                raise subprocess.CalledProcessError(1, argv, stderr='Actual Docker failure; password=secret')
+            output = 'v24.20.0' if argv[0] == 'node' else 'npipe:////./pipe/dockerDesktopLinuxEngine'
+            return subprocess.CompletedProcess(argv, 0, output, '')
+        with patch.object(home_smoke, 'configured_images', return_value={key: None for key in
+                    ('python_image', 'node_image', 'opencode_image')}), \
+             patch.object(home_smoke, 'version', return_value='1.30.0'):
+            checks, _ = home_smoke.preflight(Path('.'), runtime=True, command=command, lookup=lambda name: name)
+        result = next(row for row in checks if row['name'] == 'Docker confinement prerequisites')
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIn('Actual Docker failure', result['detail'])
+        self.assertNotIn('secret', result['detail'])
+        self.assertFalse(any(argv[:3] == ['docker', 'image', 'inspect'] for argv in calls))
+
     def test_ecc_pin_mismatch_fails_before_install(self):
         from install_ecc_skills import preview
         with self.assertRaisesRegex(ValueError, 'integrity mismatch'):
@@ -142,6 +207,22 @@ class HomeSmokeTests(unittest.TestCase):
             self.assertEqual(summary['status'], 'BLOCKED')
             self.assertEqual(summary['live_direct_ollama'], 'NOT_RUN')
             self.assertEqual(summary['phases'], [])
+            self.assertEqual(command.call_count, 1)
+
+    def test_full_preflight_requires_both_test_images_without_running_phases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            images = {'opencode_image': 'sha256:' + 'a' * 64, 'python_image': None, 'node_image': None}
+            command = unittest.mock.Mock(return_value=subprocess.CompletedProcess(['node'], 0, '', ''))
+            with patch.object(home_smoke, 'preflight', return_value=([{'name': 'Base', 'status': 'PASS'}], images)), \
+                 patch('model_assets.viewer_bundle', return_value={}):
+                code = home_smoke.execute(self.options(Path(temp) / 'report', full=True, preflight_only=True),
+                                          command=command)
+            summary = json.loads((Path(temp) / 'report/summary.json').read_text())
+            self.assertEqual(code, 2)
+            for name in ('Full smoke python_image', 'Full smoke node_image'):
+                self.assertEqual(next(row for row in summary['checks'] if row['name'] == name)['status'], 'BLOCKED')
+            self.assertEqual(summary['phases'], [])
+            self.assertEqual(summary['live_qwen'], 'NOT_RUN')
             self.assertEqual(command.call_count, 1)
 
 
