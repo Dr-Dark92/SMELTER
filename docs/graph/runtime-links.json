@@ -341,5 +341,12 @@
     "type": "runtime",
     "confidence": "manual-source-review",
     "evidence": "Frame/turntable export integration"
+  },
+  {
+    "source": "tools/dashboard/execution_store.py",
+    "target": "tools/dashboard/job_store.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Admitted job outcome is updated on the same SQLite connection/transaction as transcript and execution; no second terminal write"
   }
 ]

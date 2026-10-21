@@ -6,7 +6,7 @@ This repair addresses F01–F11 from the review of application commit `c9e541e9e
 
 ## Office follow-up
 
-See [offline GUI workflow](OFFICE_GUI_WORKFLOW.md) for the later catalog, atomic job-journal, reconnect and retention fixes. Current follow-up verification: 329 dashboard tests (two opt-in skips), 15 JavaScript, 32 setup and four analysis tests; no live model. The initial repair counts below remain historical.
+Follow-up application commit: `4bd636dbcc04de5d2cb016489c923e3146a611db`. See [offline GUI workflow](OFFICE_GUI_WORKFLOW.md) for the later catalog, atomic job-journal, reconnect and retention fixes. Current follow-up verification: 329 dashboard tests (two opt-in skips), 15 JavaScript, 32 setup and four analysis tests; no live model. The initial repair counts below remain historical.
 
 ## Finding disposition
 

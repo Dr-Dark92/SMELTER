@@ -1,0 +1,39 @@
+{
+  "source_revision": "4bd636dbcc04de5d2cb016489c923e3146a611db",
+  "environment": "Linux/Python 3.12/Chromium desktop 1500x1000 and mobile 390x844",
+  "fixture": "tools/analysis/offline_gui_fixture.py; temporary real SQLite and report files, synthetic inference",
+  "checks": {
+    "retention_preview": true,
+    "retention_removed_one": true,
+    "consumed_plan_disabled": true,
+    "empty_plan_disabled": true,
+    "chat": true,
+    "injected_http_503": true,
+    "reconnect_preserves_task_id_and_admission": true,
+    "stop_after_reconnect": true,
+    "mobile_no_overflow": true,
+    "page_errors": []
+  },
+  "live_model": false,
+  "docker": false,
+  "windows": false,
+  "suites": {
+    "dashboard": {
+      "run": 329,
+      "skipped": 2,
+      "result": "OK"
+    },
+    "javascript": {
+      "run": 15,
+      "result": "OK"
+    },
+    "setup": {
+      "run": 32,
+      "result": "OK"
+    },
+    "analysis": {
+      "run": 4,
+      "result": "OK"
+    }
+  }
+}

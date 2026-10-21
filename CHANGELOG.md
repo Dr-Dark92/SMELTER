@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## Office/offline follow-up — 2026-10-21
 
+Application commit: `4bd636dbcc04de5d2cb016489c923e3146a611db`. Refreshed graph: 235 scripts, 1,454 declarations/callbacks, 2,241 static relationships and 50 reviewed runtime links.
+
 - Fixed same-basename skill entries being hidden across namespaced sources; genuine identity collisions are disabled and explained. Hardened linked state/collection paths.
 - Commit admitted job outcome with transcript/execution atomically. Retry failed terminal metadata saves without replaying actions or relabelling committed outcomes. Record worker-start failures.
 - Preserve unknown active tasks across status failures; add explicit Reconnect task and retain Stop until terminal state is observed.

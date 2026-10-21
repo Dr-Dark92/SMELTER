@@ -1,6 +1,6 @@
 # Function and script index
 
-Pinned application source: `a3e3f854934ed90f36d49478eb336b86dd93948b`. 233 scripts and 1400 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.
+Pinned application source: `4bd636dbcc04de5d2cb016489c923e3146a611db`. 235 scripts and 1454 function/callback declarations. Python AST and JavaScript parser inventory; PowerShell declarations only. Inline JavaScript line locations are approximate. Callers/references are static candidates, not execution coverage or proof of dead code. Generated/embedded Python programs are not independently parsed. Analysis utilities added with these documents are outside the pinned application snapshot.
 
 ## automation/github-sync/Get-RepositoryState.ps1
 
@@ -931,16 +931,20 @@ Bounded in-memory chat jobs and cancellable local inference transport.
 | `_CancellableReader.readinto` | [L25](../tools/dashboard/chat_jobs.py#L25) | 16 | 5 | 0 / 0 |
 | `_ResponseSocket.__init__` | [L44](../tools/dashboard/chat_jobs.py#L44) | 2 | 1 | 0 / 0 |
 | `_ResponseSocket.makefile` | [L47](../tools/dashboard/chat_jobs.py#L47) | 4 | 2 | 0 / 0 |
-| `Control.__init__` | [L54](../tools/dashboard/chat_jobs.py#L54) | 14 | 1 | 0 / 0 |
-| `Control.check` | [L69](../tools/dashboard/chat_jobs.py#L69) | 3 | 2 | 2 / 0 |
-| `Control.update` | [L73](../tools/dashboard/chat_jobs.py#L73) | 4 | 1 | 1 / 0 |
-| `Control.cancel` | [L78](../tools/dashboard/chat_jobs.py#L78) | 12 | 4 | 0 / 0 |
-| `Control.infer` | [L91](../tools/dashboard/chat_jobs.py#L91) | 76 | 21 | 0 / 0 |
-| `Jobs.__init__` | [L170](../tools/dashboard/chat_jobs.py#L170) | 3 | 1 | 0 / 0 |
-| `Jobs.start` | [L174](../tools/dashboard/chat_jobs.py#L174) | 45 | 18 | 0 / 0 |
-| `Jobs._run` | [L220](../tools/dashboard/chat_jobs.py#L220) | 26 | 11 | 0 / 1 |
-| `Jobs.status` | [L247](../tools/dashboard/chat_jobs.py#L247) | 18 | 6 | 3 / 0 |
-| `Jobs.cancel` | [L266](../tools/dashboard/chat_jobs.py#L266) | 8 | 3 | 0 / 0 |
+| `Control.__init__` | [L54](../tools/dashboard/chat_jobs.py#L54) | 17 | 1 | 0 / 0 |
+| `Control.check` | [L72](../tools/dashboard/chat_jobs.py#L72) | 3 | 2 | 2 / 0 |
+| `Control.update` | [L76](../tools/dashboard/chat_jobs.py#L76) | 4 | 1 | 1 / 0 |
+| `Control.cancel` | [L81](../tools/dashboard/chat_jobs.py#L81) | 12 | 4 | 0 / 0 |
+| `Control.infer` | [L94](../tools/dashboard/chat_jobs.py#L94) | 76 | 21 | 0 / 0 |
+| `Jobs.__init__` | [L173](../tools/dashboard/chat_jobs.py#L173) | 3 | 1 | 0 / 0 |
+| `Jobs.start` | [L177](../tools/dashboard/chat_jobs.py#L177) | 53 | 22 | 0 / 0 |
+| `Jobs._run` | [L231](../tools/dashboard/chat_jobs.py#L231) | 21 | 10 | 0 / 1 |
+| `Jobs._finish` | [L253](../tools/dashboard/chat_jobs.py#L253) | 12 | 5 | 2 / 0 |
+| `Jobs._persist` | [L266](../tools/dashboard/chat_jobs.py#L266) | 7 | 2 | 3 / 0 |
+| `Jobs.retry_persistence` | [L274](../tools/dashboard/chat_jobs.py#L274) | 6 | 4 | 1 / 0 |
+| `Jobs._snapshot` | [L281](../tools/dashboard/chat_jobs.py#L281) | 10 | 4 | 2 / 0 |
+| `Jobs.status` | [L292](../tools/dashboard/chat_jobs.py#L292) | 10 | 4 | 2 / 0 |
+| `Jobs.cancel` | [L303](../tools/dashboard/chat_jobs.py#L303) | 8 | 3 | 0 / 0 |
 
 ## tools/dashboard/chat_renderer.js
 
@@ -965,8 +969,8 @@ Persistent conversation notes in SMELTER's selected SQLite database.
 | `_db` | [L18](../tools/dashboard/chats.py#L18) | 4 | 2 | 11 / 0 |
 | `_id` | [L23](../tools/dashboard/chats.py#L23) | 5 | 2 | 8 / 0 |
 | `list_chats` | [L29](../tools/dashboard/chats.py#L29) | 4 | 2 | 2 / 0 |
-| `create_chat` | [L34](../tools/dashboard/chats.py#L34) | 7 | 4 | 20 / 0 |
-| `read_chat` | [L42](../tools/dashboard/chats.py#L42) | 27 | 18 | 29 / 0 |
+| `create_chat` | [L34](../tools/dashboard/chats.py#L34) | 7 | 4 | 21 / 0 |
+| `read_chat` | [L42](../tools/dashboard/chats.py#L42) | 27 | 18 | 32 / 0 |
 | `add_note` | [L70](../tools/dashboard/chats.py#L70) | 10 | 5 | 3 / 0 |
 | `rename_chat` | [L81](../tools/dashboard/chats.py#L81) | 8 | 5 | 1 / 0 |
 | `delete_chat` | [L90](../tools/dashboard/chats.py#L90) | 20 | 7 | 4 / 0 |
@@ -1067,139 +1071,141 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `initShell` | [L5](../tools/dashboard/dashboard_shell.js#L5) | 264 | 12 | 0 / 0 |
+| `initShell` | [L5](../tools/dashboard/dashboard_shell.js#L5) | 274 | 12 | 0 / 0 |
 | `newChat.onclick` | [L12](../tools/dashboard/dashboard_shell.js#L12) | 1 | 1 | 0 / 0 |
 | `reaCheck.onclick` | [L29](../tools/dashboard/dashboard_shell.js#L29) | 1 | 3 | 0 / 0 |
 | `selectedModelIds` | [L33](../tools/dashboard/dashboard_shell.js#L33) | 1 | 1 | 2 / 0 |
 | `<callback>` | [L33](../tools/dashboard/dashboard_shell.js#L33) | 1 | 1 | 0 / 0 |
 | `window.setChatModelGrants` | [L34](../tools/dashboard/dashboard_shell.js#L34) | 1 | 2 | 0 / 0 |
-| `engineChoice.onchange` | [L45](../tools/dashboard/dashboard_shell.js#L45) | 1 | 2 | 0 / 0 |
-| `showFileActivity` | [L48](../tools/dashboard/dashboard_shell.js#L48) | 1 | 4 | 2 / 0 |
-| `showAgentActivity` | [L50](../tools/dashboard/dashboard_shell.js#L50) | 1 | 8 | 2 / 0 |
-| `<callback>` | [L50](../tools/dashboard/dashboard_shell.js#L50) | 1 | 2 | 0 / 0 |
-| `renderPending` | [L51](../tools/dashboard/dashboard_shell.js#L51) | 1 | 1 | 1 / 0 |
-| `stop.onclick` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L53](../tools/dashboard/dashboard_shell.js#L53) | 1 | 5 | 0 / 0 |
-| `send.onclick` | [L54](../tools/dashboard/dashboard_shell.js#L54) | 18 | 24 | 0 / 0 |
-| `<callback>` | [L58](../tools/dashboard/dashboard_shell.js#L58) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L61](../tools/dashboard/dashboard_shell.js#L61) | 1 | 1 | 0 / 0 |
-| `reader.onload` | [L61](../tools/dashboard/dashboard_shell.js#L61) | 1 | 1 | 0 / 0 |
-| `reader.onerror` | [L61](../tools/dashboard/dashboard_shell.js#L61) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L66](../tools/dashboard/dashboard_shell.js#L66) | 1 | 1 | 0 / 0 |
-| `resumeJob` | [L72](../tools/dashboard/dashboard_shell.js#L72) | 4 | 10 | 0 / 1 |
-| `<callback>` | [L73](../tools/dashboard/dashboard_shell.js#L73) | 1 | 1 | 0 / 0 |
-| `attachModel.onclick` | [L79](../tools/dashboard/dashboard_shell.js#L79) | 1 | 3 | 0 / 0 |
-| `modelFile.onchange` | [L80](../tools/dashboard/dashboard_shell.js#L80) | 1 | 5 | 0 / 0 |
-| `<callback>` | [L80](../tools/dashboard/dashboard_shell.js#L80) | 1 | 1 | 0 / 0 |
-| `reader.onload` | [L80](../tools/dashboard/dashboard_shell.js#L80) | 1 | 1 | 0 / 0 |
-| `reader.onerror` | [L80](../tools/dashboard/dashboard_shell.js#L80) | 1 | 1 | 0 / 0 |
-| `b.onclick` | [L96](../tools/dashboard/dashboard_shell.js#L96) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L96](../tools/dashboard/dashboard_shell.js#L96) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L96](../tools/dashboard/dashboard_shell.js#L96) | 1 | 1 | 0 / 0 |
-| `sectionFocus` | [L103](../tools/dashboard/dashboard_shell.js#L103) | 1 | 1 | 1 / 0 |
-| `<callback>` | [L103](../tools/dashboard/dashboard_shell.js#L103) | 1 | 1 | 0 / 0 |
-| `window.showChatWorkspace` | [L110](../tools/dashboard/dashboard_shell.js#L110) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L110](../tools/dashboard/dashboard_shell.js#L110) | 1 | 1 | 0 / 0 |
-| `showSkills` | [L111](../tools/dashboard/dashboard_shell.js#L111) | 1 | 1 | 0 / 1 |
+| `reconnect.onclick` | [L42](../tools/dashboard/dashboard_shell.js#L42) | 1 | 1 | 0 / 0 |
+| `jobMessage` | [L43](../tools/dashboard/dashboard_shell.js#L43) | 1 | 7 | 2 / 0 |
+| `engineChoice.onchange` | [L47](../tools/dashboard/dashboard_shell.js#L47) | 1 | 2 | 0 / 0 |
+| `showFileActivity` | [L50](../tools/dashboard/dashboard_shell.js#L50) | 1 | 4 | 2 / 0 |
+| `showAgentActivity` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 8 | 2 / 0 |
+| `<callback>` | [L52](../tools/dashboard/dashboard_shell.js#L52) | 1 | 2 | 0 / 0 |
+| `renderPending` | [L53](../tools/dashboard/dashboard_shell.js#L53) | 1 | 1 | 1 / 0 |
+| `stop.onclick` | [L54](../tools/dashboard/dashboard_shell.js#L54) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L55](../tools/dashboard/dashboard_shell.js#L55) | 1 | 5 | 0 / 0 |
+| `send.onclick` | [L56](../tools/dashboard/dashboard_shell.js#L56) | 18 | 21 | 0 / 0 |
+| `<callback>` | [L60](../tools/dashboard/dashboard_shell.js#L60) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
+| `reader.onload` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
+| `reader.onerror` | [L63](../tools/dashboard/dashboard_shell.js#L63) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L68](../tools/dashboard/dashboard_shell.js#L68) | 1 | 1 | 0 / 0 |
+| `resumeJob` | [L74](../tools/dashboard/dashboard_shell.js#L74) | 12 | 10 | 1 / 1 |
+| `<callback>` | [L79](../tools/dashboard/dashboard_shell.js#L79) | 1 | 1 | 0 / 0 |
+| `attachModel.onclick` | [L89](../tools/dashboard/dashboard_shell.js#L89) | 1 | 3 | 0 / 0 |
+| `modelFile.onchange` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 5 | 0 / 0 |
+| `<callback>` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
+| `reader.onload` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
+| `reader.onerror` | [L90](../tools/dashboard/dashboard_shell.js#L90) | 1 | 1 | 0 / 0 |
+| `b.onclick` | [L106](../tools/dashboard/dashboard_shell.js#L106) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L106](../tools/dashboard/dashboard_shell.js#L106) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L106](../tools/dashboard/dashboard_shell.js#L106) | 1 | 1 | 0 / 0 |
+| `sectionFocus` | [L113](../tools/dashboard/dashboard_shell.js#L113) | 1 | 1 | 1 / 0 |
 | `<callback>` | [L113](../tools/dashboard/dashboard_shell.js#L113) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L114](../tools/dashboard/dashboard_shell.js#L114) | 1 | 4 | 0 / 0 |
-| `dismissNotice.onclick` | [L117](../tools/dashboard/dashboard_shell.js#L117) | 1 | 1 | 0 / 0 |
-| `refreshSkillNotice` | [L118](../tools/dashboard/dashboard_shell.js#L118) | 1 | 5 | 1 / 1 |
-| `<callback>` | [L122](../tools/dashboard/dashboard_shell.js#L122) | 1 | 1 | 0 / 0 |
-| `runtimeButton.onclick` | [L123](../tools/dashboard/dashboard_shell.js#L123) | 11 | 4 | 0 / 0 |
+| `window.showChatWorkspace` | [L120](../tools/dashboard/dashboard_shell.js#L120) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L120](../tools/dashboard/dashboard_shell.js#L120) | 1 | 1 | 0 / 0 |
+| `showSkills` | [L121](../tools/dashboard/dashboard_shell.js#L121) | 1 | 1 | 0 / 1 |
 | `<callback>` | [L123](../tools/dashboard/dashboard_shell.js#L123) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L123](../tools/dashboard/dashboard_shell.js#L123) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L130](../tools/dashboard/dashboard_shell.js#L130) | 1 | 1 | 0 / 0 |
-| `apply.onclick` | [L131](../tools/dashboard/dashboard_shell.js#L131) | 1 | 2 | 0 / 0 |
-| `save.onclick` | [L132](../tools/dashboard/dashboard_shell.js#L132) | 1 | 5 | 0 / 0 |
-| `aeroButton.onclick` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L143](../tools/dashboard/dashboard_shell.js#L143) | 1 | 1 | 0 / 0 |
-| `btn.onclick` | [L144](../tools/dashboard/dashboard_shell.js#L144) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L144](../tools/dashboard/dashboard_shell.js#L144) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L144](../tools/dashboard/dashboard_shell.js#L144) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L146](../tools/dashboard/dashboard_shell.js#L146) | 1 | 1 | 0 / 0 |
-| `btn.onclick` | [L149](../tools/dashboard/dashboard_shell.js#L149) | 114 | 16 | 0 / 0 |
-| `<callback>` | [L151](../tools/dashboard/dashboard_shell.js#L151) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L152](../tools/dashboard/dashboard_shell.js#L152) | 1 | 1 | 0 / 0 |
-| `updateSummary` | [L159](../tools/dashboard/dashboard_shell.js#L159) | 4 | 3 | 4 / 0 |
-| `autoBox.onchange` | [L166](../tools/dashboard/dashboard_shell.js#L166) | 1 | 1 | 0 / 0 |
-| `clear.onclick` | [L170](../tools/dashboard/dashboard_shell.js#L170) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L170](../tools/dashboard/dashboard_shell.js#L170) | 1 | 1 | 0 / 0 |
-| `checkbox.onchange` | [L178](../tools/dashboard/dashboard_shell.js#L178) | 5 | 3 | 0 / 0 |
+| `<callback>` | [L124](../tools/dashboard/dashboard_shell.js#L124) | 1 | 4 | 0 / 0 |
+| `dismissNotice.onclick` | [L127](../tools/dashboard/dashboard_shell.js#L127) | 1 | 1 | 0 / 0 |
+| `refreshSkillNotice` | [L128](../tools/dashboard/dashboard_shell.js#L128) | 1 | 5 | 1 / 1 |
+| `<callback>` | [L132](../tools/dashboard/dashboard_shell.js#L132) | 1 | 1 | 0 / 0 |
+| `runtimeButton.onclick` | [L133](../tools/dashboard/dashboard_shell.js#L133) | 11 | 4 | 0 / 0 |
+| `<callback>` | [L133](../tools/dashboard/dashboard_shell.js#L133) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L133](../tools/dashboard/dashboard_shell.js#L133) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L140](../tools/dashboard/dashboard_shell.js#L140) | 1 | 1 | 0 / 0 |
+| `apply.onclick` | [L141](../tools/dashboard/dashboard_shell.js#L141) | 1 | 2 | 0 / 0 |
+| `save.onclick` | [L142](../tools/dashboard/dashboard_shell.js#L142) | 1 | 5 | 0 / 0 |
+| `aeroButton.onclick` | [L151](../tools/dashboard/dashboard_shell.js#L151) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L153](../tools/dashboard/dashboard_shell.js#L153) | 1 | 1 | 0 / 0 |
+| `btn.onclick` | [L154](../tools/dashboard/dashboard_shell.js#L154) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L154](../tools/dashboard/dashboard_shell.js#L154) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L154](../tools/dashboard/dashboard_shell.js#L154) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L156](../tools/dashboard/dashboard_shell.js#L156) | 1 | 1 | 0 / 0 |
+| `btn.onclick` | [L159](../tools/dashboard/dashboard_shell.js#L159) | 114 | 16 | 0 / 0 |
+| `<callback>` | [L161](../tools/dashboard/dashboard_shell.js#L161) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L162](../tools/dashboard/dashboard_shell.js#L162) | 1 | 1 | 0 / 0 |
+| `updateSummary` | [L169](../tools/dashboard/dashboard_shell.js#L169) | 4 | 3 | 4 / 0 |
+| `autoBox.onchange` | [L176](../tools/dashboard/dashboard_shell.js#L176) | 1 | 1 | 0 / 0 |
+| `clear.onclick` | [L180](../tools/dashboard/dashboard_shell.js#L180) | 1 | 1 | 0 / 0 |
 | `<callback>` | [L180](../tools/dashboard/dashboard_shell.js#L180) | 1 | 1 | 0 / 0 |
-| `toggle.onclick` | [L186](../tools/dashboard/dashboard_shell.js#L186) | 1 | 5 | 0 / 0 |
-| `<callback>` | [L186](../tools/dashboard/dashboard_shell.js#L186) | 1 | 1 | 0 / 0 |
-| `remove.onclick` | [L188](../tools/dashboard/dashboard_shell.js#L188) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L188](../tools/dashboard/dashboard_shell.js#L188) | 1 | 1 | 0 / 0 |
-| `review.onclick` | [L192](../tools/dashboard/dashboard_shell.js#L192) | 1 | 2 | 0 / 0 |
-| `selectedUrls` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 1 | 1 / 0 |
-| `<callback>` | [L213](../tools/dashboard/dashboard_shell.js#L213) | 1 | 1 | 0 / 0 |
-| `resetBatch` | [L214](../tools/dashboard/dashboard_shell.js#L214) | 1 | 1 | 4 / 1 |
-| `repoButton.onclick` | [L215](../tools/dashboard/dashboard_shell.js#L215) | 14 | 3 | 0 / 0 |
-| `selectAll.onclick` | [L229](../tools/dashboard/dashboard_shell.js#L229) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L229](../tools/dashboard/dashboard_shell.js#L229) | 1 | 1 | 0 / 0 |
-| `clearAll.onclick` | [L230](../tools/dashboard/dashboard_shell.js#L230) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L230](../tools/dashboard/dashboard_shell.js#L230) | 1 | 1 | 0 / 0 |
-| `previewBatch.onclick` | [L231](../tools/dashboard/dashboard_shell.js#L231) | 7 | 3 | 0 / 0 |
-| `<callback>` | [L234](../tools/dashboard/dashboard_shell.js#L234) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L235](../tools/dashboard/dashboard_shell.js#L235) | 1 | 2 | 0 / 0 |
-| `installBatch.onclick` | [L238](../tools/dashboard/dashboard_shell.js#L238) | 4 | 4 | 0 / 0 |
-| `urlInput.oninput` | [L248](../tools/dashboard/dashboard_shell.js#L248) | 1 | 1 | 0 / 0 |
-| `discoverButton.onclick` | [L249](../tools/dashboard/dashboard_shell.js#L249) | 7 | 4 | 0 / 0 |
-| `installButton.onclick` | [L256](../tools/dashboard/dashboard_shell.js#L256) | 3 | 4 | 0 / 0 |
-| `<callback>` | [L266](../tools/dashboard/dashboard_shell.js#L266) | 1 | 1 | 0 / 0 |
-| `btn.onclick` | [L267](../tools/dashboard/dashboard_shell.js#L267) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L267](../tools/dashboard/dashboard_shell.js#L267) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L267](../tools/dashboard/dashboard_shell.js#L267) | 1 | 1 | 0 / 0 |
-| `refreshSystem` | [L270](../tools/dashboard/dashboard_shell.js#L270) | 13 | 10 | 3 / 0 |
-| `gb` | [L272](../tools/dashboard/dashboard_shell.js#L272) | 1 | 1 | 1 / 0 |
+| `checkbox.onchange` | [L188](../tools/dashboard/dashboard_shell.js#L188) | 5 | 3 | 0 / 0 |
+| `<callback>` | [L190](../tools/dashboard/dashboard_shell.js#L190) | 1 | 1 | 0 / 0 |
+| `toggle.onclick` | [L196](../tools/dashboard/dashboard_shell.js#L196) | 1 | 5 | 0 / 0 |
+| `<callback>` | [L196](../tools/dashboard/dashboard_shell.js#L196) | 1 | 1 | 0 / 0 |
+| `remove.onclick` | [L198](../tools/dashboard/dashboard_shell.js#L198) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L198](../tools/dashboard/dashboard_shell.js#L198) | 1 | 1 | 0 / 0 |
+| `review.onclick` | [L202](../tools/dashboard/dashboard_shell.js#L202) | 1 | 2 | 0 / 0 |
+| `selectedUrls` | [L223](../tools/dashboard/dashboard_shell.js#L223) | 1 | 1 | 1 / 0 |
+| `<callback>` | [L223](../tools/dashboard/dashboard_shell.js#L223) | 1 | 1 | 0 / 0 |
+| `resetBatch` | [L224](../tools/dashboard/dashboard_shell.js#L224) | 1 | 1 | 4 / 1 |
+| `repoButton.onclick` | [L225](../tools/dashboard/dashboard_shell.js#L225) | 14 | 3 | 0 / 0 |
+| `selectAll.onclick` | [L239](../tools/dashboard/dashboard_shell.js#L239) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L239](../tools/dashboard/dashboard_shell.js#L239) | 1 | 1 | 0 / 0 |
+| `clearAll.onclick` | [L240](../tools/dashboard/dashboard_shell.js#L240) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L240](../tools/dashboard/dashboard_shell.js#L240) | 1 | 1 | 0 / 0 |
+| `previewBatch.onclick` | [L241](../tools/dashboard/dashboard_shell.js#L241) | 7 | 3 | 0 / 0 |
+| `<callback>` | [L244](../tools/dashboard/dashboard_shell.js#L244) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L245](../tools/dashboard/dashboard_shell.js#L245) | 1 | 2 | 0 / 0 |
+| `installBatch.onclick` | [L248](../tools/dashboard/dashboard_shell.js#L248) | 4 | 4 | 0 / 0 |
+| `urlInput.oninput` | [L258](../tools/dashboard/dashboard_shell.js#L258) | 1 | 1 | 0 / 0 |
+| `discoverButton.onclick` | [L259](../tools/dashboard/dashboard_shell.js#L259) | 7 | 4 | 0 / 0 |
+| `installButton.onclick` | [L266](../tools/dashboard/dashboard_shell.js#L266) | 3 | 4 | 0 / 0 |
 | `<callback>` | [L276](../tools/dashboard/dashboard_shell.js#L276) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L283](../tools/dashboard/dashboard_shell.js#L283) | 1 | 3 | 0 / 0 |
-| `localTimestamp` | [L285](../tools/dashboard/dashboard_shell.js#L285) | 1 | 4 | 2 / 0 |
-| `highlightChat` | [L286](../tools/dashboard/dashboard_shell.js#L286) | 1 | 3 | 2 / 0 |
-| `editConversationTitle` | [L287](../tools/dashboard/dashboard_shell.js#L287) | 11 | 5 | 2 / 0 |
-| `cancel.onclick` | [L292](../tools/dashboard/dashboard_shell.js#L292) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L292](../tools/dashboard/dashboard_shell.js#L292) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L292](../tools/dashboard/dashboard_shell.js#L292) | 1 | 1 | 0 / 0 |
-| `form.onsubmit` | [L293](../tools/dashboard/dashboard_shell.js#L293) | 3 | 8 | 0 / 0 |
-| `renderChatHistory` | [L298](../tools/dashboard/dashboard_shell.js#L298) | 9 | 6 | 1 / 1 |
-| `<callback>` | [L299](../tools/dashboard/dashboard_shell.js#L299) | 1 | 1 | 0 / 0 |
-| `open.onclick` | [L302](../tools/dashboard/dashboard_shell.js#L302) | 1 | 2 | 0 / 0 |
-| `rename.onclick` | [L303](../tools/dashboard/dashboard_shell.js#L303) | 1 | 1 | 0 / 0 |
-| `del.onclick` | [L304](../tools/dashboard/dashboard_shell.js#L304) | 1 | 5 | 0 / 0 |
-| `refreshChats` | [L307](../tools/dashboard/dashboard_shell.js#L307) | 1 | 1 | 6 / 0 |
-| `executionCards` | [L308](../tools/dashboard/dashboard_shell.js#L308) | 16 | 40 | 1 / 0 |
-| `openChat` | [L324](../tools/dashboard/dashboard_shell.js#L324) | 8 | 17 | 7 / 0 |
-| `<callback>` | [L325](../tools/dashboard/dashboard_shell.js#L325) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L325](../tools/dashboard/dashboard_shell.js#L325) | 1 | 1 | 0 / 0 |
-| `older.onclick` | [L326](../tools/dashboard/dashboard_shell.js#L326) | 1 | 1 | 0 / 0 |
-| `latest.onclick` | [L326](../tools/dashboard/dashboard_shell.js#L326) | 1 | 1 | 0 / 0 |
-| `el` | [L333](../tools/dashboard/dashboard_shell.js#L333) | 1 | 1 | 17 / 0 |
-| `api` | [L337](../tools/dashboard/dashboard_shell.js#L337) | 1 | 4 | 39 / 1 |
-| `refresh` | [L338](../tools/dashboard/dashboard_shell.js#L338) | 1 | 8 | 3 / 0 |
-| `b.onclick` | [L338](../tools/dashboard/dashboard_shell.js#L338) | 1 | 2 | 0 / 0 |
-| `loadWorkflows` | [L339](../tools/dashboard/dashboard_shell.js#L339) | 1 | 3 | 1 / 0 |
-| `history` | [L340](../tools/dashboard/dashboard_shell.js#L340) | 1 | 2 | 3 / 0 |
-| `<callback>` | [L340](../tools/dashboard/dashboard_shell.js#L340) | 1 | 1 | 0 / 0 |
-| `el('plan').onclick` | [L341](../tools/dashboard/dashboard_shell.js#L341) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L341](../tools/dashboard/dashboard_shell.js#L341) | 1 | 1 | 0 / 0 |
-| `<callback>` | [L341](../tools/dashboard/dashboard_shell.js#L341) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L341](../tools/dashboard/dashboard_shell.js#L341) | 1 | 1 | 0 / 0 |
-| `el('inspect').onclick` | [L343](../tools/dashboard/dashboard_shell.js#L343) | 1 | 3 | 0 / 0 |
-| `el('mediainspect').onclick` | [L344](../tools/dashboard/dashboard_shell.js#L344) | 1 | 4 | 0 / 0 |
-| `el('blenderinspect').onclick` | [L345](../tools/dashboard/dashboard_shell.js#L345) | 1 | 3 | 0 / 0 |
-| `loadModels` | [L346](../tools/dashboard/dashboard_shell.js#L346) | 1 | 4 | 0 / 0 |
-| `<callback>` | [L346](../tools/dashboard/dashboard_shell.js#L346) | 1 | 2 | 0 / 0 |
-| `el('modelsave').onclick` | [L348](../tools/dashboard/dashboard_shell.js#L348) | 1 | 2 | 0 / 0 |
-| `el('opencodecheck').onclick` | [L349](../tools/dashboard/dashboard_shell.js#L349) | 1 | 3 | 0 / 0 |
-| `el('providerpreview').onclick` | [L350](../tools/dashboard/dashboard_shell.js#L350) | 1 | 2 | 0 / 0 |
-| `el('providerdeploy').onclick` | [L351](../tools/dashboard/dashboard_shell.js#L351) | 1 | 3 | 0 / 0 |
-| `el('providervalidate').onclick` | [L352](../tools/dashboard/dashboard_shell.js#L352) | 1 | 2 | 0 / 0 |
-| `startup` | [L353](../tools/dashboard/dashboard_shell.js#L353) | 9 | 7 | 3 / 0 |
-| `el('sessionReconnect').onclick` | [L362](../tools/dashboard/dashboard_shell.js#L362) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L363](../tools/dashboard/dashboard_shell.js#L363) | 1 | 1 | 0 / 0 |
-| `el('dbselect').onclick` | [L364](../tools/dashboard/dashboard_shell.js#L364) | 4 | 2 | 0 / 0 |
-| `el('refresh').onclick` | [L369](../tools/dashboard/dashboard_shell.js#L369) | 1 | 1 | 0 / 0 |
+| `btn.onclick` | [L277](../tools/dashboard/dashboard_shell.js#L277) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L277](../tools/dashboard/dashboard_shell.js#L277) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L277](../tools/dashboard/dashboard_shell.js#L277) | 1 | 1 | 0 / 0 |
+| `refreshSystem` | [L280](../tools/dashboard/dashboard_shell.js#L280) | 13 | 10 | 3 / 0 |
+| `gb` | [L282](../tools/dashboard/dashboard_shell.js#L282) | 1 | 1 | 1 / 0 |
+| `<callback>` | [L286](../tools/dashboard/dashboard_shell.js#L286) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L293](../tools/dashboard/dashboard_shell.js#L293) | 1 | 3 | 0 / 0 |
+| `localTimestamp` | [L295](../tools/dashboard/dashboard_shell.js#L295) | 1 | 4 | 2 / 0 |
+| `highlightChat` | [L296](../tools/dashboard/dashboard_shell.js#L296) | 1 | 3 | 2 / 0 |
+| `editConversationTitle` | [L297](../tools/dashboard/dashboard_shell.js#L297) | 11 | 5 | 2 / 0 |
+| `cancel.onclick` | [L302](../tools/dashboard/dashboard_shell.js#L302) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L302](../tools/dashboard/dashboard_shell.js#L302) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L302](../tools/dashboard/dashboard_shell.js#L302) | 1 | 1 | 0 / 0 |
+| `form.onsubmit` | [L303](../tools/dashboard/dashboard_shell.js#L303) | 3 | 8 | 0 / 0 |
+| `renderChatHistory` | [L308](../tools/dashboard/dashboard_shell.js#L308) | 9 | 6 | 1 / 1 |
+| `<callback>` | [L309](../tools/dashboard/dashboard_shell.js#L309) | 1 | 1 | 0 / 0 |
+| `open.onclick` | [L312](../tools/dashboard/dashboard_shell.js#L312) | 1 | 2 | 0 / 0 |
+| `rename.onclick` | [L313](../tools/dashboard/dashboard_shell.js#L313) | 1 | 1 | 0 / 0 |
+| `del.onclick` | [L314](../tools/dashboard/dashboard_shell.js#L314) | 1 | 5 | 0 / 0 |
+| `refreshChats` | [L317](../tools/dashboard/dashboard_shell.js#L317) | 1 | 1 | 6 / 0 |
+| `executionCards` | [L318](../tools/dashboard/dashboard_shell.js#L318) | 16 | 40 | 1 / 0 |
+| `openChat` | [L334](../tools/dashboard/dashboard_shell.js#L334) | 8 | 17 | 7 / 0 |
+| `<callback>` | [L335](../tools/dashboard/dashboard_shell.js#L335) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L335](../tools/dashboard/dashboard_shell.js#L335) | 1 | 1 | 0 / 0 |
+| `older.onclick` | [L336](../tools/dashboard/dashboard_shell.js#L336) | 1 | 1 | 0 / 0 |
+| `latest.onclick` | [L336](../tools/dashboard/dashboard_shell.js#L336) | 1 | 1 | 0 / 0 |
+| `el` | [L343](../tools/dashboard/dashboard_shell.js#L343) | 1 | 1 | 17 / 0 |
+| `api` | [L347](../tools/dashboard/dashboard_shell.js#L347) | 1 | 4 | 39 / 1 |
+| `refresh` | [L348](../tools/dashboard/dashboard_shell.js#L348) | 1 | 8 | 3 / 0 |
+| `b.onclick` | [L348](../tools/dashboard/dashboard_shell.js#L348) | 1 | 2 | 0 / 0 |
+| `loadWorkflows` | [L349](../tools/dashboard/dashboard_shell.js#L349) | 1 | 3 | 1 / 0 |
+| `history` | [L350](../tools/dashboard/dashboard_shell.js#L350) | 1 | 2 | 3 / 0 |
+| `<callback>` | [L350](../tools/dashboard/dashboard_shell.js#L350) | 1 | 1 | 0 / 0 |
+| `el('plan').onclick` | [L351](../tools/dashboard/dashboard_shell.js#L351) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L351](../tools/dashboard/dashboard_shell.js#L351) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L351](../tools/dashboard/dashboard_shell.js#L351) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L351](../tools/dashboard/dashboard_shell.js#L351) | 1 | 1 | 0 / 0 |
+| `el('inspect').onclick` | [L353](../tools/dashboard/dashboard_shell.js#L353) | 1 | 3 | 0 / 0 |
+| `el('mediainspect').onclick` | [L354](../tools/dashboard/dashboard_shell.js#L354) | 1 | 4 | 0 / 0 |
+| `el('blenderinspect').onclick` | [L355](../tools/dashboard/dashboard_shell.js#L355) | 1 | 3 | 0 / 0 |
+| `loadModels` | [L356](../tools/dashboard/dashboard_shell.js#L356) | 1 | 4 | 0 / 0 |
+| `<callback>` | [L356](../tools/dashboard/dashboard_shell.js#L356) | 1 | 2 | 0 / 0 |
+| `el('modelsave').onclick` | [L358](../tools/dashboard/dashboard_shell.js#L358) | 1 | 2 | 0 / 0 |
+| `el('opencodecheck').onclick` | [L359](../tools/dashboard/dashboard_shell.js#L359) | 1 | 3 | 0 / 0 |
+| `el('providerpreview').onclick` | [L360](../tools/dashboard/dashboard_shell.js#L360) | 1 | 2 | 0 / 0 |
+| `el('providerdeploy').onclick` | [L361](../tools/dashboard/dashboard_shell.js#L361) | 1 | 3 | 0 / 0 |
+| `el('providervalidate').onclick` | [L362](../tools/dashboard/dashboard_shell.js#L362) | 1 | 2 | 0 / 0 |
+| `startup` | [L363](../tools/dashboard/dashboard_shell.js#L363) | 9 | 7 | 3 / 0 |
+| `el('sessionReconnect').onclick` | [L372](../tools/dashboard/dashboard_shell.js#L372) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L373](../tools/dashboard/dashboard_shell.js#L373) | 1 | 1 | 0 / 0 |
+| `el('dbselect').onclick` | [L374](../tools/dashboard/dashboard_shell.js#L374) | 4 | 2 | 0 / 0 |
+| `el('refresh').onclick` | [L379](../tools/dashboard/dashboard_shell.js#L379) | 1 | 1 | 0 / 0 |
 
 ## tools/dashboard/database.py
 
@@ -1209,7 +1215,7 @@ SMELTER V1.6.1 bootstrap: user-selected SQLite location and readiness gate.
 | --- | ---: | ---: | ---: | ---: |
 | `marker_path` | [L22](../tools/dashboard/database.py#L22) | 2 | 1 | 2 / 0 |
 | `chosen_database` | [L25](../tools/dashboard/database.py#L25) | 14 | 9 | 15 / 0 |
-| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 25 / 0 |
+| `select_database` | [L40](../tools/dashboard/database.py#L40) | 44 | 17 | 26 / 0 |
 | `inspect_database` | [L85](../tools/dashboard/database.py#L85) | 15 | 10 | 13 / 0 |
 
 ## tools/dashboard/execution.py
@@ -1226,7 +1232,7 @@ Atomic transcript/outcome finalization shared by both model engines.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `finalize` | [L9](../tools/dashboard/execution_store.py#L9) | 19 | 10 | 2 / 0 |
+| `finalize` | [L10](../tools/dashboard/execution_store.py#L10) | 28 | 13 | 5 / 0 |
 
 ## tools/dashboard/extensions.py
 
@@ -1322,11 +1328,12 @@ Durable job status; interrupted actions are never replayed automatically.
 | `alive` | [L22](../tools/dashboard/job_store.py#L22) | 13 | 5 | 2 / 0 |
 | `identity` | [L37](../tools/dashboard/job_store.py#L37) | 20 | 6 | 4 / 0 |
 | `recover` | [L59](../tools/dashboard/job_store.py#L59) | 9 | 6 | 5 / 0 |
-| `save` | [L70](../tools/dashboard/job_store.py#L70) | 11 | 4 | 3 / 0 |
-| `read` | [L83](../tools/dashboard/job_store.py#L83) | 7 | 2 | 1 / 0 |
+| `save` | [L70](../tools/dashboard/job_store.py#L70) | 11 | 4 | 3 / 1 |
+| `read` | [L83](../tools/dashboard/job_store.py#L83) | 7 | 2 | 5 / 0 |
 | `active` | [L92](../tools/dashboard/job_store.py#L92) | 4 | 2 | 2 / 0 |
-| `list_jobs` | [L98](../tools/dashboard/job_store.py#L98) | 5 | 2 | 1 / 0 |
-| `admit` | [L105](../tools/dashboard/job_store.py#L105) | 2 | 1 | 2 / 0 |
+| `list_jobs` | [L98](../tools/dashboard/job_store.py#L98) | 5 | 2 | 2 / 0 |
+| `admit` | [L105](../tools/dashboard/job_store.py#L105) | 2 | 1 | 3 / 0 |
+| `finalize_in_transaction` | [L109](../tools/dashboard/job_store.py#L109) | 11 | 2 | 1 / 0 |
 
 ## tools/dashboard/maintenance.py
 
@@ -1581,10 +1588,11 @@ Script/module inventory; inspect pinned source for complete behavior.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `<callback>` | [L2](../tools/dashboard/operations_ui.js#L2) | 29 | 1 | 0 / 0 |
-| `mount` | [L3](../tools/dashboard/operations_ui.js#L3) | 26 | 2 | 0 / 1 |
+| `<callback>` | [L2](../tools/dashboard/operations_ui.js#L2) | 45 | 1 | 0 / 0 |
+| `mount` | [L3](../tools/dashboard/operations_ui.js#L3) | 42 | 2 | 0 / 1 |
 | `panel` | [L5](../tools/dashboard/operations_ui.js#L5) | 1 | 1 | 1 / 0 |
 | `button` | [L6](../tools/dashboard/operations_ui.js#L6) | 1 | 1 | 1 / 0 |
+| `<callback>` | [L6](../tools/dashboard/operations_ui.js#L6) | 1 | 1 | 0 / 0 |
 | `b.onclick` | [L6](../tools/dashboard/operations_ui.js#L6) | 1 | 1 | 0 / 0 |
 | `output` | [L7](../tools/dashboard/operations_ui.js#L7) | 1 | 1 | 1 / 0 |
 | `loadSandbox` | [L13](../tools/dashboard/operations_ui.js#L13) | 1 | 4 | 1 / 1 |
@@ -1593,14 +1601,17 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `<callback>` | [L14](../tools/dashboard/operations_ui.js#L14) | 1 | 4 | 0 / 0 |
 | `sandbox.button.onclick` | [L15](../tools/dashboard/operations_ui.js#L15) | 1 | 1 | 0 / 0 |
 | `loadMaintenance` | [L19](../tools/dashboard/operations_ui.js#L19) | 1 | 2 | 1 / 1 |
-| `<callback>` | [L22](../tools/dashboard/operations_ui.js#L22) | 1 | 4 | 0 / 0 |
-| `<callback>` | [L23](../tools/dashboard/operations_ui.js#L23) | 1 | 3 | 0 / 0 |
-| `<callback>` | [L23](../tools/dashboard/operations_ui.js#L23) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L23](../tools/dashboard/operations_ui.js#L23) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L23](../tools/dashboard/operations_ui.js#L23) | 1 | 3 | 0 / 0 |
-| `maintenance.button.onclick` | [L24](../tools/dashboard/operations_ui.js#L24) | 1 | 1 | 0 / 0 |
-| `capabilities.button.onclick` | [L26](../tools/dashboard/operations_ui.js#L26) | 1 | 2 | 0 / 0 |
-| `<callback>` | [L27](../tools/dashboard/operations_ui.js#L27) | 1 | 2 | 0 / 0 |
+| `canApply` | [L22](../tools/dashboard/operations_ui.js#L22) | 1 | 3 | 2 / 1 |
+| `<callback>` | [L23](../tools/dashboard/operations_ui.js#L23) | 6 | 4 | 0 / 0 |
+| `age.oninput` | [L29](../tools/dashboard/operations_ui.js#L29) | 1 | 1 | 0 / 0 |
+| `preview` | [L30](../tools/dashboard/operations_ui.js#L30) | 9 | 5 | 0 / 1 |
+| `<callback>` | [L36](../tools/dashboard/operations_ui.js#L36) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L39](../tools/dashboard/operations_ui.js#L39) | 1 | 3 | 0 / 0 |
+| `<callback>` | [L39](../tools/dashboard/operations_ui.js#L39) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L39](../tools/dashboard/operations_ui.js#L39) | 1 | 3 | 0 / 0 |
+| `maintenance.button.onclick` | [L40](../tools/dashboard/operations_ui.js#L40) | 1 | 1 | 0 / 0 |
+| `capabilities.button.onclick` | [L42](../tools/dashboard/operations_ui.js#L42) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L43](../tools/dashboard/operations_ui.js#L43) | 1 | 2 | 0 / 0 |
 
 ## tools/dashboard/process_runner.py
 
@@ -1630,7 +1641,7 @@ Small Python capabilities for explicitly approved local chat turns.
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
 | `_linked` | [L28](../tools/dashboard/python_tools.py#L28) | 4 | 2 | 3 / 0 |
-| `_plain_path` | [L34](../tools/dashboard/python_tools.py#L34) | 6 | 5 | 36 / 0 |
+| `_plain_path` | [L34](../tools/dashboard/python_tools.py#L34) | 6 | 5 | 38 / 0 |
 | `permissions` | [L42](../tools/dashboard/python_tools.py#L42) | 48 | 35 | 7 / 0 |
 | `schemas` | [L92](../tools/dashboard/python_tools.py#L92) | 3 | 1 | 1 / 0 |
 | `inventory` | [L97](../tools/dashboard/python_tools.py#L97) | 98 | 42 | 6 / 0 |
@@ -1771,14 +1782,14 @@ Persistent SMELTER skill management.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `_paths` | [L17](../tools/dashboard/skill_manager.py#L17) | 3 | 1 | 5 / 0 |
-| `_state` | [L22](../tools/dashboard/skill_manager.py#L22) | 8 | 6 | 4 / 0 |
-| `enabled_map` | [L32](../tools/dashboard/skill_manager.py#L32) | 2 | 1 | 1 / 0 |
-| `_write_state` | [L36](../tools/dashboard/skill_manager.py#L36) | 10 | 3 | 3 / 0 |
-| `_safe_id` | [L48](../tools/dashboard/skill_manager.py#L48) | 3 | 3 | 3 / 0 |
-| `add_skill` | [L53](../tools/dashboard/skill_manager.py#L53) | 21 | 11 | 6 / 0 |
-| `set_skill_enabled` | [L76](../tools/dashboard/skill_manager.py#L76) | 21 | 11 | 7 / 0 |
-| `remove_skill` | [L99](../tools/dashboard/skill_manager.py#L99) | 17 | 9 | 2 / 0 |
+| `_paths` | [L17](../tools/dashboard/skill_manager.py#L17) | 6 | 1 | 5 / 0 |
+| `_state` | [L25](../tools/dashboard/skill_manager.py#L25) | 10 | 6 | 4 / 0 |
+| `enabled_map` | [L37](../tools/dashboard/skill_manager.py#L37) | 2 | 1 | 1 / 0 |
+| `_write_state` | [L41](../tools/dashboard/skill_manager.py#L41) | 10 | 3 | 3 / 0 |
+| `_safe_id` | [L53](../tools/dashboard/skill_manager.py#L53) | 3 | 3 | 3 / 0 |
+| `add_skill` | [L58](../tools/dashboard/skill_manager.py#L58) | 21 | 11 | 6 / 0 |
+| `set_skill_enabled` | [L81](../tools/dashboard/skill_manager.py#L81) | 21 | 11 | 9 / 0 |
+| `remove_skill` | [L104](../tools/dashboard/skill_manager.py#L104) | 17 | 9 | 2 / 0 |
 
 ## tools/dashboard/skill_manifest.py
 
@@ -1809,7 +1820,7 @@ Startup skill snapshots and passive manifest change detection. No execution.
 | `SkillMonitor.status` | [L65](../tools/dashboard/skill_runtime.py#L65) | 21 | 15 | 1 / 0 |
 | `SkillMonitor.manifest` | [L87](../tools/dashboard/skill_runtime.py#L87) | 5 | 5 | 0 / 0 |
 | `SkillMonitor.review` | [L93](../tools/dashboard/skill_runtime.py#L93) | 5 | 4 | 0 / 0 |
-| `initialize` | [L100](../tools/dashboard/skill_runtime.py#L100) | 4 | 1 | 8 / 0 |
+| `initialize` | [L100](../tools/dashboard/skill_runtime.py#L100) | 4 | 1 | 9 / 0 |
 | `monitor` | [L106](../tools/dashboard/skill_runtime.py#L106) | 5 | 2 | 4 / 0 |
 | `runtime_manifest` | [L113](../tools/dashboard/skill_runtime.py#L113) | 3 | 2 | 2 / 0 |
 | `active_ids` | [L118](../tools/dashboard/skill_runtime.py#L118) | 5 | 3 | 1 / 0 |
@@ -1823,7 +1834,7 @@ Read-only discovery of SMELTER skills.
 
 | Function / callback | Source line | Span | Branch estimate | Callers / references |
 | --- | ---: | ---: | ---: | ---: |
-| `catalog_skills` | [L15](../tools/dashboard/skills_catalog.py#L15) | 87 | 39 | 15 / 0 |
+| `catalog_skills` | [L15](../tools/dashboard/skills_catalog.py#L15) | 91 | 43 | 18 / 0 |
 
 ## tools/dashboard/start_dashboard.ps1
 
@@ -1865,7 +1876,7 @@ One immutable admission configuration and terminal outcome for both engines.
 | --- | ---: | ---: | ---: | ---: |
 | `configuration` | [L7](../tools/dashboard/task_contract.py#L7) | 7 | 1 | 6 / 0 |
 | `outcome` | [L16](../tools/dashboard/task_contract.py#L16) | 3 | 6 | 1 / 0 |
-| `job_state` | [L21](../tools/dashboard/task_contract.py#L21) | 3 | 2 | 1 / 0 |
+| `job_state` | [L21](../tools/dashboard/task_contract.py#L21) | 3 | 2 | 3 / 0 |
 
 ## tools/dashboard/test_aero_classifier.py
 
@@ -2254,6 +2265,28 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `ModelPreferenceTests.test_availability` | [L30](../tools/dashboard/test_model_preferences.py#L30) | 4 | 1 | 0 / 0 |
 | `ModelPreferenceTests.test_corrupt_preferences` | [L34](../tools/dashboard/test_model_preferences.py#L34) | 4 | 1 | 0 / 0 |
 
+## tools/dashboard/test_office_repairs.py
+
+Offline lifecycle and shared-catalog regressions. No model or Docker calls.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `OfficeRepairs.setUp` | [L23](../tools/dashboard/test_office_repairs.py#L23) | 4 | 1 | 0 / 0 |
+| `OfficeRepairs.manifest` | [L28](../tools/dashboard/test_office_repairs.py#L28) | 2 | 1 | 2 / 0 |
+| `OfficeRepairs.test_namespaced_same_basename_skills_are_all_visible` | [L31](../tools/dashboard/test_office_repairs.py#L31) | 8 | 4 | 0 / 0 |
+| `OfficeRepairs.test_real_identity_collision_is_disabled_and_explained` | [L40](../tools/dashboard/test_office_repairs.py#L40) | 6 | 1 | 0 / 0 |
+| `OfficeRepairs.test_linked_collection_ancestor_is_never_discovered` | [L47](../tools/dashboard/test_office_repairs.py#L47) | 6 | 2 | 0 / 0 |
+| `OfficeRepairs.test_atomic_finalization_is_durable_before_worker_returns` | [L54](../tools/dashboard/test_office_repairs.py#L54) | 16 | 1 | 0 / 0 |
+| `OfficeRepairs.test_atomic_finalization_is_durable_before_worker_returns.worker` | [L56](../tools/dashboard/test_office_repairs.py#L56) | 3 | 1 | 0 / 0 |
+| `OfficeRepairs.test_late_worker_failure_cannot_relabel_committed_success` | [L71](../tools/dashboard/test_office_repairs.py#L71) | 10 | 1 | 0 / 0 |
+| `OfficeRepairs.test_late_worker_failure_cannot_relabel_committed_success.worker` | [L73](../tools/dashboard/test_office_repairs.py#L73) | 3 | 1 | 0 / 0 |
+| `OfficeRepairs.test_failed_atomic_job_update_rolls_back_transcript_too` | [L82](../tools/dashboard/test_office_repairs.py#L82) | 8 | 1 | 0 / 0 |
+| `OfficeRepairs.test_failed_journal_retry_never_reexecutes_worker` | [L91](../tools/dashboard/test_office_repairs.py#L91) | 16 | 1 | 0 / 0 |
+| `OfficeRepairs.test_failed_journal_retry_never_reexecutes_worker.save` | [L95](../tools/dashboard/test_office_repairs.py#L95) | 3 | 2 | 0 / 0 |
+| `OfficeRepairs.test_failed_journal_retry_never_reexecutes_worker.worker` | [L98](../tools/dashboard/test_office_repairs.py#L98) | 1 | 1 | 0 / 0 |
+| `OfficeRepairs.test_worker_start_failure_has_terminal_record_and_no_action` | [L108](../tools/dashboard/test_office_repairs.py#L108) | 6 | 1 | 0 / 0 |
+| `OfficeRepairs.wait_finished` | [L115](../tools/dashboard/test_office_repairs.py#L115) | 6 | 3 | 2 / 0 |
+
 ## tools/dashboard/test_ollama.py
 
 Script/module inventory; inspect pinned source for complete behavior.
@@ -2365,6 +2398,41 @@ Script/module inventory; inspect pinned source for complete behavior.
 | `ValidateTests.test_offline` | [L34](../tools/dashboard/test_opencode_validate.py#L34) | 3 | 1 | 0 / 0 |
 | `ValidateTests.test_missing_file` | [L37](../tools/dashboard/test_opencode_validate.py#L37) | 4 | 1 | 0 / 0 |
 | `ValidateTests.test_unavailable_model` | [L41](../tools/dashboard/test_opencode_validate.py#L41) | 3 | 1 | 0 / 0 |
+
+## tools/dashboard/test_operations_ui.js
+
+Script/module inventory; inspect pinned source for complete behavior.
+
+| Function / callback | Source line | Span | Branch estimate | Callers / references |
+| --- | ---: | ---: | ---: | ---: |
+| `constructor` | [L8](../tools/dashboard/test_operations_ui.js#L8) | 1 | 1 | 0 / 0 |
+| `add` | [L8](../tools/dashboard/test_operations_ui.js#L8) | 1 | 1 | 0 / 0 |
+| `append` | [L9](../tools/dashboard/test_operations_ui.js#L9) | 1 | 1 | 0 / 0 |
+| `textContent` | [L10](../tools/dashboard/test_operations_ui.js#L10) | 1 | 1 | 0 / 0 |
+| `textContent` | [L11](../tools/dashboard/test_operations_ui.js#L11) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L11](../tools/dashboard/test_operations_ui.js#L11) | 1 | 1 | 0 / 0 |
+| `setAttribute` | [L12](../tools/dashboard/test_operations_ui.js#L12) | 1 | 1 | 0 / 0 |
+| `flatten` | [L14](../tools/dashboard/test_operations_ui.js#L14) | 1 | 1 | 0 / 2 |
+| `fixture` | [L15](../tools/dashboard/test_operations_ui.js#L15) | 11 | 1 | 5 / 0 |
+| `activate` | [L17](../tools/dashboard/test_operations_ui.js#L17) | 1 | 1 | 0 / 0 |
+| `addPanel` | [L17](../tools/dashboard/test_operations_ui.js#L17) | 1 | 1 | 0 / 0 |
+| `setTimeout` | [L18](../tools/dashboard/test_operations_ui.js#L18) | 1 | 1 | 0 / 0 |
+| `confirm` | [L18](../tools/dashboard/test_operations_ui.js#L18) | 1 | 1 | 0 / 0 |
+| `api` | [L20](../tools/dashboard/test_operations_ui.js#L20) | 1 | 3 | 0 / 1 |
+| `createElement` | [L21](../tools/dashboard/test_operations_ui.js#L21) | 1 | 1 | 0 / 0 |
+| `button` | [L22](../tools/dashboard/test_operations_ui.js#L22) | 1 | 1 | 0 / 1 |
+| `<callback>` | [L22](../tools/dashboard/test_operations_ui.js#L22) | 1 | 2 | 0 / 0 |
+| `<callback>` | [L23](../tools/dashboard/test_operations_ui.js#L23) | 1 | 1 | 0 / 0 |
+| `setConfirmation` | [L24](../tools/dashboard/test_operations_ui.js#L24) | 1 | 1 | 0 / 0 |
+| `fail` | [L24](../tools/dashboard/test_operations_ui.js#L24) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L27](../tools/dashboard/test_operations_ui.js#L27) | 7 | 1 | 0 / 0 |
+| `<callback>` | [L31](../tools/dashboard/test_operations_ui.js#L31) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L35](../tools/dashboard/test_operations_ui.js#L35) | 6 | 1 | 0 / 0 |
+| `<callback>` | [L37](../tools/dashboard/test_operations_ui.js#L37) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L39](../tools/dashboard/test_operations_ui.js#L39) | 1 | 1 | 0 / 0 |
+| `<callback>` | [L42](../tools/dashboard/test_operations_ui.js#L42) | 5 | 1 | 0 / 0 |
+| `<callback>` | [L48](../tools/dashboard/test_operations_ui.js#L48) | 5 | 1 | 0 / 0 |
+| `<callback>` | [L54](../tools/dashboard/test_operations_ui.js#L54) | 4 | 2 | 0 / 0 |
 
 ## tools/dashboard/test_project_contract.py
 

@@ -1,5 +1,7 @@
 # Office GUI workflow — no live model required
 
+Application source: [`4bd636dbcc04de5d2cb016489c923e3146a611db`](https://github.com/Dr-Dark92/SMELTER/commit/4bd636dbcc04de5d2cb016489c923e3146a611db).
+
 Use this workflow on the CachyOS office desktop. Qwen, Ollama, OpenCode and Docker are not needed for the synthetic GUI fixture. It is a development harness, separate from the normal dashboard engine.
 
 ## Run from fish

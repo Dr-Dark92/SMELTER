@@ -1,5 +1,5 @@
 {
-  "commit": "a3e3f854934ed90f36d49478eb336b86dd93948b",
+  "commit": "4bd636dbcc04de5d2cb016489c923e3146a611db",
   "repository": "Dr-Dark92/SMELTER",
   "files": [
     {
@@ -420,7 +420,7 @@
     },
     {
       "path": "tools/dashboard/chat_jobs.py",
-      "sha": "532a040f034ffacaf7fb353cc6ab161f537d7ec3"
+      "sha": "78ae886eacdbd0ccbfedee2f709f0468f803b72f"
     },
     {
       "path": "tools/dashboard/chat_renderer.js",
@@ -448,7 +448,7 @@
     },
     {
       "path": "tools/dashboard/dashboard_shell.js",
-      "sha": "ada099da9e6b65fcf3096a4350685c334a36f757"
+      "sha": "375bc34384d98aa908b4e01f6b3d9c58c51ea4a7"
     },
     {
       "path": "tools/dashboard/database.py",
@@ -460,7 +460,7 @@
     },
     {
       "path": "tools/dashboard/execution_store.py",
-      "sha": "05e96a0c32e92bb4243761ffe648368841fab78a"
+      "sha": "8dbd2f67d61d9616b38857196b0b91aaa210667c"
     },
     {
       "path": "tools/dashboard/extensions.py",
@@ -488,7 +488,7 @@
     },
     {
       "path": "tools/dashboard/job_store.py",
-      "sha": "85d179d5696e3dc8ce49852bd7f7496d868a3fd6"
+      "sha": "3f0cf1531e6b7fd1db65fab613c353a49d8ac5da"
     },
     {
       "path": "tools/dashboard/maintenance.py",
@@ -564,7 +564,7 @@
     },
     {
       "path": "tools/dashboard/operations_ui.js",
-      "sha": "18374af3bf26e68931932b8533b9ca4e26824857"
+      "sha": "18538a1c52b477b8aafddfbbb13494ace6a1ebf1"
     },
     {
       "path": "tools/dashboard/process_runner.py",
@@ -596,7 +596,7 @@
     },
     {
       "path": "tools/dashboard/sandbox.py",
-      "sha": "4106b03084b6088598e377089c0d47f9a7872f54"
+      "sha": "8ef9f94e8c9836c317731c7ee5c2bdf6669fadf7"
     },
     {
       "path": "tools/dashboard/sandbox_preview.py",
@@ -620,7 +620,7 @@
     },
     {
       "path": "tools/dashboard/skill_manager.py",
-      "sha": "ac6b7098a925b7bf2cba29802154c4588ba116c7"
+      "sha": "a94a41d08e1741a89ee7c4896177ab0e39db1e25"
     },
     {
       "path": "tools/dashboard/skill_manifest.py",
@@ -636,7 +636,7 @@
     },
     {
       "path": "tools/dashboard/skills_catalog.py",
-      "sha": "1eb2864a5eaca0b8ca0520f2887b412e9b13ba3c"
+      "sha": "d01d634ae336750e8aaca190e0c4aac756781f36"
     },
     {
       "path": "tools/dashboard/start_dashboard.ps1",
@@ -739,6 +739,10 @@
       "sha": "e0323ee46f7767096457d80599f3003bfd26cce1"
     },
     {
+      "path": "tools/dashboard/test_office_repairs.py",
+      "sha": "fed363edb8c155eeead14ea843be14e407085796"
+    },
+    {
       "path": "tools/dashboard/test_ollama.py",
       "sha": "c13141326363e73ad66dc2ec57d208d0b6d12d34"
     },
@@ -765,6 +769,10 @@
     {
       "path": "tools/dashboard/test_opencode_validate.py",
       "sha": "165cb84775272f675a60780d1678651ab0df68ef"
+    },
+    {
+      "path": "tools/dashboard/test_operations_ui.js",
+      "sha": "72f8f5091b2d4c218350b651dae0a6789a4386a5"
     },
     {
       "path": "tools/dashboard/test_project_contract.py",
