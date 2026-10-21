@@ -31,7 +31,9 @@ const proxy=http.createServer((req,res)=>{
 });
 proxy.listen(11434,'127.0.0.1',()=>{
  const config={provider:{local:{npm:'@ai-sdk/openai-compatible',name:'SMELTER confined local model',options:{baseURL:'http://127.0.0.1:11434/v1',apiKey:'local'},models:{[process.env.SMELTER_MODEL]:{name:process.env.SMELTER_MODEL}}}}};
- if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:10000}};
+ // OpenCode uses this for tool calls too. The host MCP call is bounded at
+ // 120s; allow its receipt/transport cleanup rather than cutting it off at 10s.
+ if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:150000}};
  const child=cp.spawn('/usr/local/bin/opencode',['serve','--pure','--hostname','127.0.0.1','--port','4096'],{cwd:'/workspace',env:{...process.env,OPENCODE_CONFIG_CONTENT:JSON.stringify(config),OPENCODE_SERVER_PASSWORD:process.env.SMELTER_AGENT_PASSWORD},stdio:'inherit'});
  child.on('error',()=>process.exit(1));child.on('exit',code=>process.exit(code??1));
  setTimeout(()=>process.exit(124),(Number(process.env.SMELTER_TIMEOUT)+30)*1000).unref();

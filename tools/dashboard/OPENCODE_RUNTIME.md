@@ -59,7 +59,11 @@ external directories and unapproved MCP tools remain denied. Only exact
 A bounded Node stdio proxy inside the container passes MCP calls through a tmpfs
 queue. The host relay uses the existing ToolSession -> built-in Python MCP server
 path, with frozen location policy, grants, skill fingerprints, call budgets,
-write deduplication and audits. Preview launch remains owned by the dashboard;
+write deduplication and audits. OpenCode's MCP RPC timeout is 150 seconds around
+the existing 120-second host MCP operation bound. CI delays the real tool call
+by 12 seconds and verifies OpenCode acknowledges its completed result, guarding
+against a short RPC timeout silently losing the tool response.
+Preview launch remains owned by the dashboard;
 it is not launched by the short-lived MCP server. Skills do not need individual
 connectors. A capability needs a real registered backend implementation.
 

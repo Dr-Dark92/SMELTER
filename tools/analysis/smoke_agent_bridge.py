@@ -111,7 +111,7 @@ def process_fixture(base,root,target,bridge,binary):
     config={'provider':{'local':{'npm':'@ai-sdk/openai-compatible','options':{
         'baseURL':'http://127.0.0.1:11434/v1','apiKey':'fixture'},'models':{'qwen3.5:9b':{'name':'Smoke fixture'}}}},
         'mcp':{'smelter':{'type':'local','command':[node,str(REPO/'tools/dashboard/opencode_mcp_proxy.mjs'),
-            '--manifest',str(manifest),'--queue',str(queue)],'enabled':True,'timeout':10000}}}
+            '--manifest',str(manifest),'--queue',str(queue)],'enabled':True,'timeout':150000}}}
     home=base/'home';home.mkdir()
     env={key:value for key,value in os.environ.items() if key in ('PATH','SystemRoot','WINDIR','COMSPEC','PATHEXT','TEMP','TMP')}
     env.update(HOME=str(home),USERPROFILE=str(home),XDG_CONFIG_HOME=str(home/'config'),
@@ -168,6 +168,8 @@ def process_fixture(base,root,target,bridge,binary):
 
 def run(args):
     if args.live and args.process_fixture:raise ValueError('--live requires the managed container')
+    if not 0<=args.fixture_delay<=15 or args.live and args.fixture_delay:
+        raise ValueError('Fixture delay must be 0-15 seconds and cannot be used with --live')
     if not args.process_fixture and not args.image:raise ValueError('Pass --image sha256:... for the managed OpenCode image')
     with tempfile.TemporaryDirectory(prefix='smelter-agent-smoke-') as name:
         base=Path(name);root=base/'SMELTER';root.mkdir();target=base/'SMELTERV2';target.mkdir()
@@ -190,6 +192,12 @@ def run(args):
                 'I approve this one report write. Call the tool once, then report its result. Do not use other tools.')
         bridge=AgentBridge(root,cid,prompt,skills=['documentation'],grants={'write_diagnostics':True},
                            policy=control.access_policy,control=control)
+        if args.fixture_delay:
+            invoke=bridge.session._invoke
+            def delayed(name,arguments,event):
+                time.sleep(args.fixture_delay)
+                return invoke(name,arguments,event)
+            bridge.session._invoke=delayed
         with model_fixture(not args.live,'Maintain concise, accurate, version-controlled engineering documentation'):
             manager=process_fixture(base,root,target,bridge,args.opencode) if args.process_fixture else contextlib.nullcontext(None)
             with manager as client:
@@ -201,6 +209,9 @@ def run(args):
         execution=read_chat(root,cid)['messages'][-1]['execution']
         events=[event for event in execution['events'] if event.get('source')=='controller']
         if len(events)!=1 or events[0]['result']['status']!='written':raise ValueError('Missing or repeated controller write receipt')
+        acknowledged=[event for event in execution['events'] if event.get('tool')=='opencode/smelter_write_diagnostic_markdown']
+        if not acknowledged or acknowledged[-1]['result']['status']!='completed':
+            raise ValueError('OpenCode did not acknowledge the completed MCP result')
         receipt=events[0]['result'];digest=hashlib.sha256(saved.read_bytes()).hexdigest()
         if receipt['sha256']!=digest:raise ValueError('Receipt hash does not match disk')
         if not Path(receipt['mcp_audit_path']).is_file():raise ValueError('Real MCP server audit is missing')
@@ -214,6 +225,7 @@ def run(args):
                 'skills':execution['skill_snapshots'],'tool':events[0]['tool'],'transport':events[0]['transport'],
                 'bytes':len(CONTENT.encode()),'sha256':digest,'independent_saved_bytes_check':True,
                 'mcp_server_audit_checked':True,'chat_persistence_checked':True,'unapproved_write_denied':True,
+                'opencode_mcp_result_acknowledged':True,'fixture_tool_delay_seconds':args.fixture_delay,
                 'cleanup_confirmed':execution['cleanup_confirmed'],'fixture_model_requests':len(ModelFixture.requests) if not args.live else None,
                 'disposable_state_removed_on_exit':True}
 
@@ -224,6 +236,7 @@ def main():
     parser.add_argument('--live',action='store_true',help='Use the existing local Qwen; requires --image')
     parser.add_argument('--process-fixture',action='store_true',help='Explicit real-process test without Docker or Qwen')
     parser.add_argument('--opencode',help='Existing executable path for --process-fixture')
+    parser.add_argument('--fixture-delay',type=float,default=0,help='Synthetic-only 0-15s tool delay to exercise RPC deadlines')
     args=parser.parse_args()
     try:report=run(args)
     except Exception as exc:

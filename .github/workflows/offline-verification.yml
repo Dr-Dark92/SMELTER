@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p .smelter/bridge-checks
-          python tools/analysis/smoke_agent_bridge.py --image "$(cat "$RUNNER_TEMP/smelter-opencode-image")" | tee .smelter/bridge-checks/managed-smoke.json
+          python tools/analysis/smoke_agent_bridge.py --image "$(cat "$RUNNER_TEMP/smelter-opencode-image")" --fixture-delay 12 | tee .smelter/bridge-checks/managed-smoke.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
