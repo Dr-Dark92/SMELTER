@@ -327,9 +327,44 @@
     }
   },
   "pending": [
-    "Original direct tool audit or new isolated direct evidence to determine content versus receipt failure",
-    "Direct PASS, then managed OpenCode and ECC live acceptance on the rig",
-    "Manual GUI, optional vision, installed native tools and rig performance"
+    "Managed OpenCode with live Qwen and selected verification skill",
+    "ECC live TDD RED/fix/GREEN and current-tree review",
+    "One comprehensive full live acceptance pack and manual GUI observation",
+    "Optional vision, installed native tools and rig performance",
+    "Historical original failure explanation requires its original audit/transcript; the later PASS alone does not identify that cause"
   ],
-  "graph_note": "Committed graph remains the explicitly pinned cee565b audit snapshot; narrow follow-ups are recorded separately."
+  "graph_note": "Committed graph remains the explicitly pinned cee565b audit snapshot; narrow follow-ups are recorded separately.",
+  "direct_live_recheck": {
+    "recorded_at_utc": "2026-10-21T18:50:35.028Z",
+    "evidence_basis": "Operator-pasted updated harness console result; receipt file not independently opened here",
+    "status": "PASS",
+    "live_qwen": true,
+    "engine": "direct Ollama",
+    "model": "qwen3.5:9b",
+    "inference_attempted": true,
+    "model_outcome": "completed",
+    "controller_calls": 1,
+    "content": "# DIRECT_QWEN_SMOKE_OK\n",
+    "bytes": 23,
+    "sha256": "dd016db1f3dff0293ca5ca98a590a8ad1c2c629643b611b37f4e44bb83f16e8d",
+    "checks": {
+      "model_completed": true,
+      "one_approved_mcp_write": true,
+      "file_present": true,
+      "exact_content": true,
+      "receipt_hash": true,
+      "receipt_bytes": true
+    },
+    "saved_bytes_verified": true,
+    "evidence_directory": "Not included in the pasted output",
+    "original_failure_explained": false
+  },
+  "current_acceptance": {
+    "direct_live": "PASS",
+    "managed_opencode_live": "NOT_RUN",
+    "ecc_coding_live": "NOT_RUN",
+    "manual_gui": "PENDING",
+    "single_complete_live_pack": "NOT_YET_PASSED",
+    "original_full_run": "Historical FAIL retained"
+  }
 }

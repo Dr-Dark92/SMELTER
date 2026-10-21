@@ -111,3 +111,19 @@ checks with no page errors or external requests. Actual container profiles,
 OpenCode/MCP saved bytes, CSS preview and ECC RED/GREEN passed with cleanup.
 Model responses in CI were synthetic. See [retained evidence](direct-live-followup.json)
 for job/artifact IDs and the unresolved desktop direct-model acceptance.
+
+## Later direct live recheck: PASS
+
+The operator supplied the updated harness console result on 2026-10-21: live
+`qwen3.5:9b`, completed outcome, one executed MCP write and all six acceptance
+checks true. Expected, observed and receipt byte counts are 23; the SHA-256 is
+`dd016db1f3dff0293ca5ca98a590a8ad1c2c629643b611b37f4e44bb83f16e8d`.
+The saved content is exactly `# DIRECT_QWEN_SMOKE_OK` plus LF. This is evidence
+from the operator's pasted output; no receipt file was independently opened here.
+
+Direct live acceptance is now PASS for this recheck. Managed OpenCode/ECC live
+acceptance remains NOT_RUN. The earlier complete smoke remains a historical FAIL;
+a successful separate recheck does not explain its original byte/hash mismatch
+or create a single full acceptance pack. Continue with the targeted managed and
+ECC steps in [the runbook](../../../FULL_SMOKE_TEST.md), then record manual GUI
+acceptance. Preserve both results rather than relabelling the earlier failure.

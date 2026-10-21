@@ -33,10 +33,12 @@ a root cause. See [progress](PROGRESS.md).
 
 The follow-up retains failed bytes and independent acceptance checks, corrects
 the aggregate live headline and keeps strict acceptance and later-stage gates.
-Run only the targeted direct recheck in [the runbook](../../../FULL_SMOKE_TEST.md)
-first; no need to repeat eight completed stages to collect this evidence.
+The later operator-supplied direct recheck passed all six checks: completed live
+Qwen, one executed MCP write, exact 23 bytes and matching receipt SHA-256/length.
+Direct live is PASS for that task; managed OpenCode/ECC live remains NOT_RUN.
+Continue with the targeted managed/ECC commands in [the runbook](../../../FULL_SMOKE_TEST.md).
 Local validation: 29 analysis tests, including actual MCP with synthetic exact
-and missing-final-LF arguments. Live Qwen remains unaccepted. The graph remains
+and missing-final-LF arguments. The graph remains
 the explicitly pinned audit snapshot; narrow follow-ups are recorded separately.
 
 Final follow-up source `0e1d41f0ede51496bac19bf1d2095743d3fc25b1` passed all four
@@ -47,8 +49,9 @@ keeps the stage visible while requiring real advancing animation time. CI model
 responses were synthetic. [Evidence and artifact links](direct-live-followup.json)
 retain both the initial browser failure and final successful validation.
 
-Live Qwen, optional vision, installed native tools and manual rig performance.
-Synthetic inference verified transport/tool wiring only. No game library was
+Pending: managed OpenCode/ECC with live Qwen, optional vision, installed native
+tools and manual rig performance. Synthetic inference verified transport/tool
+wiring only. No game library was
 inspected, launched or extracted.
 
 ## Known issues
@@ -64,8 +67,10 @@ paths/image IDs require review. No automatic deletion/replay is introduced.
 
 ## Next actions
 
-1. On the home rig follow [FULL_SMOKE_TEST.md](../../../FULL_SMOKE_TEST.md).
-   `--full --live --ecc --coding --prepare-demo` is the comprehensive route.
+1. On the home rig run the targeted managed OpenCode/ECC continuation in
+   [FULL_SMOKE_TEST.md](../../../FULL_SMOKE_TEST.md) after the direct PASS.
+   Once those pass, `--full --live --ecc --coding --prepare-demo` creates one
+   comprehensive acceptance pack; separate task passes do not rewrite the old run.
 2. Retain failed model/controller artifacts; isolate the failing layer before
    changing tool scope or model configuration.
 3. Implement the next item from ACTION_PLAN with behavior-level acceptance.

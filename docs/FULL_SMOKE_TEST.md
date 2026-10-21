@@ -226,6 +226,59 @@ The corrected helper uses a successful empty exact-name listing, so absence is
 independent of locale/capitalization. A failed daemon/listing is still unconfirmed
 and an existing container still needs the exact invocation ownership label.
 
+### Continue after a direct live PASS
+
+For the current desktop evidence set, continue with the two unrun live routes.
+This reuses reviewed manifests retained by `home-smoke-20261021T181245Z-416ecc68`;
+if that directory is unavailable, stop and use the full pack to prepare reviewed
+inputs. The block uses installed immutable image IDs, new evidence directories
+and existing Ollama. The ECC task starts only after the managed report passes.
+
+```powershell
+& {
+    Set-Location C:\SMELTER -ErrorAction Stop
+
+    # Reuse the reviewed ECC manifests retained by your earlier smoke run.
+    $smelterManifests = 'diagnostics\home-smoke-20261021T181245Z-416ecc68\ecc-manifests'
+    $smelterVerify = Join-Path $smelterManifests 'verification-loop\SKILL.md'
+    $smelterTdd = Join-Path $smelterManifests 'tdd-workflow\SKILL.md'
+    foreach ($smelterManifest in @($smelterVerify, $smelterTdd)) {
+        if (-not (Test-Path -LiteralPath $smelterManifest -PathType Leaf)) {
+            throw "Reviewed ECC manifest is missing: $smelterManifest"
+        }
+    }
+
+    # Resolve the existing local images; these commands do not download them.
+    $smelterOpenCodeImage = docker image inspect smelter-opencode:1.19.3 --format '{{.Id}}'
+    if ($LASTEXITCODE -ne 0) { throw 'OpenCode image is unavailable.' }
+    $smelterPythonImage = docker image inspect python:3.12-alpine --format '{{.Id}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Python test image is unavailable.' }
+
+    # First: real OpenCode + Qwen + selected skill + MCP report write.
+    $smelterAgentEvidence = Join-Path 'diagnostics' ('opencode-live-' + [guid]::NewGuid().ToString('N'))
+    python tools\analysis\smoke_agent_bridge.py --live --image $smelterOpenCodeImage --skill-manifest $smelterVerify --skill-id ecc-verification-loop --evidence-dir $smelterAgentEvidence
+    if ($LASTEXITCODE -ne 0) { throw "OpenCode smoke failed. Retain: $smelterAgentEvidence" }
+
+    # Then: real ECC TDD task with isolated RED, fix, GREEN and final review.
+    $smelterCodingEvidence = Join-Path 'diagnostics' ('ecc-live-' + [guid]::NewGuid().ToString('N'))
+    python tools\analysis\smoke_ecc_coding.py --live --image $smelterOpenCodeImage --python-image $smelterPythonImage --skill-manifest $smelterTdd --evidence-dir $smelterCodingEvidence
+    if ($LASTEXITCODE -ne 0) { throw "ECC coding smoke failed. Retain: $smelterCodingEvidence" }
+}
+```
+
+The first result must say `status: passed`, `model: live qwen3.5:9b`, show the
+selected verification skill hash, independent saved-byte verification, actual
+MCP audit, acknowledged OpenCode tool result, denied unapproved write and confirmed
+cleanup. The ECC result must show `test_stages: [RED, GREEN]`, current tests passed,
+original source unchanged, actual MCP audits and confirmed cleanup. RED alone is
+not completion; runner ERROR does not count as the intended failing assertion.
+
+These are bounded disposable tasks, not a broad coding-quality or performance
+benchmark. Keep the original failed run and the later successful direct recheck.
+Separate stage passes do not rewrite the old full-pack summary. After both live
+routes pass, the comprehensive command above creates one acceptance pack; manual
+GUI/vision/native-tool observations remain separate.
+
 ### Evidence and limits
 
 For an isolated direct-model recheck, use a new evidence directory:

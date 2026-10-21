@@ -156,6 +156,10 @@ def run(args):
                   'Propose/apply the minimal fix from subtraction to addition. Run python tests again for GREEN and '
                   'review the workspace. Do not use shell, installs, coverage, Git, delegation, or modify original files. '
                   'Report actual RED/GREEN and saved hashes without claiming coverage or a source merge.')
+        prompt += ('\nExact expected UTF-8 file contents (JSON):\n' + json.dumps({
+            'tools/dashboard/test_example.py': TEST, 'tools/dashboard/example.py': AFTER}) +
+            '\nDecode these JSON strings, including final LF. Create the test before the implementation fix; '
+            'the initial failing source must remain unchanged until actual RED is recorded.')
         bridge = AgentBridge(root, cid, prompt, skills=['ecc-tdd-workflow'], grants={'coding_workspace': True},
                              policy=control.access_policy, control=control)
         with model_fixture(reference, not args.live):

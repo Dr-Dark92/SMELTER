@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## Direct live acceptance evidence follow-up — 2026-10-21
 
+- Later operator-supplied direct live recheck: PASS, one executed MCP write, exact 23 bytes and matching SHA-256/receipt; all six checks true. Managed OpenCode/ECC live tasks remain unrun. Preserve the original failed run and its unresolved cause. No model configuration or runtime code was changed for this documentation update.
+
 - The next desktop run passed all prerequisites and eight phases, including both real coding profiles and CSS tests/preview. Direct Qwen reached a completed single-event/file-presence check, then failed the combined exact-content/receipt-hash check. The supplied log cannot distinguish those causes; managed OpenCode/ECC live tasks were skipped.
 - Preserve the actual saved marker before acceptance, including failed content, byte count/hash, bounded UTF-8 preview, transcript and audits. Report exact content, actual MCP execution, model outcome, receipt hash and receipt byte checks separately. Keep byte-exact acceptance; no whitespace repair, automatic retries or tolerance were added.
 - Correct the aggregate live headline to include a direct failure. Show direct, managed OpenCode and ECC live outcomes separately; partial completion cannot report a full live acceptance PASS.
