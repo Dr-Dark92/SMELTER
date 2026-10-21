@@ -23,6 +23,15 @@ does not register shell, memory, coverage, plugins or reverse-engineering tools.
 
 ## Pending acceptance
 
+The desktop progressed through all prerequisites, native contracts, actual
+HTTP/MCP/storage and Chromium/GLB, then hit the false cleanup check described in
+[progress](PROGRESS.md). The exact-name operator listing confirmed absence and
+exposed lowercase Docker error wording. Repair source `095add422d399a481ee9898d7f14905a0f62bb36`
+uses a successful listing as absence evidence; label checks remain required for
+deletion. See [follow-up evidence](cleanup-followup.json) and the targeted rerun
+in the full runbook. The graph remains the explicitly pinned audit snapshot;
+these later narrow preflight/cleanup revisions are recorded separately.
+
 Live Qwen, optional vision, installed native tools and manual rig performance.
 Synthetic inference verified transport/tool wiring only. No game library was
 inspected, launched or extracted.

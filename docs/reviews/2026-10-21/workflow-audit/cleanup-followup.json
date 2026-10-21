@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-21T17:35:13.209Z",
+  "application_sha": "095add422d399a481ee9898d7f14905a0f62bb36",
+  "previous_sha": "652e0739e2f59d94da07d67eb5e017e9f429201b",
+  "operator_run": {
+    "evidence_directory_basename": "home-smoke-20261021T171848Z-a4660b94",
+    "source_revision_embedded": false,
+    "overall_status": "FAIL",
+    "all_prerequisites_passed": true,
+    "completed_phases": [
+      "dashboard",
+      "setup",
+      "analysis",
+      "javascript",
+      "workflow-http-mcp",
+      "browser-ui-glb"
+    ],
+    "dashboard": {
+      "tests": 405,
+      "skipped": 8
+    },
+    "setup_tests": 32,
+    "analysis_tests": 23,
+    "javascript_tests": 16,
+    "workflow_checks": 15,
+    "browser": {
+      "result": "passed",
+      "page_errors": [],
+      "external_requests": [],
+      "png": true,
+      "webm": true,
+      "animation_playback_and_labels": true
+    },
+    "first_failure": "python-node-confined-profiles: cleanup unconfirmed before first profile result was returned",
+    "recorded_profile_cases": 0,
+    "live_qwen": "NOT_RUN",
+    "direct_live_ollama": "NOT_RUN",
+    "manual_gui": "PENDING",
+    "later_operator_observation": "Successful exact-name docker ps listing was empty; docker inspect returned lowercase error: no such object. No container deletion was needed.",
+    "limitation": "Original failed cleanup stderr and the first container test outcome were not retained; later absence alone does not timestamp the earlier removal."
+  },
+  "reproduction": {
+    "previous_function_result": false,
+    "corrected_function_result": true,
+    "fixture": "Captured operator stderr plus successful empty exact-name listing",
+    "live_docker_used_for_reproduction": false
+  },
+  "repair": {
+    "absence_evidence": "Successful exact-name docker ps --all --filter name=^/INVOCATION$ --format {{.ID}} with empty stdout",
+    "inspection_error_text_parsed": false,
+    "label_match_required_before_deletion": true,
+    "daemon_or_listing_failure_confirms_cleanup": false,
+    "nonempty_listing_confirms_cleanup": false,
+    "auto_removal_between_inspect_and_remove": "Same successful absence probe"
+  },
+  "local_validation": {
+    "dashboard_tests": 409,
+    "skipped": 2,
+    "dashboard_seconds": 25.622,
+    "analysis_tests": 23,
+    "analysis_seconds": 0.583,
+    "focused_relay_cleanup_tests": 11
+  },
+  "ci": {
+    "run_id": 39644336135,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119375822458,
+        "name": "agent-bridge-smoke",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119375822671,
+        "name": "contracts (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119375822729,
+        "name": "contracts (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119375822733,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "native": {
+      "linux": {
+        "dashboard": 409,
+        "skipped": 2,
+        "setup": 32,
+        "analysis": 23,
+        "javascript": 16
+      },
+      "windows": {
+        "dashboard": 409,
+        "skipped": 3,
+        "setup": 32,
+        "analysis": 23,
+        "javascript": 16
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12366532939,
+        "name": "agent-bridge-smoke-evidence",
+        "expires_at": "2026-11-04T17:32:34Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135/artifacts/12366532939"
+      },
+      {
+        "id": 12366422794,
+        "name": "workflow-smoke-ubuntu-latest",
+        "expires_at": "2026-11-04T17:30:49Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135/artifacts/12366422794"
+      },
+      {
+        "id": 12366348085,
+        "name": "workflow-smoke-windows-latest",
+        "expires_at": "2026-11-04T17:31:57Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135/artifacts/12366348085"
+      },
+      {
+        "id": 12365569374,
+        "name": "workbench-browser-evidence",
+        "expires_at": "2026-11-04T17:33:57Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135/artifacts/12365569374"
+      }
+    ]
+  },
+  "real_container_profiles": {
+    "status": "PASS",
+    "live_qwen": false,
+    "transport": "actual Python MCP",
+    "boundary": "real no-network Python and Node containers",
+    "cases": [
+      {
+        "profile": "python",
+        "stage": "RED",
+        "counts": {
+          "tests": 1,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "d03291e6d1ad9fcc88a457e788d0b04fe3a512bc1cfe8925f5efbdbd83fd77a3",
+        "log_sha256": "1072af609bff3260fd8dd9b65da8a5212b0d0ab529bcdc8ab00b44de75cb7f16",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      },
+      {
+        "profile": "node",
+        "stage": "RED",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "d03291e6d1ad9fcc88a457e788d0b04fe3a512bc1cfe8925f5efbdbd83fd77a3",
+        "log_sha256": "653bc02eef7c521a7c42be0ebd0c15cbd10580b44d52d084c27ff6adef69cd4f",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "python",
+        "stage": "GREEN",
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "exit_code": 0,
+        "cleanup_confirmed": true,
+        "tree_sha256": "2f7379de77d51ba1b287e5ede3c65cafd4113f710a17f27855191dd5d0059473",
+        "log_sha256": "18185c1cf079fd2e678ae0bccb208cfaf6a9731b3df4ccde274c2bb736d74e9b",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      },
+      {
+        "profile": "node",
+        "stage": "GREEN",
+        "counts": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 0,
+        "cleanup_confirmed": true,
+        "tree_sha256": "2f7379de77d51ba1b287e5ede3c65cafd4113f710a17f27855191dd5d0059473",
+        "log_sha256": "e9cf65fd1d6050d72a383c86695da674f7a4ec1f9b152ce2cf05c1965677925d",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "node",
+        "stage": "ERROR",
+        "counts": {
+          "tests": 2,
+          "pass": 0,
+          "fail": 2,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "761573edafdcbeda333aafa9ec9ba5efc2f30a0559fa7231239fe728e31741f6",
+        "log_sha256": "d80d2e4035992d18350b56862b4c73c5cabf5646601d32a624978412aab8a68e",
+        "image": "sha256:c79227476e31e0f5410cfc4578f1f9a59300510491f2f6f0b5eaf956dbef4986"
+      },
+      {
+        "profile": "python",
+        "stage": "ERROR",
+        "counts": {
+          "tests": 2,
+          "failures": 1,
+          "errors": 1,
+          "skipped": 0
+        },
+        "exit_code": 1,
+        "cleanup_confirmed": true,
+        "tree_sha256": "18cdbdb720d8ee3514dde59bb53f956afe87f21ee547986deab0821bb0aab85f",
+        "log_sha256": "86ce8f74ff089aff37016db6684fa1ac846d6bac94a0c062925b09a81e2b4983",
+        "image": "sha256:979e5a8a56846771598d47ebf1f8a75b46155104e168a0b237c0783c1dedff8a"
+      }
+    ],
+    "current_green_review": true,
+    "stale_green_rejected": true,
+    "source_unchanged": true,
+    "cleanup_confirmed": true,
+    "tool_calls": 15
+  },
+  "managed_report": {
+    "status": "passed",
+    "transport": "mcp",
+    "saved_bytes": 68,
+    "sha256": "dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1",
+    "independent_saved_bytes_check": true,
+    "opencode_mcp_result_acknowledged": true,
+    "cleanup_confirmed": true,
+    "model": "synthetic protocol fixture; no Qwen inference"
+  },
+  "frontend": {
+    "status": "PASS",
+    "preview_css_verified": true,
+    "stale_launch_rejected": true,
+    "cleanup_confirmed": true,
+    "live_qwen": false
+  },
+  "ecc": {
+    "status": "passed",
+    "test_stages": [
+      "RED",
+      "GREEN"
+    ],
+    "all_current_tests_passed": true,
+    "source_unchanged": true,
+    "cleanup_confirmed": true,
+    "model": "synthetic protocol fixture; no Qwen inference"
+  },
+  "pending": [
+    "Desktop targeted Python/Node profile recheck after update",
+    "Desktop CSS validation/preview and direct/managed live Qwen/ECC smoke",
+    "Manual GUI, optional vision, native tools and rig performance"
+  ],
+  "graph_note": "Committed graph remains the explicitly pinned cee565b audit snapshot. Later narrow preflight and cleanup repairs are recorded separately."
+}

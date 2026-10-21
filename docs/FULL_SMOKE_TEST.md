@@ -197,6 +197,37 @@ preserved. Record observations in the run's `MANUAL_RESULTS.md`.
 
 ## Failure triage
 
+### Targeted container-profile recheck
+
+After updating a container-runner fix, repeat the failed profiles without
+inference or the already completed browser/native phases:
+
+```powershell
+& {
+    Set-Location C:\SMELTER -ErrorAction Stop
+    $smelterPythonImage = docker image inspect python:3.12-alpine --format '{{.Id}}'
+    if ($LASTEXITCODE -ne 0) { throw "Python test image is unavailable." }
+    $smelterNodeImage = docker image inspect node:22-alpine --format '{{.Id}}'
+    if ($LASTEXITCODE -ne 0) { throw "Node test image is unavailable." }
+    $smelterProfileEvidence = Join-Path 'diagnostics' ('profiles-recheck-' + [guid]::NewGuid().ToString('N'))
+    python tools\analysis\smoke_coding_profiles.py --python-image $smelterPythonImage --node-image $smelterNodeImage --output $smelterProfileEvidence
+    if ($LASTEXITCODE -ne 0) { throw "Profile recheck failed; retain its result.json and tool audits." }
+}
+```
+
+Expected: Python RED, Node RED, Python GREEN, Node GREEN, Node mixed ERROR,
+Python mixed ERROR, current-tree/stale-review checks and confirmed cleanup.
+Expected RED/ERROR fixtures are part of a successful smoke; the top-level result
+must be PASS. Then repeat the full live command for one complete acceptance pack.
+
+Docker 29.8.2 on the desktop reported an absent container as lowercase
+`error: no such object`; the original cleanup helper compared uppercase text.
+The corrected helper uses a successful empty exact-name listing, so absence is
+independent of locale/capitalization. A failed daemon/listing is still unconfirmed
+and an existing container still needs the exact invocation ownership label.
+
+### Evidence and limits
+
 Read `SUMMARY.md`, `summary.json`, the first failed phase log and its retained
 tool/test artifacts. A completed model explanation cannot override failed hashes,
 missing receipts, ERROR tests, stale review or unconfirmed cleanup. Check the

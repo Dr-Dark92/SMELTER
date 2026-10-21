@@ -2,6 +2,13 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Docker cleanup verification follow-up — 2026-10-21
+
+- The desktop run passed all prerequisites, native contracts, actual HTTP/MCP/storage and browser/GLB checks, then stopped because an already absent test container was reported as unconfirmed cleanup. Qwen inference and later stages had not run.
+- Reproduced the case-sensitive `No such` check against the operator's Docker 29.8.2 `error: no such object` response. Cleanup now verifies absence with a successful exact-name Docker container listing, independently of error wording. A failed listing or an existing container remains unconfirmed.
+- Preserve the ownership-label requirement before deletion. Handle auto-removal between label inspection and explicit removal with the same absence probe. No broad container deletion or permission expansion.
+- Local validation: 409 dashboard tests passed (2 skips), 23 analysis tests passed, and the old helper returns false while the corrected helper confirms the same absence fixture. Cross-platform/container evidence: [run 39644336135](https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135), exact application `095add422d399a481ee9898d7f14905a0f62bb36`. Desktop recheck remains required.
+
 ## Home preflight diagnostics follow-up — 2026-10-21
 
 - The first uploaded home report stopped at Docker preflight with no test phases or inference. Later operator diagnostics showed a reachable Linux engine; the original formatted probe's error was not retained, so its exact cause is unconfirmed.

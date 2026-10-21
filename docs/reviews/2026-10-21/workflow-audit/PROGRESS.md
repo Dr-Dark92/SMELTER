@@ -47,3 +47,31 @@ above remains evidence for its exact audited source; new local test counts are
 not substituted into that historical run. The next operator action is
 `python tools/analysis/home_smoke.py --full --preflight-only`, then the live run
 only after prerequisite PASS. Manual and live acceptance remain pending.
+
+## Desktop container cleanup follow-up
+
+The next uploaded run passed every prerequisite and six phases: 405 dashboard
+tests (8 skipped on that desktop), 32 setup, 23 analysis, 16 JS, all 15 actual
+HTTP/MCP/storage checks and the real Chromium/GLB flow. Browser page errors and
+external HTTP requests were empty. These results establish wiring and fixture
+behavior; live Qwen, CSS validation/preview and managed model tasks had not run.
+
+The first Python container outcome was hidden by a false cleanup error. The
+operator's exact-name listing was empty and Docker returned lowercase
+`error: no such object`. The previous helper required uppercase `No such`.
+The old function reproduced false cleanup against that captured stderr. The
+repair requires a successful empty exact-name container listing, keeps label
+checks before deletion, and handles auto-removal between inspect and remove.
+Unavailable Docker, a nonempty listing or a mismatched label cannot confirm
+cleanup or authorize another container's removal.
+
+Repair source: `095add422d399a481ee9898d7f14905a0f62bb36`.
+Verification: [run 39644336135](https://github.com/Dr-Dark92/SMELTER/actions/runs/39644336135).
+All four CI jobs passed: Windows/Linux contracts, actual Chromium and real
+container profiles, CSS preview, OpenCode/MCP report and ECC TDD. Inference was
+synthetic. Native counts per OS are 409 dashboard (2 Linux/3 Windows skips), 32
+setup, 23 analysis and 16 JS; every actual container cleanup check passed.
+Local 409 dashboard tests (2 skips) and 23 analysis tests passed. Exact final CI
+results are retained in [cleanup follow-up evidence](cleanup-followup.json).
+Repeat the isolated profiles before the full live run; original desktop results
+remain evidence for their completed stages, not a full smoke PASS.
