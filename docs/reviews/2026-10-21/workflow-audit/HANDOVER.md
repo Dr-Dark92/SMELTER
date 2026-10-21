@@ -39,6 +39,14 @@ Local validation: 29 analysis tests, including actual MCP with synthetic exact
 and missing-final-LF arguments. Live Qwen remains unaccepted. The graph remains
 the explicitly pinned audit snapshot; narrow follow-ups are recorded separately.
 
+Final follow-up source `0e1d41f0ede51496bac19bf1d2095743d3fc25b1` passed all four
+CI jobs: Windows/Linux contracts, actual confined OpenCode/MCP/CSS/ECC and
+Chromium/GLB. Each native job ran 409 dashboard, 32 setup, 29 analysis and 16 JS
+tests; dashboard skips were 3 on Windows and 2 on Linux. The browser fixture now
+keeps the stage visible while requiring real advancing animation time. CI model
+responses were synthetic. [Evidence and artifact links](direct-live-followup.json)
+retain both the initial browser failure and final successful validation.
+
 Live Qwen, optional vision, installed native tools and manual rig performance.
 Synthetic inference verified transport/tool wiring only. No game library was
 inspected, launched or extracted.

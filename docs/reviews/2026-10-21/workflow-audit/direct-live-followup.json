@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-21T18:42:23.115Z",
+  "application_sha": "0e1d41f0ede51496bac19bf1d2095743d3fc25b1",
+  "previous_sha": "a89b7fcd8bb79ff59bc5362bb91134a1fd1f5704",
+  "operator_run": {
+    "evidence_directory_basename": "home-smoke-20261021T181245Z-416ecc68",
+    "source_revision_embedded": false,
+    "status": "FAIL",
+    "all_prerequisites_passed": true,
+    "passed_phases": [
+      "dashboard",
+      "setup",
+      "analysis",
+      "javascript",
+      "workflow-http-mcp",
+      "browser-ui-glb",
+      "python-node-confined-profiles",
+      "frontend-css-tests-preview"
+    ],
+    "dashboard": {
+      "tests": 409,
+      "skipped": 8
+    },
+    "setup_tests": 32,
+    "analysis_tests": 23,
+    "javascript_tests": 16,
+    "workflow_checks": 15,
+    "container_profile_cases": 6,
+    "cleanup_confirmed": true,
+    "frontend_preview_css_verified": true,
+    "first_failure": {
+      "phase": "direct-ollama-live",
+      "seconds": 13.72,
+      "error": "Direct model/controller saved bytes differ from the requested marker",
+      "reached_checks": {
+        "model_outcome_completed": true,
+        "one_controller_event": true,
+        "expected_file_present": true
+      },
+      "failed_combined_check": "exact content OR receipt hash; not disambiguated in original report"
+    },
+    "original_live_headline": "NOT_RUN (reporting defect; direct live phase was attempted and failed)",
+    "direct_live": "FAIL",
+    "managed_opencode_live": "NOT_RUN",
+    "ecc_coding_live": "NOT_RUN",
+    "manual_gui": "PENDING",
+    "original_failed_saved_bytes_retained": false,
+    "original_tool_arguments_in_supplied_logs": false,
+    "root_cause": "UNRESOLVED: inspect original retained tool audit/transcript or new isolated probe; do not attribute to model or storage from the generic error"
+  },
+  "repairs": {
+    "preserve_actual_saved_bytes_before_acceptance": true,
+    "strict_expected_content": "# DIRECT_QWEN_SMOKE_OK\n",
+    "strict_expected_utf8_bytes": 23,
+    "independent_checks": [
+      "model_completed",
+      "one_approved_mcp_write",
+      "file_present",
+      "exact_content",
+      "receipt_hash",
+      "receipt_bytes"
+    ],
+    "failed_evidence": [
+      "direct-smoke.md when present",
+      "expected/observed/checks/receipt in result.json",
+      "chat-evidence.json",
+      "tool-runs/*.jsonl"
+    ],
+    "content_repair_or_automatic_retry": false,
+    "later_live_phase_gates_unchanged": true,
+    "aggregate_live_acceptance": "FAIL on any failed requested live phase; PARTIAL if only some requested routes passed; separate direct/OpenCode/ECC outcomes",
+    "browser_fixture": "Scroll the model-viewer stage into view after Play before the unchanged currentTime > 0 assertion. Clicking controls can scroll the stage out of view; model-viewer intentionally suspends offscreen animation.",
+    "browser_product_policy_or_timeout_changed": false
+  },
+  "local_validation": {
+    "analysis_tests": 29,
+    "mcp_version": "1.30.0",
+    "actual_mcp_contract_fixtures": 2,
+    "synthetic_model_responses": true,
+    "missing_final_LF": "FAIL; actual wrong bytes retained with matching receipt",
+    "exact_argument": "PASS",
+    "live_qwen_used": false,
+    "javascript_syntax": "PASS"
+  },
+  "initial_ci": {
+    "run_id": 39653535894,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39653535894",
+    "application_sha": "d3254c2040f707884452583818cb7c1c4b44dd88",
+    "conclusion": "failure",
+    "passed": [
+      "contracts (ubuntu-latest)",
+      "contracts (windows-latest)",
+      "agent-bridge-smoke"
+    ],
+    "first_failure": "Browser GLB animation current-time wait; screenshot confirms offscreen stage, visible animation controls and zero time"
+  },
+  "ci": {
+    "run_id": 39654266647,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119410266708,
+        "name": "contracts (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119410267260,
+        "name": "agent-bridge-smoke",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119410267293,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119410267400,
+        "name": "contracts (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "native": {
+      "linux": {
+        "dashboard": 409,
+        "skipped": 2,
+        "setup": 32,
+        "analysis": 29,
+        "javascript": 16
+      },
+      "windows": {
+        "dashboard": 409,
+        "skipped": 3,
+        "setup": 32,
+        "analysis": 29,
+        "javascript": 16
+      }
+    },
+    "live_qwen_used": false,
+    "artifacts": [
+      {
+        "id": 12371910476,
+        "name": "workbench-browser-evidence",
+        "expires_at": "2026-11-04T18:40:37Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647/artifacts/12371910476"
+      },
+      {
+        "id": 12371171069,
+        "name": "agent-bridge-smoke-evidence",
+        "expires_at": "2026-11-04T18:39:08Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647/artifacts/12371171069"
+      },
+      {
+        "id": 12370826090,
+        "name": "workflow-smoke-windows-latest",
+        "expires_at": "2026-11-04T18:38:34Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647/artifacts/12370826090"
+      },
+      {
+        "id": 12369733367,
+        "name": "workflow-smoke-ubuntu-latest",
+        "expires_at": "2026-11-04T18:37:22Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647/artifacts/12369733367"
+      }
+    ],
+    "real_container_profiles": {
+      "status": "PASS",
+      "cases": [
+        {
+          "profile": "python",
+          "stage": "RED",
+          "counts": {
+            "tests": 1,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "exit_code": 1,
+          "cleanup_confirmed": true
+        },
+        {
+          "profile": "node",
+          "stage": "RED",
+          "counts": {
+            "tests": 1,
+            "pass": 0,
+            "fail": 1,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "exit_code": 1,
+          "cleanup_confirmed": true
+        },
+        {
+          "profile": "python",
+          "stage": "GREEN",
+          "counts": {
+            "tests": 1,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "exit_code": 0,
+          "cleanup_confirmed": true
+        },
+        {
+          "profile": "node",
+          "stage": "GREEN",
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "exit_code": 0,
+          "cleanup_confirmed": true
+        },
+        {
+          "profile": "node",
+          "stage": "ERROR",
+          "counts": {
+            "tests": 2,
+            "pass": 0,
+            "fail": 2,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "exit_code": 1,
+          "cleanup_confirmed": true
+        },
+        {
+          "profile": "python",
+          "stage": "ERROR",
+          "counts": {
+            "tests": 2,
+            "failures": 1,
+            "errors": 1,
+            "skipped": 0
+          },
+          "exit_code": 1,
+          "cleanup_confirmed": true
+        }
+      ],
+      "current_green_review": true,
+      "stale_green_rejected": true,
+      "source_unchanged": true,
+      "cleanup_confirmed": true
+    },
+    "managed_report": {
+      "status": "passed",
+      "transport": "mcp",
+      "bytes": 68,
+      "sha256": "dfe22aa9e274e9f3b4487c10cc6c3456df909d30d3f8544abb9e8588951054d1",
+      "independent_saved_bytes_check": true,
+      "opencode_mcp_result_acknowledged": true,
+      "cleanup_confirmed": true,
+      "model": "synthetic protocol fixture; no Qwen inference"
+    },
+    "frontend": {
+      "status": "PASS",
+      "preview_css_verified": true,
+      "authenticated_empty_preview_db": true,
+      "stale_launch_rejected": true,
+      "source_unchanged": true,
+      "cleanup_confirmed": true
+    },
+    "ecc": {
+      "status": "passed",
+      "test_stages": [
+        "RED",
+        "GREEN"
+      ],
+      "all_current_tests_passed": true,
+      "source_unchanged": true,
+      "cleanup_confirmed": true,
+      "model": "synthetic protocol fixture; no Qwen inference"
+    },
+    "browser": {
+      "liveInference": false,
+      "liveDocker": false,
+      "syntheticAssets": true,
+      "pageErrors": [],
+      "externalRequests": [],
+      "largeSkillCatalogue": true,
+      "stopAndRefreshRecovery": true,
+      "codingReceiptStates": true,
+      "openCodeGuiForwarding": true,
+      "result": "passed",
+      "settingsSearch": true,
+      "registeredLocations": true,
+      "folderBrowse": true,
+      "skillsBulk": true,
+      "titledChat": true,
+      "attachmentMenu": true,
+      "glbRender": true,
+      "animationPlaybackAndLabels": true,
+      "png": true,
+      "webm": true,
+      "releaseDuringExport": true,
+      "lateLoadIgnored": true,
+      "latePngIgnored": true,
+      "errorReload": true,
+      "widths": [
+        375,
+        768,
+        1024,
+        1440
+      ],
+      "reducedMotion": true
+    },
+    "generated_graph": {
+      "revision": "0e1d41f0ede51496bac19bf1d2095743d3fc25b1",
+      "counts": {
+        "files": 273,
+        "symbols": 1944,
+        "relationships": 3307,
+        "unresolved_calls": 11547
+      },
+      "runtime_links": 74
+    }
+  },
+  "pending": [
+    "Original direct tool audit or new isolated direct evidence to determine content versus receipt failure",
+    "Direct PASS, then managed OpenCode and ECC live acceptance on the rig",
+    "Manual GUI, optional vision, installed native tools and rig performance"
+  ],
+  "graph_note": "Committed graph remains the explicitly pinned cee565b audit snapshot; narrow follow-ups are recorded separately."
+}

@@ -9,6 +9,7 @@ This file records verified changes. Older research rounds are preserved in their
 - Correct the aggregate live headline to include a direct failure. Show direct, managed OpenCode and ECC live outcomes separately; partial completion cannot report a full live acceptance PASS.
 - Local validation: 29 analysis tests, including actual MCP writes with synthetic controlled responses. Missing-final-newline content remains FAIL with retained evidence; the exact argument passes. No live Qwen was run here.
 - Cross-platform contracts and actual container/OpenCode checks passed. The first browser run exposed a fixture viewport issue: clicking animation controls scrolled the viewer offscreen, where the viewer intentionally suspends animation. Bring the stage into view before requiring advancing playback time; keep the actual-animation assertion and timeout unchanged.
+- Final CI 39654266647 passed all four jobs at source `0e1d41f0ede51496bac19bf1d2095743d3fc25b1`, including Windows/Linux contracts, real Chromium/GLB and actual confined OpenCode/MCP/CSS/ECC. Each native suite passed 409 dashboard, 32 setup, 29 analysis and 16 JS tests (3 Windows / 2 Linux dashboard skips). CI inference was synthetic; the desktop direct live failure remains unresolved pending actual tool arguments or the isolated recheck.
 
 ## Docker cleanup verification follow-up — 2026-10-21
 

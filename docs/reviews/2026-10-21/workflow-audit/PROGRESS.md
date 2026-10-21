@@ -100,5 +100,14 @@ Its screenshot showed the animation controls in view and the stage above the
 chat viewport. Pinned model-viewer 4.1.0 intentionally suspends offscreen animation
 (`packages/model-viewer/src/features/animation.ts`, `$tick`). The browser fixture
 now scrolls the stage into view before the unchanged advancing-time assertion;
-no product render policy, timeout or retry was changed. Final CI evidence follows
-in `direct-live-followup.json` when that run completes.
+no product render policy, timeout or retry was changed.
+
+Final source `0e1d41f0ede51496bac19bf1d2095743d3fc25b1` passed all four jobs in
+[CI 39654266647](https://github.com/Dr-Dark92/SMELTER/actions/runs/39654266647).
+Windows/Linux each passed 409 dashboard, 32 setup, 29 analysis and 16 JS tests
+(3/2 dashboard skips respectively), plus actual HTTP/MCP contracts. Chromium
+passed playback/labels, PNG/WebM, release/error lifecycle, forwarding and layout
+checks with no page errors or external requests. Actual container profiles,
+OpenCode/MCP saved bytes, CSS preview and ECC RED/GREEN passed with cleanup.
+Model responses in CI were synthetic. See [retained evidence](direct-live-followup.json)
+for job/artifact IDs and the unresolved desktop direct-model acceptance.
