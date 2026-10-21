@@ -6,7 +6,7 @@ const SmelterMcp = (() => {
     const external = document.createElement('div'); external.id = 'mcpToolGrants';
     const selected = [];
     permissionsBox.append(document.createElement('br'), transportLabel, external);
-    const button = document.createElement('button'); button.className = 'navbtn'; button.textContent = 'MCP Connections';
+    let button;
     const panel = document.createElement('section'); panel.className = 'panel'; panel.id = 'mcpPanel';
     const heading = document.createElement('h3'); heading.textContent = 'MCP Connections';
     const info = document.createElement('p'); info.setAttribute('role', 'status');
@@ -47,11 +47,8 @@ const SmelterMcp = (() => {
         probe.disabled = data.sdk.status !== 'installed';refreshApprovals();
       } catch (error) { info.textContent = error.message; }
     }
-    button.onclick = () => {
-      right.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-      right.querySelectorAll('.navbtn').forEach(x => x.classList.remove('active'));
-      panel.classList.add('active'); button.classList.add('active'); load();
-    };
+    button=SmelterSettings.current.addPanel('mcpPanel','MCP connections',panel,'Skills & integrations');
+    button.onclick=()=>{SmelterSettings.current.activate('mcpPanel');load()};
     refresh.onclick = load;
     save.onclick = async () => {
       save.disabled = true;
@@ -82,7 +79,7 @@ const SmelterMcp = (() => {
       } catch (error) { discoverySnapshot=null;discoveryStatus.textContent='Discovery failed: '+error.message; }
       finally { probe.disabled = false;refreshApprovals(); }
     };
-    (folder?.querySelector('.config-folder-items') || right).prepend(button, panel);
+
     refreshApprovals();
     return {refreshApprovals,collect() {
       const result = {transport: transport.checked ? 'mcp' : 'python',

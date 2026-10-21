@@ -168,3 +168,7 @@ Do not publish raw audits, databases, credentials, launch tokens or game assets.
 ## Offline office harness
 
 `python tools/analysis/offline_gui_fixture.py` serves the real browser UI with synthetic replies, disposable state and stubbed services on loopback 18771. It never calls a live model. See [office workflow](OFFICE_GUI_WORKFLOW.md). Retention plans now remain disabled after consumption/failure/expiry and are invalidated when age changes.
+
+## Settings and skills GUI revision
+
+The settings rail/mobile picker, table-based bulk skill management, single + attachment menu and duplicate-skipping imports are documented in [GUI behavior](GUI_SKILLS_AND_ATTACHMENTS.md). New browser modules are settings_ui, skills_ui and attachments_ui. Bulk skill operations add `action=bulk` to the existing operator API; other chat/asset/API contracts are preserved.

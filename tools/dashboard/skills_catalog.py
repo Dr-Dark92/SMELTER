@@ -91,7 +91,7 @@ def catalog_skills(root):
                     "description": meta["description"], "status": status,
                     "enabled": state.get(skill_id, False) and status == "ready",
                     "source": "collection", "collection": group.name,
-                    "removable": False, "bytes": size,
+                    "removable": True, "bytes": size,
                     "loaded_into_model": False, "executable": False,
                 })
     # Canonical IDs must not silently select a different source directory.

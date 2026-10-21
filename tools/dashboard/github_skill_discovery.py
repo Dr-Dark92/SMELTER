@@ -87,8 +87,21 @@ def install_discovered_skill(root, name, url, sha256, approval=False, opener=url
     discovered = discover_github_skill(url, opener)
     if discovered["sha256"] != sha256:
         raise ValueError("GitHub skill changed since discovery; review again")
+    from skill_duplicates import installed,digest
+    from skill_manager import _safe_id
+    _safe_id(name);identities,contents=installed(root)
+    duplicate=name if name in identities else contents.get(digest(discovered['content']))
+    if duplicate:
+        return {'id':name,'added':False,'status':'skipped','reason':'duplicate_skill','existing_id':duplicate,'enabled':False,'source':'github'}
     result = add_skill(root, name, discovered["content"], approval=True)
-    set_skill_enabled(root, name, False, approval=True)
+    try:set_skill_enabled(root,name,False,approval=True)
+    except Exception:
+        from skill_manager import _paths
+        from python_tools import _plain_path
+        _,base=_paths(root);folder=_plain_path(base/name);manifest=_plain_path(folder/'SKILL.md')
+        if manifest.is_file() and manifest.read_text(encoding='utf-8')==discovered['content']:
+            manifest.unlink();folder.rmdir()
+        raise
     return {**result, "enabled": False, "source": "github", "source_url": url, "sha256": sha256}
 
 

@@ -86,51 +86,29 @@ function initShell(){
  window.resumeChatJob=resumeJob;
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
  const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
- const attachModel=document.createElement('button');attachModel.type='button';attachModel.textContent='Attach GLB';attachModel.onclick=()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;modelFile.click()};
- modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
- composer.append(input,imageInput,modelFile,attachModel,send,stop,reconnect);center.append(title,log,engineLabel,requestStatus,composer);settings.task.append(permissionsBox);
+ const attachments=SmelterAttachments.mount(composer,{imageInput,modelInput:modelFile,canAttach:()=>!send.disabled,onError:message=>requestStatus.textContent=message});const attachModel=attachments.button;
+ modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(!activeChat){requestStatus.textContent='Create a titled conversation before attaching a model.';modelFile.value='';return}if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
+ composer.append(input,imageInput,modelFile,send,stop,reconnect);center.append(title,log,engineLabel,requestStatus,composer);settings.task.append(permissionsBox);
 
- const folders=[
-  {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},
-  {name:'Tools & Integrations',items:[[0,'Installed tools'],[2,'Archive / 7-Zip'],[3,'Media / FFprobe'],[4,'Blender']],planned:['GitHub connector','Tool path overrides']},
-  {name:'Automation & Workflows',items:[[1,'Workflow planner']]},
-  {name:'System & Storage',items:[],planned:['Database management','Startup services','Live hardware statistics']}
- ];
- const nav=[];
- for(const folder of folders){
-  const group=document.createElement('details');group.className='config-folder';
-  const heading=document.createElement('summary');heading.textContent='📁 '+folder.name;group.append(heading);
-  const contents=document.createElement('div');contents.className='config-folder-items';
-  for(const [i,label] of folder.items){
-   const b=document.createElement('button');b.className='navbtn';b.textContent=label;
-   b.onclick=()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));nav.forEach(x=>x.classList.remove('active'));sectionFocus(section,b)};
-   const section=sections[i];
-   contents.append(b,section);nav.push(b);
-  }
-  for(const label of folder.planned||[]){const b=document.createElement('button');b.className='navbtn';b.textContent=label+' · planned';b.disabled=true;contents.append(b)}
-  group.append(contents);right.append(group);
- }
- function sectionFocus(section,button){right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));section.classList.add('active');button.classList.add('active')}
- folders[0] && (right.querySelector('details').open=true);
- if(nav.length)nav[0].click();
+ const entries=[['toolsPanel','Installed tools',0,'Tools'],['workflowPanel','Workflow planner',1,'Tools'],['archivePanel','Archive inspection',2,'Tools'],['mediaPanel','Media inspection',3,'Tools'],['blenderPanel','Blender',4,'Tools'],['ollamaPanel','Ollama models',5,'AI & runtime'],['opencodePanel','OpenCode',6,'AI & runtime']];
+ for(const [id,label,index,category] of entries)settings.addPanel(id,label,sections[index],category);
+ settings.activate('taskAccessPanel');
  shell.append(left,center);
  const skillNotice=document.createElement('div');skillNotice.id='skillNotice';skillNotice.hidden=true;skillNotice.setAttribute('role','status');
  const skillNoticeText=document.createElement('span');const skillReview=document.createElement('button');skillReview.textContent='Review skills';const dismissNotice=document.createElement('button');dismissNotice.textContent='Dismiss';skillNotice.append(skillNoticeText,skillReview,dismissNotice);main.prepend(skillNotice);
  const chatElements=[title,log,engineLabel,requestStatus,composer];
  window.showChatWorkspace=()=>chatElements.forEach(x=>x.hidden=false);
  const showSkills=()=>{settings.open();document.getElementById('skillsManagerButton')?.click()};
- const overviewButton=document.createElement('button');overviewButton.textContent='Skills';overviewButton.className='navbtn';overviewButton.onclick=showSkills;
- const integrations=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
+ const integrations=null;
  const mcpControls=SmelterMcp.mount(right,integrations,permissionsBox,api,()=>({frontend_workspace:workspaceGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null}));
  skillReview.onclick=showSkills;
  let dismissedRevision=null,lastSkillsData=null,skillsPolling=false;
  dismissNotice.onclick=()=>{dismissedRevision=lastSkillsData?.revision;skillNotice.hidden=true};
- const refreshSkillNotice=async()=>{if(skillsPolling||document.hidden)return;skillsPolling=true;try{const data=await api('/api/skills/status');lastSkillsData=data;skillNoticeText.textContent=data.changes.length+' skill changes detected · review before restart. ';skillNotice.hidden=!data.changes.length||dismissedRevision===data.revision;}catch(e){overviewButton.title='Skill discovery unavailable: '+e.message}finally{skillsPolling=false}};
+ const refreshSkillNotice=async()=>{if(skillsPolling||document.hidden)return;skillsPolling=true;try{const data=await api('/api/skills/status');lastSkillsData=data;skillNoticeText.textContent=data.changes.length+' skill changes detected · review before restart. ';skillNotice.hidden=!data.changes.length||dismissedRevision===data.revision;}catch(e){skillNoticeText.title='Skill discovery unavailable: '+e.message}finally{skillsPolling=false}};
  setInterval(refreshSkillNotice,15000);refreshSkillNotice();
  const runtimePanel=document.createElement('section');runtimePanel.className='panel';runtimePanel.id='runtimePanel';
- const runtimeButton=document.createElement('button');runtimeButton.className='navbtn';runtimeButton.textContent='Chat runtime settings';
- const aiFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('AI & Models'));
- runtimeButton.onclick=async()=>{right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));runtimePanel.classList.add('active');runtimeButton.classList.add('active');runtimePanel.textContent='Loading runtime settings…';
+ const runtimeNav=settings.addPanel('runtimePanel','Chat runtime',runtimePanel,'AI & runtime');
+ runtimeNav.onclick=async()=>{settings.activate('runtimePanel');runtimePanel.textContent='Loading runtime settings…';
  try{const data=await api('/api/runtime');runtimePanel.replaceChildren();const heading=document.createElement('h3');heading.textContent='Chat runtime';const description=document.createElement('p');description.textContent='Applies to new SMELTER requests. Saving starts no model and does not change OpenCode.';const presets=document.createElement('select');presets.setAttribute('aria-label','Runtime preset');for(const [key,label] of [['office','Office · 16K · direct'],['home','Home · 32K']]){const option=document.createElement('option');option.value=key;option.textContent=label;presets.append(option)}const apply=document.createElement('button');apply.textContent='Use preset';
  const inputs={};const definitions=[['context_tokens','Context tokens',2048,131072],['max_output_tokens','Maximum response tokens',128,8192],['timeout_seconds','Request timeout (seconds)',30,1800]];
  runtimePanel.append(heading,description,presets,apply);
@@ -141,7 +119,7 @@ function initShell(){
  apply.onclick=()=>{const preset=data.profiles[presets.value];for(const key of Object.keys(inputs))inputs[key].value=preset[key];thinking.checked=preset.thinking;result.textContent='Preset selected. Click Save to apply.'};
  const save=document.createElement('button');save.textContent='Save runtime settings';save.onclick=async()=>{const settings={thinking:thinking.checked};for(const [key,input] of Object.entries(inputs)){if(!input.checkValidity()||!input.value){result.textContent='Enter a valid value for '+key;return}settings[key]=input.valueAsNumber}save.disabled=true;try{await api('/api/chats','POST',{action:'runtime_settings',settings});result.textContent='Saved locally. Applies to the next request; active generation is unchanged.';window.reloadTaskContext?.()}catch(e){result.textContent=e.message}finally{save.disabled=false}};runtimePanel.append(save,result);
  }catch(e){runtimePanel.textContent='Runtime settings unavailable: '+e.message}};
- if(aiFolder)aiFolder.querySelector('.config-folder-items').prepend(runtimeButton,runtimePanel);
+
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='Host observations · CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
  const aeroPanel=document.createElement('div');aeroPanel.className='panel';aeroPanel.id='aeroPanel';
@@ -150,131 +128,13 @@ function initShell(){
  const aeroResult=document.createElement('pre');aeroResult.style.whiteSpace='pre-wrap';aeroResult.style.overflowWrap='anywhere';
  aeroButton.onclick=async()=>{try{const result=await api('/api/aero/classify','POST',{task:aeroInput.value});aeroResult.textContent=JSON.stringify(result,null,2)}catch(e){aeroResult.textContent=e.message}};
  aeroPanel.append(aeroInput,aeroButton,aeroResult);
- const automationFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Automation & Workflows'));
- if(automationFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='AERO task preview';btn.onclick=()=>{automationFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));aeroPanel.classList.add('active');btn.classList.add('active')};automationFolder.querySelector('.config-folder-items').append(btn,aeroPanel)}
- const skillsPanel=document.createElement('div');skillsPanel.className='panel';skillsPanel.id='skillsPanel';skillsPanel.textContent='Open Skills to inspect installed skills.';
- const toolsFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('Tools & Integrations'));
- if(toolsFolder){
-  const btn=document.createElement('button');btn.className='navbtn';btn.textContent='Skills';btn.id='skillsManagerButton';
-  btn.onclick=async()=>{
-   toolsFolder.open=true;
-   right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-   right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));
-   skillsPanel.classList.add('active');btn.classList.add('active');
-   try{
-    const data=await api('/api/skills');
-    skillsPanel.replaceChildren();
-    const heading=document.createElement('h2');heading.textContent='Skills';
-    const summary=document.createElement('p');
-    const updateSummary=()=>{
-     const mode=selectedSkills.length?'Manual override ('+selectedSkills.join(', ')+')':(autoSkills?'Automatic routing':'No skills selected');
-     summary.textContent='Next direct-model message: '+mode+'. Installed: '+data.count+'. Context only; no execution permission.';
-    };
-    skillsPanel.append(heading,summary);
-    const autoLabel=document.createElement('label');autoLabel.style.display='block';autoLabel.style.margin='12px 0';
-    const autoBox=document.createElement('input');autoBox.type='checkbox';autoBox.checked=autoSkills;
-    autoBox.onchange=()=>{autoSkills=autoBox.checked;updateSummary()};
-    autoLabel.append(autoBox,document.createTextNode(' Enable automatic skill routing when no manual skills are selected'));
-    skillsPanel.append(autoLabel);
-    const clear=document.createElement('button');clear.textContent='Clear manual selections';
-    clear.onclick=()=>{selectedSkills=[];skillsPanel.querySelectorAll('input[data-skill-id]').forEach(x=>x.checked=false);updateSummary()};
-    skillsPanel.append(clear);
-    const collectionFolders=new Map();
-    for(const s of data.skills){
-     const item=document.createElement('div');item.style.margin='12px 0';item.style.padding='10px';item.style.border='1px solid #7775';item.style.borderRadius='8px';
-     const label=document.createElement('label');label.style.display='block';
-     const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.skillId=s.id;
-     checkbox.disabled=s.status!=='ready'||!s.enabled||!s.active_snapshot||s.activation==='invalid';checkbox.checked=s.enabled&&selectedSkills.includes(s.id);
-     checkbox.onchange=()=>{
-      if(checkbox.checked){if(selectedSkills.length>=3){checkbox.checked=false;alert('Maximum three manually selected skills');return}selectedSkills.push(s.id)}
-      else selectedSkills=selectedSkills.filter(x=>x!==s.id);
-      updateSummary();
-     };
-     label.append(checkbox,document.createTextNode(' '+(s.name||s.id)));
-     const status=document.createElement('p');status.textContent='Status: '+s.activation.replaceAll('_',' ')+' · '+(s.enabled?'Enabled':'Disabled')+' · '+s.source+' · '+(s.bytes||0)+' bytes · No execution rights';
-     const toggle=document.createElement('button');toggle.textContent=s.enabled?'Disable':'Enable';toggle.disabled=!s.enabled&&s.status!=='ready';
-     toggle.onclick=async()=>{if(!confirm((s.enabled?'Disable ':'Enable ')+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'enable',id:s.id,enabled:!s.enabled,approval:true});if(s.enabled)selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
-     const remove=document.createElement('button');remove.textContent='Remove';remove.disabled=!s.removable;remove.title=s.removable?'Delete user-added skill':'Bundled skills cannot be deleted';
-     remove.onclick=async()=>{if(!confirm('Permanently remove skill '+s.id+'?'))return;try{await api('/api/skills/manage','POST',{action:'remove',id:s.id,approval:true});selectedSkills=selectedSkills.filter(x=>x!==s.id);await btn.onclick()}catch(e){alert(e.message)}};
-     const description=document.createElement('p');description.textContent=s.description||'No purpose available.';
-     const review=document.createElement('button');review.textContent='Review manifest';
-     const preview=document.createElement('pre');preview.hidden=true;preview.style.whiteSpace='pre-wrap';
-     review.onclick=async()=>{try{const result=await api('/api/skills/review/'+encodeURIComponent(s.id));preview.textContent=result.manifest+'\nFingerprint: '+result.fingerprint+'\n\n'+result.text;preview.hidden=!preview.hidden}catch(e){preview.textContent=e.message;preview.hidden=false}};
-     item.append(label,status,description,review,toggle,remove,preview);
-     if(s.collection){
-       if(!collectionFolders.has(s.collection)){
-         const folder=document.createElement('details');folder.style.margin='12px 0';
-         const heading=document.createElement('summary');heading.textContent='📁 '+s.collection;folder.append(heading);
-         collectionFolders.set(s.collection,folder);skillsPanel.append(folder);
-       }
-       collectionFolders.get(s.collection).append(item);
-     }else skillsPanel.append(item);
-    }
-    const addHeading=document.createElement('h3');addHeading.textContent='Discover skill from GitHub';
-    const urlInput=document.createElement('input');urlInput.placeholder='https://github.com/owner/repo/blob/main/SKILL.md';urlInput.style.width='100%';
-    const repoButton=document.createElement('button');repoButton.textContent='Discover repository skills';
-    const candidates=document.createElement('div');candidates.style.maxHeight='300px';candidates.style.overflowY='auto';
-    const selectAll=document.createElement('button');selectAll.textContent='Select all';selectAll.hidden=true;
-    const clearAll=document.createElement('button');clearAll.textContent='Clear';clearAll.hidden=true;
-    const previewBatch=document.createElement('button');previewBatch.textContent='Review selected skills';previewBatch.hidden=true;
-    const batchReview=document.createElement('pre');batchReview.style.whiteSpace='pre-wrap';batchReview.style.overflowWrap='anywhere';batchReview.style.maxHeight='320px';batchReview.style.overflow='auto';
-    const installBatch=document.createElement('button');installBatch.textContent='Approve & install collection';installBatch.hidden=true;
-    let repositoryUrl='', repositoryResults=[], reviewedBatch=[];
-    const selectedUrls=()=>[...candidates.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
-    const resetBatch=()=>{reviewedBatch=[];installBatch.hidden=true;batchReview.textContent=''};
-    repoButton.onclick=async()=>{candidates.replaceChildren();selectAll.hidden=true;clearAll.hidden=true;previewBatch.hidden=true;resetBatch();try{
-      repositoryUrl=urlInput.value;
-      const result=await api('/api/skills/discover-repository','POST',{url:repositoryUrl});
-      repositoryResults=result.skills;
-      const info=document.createElement('p');info.textContent=result.count+' skills found in '+result.owner+'/'+result.repository+' @ '+result.ref;
-      candidates.append(info);
-      for(const skill of result.skills){
-        const label=document.createElement('label');label.style.display='block';label.style.margin='6px 0';
-        const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=skill.url;checkbox.onchange=resetBatch;
-        label.append(checkbox,document.createTextNode(' '+skill.path.replace('skills/','').replace('/SKILL.md','')));
-        candidates.append(label);
-      }
-      selectAll.hidden=clearAll.hidden=previewBatch.hidden=!result.skills.length;
-    }catch(e){const error=document.createElement('p');error.textContent=e.message;candidates.append(error)}};
-    selectAll.onclick=()=>{candidates.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true);resetBatch()};
-    clearAll.onclick=()=>{candidates.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=false);resetBatch()};
-    previewBatch.onclick=async()=>{resetBatch();const urls=selectedUrls();if(!urls.length){batchReview.textContent='Select at least one skill';return}
-      batchReview.textContent='Fetching selected manifests for review...';
-      try{const result=await api('/api/skills/collection-preview','POST',{urls});
-        reviewedBatch=result.skills.map(s=>({url:s.url,sha256:s.sha256,id:(s.path.split('/').slice(-2,-1)[0]||s.repository).toLowerCase().replace(/[^a-z0-9_-]/g,'-')}));
-        batchReview.textContent=result.skills.map(s=>'--- '+s.path+' ---\nWarnings: '+(s.warnings.join(', ')||'none detected')+'\nSHA256: '+s.sha256+'\n'+s.content).join('\n\n');
-        installBatch.hidden=false;
-      }catch(e){batchReview.textContent=e.message}};
-    installBatch.onclick=async()=>{if(!reviewedBatch.length)return;
-      if(!confirm('Install '+reviewedBatch.length+' reviewed skills as a disabled collection?'))return;
-      try{await api('/api/skills/manage','POST',{action:'install_collection',repository_url:repositoryUrl,selected:reviewedBatch,approval:true});await btn.onclick()}
-      catch(e){alert(e.message)}};
-    const discoverButton=document.createElement('button');discoverButton.textContent='Discover & inspect URL';
-
-    const preview=document.createElement('pre');preview.style.whiteSpace='pre-wrap';preview.style.overflowWrap='anywhere';preview.style.maxHeight='260px';preview.style.overflow='auto';
-    const idInput=document.createElement('input');idInput.placeholder='Local skill ID';idInput.style.width='100%';idInput.hidden=true;
-    const installButton=document.createElement('button');installButton.textContent='Approve & install';installButton.hidden=true;
-    let discovery=null;
-    urlInput.oninput=()=>{discovery=null;preview.textContent='';installButton.hidden=true;idInput.hidden=true};
-    discoverButton.onclick=async()=>{discovery=null;installButton.hidden=true;idInput.hidden=true;preview.textContent='Discovering...';try{
-      const result=await api('/api/skills/discover','POST',{url:urlInput.value});
-      discovery=result;
-      preview.textContent='Source: '+result.owner+'/'+result.repository+' @ '+result.ref+'\nPath: '+result.path+'\nSHA256: '+result.sha256+'\nWarnings: '+(result.warnings.join(', ')||'none detected (not a security guarantee)')+'\n\n--- SKILL.md ---\n'+result.content;
-      idInput.value=result.path.split('/').slice(-2,-1)[0]||result.repository.toLowerCase().replace(/[^a-z0-9_-]/g,'-');
-      idInput.hidden=false;installButton.hidden=false;
-    }catch(e){preview.textContent=e.message}};
-    installButton.onclick=async()=>{if(!discovery)return;if(!confirm('Install reviewed GitHub skill '+idInput.value+'? Instructions only; no execution permissions.'))return;try{
-      await api('/api/skills/manage','POST',{action:'install_github',id:idInput.value,url:discovery.url,sha256:discovery.sha256,approval:true});await btn.onclick()
-    }catch(e){alert(e.message)}};
-    skillsPanel.append(addHeading,urlInput,repoButton,candidates,selectAll,clearAll,previewBatch,batchReview,installBatch,discoverButton,preview,idInput,installButton);
-    updateSummary();
-   }catch(e){skillsPanel.textContent='Skills error: '+e.message}
-  };
-  toolsFolder.querySelector('.config-folder-items').prepend(btn,skillsPanel);
- }
+ const aeroNav=settings.addPanel('aeroPanel','AERO classification',aeroPanel,'Tools');
+ aeroNav.onclick=()=>settings.activate('aeroPanel');
+ const skillsPanel=document.createElement('section');const skillsNav=settings.addPanel('skillsPanel','Skills',skillsPanel,'Skills & integrations');skillsNav.id='skillsManagerButton';
+ const skillsView=SmelterSkills.mount(skillsPanel,api,{get:()=>({selected:selectedSkills,automatic:autoSkills}),set:value=>{selectedSkills=value.selected;autoSkills=value.automatic}},document);
+ skillsNav.onclick=()=>{settings.activate('skillsPanel');skillsView.load()};
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
- const systemFolder=[...right.querySelectorAll('details')].find(x=>x.querySelector('summary')?.textContent.includes('System & Storage'));
- if(systemFolder){const btn=document.createElement('button');btn.className='navbtn';btn.textContent='System status';btn.onclick=async()=>{systemFolder.open=true;right.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));right.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));statusPanel.classList.add('active');btn.classList.add('active');await refreshSystem()};systemFolder.querySelector('.config-folder-items').prepend(btn,statusPanel)}
+ const statusNav=settings.addPanel('systemStatusPanel','System status',statusPanel,'System');statusNav.onclick=async()=>{settings.activate('systemStatusPanel');await refreshSystem()};
 }
 let systemStatusBusy=false;
 async function refreshSystem(){
@@ -311,7 +171,7 @@ function renderChatHistory(){
  for(const chat of matches){const row=document.createElement('div');row.className='history-row';row.dataset.chatId=chat.id;
  const open=document.createElement('button');open.className='chat-open';open.title=chat.title;const title=document.createElement('span');title.className='history-title';title.textContent=chat.title;const date=document.createElement('small');date.textContent=localTimestamp(chat.created_at);open.append(title,date);open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
  const rename=document.createElement('button');rename.className='chat-action';rename.textContent='✎';rename.title='Rename';rename.setAttribute('aria-label','Rename '+chat.title);rename.onclick=()=>editConversationTitle(chat);
- const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'” and its messages? Diagnostic files, 3D uploads and audit logs remain on disk.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
+ const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'”, its messages and attached 3D files? Diagnostic reports and audit logs remain.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
  row.append(open,rename,del);history.append(row)}highlightChat();
 }
 async function refreshChats(){const data=await api('/api/chats');conversationHistory=data.conversations;renderChatHistory()}

@@ -60,6 +60,31 @@ class SkillManagerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             add_skill(self.root, "custom", "hello", True)
 
+    def test_bulk_enable_disable_validates_all_before_writing(self):
+        from skill_manager import manage_many
+        add_skill(self.root,'custom',MANIFEST,True)
+        result=manage_many(self.root,['documentation','custom'],'disable',True)
+        self.assertEqual(len(result['changed']),2)
+        with self.assertRaises(ValueError):manage_many(self.root,['custom','missing'],'enable',True)
+        self.assertFalse(next(s for s in catalog_skills(self.root)['skills'] if s['id']=='custom')['enabled'])
+        manage_many(self.root,['documentation','custom'],'enable',True)
+        self.assertTrue(all(s['enabled'] for s in catalog_skills(self.root)['skills']))
+
+    def test_bulk_removal_protects_bundled_before_removing_anything(self):
+        from skill_manager import manage_many
+        add_skill(self.root,'custom',MANIFEST,True)
+        with self.assertRaises(ValueError):manage_many(self.root,['custom','documentation'],'remove',True)
+        self.assertTrue((self.root/'.smelter/managed-skills/custom/SKILL.md').exists())
+        self.assertEqual(manage_many(self.root,['custom'],'remove',True)['changed'],['custom'])
+
+    def test_collection_subskill_removal_preserves_siblings(self):
+        from skill_manager import manage_many
+        group=self.root/'.smelter/managed-skills/collections/design'
+        for name in ('first','second'):
+            folder=group/name;folder.mkdir(parents=True);(folder/'SKILL.md').write_text(MANIFEST)
+        manage_many(self.root,['design/first'],'remove',True)
+        self.assertFalse((group/'first').exists());self.assertTrue((group/'second/SKILL.md').is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

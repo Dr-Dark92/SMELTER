@@ -97,6 +97,22 @@ class GitHubSkillTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             discover_github_repository("https://github.com/org/repo/blob/main/SKILL.md")
 
+    def test_duplicate_content_import_is_skipped_without_copying(self):
+        with tempfile.TemporaryDirectory() as root:
+            url='https://github.com/org/repo';preview=discover_github_skill(url,opener_for(MANIFEST))
+            install_discovered_skill(root,'original',url,preview['sha256'],True,opener_for(MANIFEST))
+            result=install_discovered_skill(root,'copy',url,preview['sha256'],True,opener_for(MANIFEST))
+            self.assertEqual(result['status'],'skipped');self.assertEqual(result['existing_id'],'original')
+            self.assertFalse((Path(root)/'.smelter/managed-skills/copy').exists())
+
+    def test_failed_disable_rolls_back_new_import(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            url='https://github.com/org/repo';preview=discover_github_skill(url,opener_for(MANIFEST))
+            with patch('github_skill_discovery.set_skill_enabled',side_effect=OSError('fixture full disk')):
+                with self.assertRaises(OSError):install_discovered_skill(root,'new',url,preview['sha256'],True,opener_for(MANIFEST))
+            self.assertFalse((Path(root)/'.smelter/managed-skills/new').exists())
+
 
 if __name__ == "__main__":
     unittest.main()

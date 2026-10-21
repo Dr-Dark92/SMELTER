@@ -2,6 +2,14 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Settings and skills GUI revision — 2026-10-21
+
+- Replaced stacked settings with grouped navigation/content panes and a mobile section picker; refreshed the shared dark theme and controls.
+- Replaced visible type-specific attachment controls with one accessible + menu for supported images and GLBs; added removable image filename chip.
+- Replaced skill cards with a searchable table, clear runtime/enabled indicators, expandable collections, parent/child checkboxes and top bulk toolbar. Task-context selection stays explicit and separate.
+- Skip duplicate IDs/content during reviewed imports, append unique children without overwrite, preserve existing enable states and report skipped identities. Protect bundled skills; allow imported child removal. Roll back failed new imports.
+- Extended the offline GUI fixture with collection/status/import samples. Validation: 338 dashboard tests OK (two opt-in skips), 15 JavaScript, 32 setup, four analysis; desktop/mobile actual fixture flows passed without live Qwen.
+
 ## Office/offline follow-up — 2026-10-21
 
 Application commit: `4bd636dbcc04de5d2cb016489c923e3146a611db`. Refreshed graph: 235 scripts, 1,454 declarations/callbacks, 2,241 static relationships and 50 reviewed runtime links.

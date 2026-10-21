@@ -2,7 +2,7 @@
 const SmelterOperations=(()=>{
  function mount(api,doc=document){
   const settings=SmelterSettings.current;
-  function panel(id,label){const section=doc.createElement('section');const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);const button=settings.addPanel(id,label,section);return {section,button}}
+  function panel(id,label){const section=doc.createElement('section');const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);const button=settings.addPanel(id,label,section,'System');return {section,button}}
   function button(label,action,enabled=()=>true){const b=doc.createElement('button');b.textContent=label;b.onclick=async()=>{b.disabled=true;try{await action()}finally{b.disabled=!enabled()}};return b}
   function output(parent){const pre=doc.createElement('pre');pre.style.whiteSpace='pre-wrap';pre.style.overflowWrap='anywhere';pre.setAttribute('role','status');parent.append(pre);return pre}
   const sandbox=panel('sandboxPanel','Confined execution');

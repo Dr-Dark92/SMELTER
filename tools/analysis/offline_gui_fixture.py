@@ -5,6 +5,9 @@ fixture chats/reports/state. Application source remains unchanged. This is a
 manual development harness, not an alternate production execution engine.
 """
 import argparse
+import base64
+import hashlib
+import io
 from contextlib import ExitStack
 from http.server import ThreadingHTTPServer
 import json
@@ -32,6 +35,24 @@ def serve(port=18771):
         (root/'README.md').write_text('Offline synthetic GUI fixture.\n')
         skill=root/'skills/fixture';skill.mkdir(parents=True)
         (skill/'SKILL.md').write_text('# Fixture\n\n## Purpose\nInspect synthetic work only.\n')
+        demo={name:'# '+name.title()+'\n\n## Purpose\nReview '+name+' in the offline fixture.\n' for name in ('layout','spacing','contrast')}
+        for name,text in demo.items():
+            folder=root/'.smelter/managed-skills/collections/demo-design'/name;folder.mkdir(parents=True);(folder/'SKILL.md').write_text(text)
+        (root/'.smelter/skill-state.json').write_text(json.dumps({'demo-design/layout':True,'demo-design/spacing':False,'demo-design/contrast':True}))
+        imported={'layout':demo['layout'],'rhythm':'# Rhythm\n\n## Purpose\nImprove rhythm in this fixture.\n','rhythm-copy':'# Rhythm\n\n## Purpose\nImprove rhythm in this fixture.\n'}
+        def discovery(url):
+            from github_skill_discovery import parse_github_skill
+            owner,repository,ref,path=parse_github_skill(url)
+            if (owner,repository)!=('offline','design'):raise ValueError('Offline import demo uses https://github.com/offline/design')
+            name=path.split('/')[-2] if '/' in path else 'layout';text=imported[name]
+            return {'url':url,'owner':owner,'repository':repository,'ref':ref,'path':path,'content':text,'sha256':hashlib.sha256(text.encode()).hexdigest(),'warnings':[]}
+        def discovery_repository(url):
+            if url!='https://github.com/offline/design':raise ValueError('Offline import demo uses https://github.com/offline/design')
+            rows=[{'path':'skills/'+name+'/SKILL.md','url':url+'/blob/main/skills/'+name+'/SKILL.md'} for name in imported]
+            return {'owner':'offline','repository':'design','ref':'main','skills':rows,'count':len(rows)}
+        def fixture_opener(request,timeout):
+            name=request.full_url.split('/skills/')[1].split('/')[0]
+            return io.BytesIO(json.dumps({'type':'file','encoding':'base64','content':base64.b64encode(imported[name].encode()).decode()}).encode())
         reports=root/'.smelter/reports';reports.mkdir()
         old=reports/(str(uuid4())+'.json');old.write_text('{"fixture":true}')
         import os
@@ -56,8 +77,16 @@ def serve(port=18771):
         patches.enter_context(patch.object(dashboard,'rea_package_status',lambda *a,**k:unavailable))
         patches.enter_context(patch('opencode_runtime.status',return_value=unavailable))
         patches.enter_context(patch('sandbox.status',return_value={'configured':{'schema_version':1,'python_image':None,'node_image':None,'opencode_image':None},'ready':False,'reason':'Execution blocked in offline fixture','boundary':'Synthetic fixture; no container service','host_fallback':False}))
+        from skill_collections import install_collection
+        from github_skill_discovery import install_discovered_skill
+        patches.enter_context(patch.object(dashboard,'discover_github_skill',discovery))
+        patches.enter_context(patch.object(dashboard,'discover_github_repository',discovery_repository))
+        patches.enter_context(patch.object(dashboard,'install_collection',lambda *a,**k:install_collection(*a,**k,discover=discovery)))
+        patches.enter_context(patch.object(dashboard,'install_discovered_skill',lambda *a,**k:install_discovered_skill(*a,**k,opener=fixture_opener)))
         patches.enter_context(patch.object(Control,'infer',infer))
-        initialize(root);token=secrets.token_urlsafe(32)
+        initialize(root)
+        changed=root/'.smelter/managed-skills/collections/demo-design/contrast/SKILL.md';changed.write_text(demo['contrast']+'\nChanged fixture instructions.\n')
+        token=secrets.token_urlsafe(32)
         handler=dashboard.handler(token)
         class FixtureHandler(handler):
             def _get_page(self,*args,**kwargs):

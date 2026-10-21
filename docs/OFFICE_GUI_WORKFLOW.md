@@ -55,3 +55,7 @@ Resource metrics and service checks are stubbed in this harness. Confined execut
 - Fixtures also verify job/transcript rollback together, durable completion before worker return, no replay after failed journal persistence, and committed outcomes surviving a late worker exception.
 
 These checks do not replace the Windows/Docker/OpenCode smoke tests documented in [repair status](REPAIR_STATUS_20261021.md). The source graph is regenerated against the follow-up application commit in a separate documentation commit.
+
+## Latest GUI revision
+
+See [settings/skills/attachments](GUI_SKILLS_AND_ATTACHMENTS.md). The fixture now seeds an expandable demo collection and restart/disabled indicators. To exercise duplicate handling through Add, use `https://github.com/offline/design` in the synthetic import dialog. It imports one unique skill and skips two duplicates; repeating it imports zero. This URL is mocked locally by the fixture. Current suite: 338 dashboard tests, two skipped; no live model.

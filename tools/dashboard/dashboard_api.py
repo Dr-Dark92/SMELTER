@@ -21,7 +21,7 @@ class ApiRoutes:
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
         '/assets/turntable.js':'turntable.js','/assets/model-animations.js':'model_animations.js',
         '/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
-        '/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
+        '/assets/skills-ui.js':'skills_ui.js','/assets/attachments-ui.js':'attachments_ui.js','/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
         '/assets/operations-ui.js':'operations_ui.js','/assets/dashboard-shell.js':'dashboard_shell.js'}
 
     def do_GET(self):
@@ -250,6 +250,9 @@ class ApiRoutes:
             action = data.get('action')
             if action == 'add':
                 raise ValueError('Use GitHub discovery before installation')
+            elif action == 'bulk':
+                from skill_manager import manage_many
+                result=manage_many(self.app.ROOT,data.get('ids'),data.get('operation'),data.get('approval'))
             elif action == 'install_collection':
                 result = self.app.install_collection(self.app.ROOT, data.get('repository_url'), data.get('selected'), data.get('approval'))
             elif action == 'install_github':

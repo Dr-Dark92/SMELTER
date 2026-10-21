@@ -101,20 +101,44 @@ def set_skill_enabled(root, name, enabled, approval=False):
     return {"id": name, "enabled": enabled}
 
 
-def remove_skill(root, name, approval=False):
-    _safe_id(name)
-    if approval is not True:
-        raise ValueError("Explicit approval required")
-    _, base = _paths(root)
-    folder = base / name
-    if base.is_symlink() or folder.is_symlink() or not folder.is_dir():
-        raise ValueError("Only user-added skills can be removed")
-    contents = list(folder.iterdir())
-    if len(contents) != 1 or contents[0].name != "SKILL.md" or contents[0].is_symlink() or not contents[0].is_file():
-        raise ValueError("Managed skill contains unexpected files; removal blocked")
-    contents[0].unlink()
-    folder.rmdir()
-    state = _state(root)
-    state.pop(name, None)
-    _write_state(root, state)
-    return {"id": name, "removed": True}
+def _removal(root,name):
+    from skills_catalog import catalog_skills
+    from skill_runtime import skill_folder
+    from python_tools import _plain_path
+    skill=next((s for s in catalog_skills(root)['skills'] if s['id']==name),None)
+    if not skill or not skill['removable'] or skill['status']=='identity_conflict':raise ValueError('Only unambiguous user-imported skills can be removed')
+    folder=_plain_path(skill_folder(Path(root),skill));contents=list(folder.iterdir())
+    if len(contents)!=1 or contents[0].name!='SKILL.md' or not _plain_path(contents[0]).is_file():raise ValueError('Managed skill contains unexpected files; removal blocked')
+    return folder
+
+
+def remove_skill(root,name,approval=False):
+    if approval is not True:raise ValueError('Explicit approval required')
+    folder=_removal(root,name);(folder/'SKILL.md').unlink();folder.rmdir()
+    state=_state(root);state.pop(name,None);_write_state(root,state)
+    return {'id':name,'removed':True}
+
+
+def manage_many(root,ids,operation,approval=False):
+    if approval is not True:raise ValueError('Explicit approval required')
+    if not isinstance(ids,list) or not ids or len(ids)>256 or any(not isinstance(i,str) for i in ids) or len(set(ids))!=len(ids):raise ValueError('Select 1–256 distinct skill IDs')
+    if operation not in ('enable','disable','remove'):raise ValueError('Unknown bulk skill operation')
+    from skills_catalog import catalog_skills
+    known={s['id']:s for s in catalog_skills(root)['skills']}
+    if any(i not in known for i in ids):raise ValueError('A selected skill no longer exists; refresh the table')
+    if operation=='enable' and any(known[i]['status']!='ready' for i in ids):raise ValueError('All selected skills must be ready before enabling')
+    if operation!='remove':
+        state=_state(root)
+        for sid in ids:state[sid]=operation=='enable'
+        _write_state(root,state)
+        return {'operation':operation,'changed':ids,'errors':[]}
+    # Validate every selected folder before destructive work; report partial IO failures.
+    folders=[(sid,_removal(root,sid)) for sid in ids];changed=[];errors=[]
+    for sid,folder in folders:
+        try:(folder/'SKILL.md').unlink();folder.rmdir();changed.append(sid)
+        except OSError as exc:errors.append({'id':sid,'error':str(exc)[:300]})
+    state=_state(root)
+    for sid in changed:state.pop(sid,None)
+    try:_write_state(root,state)
+    except OSError as exc:errors.append({'id':'skill-state','error':str(exc)[:300]})
+    return {'operation':operation,'changed':changed,'errors':errors}

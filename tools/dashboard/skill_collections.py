@@ -23,8 +23,8 @@ def _validate(repo_url, selected):
            for item in selected):
         raise ValueError("Invalid skill selection")
     ids = [x["id"] for x in selected]
-    if len(ids) != len(set(ids)) or any(not ID.fullmatch(x) for x in ids):
-        raise ValueError("Duplicate or invalid skill IDs")
+    if any(not ID.fullmatch(x) for x in ids) or any(not re.fullmatch(r"[a-f0-9]{64}",x["sha256"]) for x in selected):
+        raise ValueError("Invalid skill IDs or discovery digests")
     for item in selected:
         selected_owner, selected_repo, _, selected_path = parse_github_skill(item["url"])
         if (selected_owner, selected_repo) != (owner, repo) or not selected_path.endswith("SKILL.md"):
@@ -39,38 +39,36 @@ def install_collection(root, repo_url, selected, approval=False, discover=discov
     collection = re.sub(r"[^a-z0-9_-]", "-", (owner + "-" + repo).lower())[:64].strip("-")
     if not ID.fullmatch(collection):
         raise ValueError("Invalid collection identifier")
-    _, base = _paths(root)
-    collections = base / "collections"
-    folder = collections / collection
-    if collections.is_symlink() or folder.exists() or folder.is_symlink():
-        raise ValueError("Collection already exists; cannot overwrite")
-    checked = []
+    from python_tools import _plain_path
+    from skill_duplicates import installed,digest
+    _,base=_paths(root);collections=_plain_path(base/'collections');folder=_plain_path(collections/collection)
+    if folder.exists() and not folder.is_dir():raise ValueError('Collection path is not a directory')
+    identities,contents=installed(root);checked=[];skipped=[];seen=set()
     for item in selected:
-        manifest = discover(item["url"])
-        if manifest["sha256"] != item["sha256"]:
-            raise ValueError("Skill changed since preview: " + item["id"])
-        if not parse_skill_manifest(manifest["content"])["valid"]:
-            raise ValueError("Invalid manifest: " + item["id"])
-        checked.append((item["id"], manifest["content"]))
-    # Validate everything before touching the filesystem.
-    collections.mkdir(parents=True, exist_ok=True)
-    folder.mkdir()
-    created = []
-    try:
-        for name, content in checked:
-            child = folder / name
-            child.mkdir()
-            (child / "SKILL.md").write_text(content, encoding="utf-8")
-            created.append(child)
-        state = _state(root)
-        for name, _ in checked:
-            state[collection + "/" + name] = False
-        _write_state(root, state)
-    except Exception:
-        for child in created:
-            (child / "SKILL.md").unlink(missing_ok=True)
-            child.rmdir()
-        folder.rmdir()
-        raise
-    return {"collection": collection, "count": len(checked), "installed": [n for n, _ in checked],
-            "enabled": False, "source": repo_url}
+        identity=collection+'/'+item['id']
+        if identity in identities or item['id'] in seen or (folder/item['id']).exists():
+            skipped.append({'id':item['id'],'reason':'identity_exists','existing_id':identity});continue
+        seen.add(item['id']);manifest=discover(item['url'])
+        if manifest['sha256']!=item['sha256']:raise ValueError('Skill changed since preview: '+item['id'])
+        if not parse_skill_manifest(manifest['content'])['valid']:raise ValueError('Invalid manifest: '+item['id'])
+        fingerprint=digest(manifest['content'])
+        if fingerprint in contents:
+            skipped.append({'id':item['id'],'reason':'duplicate_content','existing_id':contents[fingerprint]});continue
+        contents[fingerprint]=identity;checked.append((item['id'],manifest['content']))
+    if checked:
+        collections.mkdir(parents=True,exist_ok=True);created_group=not folder.exists();folder.mkdir(exist_ok=True);created=[]
+        try:
+            for name,content in checked:
+                child=_plain_path(folder/name);child.mkdir();created.append(child)
+                with (child/'SKILL.md').open('x',encoding='utf-8',newline='') as stream:stream.write(content)
+            state=_state(root)
+            for name,_ in checked:state[collection+'/'+name]=False
+            _write_state(root,state)
+        except Exception:
+            for child in reversed(created):
+                (child/'SKILL.md').unlink(missing_ok=True);child.rmdir()
+            if created_group:folder.rmdir()
+            raise
+    return {'collection':collection,'count':len(checked),'installed':[name for name,_ in checked],
+            'skipped':skipped,'skipped_count':len(skipped),'enabled':False,'source':repo_url,
+            'status':'installed' if checked else 'unchanged'}

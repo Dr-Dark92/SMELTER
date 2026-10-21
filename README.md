@@ -97,6 +97,10 @@ Check each exit code before continuing. Some scripts named `test_*` under `tools
 
 Do not commit credentials, launch tokens, game binaries, extracted game assets, model weights, local databases or generated workspaces. Existing managed V2 copies are preserved; pulling this branch does not update an already prepared V2 copy. Read the repair handover for container setup, backup/restore, preserved V2 copies and platform verification requirements.
 
+## GUI revision
+
+Settings now uses a navigation rail, a selectable skills table with expandable collections and a single + attachment menu. Reviewed imports skip existing IDs/content and import unique skills disabled. See [GUI and import behavior](docs/GUI_SKILLS_AND_ATTACHMENTS.md).
+
 ## Operational repair (V1.7)
 
 Settings now includes confined execution, storage/recovery/backup and capabilities/project checks. Tasks keep an admitted model/settings/policy snapshot and durable lifecycle record; interrupted work is reported without replay. Artifact storage has conservative quotas and an explicitly reviewed retention plan. Database integrity checks are operator-triggered; dependency probes have a short timestamped cache.
