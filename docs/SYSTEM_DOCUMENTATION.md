@@ -172,3 +172,5 @@ Do not publish raw audits, databases, credentials, launch tokens or game assets.
 ## Settings and skills GUI revision
 
 The settings rail/mobile picker, table-based bulk skill management, single + attachment menu and duplicate-skipping imports are documented in [GUI behavior](GUI_SKILLS_AND_ATTACHMENTS.md). New browser modules are settings_ui, skills_ui and attachments_ui. Bulk skill operations add `action=bulk` to the existing operator API; other chat/asset/API contracts are preserved.
+
+Registered locations now use a staged permission table with folder browsing and atomic Apply. See [location controls](REGISTERED_LOCATIONS.md).

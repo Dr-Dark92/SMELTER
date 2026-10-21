@@ -21,7 +21,7 @@ class ApiRoutes:
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
         '/assets/turntable.js':'turntable.js','/assets/model-animations.js':'model_animations.js',
         '/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
-        '/assets/skills-ui.js':'skills_ui.js','/assets/attachments-ui.js':'attachments_ui.js','/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
+        '/assets/location-browser.js':'location_browser.js','/assets/locations-ui.js':'locations_ui.js','/assets/skills-ui.js':'skills_ui.js','/assets/attachments-ui.js':'attachments_ui.js','/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
         '/assets/operations-ui.js':'operations_ui.js','/assets/dashboard-shell.js':'dashboard_shell.js'}
 
     def do_GET(self):
@@ -206,10 +206,18 @@ class ApiRoutes:
         except (ValueError, OSError, TypeError, KeyError, self.app.json.JSONDecodeError) as e:
             return self.reply(500, {'error': str(e)})
 
+    def _get_location_browser(self,route,data=None):
+        from location_browser import browse
+        from urllib.parse import parse_qs,urlsplit
+        query=parse_qs(urlsplit(self.path).query)
+        if set(query)-{'path','hidden'} or any(len(values)!=1 for values in query.values()):raise ValueError('Invalid folder-browser query')
+        if query.get('hidden',['0'])[0] not in ('0','1'):raise ValueError('Invalid hidden-folder option')
+        return self.reply(200,browse(self.app.ROOT,query.get('path',[None])[0],query.get('hidden',['0'])[0]=='1'))
+
     def _post_api_access_policy(self, route, data=None):
         from access_policy import save
         with self.app.STATE_LOCK:
-            return self.reply(200, save(self.app.ROOT, data.get('policy')))
+            return self.reply(200, save(self.app.ROOT,data.get('policy'),data.get('expected_revision')))
 
     def _post_api_mcp(self, route, data=None):
         if data.get('action') == 'save':
@@ -416,5 +424,5 @@ class ApiRoutes:
         return self.reply(200,result)
 
 
-ApiRoutes.GET_ROUTES.update({'/api/capabilities':'_get_capabilities','/api/maintenance':'_get_maintenance','/api/sandbox':'_get_sandbox'})
+ApiRoutes.GET_ROUTES.update({'/api/location-browser':'_get_location_browser','/api/capabilities':'_get_capabilities','/api/maintenance':'_get_maintenance','/api/sandbox':'_get_sandbox'})
 ApiRoutes.POST_ROUTES.update({'/api/project-contract':'_post_project_contract','/api/maintenance':'_post_maintenance','/api/sandbox':'_post_sandbox'})

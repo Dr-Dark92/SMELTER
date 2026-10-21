@@ -2,6 +2,14 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Registered locations GUI — 2026-10-21
+
+- Replaced location cards with a searchable permission table and Add / Remove / Enable / Disable / Apply / Revert toolbar.
+- Added an authenticated directory browser for operator selection, with no model-tool grant or process launch. Add starts read-only; roots, links and traversal remain restricted.
+- Keep edits in a draft, preserve it across settings navigation, and atomically reject stale Apply revisions. Applied task choices and admitted active tasks retain their respective policies.
+- Modernized table, editor and folder-picker controls with responsive layouts and explicit status. See [registered locations](docs/REGISTERED_LOCATIONS.md).
+- Validation: 347 dashboard tests OK (two opt-in skips), 15 JavaScript tests, 32 setup tests, four analysis tests; desktop/mobile location and existing GUI browser flows. No live Qwen/Docker tests.
+
 ## Settings and skills GUI revision — 2026-10-21
 
 Application commit: `92e14fe0bb098b4a02712b1cc88f196324b4b9db`. Source graph/function inventory regenerated against that commit.

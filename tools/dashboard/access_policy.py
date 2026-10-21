@@ -71,10 +71,21 @@ def load(root):
     return load_config(Path(root), NAME)
 
 
-def save(root, value):
-    from config_store import save_config
+def save(root,value,expected_revision=None):
+    from config_store import save_config,_db
     validate(value)
-    save_config(Path(root),NAME,value)
+    if expected_revision is None:save_config(Path(root),NAME,value)
+    else:
+        if not isinstance(expected_revision,str) or not re.fullmatch(r'[a-f0-9]{64}',expected_revision):raise ValueError('Invalid expected policy revision')
+        import sqlite3
+        from contextlib import closing
+        # Serialize the revision comparison and write across dashboard processes.
+        with closing(sqlite3.connect(_db(Path(root)),timeout=5)) as conn,conn:
+            conn.execute('BEGIN IMMEDIATE')
+            row=conn.execute('SELECT payload FROM config_snapshots WHERE name=?',(NAME,)).fetchone()
+            stored=Policy(json.loads(row[0]) if row else defaults(root))
+            if stored.revision!=expected_revision:raise ValueError('Access policy changed in another window. Revert/reload before applying your draft.')
+            conn.execute('INSERT INTO config_snapshots(name,payload,imported_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(name) DO UPDATE SET payload=excluded.payload,imported_at=CURRENT_TIMESTAMP',(NAME,json.dumps(value)))
     return Policy(value).report()
 
 

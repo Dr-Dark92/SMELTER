@@ -59,3 +59,5 @@ These checks do not replace the Windows/Docker/OpenCode smoke tests documented i
 ## Latest GUI revision
 
 See [settings/skills/attachments](GUI_SKILLS_AND_ATTACHMENTS.md). The fixture now seeds an expandable demo collection and restart/disabled indicators. To exercise duplicate handling through Add, use `https://github.com/offline/design` in the synthetic import dialog. It imports one unique skill and skips two duplicates; repeating it imports zero. This URL is mocked locally by the fixture. Current suite: 338 dashboard tests, two skipped; no live model.
+
+Registered locations now use a staged permission table with folder browsing and atomic Apply. See [location controls](REGISTERED_LOCATIONS.md).

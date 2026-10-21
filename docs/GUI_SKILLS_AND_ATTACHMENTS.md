@@ -45,3 +45,5 @@ POST `/api/skills/manage` additionally accepts `action=bulk`, `operation=enable|
 - Regression cases cover cross-source and within-batch duplicates, newline normalization, preserving enabled existing children, unique append, append rollback, protected bundled bulk removal, sibling preservation and failed single-import rollback.
 
 For office inspection, run `python tools/analysis/offline_gui_fixture.py`. Its synthetic GitHub import demo uses **https://github.com/offline/design**; that URL is handled by the fixture, not fetched from GitHub. It contains one existing-content duplicate, one unique skill and one duplicate of that new skill. No live model is called. Stop the old fixture and start it again after pulling the revision. Production uses normal GitHub discovery and does not contain those stubs.
+
+Registered locations now use a staged permission table with folder browsing and atomic Apply. See [location controls](REGISTERED_LOCATIONS.md).

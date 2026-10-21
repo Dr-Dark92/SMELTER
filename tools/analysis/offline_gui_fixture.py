@@ -33,6 +33,8 @@ def serve(port=18771):
         base=Path(temporary);root=base/'SMELTER';root.mkdir();root.with_name('SMELTERV2').mkdir()
         select_database(root,str(base/'data'))
         (root/'README.md').write_text('Offline synthetic GUI fixture.\n')
+        for name in ('Characters','Environments'):(root/'Assets'/name).mkdir(parents=True)
+        (root/'Assets/notes.txt').write_text('This file is not listed or read by the folder browser.')
         skill=root/'skills/fixture';skill.mkdir(parents=True)
         (skill/'SKILL.md').write_text('# Fixture\n\n## Purpose\nInspect synthetic work only.\n')
         demo={name:'# '+name.title()+'\n\n## Purpose\nReview '+name+' in the offline fixture.\n' for name in ('layout','spacing','contrast')}
