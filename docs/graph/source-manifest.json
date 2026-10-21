@@ -1,5 +1,5 @@
 {
-  "commit": "e27036e0da3a3052273bca938faa4cb185f4aaba",
+  "commit": "43ff086bac02a42c6257c91db983a307ff345f15",
   "repository": "Dr-Dark92/SMELTER",
   "files": [
     {
@@ -396,11 +396,11 @@
     },
     {
       "path": "tools/dashboard/access_policy.py",
-      "sha": "979a6495f29cc590e3e344e7939e788b90ae1b35"
+      "sha": "fc94a267f442195f2f26018f023065f2747b9de3"
     },
     {
       "path": "tools/dashboard/access_ui.js",
-      "sha": "614f6d1520c9644c58b7810db728414c96f769a7"
+      "sha": "3651098b8bb3f5828af868543ca06bc150ac95f3"
     },
     {
       "path": "tools/dashboard/aero_classifier.py",
@@ -420,11 +420,11 @@
     },
     {
       "path": "tools/dashboard/chat_inference.py",
-      "sha": "4e7843459c047debd0d992c9b8723fea6d6248d4"
+      "sha": "218456a1f5b24fdba7053c22f91a1a33198c4ef9"
     },
     {
       "path": "tools/dashboard/chat_jobs.py",
-      "sha": "78ae886eacdbd0ccbfedee2f709f0468f803b72f"
+      "sha": "f733cc08942397d8ed32e7608c6cb26ab8b471a1"
     },
     {
       "path": "tools/dashboard/chat_renderer.js",
@@ -444,15 +444,15 @@
     },
     {
       "path": "tools/dashboard/dashboard.py",
-      "sha": "d8000960baa88a6b02db5f441b673d0e43c2261a"
+      "sha": "5d7a2cdd458981a3036dcec9268fddf952ce8803"
     },
     {
       "path": "tools/dashboard/dashboard_api.py",
-      "sha": "b7984cd712a2108573c9987ece1b789a0ed05fea"
+      "sha": "686d6c4395b85acb2e82cf9e2bf0c28736681ae3"
     },
     {
       "path": "tools/dashboard/dashboard_shell.js",
-      "sha": "b67c91c438891150a1c7c750c5c127731fc4652c"
+      "sha": "723d0803d8836be8c8efb1bdeb9728e7c4199bda"
     },
     {
       "path": "tools/dashboard/database.py",
@@ -480,7 +480,7 @@
     },
     {
       "path": "tools/dashboard/frontend_workspace.py",
-      "sha": "f7da26d80dbac8dc0735e9c8da098e9141c84e03"
+      "sha": "82c0f5ed0b786777fd8815725cea396ff7c7b592"
     },
     {
       "path": "tools/dashboard/github_skill_discovery.py",
@@ -520,7 +520,7 @@
     },
     {
       "path": "tools/dashboard/mcp_ui.js",
-      "sha": "3333101ba2f9588e0ffd628bb22f1cb4309a749c"
+      "sha": "49d27b4ccb6950028fd6108a78d3d5e532519506"
     },
     {
       "path": "tools/dashboard/media.py",
@@ -528,7 +528,7 @@
     },
     {
       "path": "tools/dashboard/model_animations.js",
-      "sha": "3d2fa849fef433669861794ee705c65a800ce64b"
+      "sha": "59ec67351c2e89e28ca83ef037826c28c0747814"
     },
     {
       "path": "tools/dashboard/model_assets.py",
@@ -540,7 +540,7 @@
     },
     {
       "path": "tools/dashboard/model_preview.js",
-      "sha": "1415c86fb91de095065799048dd47cabdfb489e7"
+      "sha": "ce860abe6b1b5f08eb9401474dc3ddc51be74587"
     },
     {
       "path": "tools/dashboard/ollama.py",
@@ -556,7 +556,7 @@
     },
     {
       "path": "tools/dashboard/opencode_agent_ui.js",
-      "sha": "78abd2ef56ce8df67d387136cbaecaace8fa5a55"
+      "sha": "5fc3af00d16a537b6a520010cfc5ee544f287758"
     },
     {
       "path": "tools/dashboard/opencode_deploy.py",
@@ -568,7 +568,7 @@
     },
     {
       "path": "tools/dashboard/opencode_runtime.py",
-      "sha": "3b43a7225c931309a0653ee8eef13ac05ccb057b"
+      "sha": "9beb6407da9b70de57c579d5d3fd94a0321adf37"
     },
     {
       "path": "tools/dashboard/opencode_sandbox.py",
@@ -592,7 +592,7 @@
     },
     {
       "path": "tools/dashboard/python_tools.py",
-      "sha": "f2a44bd66008f7c56150a9a6b1bda04ac1f0518e"
+      "sha": "8020978b860da6ea81978bd149aefb0b07e77389"
     },
     {
       "path": "tools/dashboard/rea_connection.py",
@@ -624,7 +624,7 @@
     },
     {
       "path": "tools/dashboard/settings_ui.js",
-      "sha": "49eba453dcc37b3551051d589228189e2c6aaecc"
+      "sha": "8b3d0ab1d602b87f7d62ffb63be25e2ca8e0d5f0"
     },
     {
       "path": "tools/dashboard/skill_collections.py",
@@ -680,7 +680,7 @@
     },
     {
       "path": "tools/dashboard/task_contract.py",
-      "sha": "181719632ebbe97300e7bb501e8c406f213ace1f"
+      "sha": "e2d58e8984c9d2ab8dc9f050c2485e2b9d3031ad"
     },
     {
       "path": "tools/dashboard/test_aero_classifier.py",
@@ -803,12 +803,16 @@
       "sha": "72f8f5091b2d4c218350b651dae0a6789a4386a5"
     },
     {
+      "path": "tools/dashboard/test_overhaul_repairs.py",
+      "sha": "cfbecd7cb6ea26e7992ea221394fcac30014ab33"
+    },
+    {
       "path": "tools/dashboard/test_project_contract.py",
       "sha": "c4faa040e0fc323a634f7df3bcf6635f2078da1c"
     },
     {
       "path": "tools/dashboard/test_python_tools.py",
-      "sha": "ca82538a5d36449fdfa0b5b23469e8bccf6e0f6b"
+      "sha": "9234d3ab9099d327f805fdf8cba85d7ff72788de"
     },
     {
       "path": "tools/dashboard/test_rea_connection.py",
@@ -828,7 +832,7 @@
     },
     {
       "path": "tools/dashboard/test_revision_contracts.py",
-      "sha": "f95554d474e072104f4da34103681f51cb60c0f7"
+      "sha": "8a6ab31ae2f19d27290799c3629cb3ebbb4ce334"
     },
     {
       "path": "tools/dashboard/test_runtime_settings.py",
@@ -905,6 +909,10 @@
     {
       "path": "tools/dashboard/vision_probe.py",
       "sha": "63b4b34aa2d59a526d30cf9fb32470e64378d074"
+    },
+    {
+      "path": "tools/dashboard/workbench_ui.js",
+      "sha": "9cdad24a25548c334c1d42427c29a374e0db154f"
     },
     {
       "path": "tools/dashboard/workflows.py",

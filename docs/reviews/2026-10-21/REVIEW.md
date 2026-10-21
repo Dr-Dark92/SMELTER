@@ -1,3 +1,5 @@
+> **Implementation update:** The UI/UX overhaul implements R01–R07. Read [current implementation and validation](../../UI_UX_OVERHAUL.md) and [current progress](PROGRESS.md). The following document records the original pinned review and plan; statements about open/unapplied repairs describe that historical baseline.
+
 # SMELTER runtime and GUI review
 
 Reviewed 2026-10-21. Repository: [Dr-Dark92/SMELTER](https://github.com/Dr-Dark92/SMELTER/tree/a609148fab2dec8915da24ca46550f9cd275b694), branch **SMELTERV1**, pinned source **a609148fab2dec8915da24ca46550f9cd275b694**.

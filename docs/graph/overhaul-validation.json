@@ -1,0 +1,135 @@
+{
+  "application_commit": "43ff086bac02a42c6257c91db983a307ff345f15",
+  "repository": "Dr-Dark92/SMELTER",
+  "branch": "SMELTERV1",
+  "ci_run": 39561889060,
+  "ci_url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39561889060",
+  "source": "GitHub Actions native Linux/Windows and Chromium",
+  "contracts": {
+    "linux": {
+      "dashboard": 359,
+      "skipped": 2,
+      "setup": 32,
+      "analysis": 4,
+      "javascript": 15,
+      "result": "passed"
+    },
+    "windows": {
+      "dashboard": 359,
+      "skipped": 3,
+      "setup": 32,
+      "analysis": 4,
+      "javascript": 15,
+      "result": "passed"
+    }
+  },
+  "browser": {
+    "liveInference": false,
+    "liveDocker": false,
+    "syntheticAssets": true,
+    "pageErrors": [],
+    "externalRequests": [],
+    "result": "passed",
+    "settingsSearch": true,
+    "registeredLocations": true,
+    "folderBrowse": true,
+    "skillsBulk": true,
+    "titledChat": true,
+    "attachmentMenu": true,
+    "glbRender": true,
+    "animationPlaybackAndLabels": true,
+    "png": true,
+    "webm": true,
+    "releaseDuringExport": true,
+    "lateLoadIgnored": true,
+    "latePngIgnored": true,
+    "errorReload": true,
+    "widths": [
+      375,
+      768,
+      1024,
+      1440
+    ],
+    "reducedMotion": true
+  },
+  "graph": {
+    "revision": "43ff086bac02a42c6257c91db983a307ff345f15",
+    "counts": {
+      "files": 244,
+      "symbols": 1626,
+      "relationships": 2603,
+      "unresolved_calls": 9207
+    },
+    "runtime_links": 59
+  },
+  "contrast": [
+    {
+      "role": "Body",
+      "foreground": "#edf2f8",
+      "background": "#141c26",
+      "ratio": 15.24,
+      "minimum": 4.5
+    },
+    {
+      "role": "Secondary",
+      "foreground": "#a3b2c5",
+      "background": "#141c26",
+      "ratio": 7.95,
+      "minimum": 4.5
+    },
+    {
+      "role": "Primary button",
+      "foreground": "#211407",
+      "background": "#ffb169",
+      "ratio": 10.06,
+      "minimum": 4.5
+    },
+    {
+      "role": "Control border",
+      "foreground": "#52677e",
+      "background": "#101720",
+      "ratio": 3.09,
+      "minimum": 3
+    },
+    {
+      "role": "Focus",
+      "foreground": "#b1deff",
+      "background": "#141c26",
+      "ratio": 12.06,
+      "minimum": 3
+    },
+    {
+      "role": "User message",
+      "foreground": "#edf2f8",
+      "background": "#253b52",
+      "ratio": 10.22,
+      "minimum": 4.5
+    },
+    {
+      "role": "Ready badge",
+      "foreground": "#a4f1da",
+      "background": "#153b30",
+      "ratio": 9.51,
+      "minimum": 4.5
+    }
+  ],
+  "screenshots_reviewed": true,
+  "live_qwen": false,
+  "live_ollama_inference": false,
+  "live_opencode_task": false,
+  "live_docker_integration": false,
+  "limitations": [
+    "Hosted CI does not substitute for the user's rig",
+    "No full WCAG or screen-reader certification",
+    "No model-quality/GPU-performance benchmark"
+  ],
+  "fixed_findings": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07"
+  ]
+}

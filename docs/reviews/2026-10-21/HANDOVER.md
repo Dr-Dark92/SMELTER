@@ -1,3 +1,5 @@
+> **Repair update:** R01–R07 are implemented in the UI/UX overhaul. Read [current implementation, validation and rollout](../../UI_UX_OVERHAUL.md) and [current progress](PROGRESS.md). The original review-only handover below describes its pinned historical source; its statements that no fixes had been applied are historical.
+
 # SMELTER runtime review handover
 
 Date: 2026-10-21, Asia/Muscat. Repository [Dr-Dark92/SMELTER](https://github.com/Dr-Dark92/SMELTER/tree/SMELTERV1), branch **SMELTERV1**. Reviewed source **a609148fab2dec8915da24ca46550f9cd275b694**. This handover accompanies a review-only change, not application repairs.

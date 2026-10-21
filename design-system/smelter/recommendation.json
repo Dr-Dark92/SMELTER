@@ -1,0 +1,119 @@
+{
+  "design_system": {
+    "project_name": "SMELTER",
+    "category": "Developer Tool / IDE",
+    "pattern": {
+      "name": "FAQ/Documentation Landing",
+      "sections": "Hero with search bar > Popular categories > FAQ accordion > Contact/support CTA",
+      "cta_placement": "Search bar prominent + Contact CTA for unresolved questions",
+      "color_strategy": "Clean, high readability. Minimal color. Category icons in brand color. Success green for resolved.",
+      "conversion": "Reduce support tickets. Track search analytics. Show related articles. Contact escalation path."
+    },
+    "style": {
+      "id": "dark-mode-oled",
+      "name": "Dark Mode (OLED)",
+      "type": "General",
+      "effects": "Minimal glow (text-shadow: 0 0 10px), dark-to-light transitions, low white emission, high readability, visible focus",
+      "keywords": "Dark theme, low light, high contrast, deep black, midnight blue, eye-friendly, OLED, night mode, power efficient",
+      "best_for": "Night-mode apps, coding platforms, entertainment, eye-strain prevention, OLED devices, low-light",
+      "performance": "cost:low|drivers:none",
+      "accessibility": "risk:low|requires:contrast-text-4.5,keyboard,visible-focus,reduced-motion",
+      "light_mode": "not-recommended",
+      "dark_mode": "supported"
+    },
+    "colors": {
+      "primary": "#1E293B",
+      "on_primary": "#FFFFFF",
+      "secondary": "#334155",
+      "on_secondary": "#FFFFFF",
+      "accent": "#22C55E",
+      "on_accent": "#0F172A",
+      "background": "#0F172A",
+      "foreground": "#F8FAFC",
+      "card": "#1B2336",
+      "card_foreground": "#F8FAFC",
+      "muted": "#272F42",
+      "muted_foreground": "#94A3B8",
+      "border": "#475569",
+      "destructive": "#EF4444",
+      "on_destructive": "#000000",
+      "ring": "#FFFFFF",
+      "notes": "Code dark + run green",
+      "cta": "#22C55E",
+      "text": "#F8FAFC",
+      "on_cta": "#0F172A"
+    },
+    "typography": {
+      "heading": "JetBrains Mono",
+      "body": "IBM Plex Sans",
+      "mood": "code, developer, technical, precise, functional, hacker",
+      "best_for": "Developer tools, documentation, code editors, tech blogs, CLI apps",
+      "google_fonts_url": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap",
+      "css_import": "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');"
+    },
+    "key_effects": "Minimal glow (text-shadow: 0 0 10px), dark-to-light transitions, low white emission, high readability, visible focus",
+    "anti_patterns": "Light mode default + Slow performance",
+    "decision_rules": {
+      "must_have": [
+        "constraint:keyboard-shortcuts",
+        "constraint:documentation"
+      ]
+    },
+    "activated_rules": [
+      {
+        "condition": "must_have",
+        "actions": [
+          "constraint:keyboard-shortcuts",
+          "constraint:documentation"
+        ]
+      }
+    ],
+    "constraints": [
+      "keyboard-shortcuts",
+      "documentation"
+    ],
+    "reasoning_default": false,
+    "source_identities": {
+      "product": "Developer Tool / IDE",
+      "reasoning": "Developer Tool / IDE",
+      "style": "dark-mode-oled",
+      "color": "Developer Tool / IDE",
+      "typography": "Developer Mono",
+      "landing": "FAQ/Documentation Landing"
+    },
+    "source_derivations": {
+      "color_mode": null
+    },
+    "severity": "HIGH",
+    "dials": {
+      "variance": 4,
+      "variance_label": "Balanced / Modern",
+      "motion": 1,
+      "motion_label": "Subtle",
+      "density": 8,
+      "density_label": "Dense / Dashboard"
+    },
+    "motion_snippet": {
+      "Category": "Scroll Reveal",
+      "Intensity Tier": "Subtle",
+      "Trigger": "scroll (viewport enter)",
+      "Duration": "300-400ms",
+      "Easing": "power1.out",
+      "GSAP Snippet": "gsap.from(el, { opacity: 0, y: 12, duration: 0.35, ease: 'power1.out', scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none reverse' } });",
+      "Framework Notes": "Requires the ScrollTrigger plugin registered once via gsap.registerPlugin(ScrollTrigger); Use matchMedia('(prefers-reduced-motion: reduce)') to skip non-essential motion and render the final state immediately",
+      "Do": "Keep the y offset small (8-16px) so it reads as a fade, not a slide",
+      "Don't": "Don't reveal below-the-fold content needed for SEO/crawlers as invisible-by-default without a no-JS fallback",
+      "Performance Notes": "toggleActions 'play none none reverse' avoids re-triggering on every scroll direction change"
+    },
+    "spacing_scale": {
+      "xs": "2px",
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px",
+      "xl": "16px",
+      "2xl": "24px",
+      "3xl": "32px"
+    }
+  },
+  "persistence": null
+}

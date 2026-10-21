@@ -1,3 +1,5 @@
+> **Implementation update:** The UI/UX overhaul implements R01–R07. Read [current implementation and validation](../../UI_UX_OVERHAUL.md) and [current progress](PROGRESS.md). The following document records the original pinned review and plan; statements about open/unapplied repairs describe that historical baseline.
+
 # SMELTER review action plan
 
 Source reviewed: `a609148fab2dec8915da24ca46550f9cd275b694`, SMELTERV1, 2026-10-21. This is a proposed implementation sequence. **No production repair in this plan has been applied.** Findings/evidence: [review](REVIEW.md), [runtime fixtures](evidence.json), [GLB fixtures](glb-browser-evidence.json).

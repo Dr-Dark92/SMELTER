@@ -2,6 +2,15 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## UI/UX overhaul and R01–R07 repairs — 2026-10-21
+
+Application: `43ff086bac02a42c6257c91db983a307ff345f15`. Offline CI: [run 39561889060](https://github.com/Dr-Dark92/SMELTER/actions/runs/39561889060). See [implementation and rollout](docs/UI_UX_OVERHAUL.md).
+
+- Applied the requested pinned UI UX Pro Max guidance with a documented design system, redesigned workbench/composer, searchable settings, responsive navigation, readable controls and explicit runtime/permission states.
+- Repaired final-file path checks, Stop serialization, length termination, GLB owner/cancellation races, malformed-stream persistence, Linux path identity and owned preparation rollback.
+- Added focused regressions, native Linux/Windows offline CI, actual Chromium GLB/UI checks and pinned source-graph generation. Corrected two Windows fixture defects.
+- Live Qwen/Ollama quality/performance, real Docker/OpenCode images and the user's hardware remain separate deployment checks.
+
 ## Runtime layer review — 2026-10-21
 
 Reviewed GitHub head `a609148fab2dec8915da24ca46550f9cd275b694`; all 247 scripts matched Git blobs. Added [findings](docs/reviews/2026-10-21/REVIEW.md), action plan, progress, handover and fixture evidence. Seven new defects reproduced; no production code repaired. Actual GLB preview/playback/PNG and one WebM export checked alongside lifecycle races. No live Qwen/Ollama/OpenCode/Docker tests.
