@@ -348,5 +348,26 @@
     "type": "runtime",
     "confidence": "manual-source-review",
     "evidence": "Admitted job outcome is updated on the same SQLite connection/transaction as transcript and execution; no second terminal write"
+  },
+  {
+    "source": "tools/dashboard/dashboard_shell.js",
+    "target": "tools/dashboard/skills_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Composes table management, explicit task selection and reviewed import dialog"
+  },
+  {
+    "source": "tools/dashboard/dashboard_shell.js",
+    "target": "tools/dashboard/attachments_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Composes one supported-file + menu using existing image/GLB inputs"
+  },
+  {
+    "source": "tools/dashboard/skill_collections.py",
+    "target": "tools/dashboard/skill_duplicates.py",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Reviewed batch skips canonical identity and normalized content duplicates before writing unique children"
   }
 ]

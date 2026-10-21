@@ -1,5 +1,7 @@
 # Settings, skills table and attachment menu
 
+Application commit: [`92e14fe0bb098b4a02712b1cc88f196324b4b9db`](https://github.com/Dr-Dark92/SMELTER/commit/92e14fe0bb098b4a02712b1cc88f196324b4b9db).
+
 This GUI revision replaces the earlier stacked settings layout and skill cards. It preserves existing chat, model, asset, access, MCP and inspection APIs; bulk skill management is an additive operator action.
 
 ## Interface

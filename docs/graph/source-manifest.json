@@ -1,5 +1,5 @@
 {
-  "commit": "4bd636dbcc04de5d2cb016489c923e3146a611db",
+  "commit": "92e14fe0bb098b4a02712b1cc88f196324b4b9db",
   "repository": "Dr-Dark92/SMELTER",
   "files": [
     {
@@ -407,6 +407,10 @@
       "sha": "6535aedc17bb2bba6454358c4e339173e0fb9acd"
     },
     {
+      "path": "tools/dashboard/attachments_ui.js",
+      "sha": "090eac1c4730c0168bb50f1ca548a47caeaac4a8"
+    },
+    {
       "path": "tools/dashboard/blender.py",
       "sha": "760c59fba69602a793fbaf96f0c63ab74db5100c"
     },
@@ -440,15 +444,15 @@
     },
     {
       "path": "tools/dashboard/dashboard.py",
-      "sha": "c7af64f090593594c18a2252d95c5f8b25990e0c"
+      "sha": "688da08b1b3a16dc7f14cf0d5d8ec48aceda748b"
     },
     {
       "path": "tools/dashboard/dashboard_api.py",
-      "sha": "d816cb0dde3a0447568550f601f0590d85ee6124"
+      "sha": "2c51eeb9aede6b53c230fc64f19408b871f559c0"
     },
     {
       "path": "tools/dashboard/dashboard_shell.js",
-      "sha": "375bc34384d98aa908b4e01f6b3d9c58c51ea4a7"
+      "sha": "b67c91c438891150a1c7c750c5c127731fc4652c"
     },
     {
       "path": "tools/dashboard/database.py",
@@ -480,7 +484,7 @@
     },
     {
       "path": "tools/dashboard/github_skill_discovery.py",
-      "sha": "de7d6f6253502bd270a0615256dd5a9c05e4fe1f"
+      "sha": "3febf7ab7c4cf1ab21281890082ebfad9689f9cb"
     },
     {
       "path": "tools/dashboard/install_war_skills.py",
@@ -504,7 +508,7 @@
     },
     {
       "path": "tools/dashboard/mcp_ui.js",
-      "sha": "b619aa99a2639d5bf2f811d25de8655f942e3fd2"
+      "sha": "3333101ba2f9588e0ffd628bb22f1cb4309a749c"
     },
     {
       "path": "tools/dashboard/media.py",
@@ -564,7 +568,7 @@
     },
     {
       "path": "tools/dashboard/operations_ui.js",
-      "sha": "18538a1c52b477b8aafddfbbb13494ace6a1ebf1"
+      "sha": "acd063ac6e5c4837380c91fff2794d19cc143062"
     },
     {
       "path": "tools/dashboard/process_runner.py",
@@ -608,19 +612,23 @@
     },
     {
       "path": "tools/dashboard/settings_ui.js",
-      "sha": "0cbcb63f1a17f31bedca478774ae2caa82581b27"
+      "sha": "49eba453dcc37b3551051d589228189e2c6aaecc"
     },
     {
       "path": "tools/dashboard/skill_collections.py",
-      "sha": "3232b7860b13c9ba3fd30f691505d067ae33bbad"
+      "sha": "976784e2356b3eee55dc50893a6f046f3a0689e0"
     },
     {
       "path": "tools/dashboard/skill_context.py",
       "sha": "e922f674e967fbe6e3ef2b656f77d3fce6d2451c"
     },
     {
+      "path": "tools/dashboard/skill_duplicates.py",
+      "sha": "bcc6f00260d32a9a868371d228a511969b8c5770"
+    },
+    {
       "path": "tools/dashboard/skill_manager.py",
-      "sha": "a94a41d08e1741a89ee7c4896177ab0e39db1e25"
+      "sha": "4ea8df9ff4f7ea25e39210959478c385021b925d"
     },
     {
       "path": "tools/dashboard/skill_manifest.py",
@@ -636,7 +644,11 @@
     },
     {
       "path": "tools/dashboard/skills_catalog.py",
-      "sha": "d01d634ae336750e8aaca190e0c4aac756781f36"
+      "sha": "51c605ffe9a08e5ad45677f1e4b07dab3505ba95"
+    },
+    {
+      "path": "tools/dashboard/skills_ui.js",
+      "sha": "14cccb954906136799f7e706cc1296d3a0667588"
     },
     {
       "path": "tools/dashboard/start_dashboard.ps1",
@@ -720,7 +732,7 @@
     },
     {
       "path": "tools/dashboard/test_github_skill_discovery.py",
-      "sha": "4e8bd22a49cefe4758179b1a93f2fafed55eae3d"
+      "sha": "4dae3a335b845a710b062aa6a04695917a3289a9"
     },
     {
       "path": "tools/dashboard/test_mcp_connections.py",
@@ -812,7 +824,7 @@
     },
     {
       "path": "tools/dashboard/test_skill_collections.py",
-      "sha": "26922fbf37ac3de5a71b3dc16b847e804bb409ae"
+      "sha": "14974c103f77b4c33b0b95254ec36dc4c995357c"
     },
     {
       "path": "tools/dashboard/test_skill_context.py",
@@ -820,7 +832,7 @@
     },
     {
       "path": "tools/dashboard/test_skill_manager.py",
-      "sha": "cc3dec15a65c79be67b39edbf6850a42ab900754"
+      "sha": "a5568e2272598aa7c71c6650b9f0f0aa0ebd32f8"
     },
     {
       "path": "tools/dashboard/test_skill_manifest.py",

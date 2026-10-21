@@ -1,0 +1,46 @@
+{
+  "source_revision": "92e14fe0bb098b4a02712b1cc88f196324b4b9db",
+  "environment": "Linux/Python 3.12/Chromium desktop 1500x1000 and mobile 390x844",
+  "fixture": "tools/analysis/offline_gui_fixture.py",
+  "checks": [
+    "settings_rail",
+    "mobile_section_picker",
+    "skill_table_statuses",
+    "expand_collection",
+    "collection_checkbox_selects_children",
+    "bulk_enable_disable",
+    "remove_imported_child",
+    "import_one_skip_two",
+    "repeat_import_zero_skip_three",
+    "plus_attachment_menu",
+    "image_select_and_remove",
+    "glb_upload",
+    "escape_closes_menu",
+    "native_inputs_hidden",
+    "no_horizontal_page_overflow",
+    "existing_retention_reconnect_stop_regressions"
+  ],
+  "page_errors": [],
+  "live_model": false,
+  "docker": false,
+  "windows": false,
+  "suites": {
+    "dashboard": {
+      "run": 338,
+      "skipped": 2,
+      "result": "OK"
+    },
+    "javascript": {
+      "run": 15,
+      "result": "OK"
+    },
+    "setup": {
+      "run": 32,
+      "result": "OK"
+    },
+    "analysis": {
+      "run": 4,
+      "result": "OK"
+    }
+  }
+}

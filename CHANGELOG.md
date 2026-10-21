@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## Settings and skills GUI revision — 2026-10-21
 
+Application commit: `92e14fe0bb098b4a02712b1cc88f196324b4b9db`. Source graph/function inventory regenerated against that commit.
+
 - Replaced stacked settings with grouped navigation/content panes and a mobile section picker; refreshed the shared dark theme and controls.
 - Replaced visible type-specific attachment controls with one accessible + menu for supported images and GLBs; added removable image filename chip.
 - Replaced skill cards with a searchable table, clear runtime/enabled indicators, expandable collections, parent/child checkboxes and top bulk toolbar. Task-context selection stays explicit and separate.
