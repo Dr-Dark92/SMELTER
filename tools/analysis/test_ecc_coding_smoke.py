@@ -1,7 +1,11 @@
 """Deterministic driver accepts real MCP results, never model success prose."""
 import json
+import http.client
+import http.server
+import threading
 import unittest
 from smoke_ecc_coding import next_call, tool_results
+from smoke_agent_bridge import port_free
 
 
 class EccCodingFixtureTests(unittest.TestCase):
@@ -27,6 +31,22 @@ class EccCodingFixtureTests(unittest.TestCase):
                        {'stage': 'GREEN'}, {'all_current_tests_passed': False}])
         self.assertIsNone(next_call([{'workspace_id': 'id'}, {}, {}, {}, {'stage': 'RED'}, {}, {},
                                     {'stage': 'GREEN'}, {'all_current_tests_passed': True}]))
+
+    def test_consecutive_fixture_checks_reject_a_listener_and_allow_closed_server(self):
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self,*args):pass
+            def do_GET(self):
+                self.send_response(200);self.send_header('Content-Length','2');self.end_headers();self.wfile.write(b'ok')
+        server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        port=server.server_port
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with self.assertRaisesRegex(ValueError,'occupied'):port_free(port)
+            client=http.client.HTTPConnection('127.0.0.1',port,timeout=2)
+            try:client.request('GET','/');self.assertEqual(client.getresponse().read(),b'ok')
+            finally:client.close()
+        finally:server.shutdown();server.server_close();thread.join(timeout=2)
+        port_free(port)
 
 
 if __name__ == '__main__':unittest.main()

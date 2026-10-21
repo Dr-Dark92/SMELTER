@@ -147,7 +147,14 @@ class ModelFixture(http.server.BaseHTTPRequestHandler):
 
 
 def port_free(port):
+    # A recently closed fixture can leave accepted connections in TIME_WAIT.
+    # Match HTTPServer's POSIX reuse policy while still refusing live listeners.
+    with socket.socket() as probe:
+        probe.settimeout(.25)
+        if probe.connect_ex(('127.0.0.1',port)) == 0:
+            raise ValueError(f'Fixture port {port} is occupied; no existing service was stopped')
     with socket.socket() as sock:
+        if os.name != 'nt':sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         try:sock.bind(('127.0.0.1',port))
         except OSError:raise ValueError(f'Fixture port {port} is occupied; no existing service was stopped')
 

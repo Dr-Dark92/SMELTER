@@ -1,6 +1,7 @@
 """Code isolation, hash admission, rollback, real MCP and evidence freshness."""
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 import tempfile
@@ -71,6 +72,28 @@ class CodingWorkspaceTests(unittest.TestCase):
         self.assertEqual(len(result['files']), 6)
         with self.assertRaisesRegex(ValueError, 'overwrite'):
             coding.propose(self.root, {'workspace_id': sid, 'changes': changes})
+
+    def test_large_unicode_proposal_remains_readable_and_applicable(self):
+        sid, target = self.prepare()
+        text = 'VALUE = """' + 'é' * 60000 + '"""\n'
+        changes = [{'relative_path': f'tools/dashboard/unicode_{i}.py', 'expected_sha256': None,
+                    'content': text} for i in range(3)]
+        proposed = coding.propose(self.root, {'workspace_id': sid, 'changes': changes})
+        record, _ = coding.proposal(self.root, sid, proposed['proposal_id'])
+        self.assertGreater(record.stat().st_size, 1024 * 1024)
+        coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposed['proposal_id']})
+        self.assertEqual((target / changes[0]['relative_path']).read_bytes(), text.encode())
+
+    def test_atomic_replacement_does_not_modify_hardlinked_original(self):
+        sid, target = self.prepare()
+        relative = 'tools/dashboard/example.py'
+        path = target / relative
+        path.unlink()
+        os.link(self.root / relative, path)
+        proposed = coding.propose(self.root, self.change(sid, target, relative, 'VALUE=42\n'))
+        coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposed['proposal_id']})
+        self.assertEqual((self.root / relative).read_bytes(), self.original[relative])
+        self.assertEqual(path.read_bytes(), b'VALUE=42\n')
 
     def test_stale_second_file_rejects_whole_patch_before_any_write(self):
         sid, target = self.prepare()

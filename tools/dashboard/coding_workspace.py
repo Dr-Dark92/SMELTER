@@ -284,7 +284,8 @@ def propose(root, arguments):
 
 def proposal(root, workspace_id, proposal_id):
     path = _plain_path(base_path(root) / identifier(workspace_id) / 'proposals' / (identifier(proposal_id) + '.json'))
-    if not path.is_file() or path.stat().st_size > 2 * MAX_PATCH:
+    # JSON escapes can expand valid UTF-8 content beyond its raw byte budget.
+    if not path.is_file() or path.stat().st_size > 4 * 1024 * 1024:
         raise ValueError('Unknown or oversized coding proposal')
     value = json.loads(path.read_text(encoding='utf-8'))
     if value.get('workspace_id') != workspace_id or value.get('proposal_id') != proposal_id:
@@ -336,13 +337,18 @@ def apply(root, arguments):
             restored = True
             for path, change in reversed(installed):
                 try:
+                    _plain_path(path)
                     if digest(path.read_bytes()) != change['after_sha256']:
                         restored = False
                         continue
                     if backups[path] is None:
                         path.unlink()
                     else:
-                        path.write_bytes(backups[path])
+                        restored_file = _plain_path(path.with_name('.smelter-restore-' + uuid4().hex))
+                        try:
+                            with restored_file.open('xb') as stream:stream.write(backups[path])
+                            restored_file.replace(path)
+                        finally:restored_file.unlink(missing_ok=True)
                 except OSError:
                     restored = False
             plan['state'] = 'rolled_back' if restored else 'partial_unconfirmed'
