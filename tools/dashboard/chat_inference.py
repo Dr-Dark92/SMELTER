@@ -100,10 +100,11 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     except ChatCancelled:answer='Request stopped. Completed tool actions remain recorded below.'
     except (ValueError,OSError) as exc:
         if control and control.cancelled.is_set():answer='Request stopped. Completed tool actions remain recorded below.'
-        elif not session.events:raise
+        elif not session.events and not (control and control.output_text):raise
         else:
             failure=str(exc)
-            answer='Model follow-up failed: '+str(exc)+'. See the actual tool receipts below.'
+            answer=('Model follow-up failed: '+str(exc)+'. See the actual tool receipts below.' if session.events
+                    else 'Model response interrupted: '+str(exc)+'. Partial output is retained below.')
             if control and control.output_text:
                 answer+='\n\nPartial model response:\n'+control.output_text[-12000:]
     failed_tools=any(e.get('result',{}).get('status') in ('error','rea_failed','mcp_failed','workspace_validation_failed') for e in session.events)
@@ -115,7 +116,7 @@ def ask(root, conversation_id, prompt, opener=urlopen, image=None, skills=None, 
     execution={'source':'controller','policy_revision':session.policy.revision,'engine':'ollama','model':effective['model'],'configuration':effective,
                'permissions':{**session.grants,'transport':session.transport,'mcp_tools':list(session.external_tools)},
                'events':session.events,'audit_path':str(session.audit_path) if session.audit_path else None,'files':session.file_activity.snapshot()}
-    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=failure,partial=bool(session.events) or failure==OUTPUT_LIMIT_ERROR,receipt=receipt,
+    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=failure,partial=bool(session.events) or failure==OUTPUT_LIMIT_ERROR or bool(failure and control and control.output_text),receipt=receipt,
                     cancel_answer='Request stopped. Completed tool actions remain recorded below.'+receipt)
     return {**result,'model':effective['model'],'tools_executed':any(e['executed'] for e in session.events),'tool_events':session.events,
             'tool_audit_path':str(session.audit_path) if session.audit_path else None,'image_analyzed':image is not None,'skills_used':active_skills or []}

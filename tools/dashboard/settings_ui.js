@@ -14,7 +14,7 @@ const SmelterSettings=(()=>{
   const picker=doc.createElement('select');picker.className='settings-section-picker';picker.setAttribute('aria-label','Settings section');
   const deck=doc.createElement('div');deck.className='settings-content';content.append(picker,nav,deck);dialog.append(header,content);doc.body.append(dialog);
   const groups=new Map(),options=new Map(),entries=[];let previous=null,activePanel='taskAccessPanel';
-  const empty=doc.createElement('p');empty.className='settings-no-results';empty.textContent='No matching settings.';empty.hidden=true;nav.append(empty);
+  const empty=doc.createElement('p');empty.className='settings-no-results';empty.textContent='No matching settings. Clear or change the search to try again.';empty.setAttribute('role','status');empty.hidden=true;deck.prepend(empty);
   function group(label){if(!groups.has(label)){const section=doc.createElement('section');section.className='settings-nav-group';const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);nav.append(section);groups.set(label,section);const optionGroup=doc.createElement('optgroup');optionGroup.label=label;picker.append(optionGroup);options.set(label,optionGroup)}return groups.get(label)}
   function activate(id){
    const panel=doc.getElementById(id);if(!panel||!deck.contains(panel))return;

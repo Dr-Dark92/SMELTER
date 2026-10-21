@@ -140,6 +140,17 @@ class OverhaulRepairs(unittest.TestCase):
         self.assertEqual(len(messages), 2)
         self.assertEqual(messages[-1]['execution']['events'][0]['result']['status'], 'written')
 
+    def test_partial_text_survives_protocol_failure_without_tools(self):
+        server = self.stream_server([{'message':{'content':'Observed partial text'},'done':False}, []])
+        with patch('chat_jobs.http.client.HTTPConnection', side_effect=lambda *a,**k:HTTPConnection('127.0.0.1', server.server_port, timeout=2)):
+            result = ask(self.root, self.cid, 'Fixture text', control=Control())
+        self.assertEqual(result['status'], 'partial')
+        self.assertFalse(result['tools_executed'])
+        messages = read_chat(self.root, self.cid)['messages']
+        self.assertEqual(len(messages), 2)
+        self.assertIn('Observed partial text', messages[-1]['content'])
+        self.assertEqual(messages[-1]['execution']['outcome'], 'partial')
+
     @unittest.skipIf(os.name == 'nt', 'Case-distinct directory fixture is Linux-specific')
     def test_linux_case_distinct_locations(self):
         value = defaults(self.root)

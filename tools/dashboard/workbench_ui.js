@@ -53,12 +53,12 @@ const SmelterWorkbench = (() => {
     appbar.append(menu,brand,runtime);main.prepend(appbar);
     const skip=doc.createElement('a');skip.className='skip-link';skip.href='#workspace';skip.textContent='Skip to workbench';main.prepend(skip);workspace.tabIndex=-1;
     const scrim=doc.createElement('button');scrim.className='history-scrim';scrim.type='button';scrim.hidden=true;scrim.setAttribute('aria-label','Close conversations');shell.append(scrim);
-    const closeHistory=()=>{shell.classList.remove('history-open');scrim.hidden=true;menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Open conversations')};
-    menu.onclick=()=>{const open=!shell.classList.contains('history-open');shell.classList.toggle('history-open',open);scrim.hidden=!open;menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close conversations':'Open conversations');if(open)newChat.focus()};
+    const closeHistory=()=>{workspace.inert=false;shell.classList.remove('history-open');scrim.hidden=true;menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Open conversations')};
+    menu.onclick=()=>{const open=!shell.classList.contains('history-open');shell.classList.toggle('history-open',open);workspace.inert=open;scrim.hidden=!open;menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close conversations':'Open conversations');if(open)newChat.focus()};
     scrim.onclick=closeHistory;
     const updateMenu=()=>{menu.disabled=shell.hidden;if(shell.hidden)closeHistory()};new MutationObserver(updateMenu).observe(shell,{attributes:true,attributeFilter:['hidden']});updateMenu();
     doc.addEventListener('keydown',event=>{if(event.key==='Escape'&&!settings.dialog.open&&shell.classList.contains('history-open')){closeHistory();menu.focus()}});
-    window.addEventListener('resize',()=>{if(resourcePreference===null&&lastResources)resources(lastResources.status,lastResources.settings,doc)});
+    window.addEventListener('resize',()=>{if(matchMedia('(min-width:801px)').matches)closeHistory();if(resourcePreference===null&&lastResources)resources(lastResources.status,lastResources.settings,doc)});
     left.addEventListener('click',event=>{if(event.target.closest('.chat-open'))closeHistory()});
     newChat.addEventListener('click',closeHistory);newChat.textContent='New chat';labelButton(newChat,'plus',doc);
     left.querySelector('h2').textContent='Conversations';
