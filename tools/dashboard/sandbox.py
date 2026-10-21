@@ -122,13 +122,21 @@ def snapshot(root,target):
 def _remove(docker,name):
     """Only remove a container carrying this invocation's ownership label."""
     if not re.fullmatch(r'smelter-(?:tests|preview|opencode)-[a-f0-9]{32}',name):return False
+    def absent():
+        # An auto-removed container is already clean. Docker versions/locales
+        # differ in error wording; only a successful exact-name listing proves
+        # absence. A failed daemon request cannot establish cleanup.
+        listed=run([docker,'ps','--all','--filter','name=^/'+name+'$','--format','{{.ID}}'],
+                   timeout=5,max_output=16384,text=True)
+        return listed.returncode==0 and not listed.stdout.strip()
     try:
         found=run([docker,'inspect','--format','{{json .Config.Labels}}',name],timeout=5,max_output=16384,text=True)
-        if found.returncode:
-            return 'No such' in (found.stderr or '')
+        if found.returncode:return absent()
         labels=json.loads(found.stdout)
         if not isinstance(labels,dict) or labels.get('smelter.owner')!=name:return False
-        return run([docker,'rm','--force',name],timeout=10,max_output=16384).returncode==0
+        removed=run([docker,'rm','--force',name],timeout=10,max_output=16384)
+        # --rm can finish between inspection and explicit removal.
+        return removed.returncode==0 or absent()
     except (ValueError,OSError,subprocess.SubprocessError):return False
 
 

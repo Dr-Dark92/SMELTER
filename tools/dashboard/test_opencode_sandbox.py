@@ -89,5 +89,42 @@ class ModelRelayTests(unittest.TestCase):
         with patch('sandbox.run',side_effect=[SimpleNamespace(returncode=0,stdout=json.dumps({'smelter.owner':name})),SimpleNamespace(returncode=0)]) as runner:
             self.assertTrue(_remove('docker',name));self.assertEqual(runner.call_args.args[0],['docker','rm','--force',name])
 
+    def test_auto_removed_container_is_confirmed_without_parsing_error_wording(self):
+        name='smelter-tests-'+'a'*32
+        for error in ('error: no such object: '+name, 'Error: No such object: '+name, 'localized absence message'):
+            with self.subTest(error=error), patch('sandbox.run',side_effect=[
+                    SimpleNamespace(returncode=1,stdout='',stderr=error),
+                    SimpleNamespace(returncode=0,stdout='',stderr='')]) as runner:
+                self.assertTrue(_remove('docker',name))
+                self.assertEqual(runner.call_args.args[0],['docker','ps','--all','--filter',
+                                 'name=^/'+name+'$','--format','{{.ID}}'])
+                self.assertFalse(any(call.args[0][1]=='rm' for call in runner.call_args_list))
+
+    def test_failed_daemon_request_cannot_be_interpreted_as_absence(self):
+        name='smelter-tests-'+'a'*32
+        with patch('sandbox.run',side_effect=[
+                SimpleNamespace(returncode=1,stdout='',stderr='No such host'),
+                SimpleNamespace(returncode=1,stdout='',stderr='Docker is unavailable')]) as runner:
+            self.assertFalse(_remove('docker',name))
+            self.assertEqual(runner.call_count,2)
+
+    def test_nonempty_or_failed_absence_probe_keeps_cleanup_unconfirmed(self):
+        name='smelter-tests-'+'a'*32
+        for probe in (SimpleNamespace(returncode=0,stdout='b'*64,stderr=''),
+                      SimpleNamespace(returncode=1,stdout='',stderr='permission denied')):
+            with self.subTest(probe=probe), patch('sandbox.run',side_effect=[
+                    SimpleNamespace(returncode=1,stdout='',stderr='error: no such object: '+name),probe]):
+                self.assertFalse(_remove('docker',name))
+
+    def test_auto_removal_race_requires_a_successful_absence_probe(self):
+        name='smelter-tests-'+'a'*32
+        for remains in (False,True):
+            with self.subTest(remains=remains), patch('sandbox.run',side_effect=[
+                    SimpleNamespace(returncode=0,stdout=json.dumps({'smelter.owner':name})),
+                    SimpleNamespace(returncode=1,stderr='removal already in progress'),
+                    SimpleNamespace(returncode=0,stdout='b'*64 if remains else '')]) as runner:
+                self.assertEqual(_remove('docker',name),not remains)
+                self.assertEqual(runner.call_args_list[1].args[0],['docker','rm','--force',name])
+
 
 if __name__=='__main__':unittest.main()
