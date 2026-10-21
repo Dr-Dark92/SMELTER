@@ -7,7 +7,7 @@ const SmelterAccess = (() => {
     const permissions=doc.getElementById('pythonTools');permissions.open=true;
     const taskPanel=surface.task;
     const taskNote=doc.createElement('p');taskNote.textContent='Select a subset of registered access for the next Send. Skills cannot expand permissions. OpenCode uses a managed container and local-model relay; arbitrary external MCP remains blocked.';
-    taskPanel.prepend(taskNote);
+    const effectiveContext=doc.createElement('p');effectiveContext.className='effective-task-context';taskPanel.prepend(taskNote,effectiveContext);
     const agentAccess=doc.createElement('div');agentAccess.id='openCodeTaskAccess';
     const agentHeading=doc.createElement('h4');agentHeading.textContent='Confined OpenCode · read-only';agentAccess.append(agentHeading);
     const check=doc.getElementById('opencodeServerCheck'),connection=doc.getElementById('opencodeServerStatus');
@@ -23,7 +23,8 @@ const SmelterAccess = (() => {
       if(doc.getElementById('approveRea').checked)names.push('REA');
       if(doc.getElementById('approveFrontendWorkspace').checked)names.push('V2 CSS/tests/preview');
       if(doc.querySelector('#modelInspectionGrants input:checked'))names.push('selected GLB metadata');
-      summary.textContent=direct?'Ollama · '+(policy?.model||'loading model…')+' · ctx '+(policy?.configuration?.runtime.context_tokens||'?')+' / output '+(policy?.configuration?.runtime.max_output_tokens||'?')+' / '+(policy?.configuration?.runtime.timeout_seconds||'?')+'s · '+(names.join(', ')||'no file tools selected'):'OpenCode · confined read-only workspace';
+      const detailedSummary=direct?'Ollama · '+(policy?.model||'loading model…')+' · ctx '+(policy?.configuration?.runtime.context_tokens||'?')+' / output '+(policy?.configuration?.runtime.max_output_tokens||'?')+' / '+(policy?.configuration?.runtime.timeout_seconds||'?')+'s · '+(names.join(', ')||'no file tools selected'):'OpenCode · confined read-only workspace';
+      summary.textContent=direct?'Direct chat · '+(names.join(', ')||'No tools approved'):'OpenCode · Read-only';summary.title=detailedSummary;effectiveContext.textContent=detailedSummary;
       doc.getElementById('chatinput').placeholder=direct?'Message the selected local model':'Request a read-only source inspection';
     }
     function applyContext(report){

@@ -2,6 +2,7 @@ name: SMELTER offline verification
 on:
   push:
     branches: [SMELTERV1, codex/uiux-overhaul-20261021]
+    paths-ignore: ['docs/**', 'design-system/**', 'README.md', 'CHANGELOG.md']
   pull_request:
     branches: [SMELTERV1]
 permissions:
@@ -72,6 +73,8 @@ jobs:
           echo "SMELTER_TEST_PLAYWRIGHT=$RUNNER_TEMP/smelter-browser/node_modules/playwright" >> "$GITHUB_ENV"
       - name: Verify real UI and GLB lifecycle without inference
         run: node tools/analysis/check_workbench_browser.mjs
+      - name: Build pinned source relationships
+        run: python tools/analysis/ci_graph_snapshot.py --emit-base64
       - name: Emit fixture screenshots for visual review
         if: always()
         shell: python

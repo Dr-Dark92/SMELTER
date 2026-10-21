@@ -37,7 +37,7 @@ function initShell(){
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('textarea');input.rows=3;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  const send=document.createElement('button');send.textContent='Send';
- const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · Enter to send · Shift+Enter for a new line';
+ const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · local workspace';
  const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;
  const reconnect=document.createElement('button');reconnect.type='button';reconnect.textContent='Reconnect task';reconnect.hidden=true;reconnect.onclick=()=>resumeJob();
  const jobMessage=job=>{const text=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':job.state==='partial'?'Partially completed · '+job.error:job.state==='interrupted'?'Interrupted · '+job.error:job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':'Request failed: '+job.error;return text+(job.persistence_pending?' · '+job.persistence_error+' Polling or the next admission retries metadata only.':'')};
@@ -95,7 +95,7 @@ function initShell(){
  settings.activate('taskAccessPanel');
  shell.append(left,center);
  const skillNotice=document.createElement('div');skillNotice.id='skillNotice';skillNotice.hidden=true;skillNotice.setAttribute('role','status');
- const skillNoticeText=document.createElement('span');const skillReview=document.createElement('button');skillReview.textContent='Review skills';const dismissNotice=document.createElement('button');dismissNotice.textContent='Dismiss';skillNotice.append(skillNoticeText,skillReview,dismissNotice);main.prepend(skillNotice);
+ const skillNoticeText=document.createElement('span');skillNoticeText.id='skillNoticeText';const skillReview=document.createElement('button');skillReview.textContent='Review skills';const dismissNotice=document.createElement('button');dismissNotice.textContent='Dismiss';skillNotice.append(skillNoticeText,skillReview,dismissNotice);main.prepend(skillNotice);
  const chatElements=[title,log,engineLabel,requestStatus,composer];
  window.showChatWorkspace=()=>chatElements.forEach(x=>x.hidden=false);
  const showSkills=()=>{settings.open();document.getElementById('skillsManagerButton')?.click()};
@@ -104,7 +104,7 @@ function initShell(){
  skillReview.onclick=showSkills;
  let dismissedRevision=null,lastSkillsData=null,skillsPolling=false;
  dismissNotice.onclick=()=>{dismissedRevision=lastSkillsData?.revision;skillNotice.hidden=true};
- const refreshSkillNotice=async()=>{if(skillsPolling||document.hidden)return;skillsPolling=true;try{const data=await api('/api/skills/status');lastSkillsData=data;skillNoticeText.textContent=data.changes.length+' skill changes detected · review before restart. ';skillNotice.hidden=!data.changes.length||dismissedRevision===data.revision;}catch(e){skillNoticeText.title='Skill discovery unavailable: '+e.message}finally{skillsPolling=false}};
+ const refreshSkillNotice=async()=>{if(skillsPolling||document.hidden)return;skillsPolling=true;try{const data=await api('/api/skills/status');lastSkillsData=data;skillNoticeText.textContent=data.changes.length+' skill '+(data.changes.length===1?'change':'changes')+' · review before restart. ';skillNotice.hidden=!data.changes.length||dismissedRevision===data.revision;}catch(e){skillNoticeText.title='Skill discovery unavailable: '+e.message}finally{skillsPolling=false}};
  setInterval(refreshSkillNotice,15000);refreshSkillNotice();
  const runtimePanel=document.createElement('section');runtimePanel.className='panel';runtimePanel.id='runtimePanel';
  const runtimeNav=settings.addPanel('runtimePanel','Chat runtime',runtimePanel,'AI & runtime');
@@ -198,7 +198,7 @@ async function openChat(id,before=null){
  if(chat.has_older){const older=document.createElement('button');older.textContent='Load older messages';older.onclick=()=>openChat(id,chat.older_cursor);log.append(older)}if(before){const latest=document.createElement('button');latest.textContent='Return to latest messages';latest.onclick=()=>openChat(id);log.append(latest)}
  for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?(msg.execution?.engine==='opencode'?'SMELTER · OpenCode response':'SMELTER · AI response'):'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
- if(!chat.messages.length)window.showEmptyConversation?.();log.scrollTop=log.scrollHeight;
+ if(!chat.messages.length){window.showEmptyConversation?.();log.scrollTop=0}else log.scrollTop=log.scrollHeight;
  }catch(e){SmelterWorkbench.notify(e.message)}
 }
 initShell();

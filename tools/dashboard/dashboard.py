@@ -188,6 +188,18 @@ dialog::backdrop{background:#030810c9;backdrop-filter:blur(4px)}.settings-header
  button{min-height:44px}.chat-action{min-width:32px;min-height:36px}.copy-button{min-height:32px}.attachment-add{min-width:44px;height:44px}.history-row{grid-template-columns:minmax(0,1fr) 36px 36px}.empty-mark{width:52px;height:52px;margin-bottom:14px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Content-first refinements after desktop/mobile screenshot review. */
+.workbench-empty{flex-shrink:0;padding:20px 12px}.empty-mark{width:48px;height:48px;margin-bottom:14px;border-radius:12px}.empty-mark .ui-icon{width:28px;height:28px}
+.workbench-empty h2{font-size:28px}.workbench-empty>p:not(.eyebrow){font-size:14px;margin-bottom:16px}.starter-grid{margin-top:22px}.starter-card{padding:16px;gap:8px}.workbench-empty .empty-boundary{margin-top:18px;font-size:12px}
+#chatinput{height:84px}#skillNotice{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#skillNoticeText{flex:1;min-width:130px}#skillNotice button{margin:0}
+.effective-task-context{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:#0e1721;color:var(--muted)}
+@media(max-width:800px){
+ #chatinput{height:72px;min-height:64px}#composer>.composer-engine{display:flex;align-items:center;gap:8px}#composer>.composer-engine select{flex:1;min-width:0}
+ .conversation-caption{display:none}.conversation-heading{padding:14px 0 8px}.task-status{font-size:12px;margin:6px 2px}.workbench-empty{padding:12px 4px}
+ #skillNotice{font-size:11px;padding:7px 10px;gap:6px}#skillNoticeText{min-width:100px}#skillNotice button{font-size:11px;padding:4px 8px;min-height:34px}
+ .resource-grid{padding-bottom:6px}#sysfooter{padding-bottom:max(8px,env(safe-area-inset-bottom))}.workbench-empty h2{font-size:24px}
+}
 </style><main><h1>SMELTER</h1><p>V1.7 · Scoped local workbench</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>

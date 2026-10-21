@@ -1,5 +1,6 @@
 /* Workbench presentation and accessible controls; no filesystem or model authority. */
 const SmelterWorkbench = (() => {
+  let resourcePreference=null, lastResources=null;
   const paths = {
     forge:'M4 5h16v4H4z M7 9v5l5 6 5-6V9 M12 3v2',
     menu:'M4 6h16 M4 12h16 M4 18h16',
@@ -30,7 +31,7 @@ const SmelterWorkbench = (() => {
     log.replaceChildren();const box=doc.createElement('section');box.className='workbench-empty';
     const mark=doc.createElement('div');mark.className='empty-mark';mark.append(icon('forge',doc));
     const eyebrow=doc.createElement('p');eyebrow.className='eyebrow';eyebrow.textContent='LOCAL AI WORKBENCH';
-    const heading=doc.createElement('h2');heading.textContent=hasConversation?'Ready when you are.':'Make room for the next idea.';
+    const heading=doc.createElement('h2');heading.textContent=hasConversation?'Conversation ready.':'Start a conversation.';
     const copy=doc.createElement('p');copy.textContent=hasConversation?'Write a message or attach a model. Choose tool access before asking the AI to work on files.':'Create a titled conversation to inspect assets, explore ideas and keep the evidence together.';
     box.append(mark,eyebrow,heading,copy);
     if(!hasConversation){const start=doc.createElement('button');start.className='primary-button icon-label-button';start.append(icon('plus',doc),doc.createTextNode('Create conversation'));start.onclick=onNew;box.append(start)}
@@ -57,8 +58,9 @@ const SmelterWorkbench = (() => {
     scrim.onclick=closeHistory;
     const updateMenu=()=>{menu.disabled=shell.hidden;if(shell.hidden)closeHistory()};new MutationObserver(updateMenu).observe(shell,{attributes:true,attributeFilter:['hidden']});updateMenu();
     doc.addEventListener('keydown',event=>{if(event.key==='Escape'&&!settings.dialog.open&&shell.classList.contains('history-open')){closeHistory();menu.focus()}});
+    window.addEventListener('resize',()=>{if(resourcePreference===null&&lastResources)resources(lastResources.status,lastResources.settings,doc)});
     left.addEventListener('click',event=>{if(event.target.closest('.chat-open'))closeHistory()});
-    newChat.addEventListener('click',closeHistory);labelButton(newChat,'plus',doc);
+    newChat.addEventListener('click',closeHistory);newChat.textContent='New chat';labelButton(newChat,'plus',doc);
     left.querySelector('h2').textContent='Conversations';
     const search=doc.getElementById('chatSearch'),searchLabel=doc.createElement('label');searchLabel.htmlFor='chatSearch';searchLabel.className='field-caption';searchLabel.textContent='Find a conversation';search.before(searchLabel);
     const footer=doc.createElement('p');footer.className='sidebar-note';footer.textContent='Local conversations. Explicit access. Recorded results.';left.append(footer);
@@ -87,9 +89,10 @@ const SmelterWorkbench = (() => {
   }
   function resources(status,settings,doc=document) {
     const host=doc.getElementById('sysfooter');if(!host)return;
-    const expanded=host.querySelector('details')?.open ?? matchMedia('(min-width:900px)').matches;
+    lastResources={status,settings};
+    const expanded=resourcePreference ?? matchMedia('(min-width:900px)').matches;
     const details=doc.createElement('details');details.className='resource-details';details.open=expanded;
-    const summary=doc.createElement('summary');summary.textContent='Host resources · DB '+status.database.status;
+    const summary=doc.createElement('summary');summary.textContent='Host resources · DB '+status.database.status;summary.onclick=()=>{resourcePreference=!details.open};
     const list=doc.createElement('div');list.className='resource-grid';
     const gb=n=>Number.isFinite(n)?(n/1073741824).toFixed(1)+' GiB':'unavailable';
     for(const [label,value] of [

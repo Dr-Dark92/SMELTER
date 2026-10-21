@@ -390,5 +390,26 @@
     "type": "runtime",
     "confidence": "manual-source-review",
     "evidence": "Authenticated GET dispatches operator directory navigation; not a registered model tool"
+  },
+  {
+    "source": "tools/dashboard/dashboard_shell.js",
+    "target": "tools/dashboard/workbench_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Mounts the workbench presentation, empty state and host-resource summaries without adding tool authority"
+  },
+  {
+    "source": "tools/dashboard/workbench_ui.js",
+    "target": "tools/dashboard/settings_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Presentation shortcuts route to the single settings centre; task permissions remain in their existing controller"
+  },
+  {
+    "source": "tools/dashboard/access_ui.js",
+    "target": "tools/dashboard/workbench_ui.js",
+    "type": "runtime",
+    "confidence": "manual-source-review",
+    "evidence": "Applied configuration refreshes the configured-model chip and keeps full next-task context in Settings"
   }
 ]
