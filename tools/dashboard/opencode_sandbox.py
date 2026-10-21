@@ -245,7 +245,11 @@ class ManagedClient:
         record_owner(self.folder,self.name,self.image,'opencode',finished=True)
         self.cleanup_confirmed=_remove(self.docker,self.name)
         if self.thread and self.thread is not threading.current_thread():
-            self.thread.join(timeout=15)
+            # This runs in the task worker, not the Stop HTTP handler. A host
+            # MCP operation already admitted before Stop has its own 120s
+            # transport bound; retain its final receipt before persistence.
+            active=bool(getattr(self,'bridge',None) and self.bridge.active.is_set())
+            self.thread.join(timeout=150 if active else 15)
             if self.thread.is_alive():self.cleanup_confirmed=False
         import shutil
         if self.cleanup_confirmed:shutil.rmtree(self.folder,ignore_errors=True)

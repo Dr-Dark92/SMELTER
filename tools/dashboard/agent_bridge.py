@@ -25,6 +25,8 @@ class AgentBridge:
                                        self.session.grants.get('rea_analysis', False))
         self.control = control
         self.lock = threading.Lock()
+        self.state_lock = threading.Lock()
+        self.active = threading.Event()
         self.closed = False
         self.tools = [{'name': item['function']['name'],
                        'description': item['function']['description'],
@@ -60,24 +62,27 @@ class AgentBridge:
     def call(self, name, arguments):
         """Called serially by the host relay, never with model-supplied grants."""
         with self.lock:
-            if self.closed:
-                raise ValueError('Agent bridge is closed')
-            if self.control:
-                self.control.check()
-                self.control.file_activity = self.session.file_activity
-            result = self.session.execute({'function': {'name': name, 'arguments': arguments}})
-            if self.control:
-                with self.control.lock:
-                    self.control.tool_activity = list(self.session.events)
-            envelope = {'tool_result': result,
-                        'audit_path': str(self.session.audit_path) if self.session.audit_path else None}
-            return {'content': [{'type': 'text', 'text': json.dumps(envelope)}],
-                    'structuredContent': envelope,
-                    'isError': result.get('status') in
-                    {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed'}}
+            with self.state_lock:
+                if self.closed:
+                    raise ValueError('Agent bridge is closed')
+                if self.control:self.control.check()
+                self.active.set()
+            try:
+                if self.control:self.control.file_activity = self.session.file_activity
+                result = self.session.execute({'function': {'name': name, 'arguments': arguments}})
+                if self.control:
+                    with self.control.lock:
+                        self.control.tool_activity = list(self.session.events)
+                envelope = {'tool_result': result,
+                            'audit_path': str(self.session.audit_path) if self.session.audit_path else None}
+                return {'content': [{'type': 'text', 'text': json.dumps(envelope)}],
+                        'structuredContent': envelope,
+                        'isError': result.get('status') in
+                        {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed'}}
+            finally:self.active.clear()
 
     def close(self):
         # Closing never waits for a fixed, already-running tool while holding
         # the UI cancellation path. Subsequent calls are rejected.
-        self.closed = True
+        with self.state_lock:self.closed = True
 

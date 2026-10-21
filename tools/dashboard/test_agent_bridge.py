@@ -1,6 +1,7 @@
 import hashlib
 import json
 import tempfile
+import threading
 import io
 import unittest
 from pathlib import Path
@@ -66,6 +67,24 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(bridge.session.events,[])
         bridge.close()
         with self.assertRaisesRegex(ValueError,'closed'):bridge.call('inventory_directory',{})
+
+    def test_close_admits_no_further_calls_and_retains_inflight_receipt(self):
+        bridge=self.bridge(grants={'write_diagnostics':True})
+        entered,release=threading.Event(),threading.Event()
+        def invoke(*args):
+            entered.set()
+            if not release.wait(5):raise AssertionError('test release timed out')
+            return {'status':'written','path':'fixture','bytes':1,'sha256':'fixture'}
+        worker=threading.Thread(target=lambda:bridge.call('write_diagnostic_markdown',{'filename':'fixture.md','content':'x'}))
+        with patch('mcp_connections.call',side_effect=invoke):
+            worker.start()
+            try:
+                self.assertTrue(entered.wait(2));self.assertTrue(bridge.active.is_set())
+                bridge.close()
+            finally:release.set();worker.join(timeout=5)
+        self.assertFalse(worker.is_alive());self.assertFalse(bridge.active.is_set())
+        self.assertEqual(bridge.session.events[-1]['result']['status'],'written')
+        with self.assertRaisesRegex(ValueError,'closed'):bridge.call('write_diagnostic_markdown',{})
 
     def test_unknown_skill_is_rejected_during_job_admission(self):
         with patch('threading.Thread') as thread,self.assertRaises(ValueError):
