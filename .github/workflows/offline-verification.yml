@@ -49,6 +49,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Read pinned UI UX Pro Max reference
+        uses: actions/checkout@v4
+        with:
+          repository: nextlevelbuilder/ui-ux-pro-max-skill
+          ref: 56ea9cf174ed86786187daa9de0e6247cb0747e4
+          path: .smelter/design-reference
+          sparse-checkout: .claude/skills/ui-ux-pro-max
+          persist-credentials: false
+      - name: Generate and record the design recommendation
+        shell: bash
+        run: |
+          mkdir -p .smelter/ui-checks
+          python .smelter/design-reference/.claude/skills/ui-ux-pro-max/scripts/search.py "developer tools dashboard dark" --design-system --variance 4 --motion 1 --density 8 -p SMELTER --json > .smelter/ui-checks/design-system.json
+          python -c "import json;from pathlib import Path;print('SMELTER_DESIGN|'+json.dumps(json.loads(Path('.smelter/ui-checks/design-system.json').read_text())))"
       - name: Install explicit browser test dependencies
         shell: bash
         run: |
@@ -58,6 +72,16 @@ jobs:
           echo "SMELTER_TEST_PLAYWRIGHT=$RUNNER_TEMP/smelter-browser/node_modules/playwright" >> "$GITHUB_ENV"
       - name: Verify real UI and GLB lifecycle without inference
         run: node tools/analysis/check_workbench_browser.mjs
+      - name: Emit fixture screenshots for visual review
+        if: always()
+        shell: python
+        run: |
+          import base64
+          from pathlib import Path
+          for name in ('workbench-desktop.png', 'settings-locations-desktop.png', 'chat-375.png', 'failure.png'):
+              path = Path('.smelter/ui-checks') / name
+              if path.is_file():
+                  print('SMELTER_PREVIEW|' + name + '|' + base64.b64encode(path.read_bytes()).decode())
       - uses: actions/upload-artifact@v4
         if: always()
         with:
