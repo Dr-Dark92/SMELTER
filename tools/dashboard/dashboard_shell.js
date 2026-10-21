@@ -39,6 +39,8 @@ function initShell(){
  const send=document.createElement('button');send.textContent='Send';
  const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · Enter to send · Shift+Enter for a new line';
  const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;
+ const reconnect=document.createElement('button');reconnect.type='button';reconnect.textContent='Reconnect task';reconnect.hidden=true;reconnect.onclick=()=>resumeJob();
+ const jobMessage=job=>{const text=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':job.state==='partial'?'Partially completed · '+job.error:job.state==='interrupted'?'Interrupted · '+job.error:job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':'Request failed: '+job.error;return text+(job.persistence_pending?' · '+job.persistence_error+' Polling or the next admission retries metadata only.':'')};
  const engineLabel=document.createElement('label');engineLabel.textContent='Execution engine ';
  const engineChoice=document.createElement('select');engineChoice.id='chatEngine';engineChoice.setAttribute('aria-label','Execution engine');
  for(const [value,text] of [['ollama','Ollama · direct chat'],['opencode_readonly','OpenCode · confined read-only']]){const option=document.createElement('option');option.value=value;option.textContent=text;engineChoice.append(option)}engineLabel.append(engineChoice);
@@ -61,24 +63,32 @@ function initShell(){
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
  const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;agentApproval.checked=false;
  if(executionEngine==='opencode_readonly'&&attachment)throw Error('OpenCode pilot accepts text only');
- let job=await api('/api/chats','POST',{action:'start',id:conversation,content,configuration_revision:window.smelterTaskConfiguration?.revision,policy_revision:window.smelterTaskPolicyRevision,engine:executionEngine,opencode_approval:approved,opencode_model:document.getElementById('opencodeAgentModel').value,image:attachment,skills:executionEngine==='opencode_readonly'?[]:selectedSkills,auto_skills:executionEngine==='opencode_readonly'?false:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;pending.textContent='You · sent';input.value='';imageInput.value='';
+ let job=await api('/api/chats','POST',{action:'start',id:conversation,content,configuration_revision:window.smelterTaskConfiguration?.revision,policy_revision:window.smelterTaskPolicyRevision,engine:executionEngine,opencode_approval:approved,opencode_model:document.getElementById('opencodeAgentModel').value,image:attachment,skills:executionEngine==='opencode_readonly'?[]:selectedSkills,auto_skills:executionEngine==='opencode_readonly'?false:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;reconnect.hidden=true;pending.textContent='You · sent';input.value='';imageInput.value='';
  try{sessionStorage.setItem('smelterActiveJob',JSON.stringify({id:job.id,conversation}))}catch(e){}
  while(job.state==='running'){showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}showFileActivity(job);showAgentActivity(job);
  currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}
- requestStatus.textContent=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':job.state==='partial'?'Partially completed · '+job.error:'Request failed: '+job.error;
+ requestStatus.textContent=jobMessage(job);
  if(activeChat===conversation)await openChat(conversation);await refreshChats();
- }catch(e){pending.textContent='You · submission/status error';requestStatus.textContent=e.message+(currentJob?' · Request may still be running. Use Stop or reload to reconnect.':'');}
+ }catch(e){pending.textContent='You · submission/status error';requestStatus.textContent=e.message+(currentJob?' · Task status is unknown. Reconnect or use Stop.':'');reconnect.hidden=!currentJob;}
  finally{if(!currentJob){stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;engineChoice.disabled=false;input.focus()}}};
- const resumeJob=async()=>{let saved;try{saved=JSON.parse(sessionStorage.getItem('smelterActiveJob')||'null')}catch(e){return}if(!saved)return;currentJob=saved.id;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;stop.disabled=false;
- try{let job;do{job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob));showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':job.state==='error'?'Request failed: '+job.error:job.state;if(job.state==='running')await new Promise(resolve=>setTimeout(resolve,1000))}while(job.state==='running');await openChat(saved.conversation);await refreshChats();}
- catch(e){requestStatus.textContent=e.message}
- finally{currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false}};
+ const resumeJob=async()=>{
+  let saved;try{saved=JSON.parse(sessionStorage.getItem('smelterActiveJob')||'null')}catch(e){return}if(!saved)return;
+  currentJob=saved.id;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;engineChoice.disabled=true;stop.disabled=false;reconnect.hidden=true;
+  let terminal=false;
+  try{
+   let job;do{job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob));showFileActivity(job);showAgentActivity(job);requestStatus.textContent=jobMessage(job);if(job.state==='running')await new Promise(resolve=>setTimeout(resolve,1000))}while(job.state==='running');
+   terminal=true;await openChat(saved.conversation);await refreshChats();
+  }catch(e){requestStatus.textContent=e.message+(terminal?'':' · Task status is unknown. Reconnect or use Stop.');reconnect.hidden=terminal}
+  finally{
+   if(terminal){currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}stop.disabled=true;send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;engineChoice.disabled=false;reconnect.hidden=true}
+  }
+ };
  window.resumeChatJob=resumeJob;
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
  const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
  const attachModel=document.createElement('button');attachModel.type='button';attachModel.textContent='Attach GLB';attachModel.onclick=()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;modelFile.click()};
  modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
- composer.append(input,imageInput,modelFile,attachModel,send,stop);center.append(title,log,engineLabel,requestStatus,composer);settings.task.append(permissionsBox);
+ composer.append(input,imageInput,modelFile,attachModel,send,stop,reconnect);center.append(title,log,engineLabel,requestStatus,composer);settings.task.append(permissionsBox);
 
  const folders=[
   {name:'AI & Models',items:[[5,'Ollama / Qwen'],[6,'OpenCode']]},

@@ -18,7 +18,6 @@ def catalog_skills(root):
     state = enabled_map(root)
     found = []
     sources = ((root / "skills", "bundled"), (root / ".smelter" / "managed-skills", "managed"), (root/".agents/skills","legacy"), (root/"agents/skills","contract"))
-    seen = set()
     for base, source in sources:
         from python_tools import _plain_path
         try:_plain_path(base)
@@ -28,12 +27,13 @@ def catalog_skills(root):
         for folder in sorted(base.iterdir(), key=lambda p: p.name.casefold()):
             if len(found) >= MAX_SKILLS:
                 break
-            if folder.is_symlink() or not folder.is_dir() or folder.name.startswith(".") or folder.name in seen:
+            if folder.is_symlink() or not folder.is_dir() or folder.name.startswith("."):
                 continue
             manifest = folder / "SKILL.md"
             if manifest.is_symlink() or not manifest.is_file():
                 continue
-            seen.add(folder.name)
+            try:_plain_path(manifest)
+            except ValueError:continue
             size = manifest.stat().st_size
             status = "ready"
             name = folder.name
@@ -59,7 +59,9 @@ def catalog_skills(root):
                 "loaded_into_model": False, "executable": False,
             })
     collections = root / ".smelter" / "managed-skills" / "collections"
-    if collections.is_dir() and not collections.is_symlink():
+    try:_plain_path(collections)
+    except ValueError:collections=None
+    if collections is not None and collections.is_dir() and not collections.is_symlink():
         for group in sorted(collections.iterdir()):
             if group.is_symlink() or not group.is_dir():
                 continue
@@ -71,6 +73,8 @@ def catalog_skills(root):
                 manifest = folder / "SKILL.md"
                 if manifest.is_symlink() or not manifest.is_file():
                     continue
+                try:_plain_path(manifest)
+                except ValueError:continue
                 skill_id = group.name + "/" + folder.name
                 size = manifest.stat().st_size
                 status = "ready" if size <= MAX_SKILL_BYTES else "oversized"
@@ -95,7 +99,7 @@ def catalog_skills(root):
     counts=Counter(skill['id'] for skill in found);unique={}
     for skill in found:
         if counts[skill['id']]>1:
-            skill={**skill,'status':'identity_conflict','enabled':False,'error':'Duplicate skill identity across source locations; review before use'}
+            skill={**skill,'conflicting_sources':sorted(x['source'] for x in found if x['id']==skill['id']),'status':'identity_conflict','enabled':False,'error':'Duplicate skill identity across source locations; review before use'}
         unique.setdefault(skill['id'],skill)
     found=list(unique.values())
     return {"skills":found,"count":len(found),"read_only":True}

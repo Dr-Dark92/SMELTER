@@ -136,7 +136,7 @@ def tests(root,target):
     if not ready['ready']:raise ValueError('Confined tests unavailable: '+ready['reason'])
     folder,code=snapshot(root,target);checks=[]
     operations=[('python_image',['python','-m','unittest','discover','-s','tools/dashboard','-p','test_*.py']),
-                ('node_image',['node','--test','tools/dashboard/test_chat_renderer.js','tools/dashboard/test_session_auth.js','tools/dashboard/test_file_activity.js'])]
+                ('node_image',['node','--test','tools/dashboard/test_chat_renderer.js','tools/dashboard/test_session_auth.js','tools/dashboard/test_file_activity.js','tools/dashboard/test_operations_ui.js'])]
     try:
         for index,(key,command) in enumerate(operations):
             name='smelter-tests-'+uuid4().hex
@@ -145,7 +145,7 @@ def tests(root,target):
                 if key=='python_image':
                     guarded=['python','-c',"import os,sys,threading,runpy; t=threading.Timer(175,lambda:os._exit(124));t.daemon=True;t.start();sys.argv=['unittest','discover','-s','tools/dashboard','-p','test_*.py'];runpy.run_module('unittest',run_name='__main__')"]
                 else:
-                    guarded=['node','-e',"const p=require('node:child_process').spawn(process.execPath,['--test','tools/dashboard/test_chat_renderer.js','tools/dashboard/test_session_auth.js','tools/dashboard/test_file_activity.js'],{stdio:'inherit'});const t=setTimeout(()=>process.exit(124),175000);p.on('exit',code=>{clearTimeout(t);process.exit(code??1)});"]
+                    guarded=['node','-e',"const p=require('node:child_process').spawn(process.execPath,['--test','tools/dashboard/test_chat_renderer.js','tools/dashboard/test_session_auth.js','tools/dashboard/test_file_activity.js','tools/dashboard/test_operations_ui.js'],{stdio:'inherit'});const t=setTimeout(()=>process.exit(124),175000);p.on('exit',code=>{clearTimeout(t);process.exit(code??1)});"]
                 result=run(_flags(ready['docker'],name,code)+['--rm',ready['configured'][key],*guarded],timeout=180,max_output=2*1024*1024)
                 log=result.stdout+result.stderr
                 checks.append({'command':command,'exit_code':result.returncode,'output':log,'sandbox':'docker-no-network','image':ready['configured'][key]})

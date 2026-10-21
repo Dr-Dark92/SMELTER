@@ -55,7 +55,7 @@ Older `test_*` core/bootstrap programs may invoke real models, Blender or Docker
 3. Direct Ollama assembles bounded history/instructions/schemas. Context estimation uses UTF-8 bytes/reserves, not the actual tokenizer. Oversized current work fails explicitly. Saved context/output/timeout values apply without a hidden frontend increase.
 4. ToolSession audits before a fixed registered action. Both adapter restrictions and policy apply. Model text cannot grant tools or add executable names. Output/evidence is bounded, and tool actions followed by model failures retain receipts.
 5. Stop shuts down the owned local-model socket. Active registered tools finish or hit their own bound; Stop does not roll back completed writes. Each engine finalizes transcript/execution atomically under the cancellation lock. Committed completion wins over a later Stop.
-6. Job outcome is saved. Restart recovers dead/reused-PID running records as **interrupted**, without replay. Live chunks/cards are memory-only; saved transcript and audits are the durable evidence.
+6. Admitted job outcome commits in the same transaction as its transcript/execution. Pre-finalization failures use a separate journal save; persistence warnings are distinct from task outcomes and polling/admission retry metadata only. Restart recovers dead/reused-PID running records as **interrupted**, without replay. A transient browser status failure retains its active task ID and Stop control; explicit Reconnect task polls that ID without resending the prompt. Live chunks/cards are memory-only; saved transcript and audits are the durable evidence.
 
 Execution records include admitted configuration, policy revision, engine, normalized outcome/error/cancelled state and tool results. A successful model explanation is not independent fact-checking of the filesystem.
 
@@ -164,3 +164,7 @@ See README for offline suites and the repair handover for counts, image setup an
 | DB corruption concern | Explicit integrity operation; cheap readiness does not run quick_check on every read |
 
 Do not publish raw audits, databases, credentials, launch tokens or game assets. AI narrative, saved file bytes, successful tool receipts and independent content verification are different claims.
+
+## Offline office harness
+
+`python tools/analysis/offline_gui_fixture.py` serves the real browser UI with synthetic replies, disposable state and stubbed services on loopback 18771. It never calls a live model. See [office workflow](OFFICE_GUI_WORKFLOW.md). Retention plans now remain disabled after consumption/failure/expiry and are invalidated when age changes.

@@ -3,7 +3,7 @@ const SmelterOperations=(()=>{
  function mount(api,doc=document){
   const settings=SmelterSettings.current;
   function panel(id,label){const section=doc.createElement('section');const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);const button=settings.addPanel(id,label,section);return {section,button}}
-  function button(label,action){const b=doc.createElement('button');b.textContent=label;b.onclick=async()=>{b.disabled=true;try{await action()}finally{b.disabled=false}};return b}
+  function button(label,action,enabled=()=>true){const b=doc.createElement('button');b.textContent=label;b.onclick=async()=>{b.disabled=true;try{await action()}finally{b.disabled=!enabled()}};return b}
   function output(parent){const pre=doc.createElement('pre');pre.style.whiteSpace='pre-wrap';pre.style.overflowWrap='anywhere';pre.setAttribute('role','status');parent.append(pre);return pre}
   const sandbox=panel('sandboxPanel','Confined execution');
   const info=doc.createElement('p');info.textContent='Frontend tests and previews require a local Docker Engine 28+ in Linux-container mode and preloaded Python/Node images. No images are downloaded by SMELTER. There is no host-execution fallback. OpenCode requires its separate reviewed image; arbitrary external MCP remains blocked.';sandbox.section.append(info);
@@ -16,11 +16,27 @@ const SmelterOperations=(()=>{
   const maintenance=panel('maintenancePanel','Storage, recovery & backup');
   const note=doc.createElement('p');note.textContent='Review durable task records, artifact quotas and retention before deleting anything. Backups include a consistent SQLite snapshot and verified application state. Restore is offline and refuses existing destinations.';maintenance.section.append(note);
   const stateOut=output(maintenance.section);let retention=null;
-  const loadMaintenance=async()=>{try{const result=await api('/api/maintenance');stateOut.textContent=JSON.stringify(result,null,2)}catch(error){stateOut.textContent=error.message}};
+  const loadMaintenance=async()=>{retention=null;apply.disabled=true;try{const result=await api('/api/maintenance');stateOut.textContent=JSON.stringify(result,null,2)}catch(error){stateOut.textContent=error.message}};
   const directory=doc.createElement('input');directory.placeholder='New absolute backup directory outside checkout/database';directory.style.width='100%';directory.setAttribute('aria-label','New backup directory');maintenance.section.append(directory);
   const age=doc.createElement('input');age.type='number';age.min='1';age.max='3650';age.value='30';age.setAttribute('aria-label','Retention age in days');maintenance.section.append(age);
-  const apply=button('Apply reviewed retention plan',async()=>{if(!retention||!confirm('Delete the '+retention.files+' unchanged files in this reviewed plan?'))return;try{const result=await api('/api/maintenance','POST',{action:'prune',plan_id:retention.plan_id,approval:true});stateOut.textContent=JSON.stringify(result,null,2);retention=null;apply.disabled=true}catch(error){stateOut.textContent=error.message}});apply.disabled=true;
-  maintenance.section.append(button('Refresh storage and task records',loadMaintenance),button('Reconcile interrupted containers',async()=>{if(!confirm('Clean up owned containers whose task/process has ended?'))return;try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'reconcile_containers',approval:true}),null,2)}catch(error){stateOut.textContent=error.message}}),button('Check database integrity',async()=>{try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'integrity'}),null,2)}catch(error){stateOut.textContent=error.message}}),button('Preview retention plan',async()=>{try{retention=await api('/api/maintenance','POST',{action:'plan',days:age.valueAsNumber});stateOut.textContent=JSON.stringify(retention,null,2);apply.disabled=!retention.files}catch(error){stateOut.textContent=error.message}}),apply,button('Create verified backup',async()=>{if(!confirm('Create a new backup at '+directory.value+'?'))return;try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'backup',directory:directory.value,approval:true}),null,2)}catch(error){stateOut.textContent=error.message}}));
+  const canApply=()=>Boolean(retention&&retention.files>0&&Date.now()<retention.expiresAt);
+  const apply=button('Apply reviewed retention plan',async()=>{
+   if(!canApply()){retention=null;stateOut.textContent='Retention plan expired or unavailable. Preview a new plan.';return}
+   if(!confirm('Delete the '+retention.files+' unchanged files in this reviewed plan?'))return;
+   const reviewed=retention;retention=null;
+   try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'prune',plan_id:reviewed.plan_id,approval:true}),null,2)}catch(error){stateOut.textContent=error.message+' Preview a new plan before retrying.'}
+  },canApply);apply.disabled=true;
+  age.oninput=()=>{retention=null;apply.disabled=true};
+  const preview=async()=>{
+   retention=null;apply.disabled=true;
+   if(!Number.isInteger(age.valueAsNumber)||age.valueAsNumber<1||age.valueAsNumber>3650){stateOut.textContent='Choose a whole retention age from 1 to 3650 days.';return}
+   try{
+    const plan=await api('/api/maintenance','POST',{action:'plan',days:age.valueAsNumber});
+    retention={...plan,expiresAt:Date.now()+plan.expires_in_seconds*1000};stateOut.textContent=JSON.stringify(plan,null,2);apply.disabled=!canApply();
+    setTimeout(()=>{if(retention?.plan_id===plan.plan_id){retention=null;apply.disabled=true;stateOut.textContent='Retention plan expired. Preview a new plan.'}},plan.expires_in_seconds*1000);
+   }catch(error){stateOut.textContent=error.message}
+  };
+  maintenance.section.append(button('Refresh storage and task records',loadMaintenance),button('Reconcile interrupted containers',async()=>{if(!confirm('Clean up owned containers whose task/process has ended?'))return;try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'reconcile_containers',approval:true}),null,2)}catch(error){stateOut.textContent=error.message}}),button('Check database integrity',async()=>{try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'integrity'}),null,2)}catch(error){stateOut.textContent=error.message}}),button('Preview retention plan',preview),apply,button('Create verified backup',async()=>{if(!confirm('Create a new backup at '+directory.value+'?'))return;try{stateOut.textContent=JSON.stringify(await api('/api/maintenance','POST',{action:'backup',directory:directory.value,approval:true}),null,2)}catch(error){stateOut.textContent=error.message}}));
   maintenance.button.onclick=()=>{settings.activate('maintenancePanel');loadMaintenance()};
   const capabilities=panel('capabilitiesPanel','Capabilities & project checks');const capOut=output(capabilities.section);
   capabilities.button.onclick=async()=>{settings.activate('capabilitiesPanel');try{capOut.textContent=JSON.stringify(await api('/api/capabilities'),null,2)}catch(error){capOut.textContent=error.message}};

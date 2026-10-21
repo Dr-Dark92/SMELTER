@@ -65,6 +65,9 @@ class Control:
         self.context_budget = None
         self.configuration = None
         self.terminal_result = None
+        self.job_id = None
+        self.admitted_at = None
+        self.journal_committed = False
 
     def check(self):
         if self.cancelled.is_set():
@@ -175,6 +178,7 @@ class Jobs:
         from chats import read_chat
         read_chat(root, data.get('id'))
         from job_store import recover,active
+        self.retry_persistence(root)
         recover(root)
         if active(root):raise ValueError('A recorded task is still owned by a live process; inspect it before starting another')
         prompt = data.get('content')
@@ -206,15 +210,22 @@ class Jobs:
             if any(j['state'] == 'running' for j in self.jobs.values()):
                 raise ValueError('A chat request is already running; finish or stop it first')
             if len(self.jobs) >= 50:
-                del self.jobs[next(iter(self.jobs))]
+                removable=next((jid for jid,old in self.jobs.items() if old['state']!='running' and not old.get('persistence_pending')),None)
+                if removable is None:raise ValueError('Unpersisted task outcomes must be saved before admitting more work')
+                del self.jobs[removable]
             job = {'id': str(uuid4()), 'conversation_id': data['id'], 'state': 'running',
                    'started': time.monotonic(), 'control': Control(), 'error': None, 'engine':engine, 'root':root,'prompt':data['content']}
+            job['control'].job_id=job['id']
+            job['control'].admitted_at=job['started']
             job['control'].access_policy = policy
             job['control'].configuration = effective
             from job_store import admit
             admit(root,{'id':job['id'],'conversation_id':job['conversation_id'],'engine':engine,'state':'running','error':None,'phase':'Admitted','policy_revision':policy.revision,'configuration':effective,'elapsed_seconds':0,'prompt':data['content']})
             self.jobs[job['id']] = job
-        threading.Thread(target=self._run, args=(root, data, job, worker), daemon=True).start()
+        try:threading.Thread(target=self._run, args=(root, data, job, worker), daemon=True).start()
+        except RuntimeError as exc:
+            self._finish(root,job,'error','Task worker could not start: '+str(exc)[:500])
+            raise ValueError('Task worker could not start; no action was executed') from exc
         return self.status(job['id'])
 
     def _run(self, root, data, job, worker):
@@ -237,31 +248,57 @@ class Jobs:
             state, error = ('cancelled', None) if control.cancelled.is_set() else ('error', str(exc)[:1000])
         if control.file_activity is not None:
             control.file_activity.settle(state == 'cancelled')
-        with self.lock:
-            job.update(state=state, error=error, ended=time.monotonic())
-            from job_store import save
-            try:save(root,self.status(job['id']))
-            except (ValueError,OSError,TypeError,sqlite3.Error) as exc:
-                job.update(state='error',error='Task ended but durable job status could not be saved: '+str(exc)[:500])
+        self._finish(root,job,state,error)
 
-    def status(self, jid, root=None):
+    def _finish(self,root,job,state,error):
+        with self.lock:
+            control=job['control']
+            with control.lock:
+                if control.terminal_result is not None:
+                    from task_contract import job_state
+                    state,error=job_state(control.terminal_result),control.terminal_result.get('error')
+                elif not control.completed and control.cancelled.is_set():state,error='cancelled',None
+                control.completed=True
+                control.phase={'done':'Completed','cancelled':'Stopped','partial':'Partially completed','error':'Failed'}[state]
+            job.update(state=state,error=error,ended=time.monotonic(),persistence_pending=False,persistence_error=None)
+            if not job['control'].journal_committed:self._persist(root,job)
+
+    def _persist(self,root,job):
+        from job_store import save
+        try:
+            save(root,self._snapshot(job))
+            job.update(persistence_pending=False,persistence_error=None)
+        except (ValueError,OSError,TypeError,sqlite3.Error) as exc:
+            job.update(persistence_pending=True,persistence_error='Task ended but its job record is not saved: '+str(exc)[:500])
+
+    def retry_persistence(self,root):
+        """Retry metadata only; never rerun a worker, model request or tool action."""
+        from pathlib import Path
+        with self.lock:
+            for job in self.jobs.values():
+                if job.get('persistence_pending') and Path(job['root']).resolve()==Path(root).resolve():self._persist(root,job)
+
+    def _snapshot(self,job):
+        return {k:job[k] for k in ('id','conversation_id','state','error','prompt')} | {
+            'engine':job['engine'],
+            'policy_revision':job['control'].access_policy.revision if job['control'].access_policy else None,
+            'context_budget':job['control'].context_budget,'configuration':job['control'].configuration,
+            'phase':job['control'].phase,'output_text':job['control'].output_text,
+            'tool_activity':job['control'].tool_activity,
+            'files':job['control'].file_activity.snapshot() if job['control'].file_activity is not None else [],
+            'persistence_pending':job.get('persistence_pending',False),'persistence_error':job.get('persistence_error'),
+            'elapsed_seconds':round(job.get('ended',time.monotonic())-job['started'],1)}
+
+    def status(self,jid,root=None):
         with self.lock:
             if jid not in self.jobs:
                 if root is not None:
                     from job_store import read
                     return read(root,jid)
                 raise ValueError('Chat request not found; the server may have restarted')
-            job = self.jobs[jid]
-            return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error','prompt')} | {
-                'engine': job['engine'],
-                'policy_revision': job['control'].access_policy.revision if job['control'].access_policy else None,
-                'context_budget': job['control'].context_budget,
-                'configuration': job['control'].configuration,
-                'phase': job['control'].phase,
-                'output_text': job['control'].output_text,
-                'tool_activity': job['control'].tool_activity,
-                'files': job['control'].file_activity.snapshot() if job['control'].file_activity is not None else [],
-                'elapsed_seconds': round(job.get('ended', time.monotonic()) - job['started'], 1)}
+            job=self.jobs[jid]
+            if job.get('persistence_pending'):self._persist(job['root'],job)
+            return self._snapshot(job)
 
     def cancel(self, jid):
         with self.lock:

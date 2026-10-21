@@ -90,7 +90,7 @@ GitHub shows the graph HTML as source; download it to use the interactive view. 
 python -m unittest discover -s tools/dashboard -p "test_*.py"
 python -m unittest discover -s tools/setup -p "test_*.py"
 python -m unittest discover -s tools/analysis -p "test_*.py"
-node --test tools/dashboard/test_chat_renderer.js tools/dashboard/test_session_auth.js tools/dashboard/test_file_activity.js
+node --test tools/dashboard/test_chat_renderer.js tools/dashboard/test_session_auth.js tools/dashboard/test_file_activity.js tools/dashboard/test_operations_ui.js
 ```
 
 Check each exit code before continuing. Some scripts named `test_*` under `tools/core` and `tools/bootstraps` are opt-in model/Docker/Blender experiments, not ordinary offline unit tests; do not run all repository scripts indiscriminately.
@@ -102,3 +102,7 @@ Do not commit credentials, launch tokens, game binaries, extracted game assets, 
 Settings now includes confined execution, storage/recovery/backup and capabilities/project checks. Tasks keep an admitted model/settings/policy snapshot and durable lifecycle record; interrupted work is reported without replay. Artifact storage has conservative quotas and an explicitly reviewed retention plan. Database integrity checks are operator-triggered; dependency probes have a short timestamped cache.
 
 **Docker is optional for ordinary chat and existing fixed native inspections, but mandatory for frontend tests/preview and managed OpenCode.** There is no automatic image pull or unconfined fallback. Live Docker/Windows execution remains to be validated on the rig. See the [repair handover](docs/REPAIR_STATUS_20261021.md).
+
+## Office GUI work without Qwen
+
+Run `python tools/analysis/offline_gui_fixture.py` from the checkout and open its printed launch URL. It serves the actual GUI with synthetic replies and temporary SQLite/report state on port 18771. No live Ollama/OpenCode/Docker service is used. Ctrl+C removes fixture state. See [office GUI workflow](docs/OFFICE_GUI_WORKFLOW.md) for fish commands and checks.

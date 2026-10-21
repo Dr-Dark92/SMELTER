@@ -104,3 +104,16 @@ def list_jobs(root,limit=50):
 
 def admit(root,payload):
     return save(root,payload,admitting=True)
+
+
+def finalize_in_transaction(conn,jid,terminal,elapsed):
+    """Commit the admitted job outcome with its transcript, without a second write."""
+    from task_contract import job_state
+    row=conn.execute("SELECT payload FROM task_jobs WHERE id=? AND state='running'",(jid,)).fetchone()
+    if not row:raise ValueError('Admitted job is missing or already finalized')
+    payload=json.loads(row[0]);state=job_state(terminal)
+    phase={'done':'Completed','cancelled':'Stopped','partial':'Partially completed','error':'Failed'}[state]
+    payload.update(state=state,error=terminal.get('error'),phase=phase,elapsed_seconds=round(elapsed,1))
+    conn.execute('UPDATE task_jobs SET state=?,payload=?,updated=? WHERE id=?',
+                 (state,json.dumps(payload),time.time(),jid))
+    return phase

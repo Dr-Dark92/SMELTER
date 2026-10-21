@@ -4,6 +4,10 @@ Application repair commit: [`a3e3f854934ed90f36d49478eb336b86dd93948b`](https://
 
 This repair addresses F01–F11 from the review of application commit `c9e541e9e0d53fcaba109170f8e5a201b500340d`. The historical review remains available; it is not the current defect inventory. Source was restored and Git-blob verified against branch head `9ee0f6dbd6c4bd790ef3bf31421f1b6f9573baf3` before editing. User-local files, the Windows rig, game assets and existing V2 were not accessed.
 
+## Office follow-up
+
+See [offline GUI workflow](OFFICE_GUI_WORKFLOW.md) for the later catalog, atomic job-journal, reconnect and retention fixes. Current follow-up verification: 329 dashboard tests (two opt-in skips), 15 JavaScript, 32 setup and four analysis tests; no live model. The initial repair counts below remain historical.
+
 ## Finding disposition
 
 | Finding | Implementation | Verification / limits |
@@ -74,5 +78,5 @@ Check test output/exit codes. The explicit Docker smoke does not build the OpenC
 - Container integration, Docker Desktop mounts, OpenCode image startup/offline SDK behavior and Windows process-job semantics have not run in this environment. They fail closed when prerequisites/checks fail. Container escape resistance is not proven.
 - Preview uses a no-network container, dashboard-owned loopback relay, temporary state and a one-hour lifetime. Relay request/reply limits are 2 MiB/6 MiB; this is a small-fixture UI preview, not a large-asset transfer service. No host preview database is mounted.
 - Backup scope is SQLite, skill-state and **managed** manifests, GLBs, reports, audits and REA evidence. Legacy `.agents`, contract files, source code, installed tools and weights must be preserved/reinstalled separately. Snapshots/containers and running external services are not restored. There is no automatic action replay.
-- Full-disk/SQLite failures are surfaced; no system can guarantee durable writes when storage fails. A failed terminal journal update is reported and may require restart/reconciliation after storage repair. Live stream chunks are not crash-durable.
+- Full-disk/SQLite failures are surfaced; no system can guarantee durable writes when storage fails. Transcript and admitted-job outcome now share a transaction. If a worker fails before that transaction, a failed terminal metadata save is reported separately and retried on polling/admission after storage repair, without action replay. Live stream chunks are not crash-durable.
 - Older CLI/core scaffolds and compatibility JSON APIs remain explicit/library-only. Unused imports were removed from the active composition root; static no-incoming symbols were not blindly deleted.

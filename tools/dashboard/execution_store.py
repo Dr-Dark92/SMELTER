@@ -1,6 +1,7 @@
 """Atomic transcript/outcome finalization shared by both model engines."""
 import json
 import sqlite3
+import time
 from contextlib import closing,nullcontext
 from chats import _db,EXECUTION_SCHEMA
 from task_contract import outcome
@@ -16,6 +17,9 @@ def finalize(root,conversation_id,prompt,answer,execution,*,control=None,error=N
         terminal=outcome(cancelled,error,partial)
         execution={**execution,'outcome':terminal['status'],'error':terminal['error'],'cancelled':cancelled,
                    'model_text':answer[:-len(receipt)] if receipt else answer}
+        jid=getattr(control,'job_id',None)
+        if jid:execution['job_id']=jid
+        phase=None
         with closing(sqlite3.connect(_db(root),timeout=5)) as conn,conn:
             conn.execute('PRAGMA foreign_keys=ON')
             if not conn.execute('SELECT 1 FROM conversations WHERE id=?',(conversation_id,)).fetchone():raise ValueError('Conversation no longer exists')
@@ -23,5 +27,11 @@ def finalize(root,conversation_id,prompt,answer,execution,*,control=None,error=N
             mid=conn.execute("INSERT INTO messages(conversation_id,role,content) VALUES(?,'assistant',?)",(conversation_id,answer)).lastrowid
             conn.execute(EXECUTION_SCHEMA)
             conn.execute('INSERT INTO message_execution(message_id,payload) VALUES(?,?)',(mid,json.dumps(execution)))
-        if control:control.terminal_result=terminal;control.completed=True
+            if jid:
+                from job_store import finalize_in_transaction
+                phase=finalize_in_transaction(conn,jid,terminal,time.monotonic()-control.admitted_at)
+        if control:
+            control.terminal_result=terminal;control.completed=True
+            control.journal_committed=bool(jid)
+            if phase:control.phase=phase
         return {'reply':answer,'stored':True,**terminal}

@@ -16,11 +16,16 @@ MAX_CONTENT = 48 * 1024
 
 def _paths(root):
     root = Path(root)
+    from python_tools import _plain_path
+    _plain_path(root / '.smelter' / 'skill-state.json')
+    _plain_path(root / '.smelter' / 'managed-skills')
     return root / ".smelter" / "skill-state.json", root / ".smelter" / "managed-skills"
 
 
 def _state(root):
     path, _ = _paths(root)
+    from python_tools import _plain_path
+    _plain_path(path)
     if not path.is_file():
         return {}
     data = json.loads(path.read_text(encoding="utf-8"))

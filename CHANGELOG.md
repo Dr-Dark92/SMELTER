@@ -2,6 +2,15 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Office/offline follow-up — 2026-10-21
+
+- Fixed same-basename skill entries being hidden across namespaced sources; genuine identity collisions are disabled and explained. Hardened linked state/collection paths.
+- Commit admitted job outcome with transcript/execution atomically. Retry failed terminal metadata saves without replaying actions or relabelling committed outcomes. Record worker-start failures.
+- Preserve unknown active tasks across status failures; add explicit Reconnect task and retain Stop until terminal state is observed.
+- Keep consumed/expired/failed retention plans disabled; invalidate plans on age edits and require fresh review after ambiguous deletion failures.
+- Added a temporary offline GUI harness with synthetic replies and isolated disposable state; no live model/container services required.
+- Validation: 329 dashboard tests OK (two opt-in skips), 15 JavaScript tests, 32 setup tests, four analysis tests, desktop/mobile retention/reconnect/Stop fixtures. Live Qwen and Docker tests disabled.
+
 ## V1.7 operational repair — 2026-10-21
 
 Application commit: `a3e3f854934ed90f36d49478eb336b86dd93948b`. Graph follow-up pins that source and records 233 scripts, 1,400 declarations/callbacks, 2,169 static edges and 49 reviewed runtime links.
