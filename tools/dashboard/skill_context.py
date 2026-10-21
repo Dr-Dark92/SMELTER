@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import hashlib
 from skills_catalog import catalog_skills
 
 MAX_SELECTED = 3
@@ -45,3 +46,25 @@ def build_skill_context(root, selected):
     if len(context) > MAX_CONTEXT_CHARS:
         raise ValueError("Selected skills exceed context budget")
     return context
+
+
+def selected_context(root, prompt, selected=None, automatic=False, rea=False):
+    """Resolve once for either engine; record the exact loaded instruction bytes."""
+    if type(automatic) is not bool:
+        raise ValueError('Invalid automatic skill setting')
+    if selected is not None and not isinstance(selected, list):
+        raise ValueError('Skills must be a list')
+    from skill_router import route_skills
+    active = route_skills(root, prompt) if automatic and not selected else list(selected or [])
+    if rea:
+        from python_tools import REA_SKILL_ID
+        if REA_SKILL_ID not in active:
+            active.append(REA_SKILL_ID)
+    text = build_skill_context(root, active)
+    snapshots = []
+    for sid in active:
+        reference = build_skill_context(root, [sid])
+        content = reference[len('Skill: ' + sid + '\n'):]
+        snapshots.append({'id': sid, 'sha256': hashlib.sha256(content.encode('utf-8')).hexdigest(),
+                          'hash_scope': 'loaded UTF-8 instruction text'})
+    return {'selected': active, 'text': text, 'snapshots': snapshots}

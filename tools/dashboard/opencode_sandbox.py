@@ -31,6 +31,7 @@ const proxy=http.createServer((req,res)=>{
 });
 proxy.listen(11434,'127.0.0.1',()=>{
  const config={provider:{local:{npm:'@ai-sdk/openai-compatible',name:'SMELTER confined local model',options:{baseURL:'http://127.0.0.1:11434/v1',apiKey:'local'},models:{[process.env.SMELTER_MODEL]:{name:process.env.SMELTER_MODEL}}}}};
+ if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:10000}};
  const child=cp.spawn('/usr/local/bin/opencode',['serve','--pure','--hostname','127.0.0.1','--port','4096'],{cwd:'/workspace',env:{...process.env,OPENCODE_CONFIG_CONTENT:JSON.stringify(config),OPENCODE_SERVER_PASSWORD:process.env.SMELTER_AGENT_PASSWORD},stdio:'inherit'});
  child.on('error',()=>process.exit(1));child.on('exit',code=>process.exit(code??1));
  setTimeout(()=>process.exit(124),(Number(process.env.SMELTER_TIMEOUT)+30)*1000).unref();
@@ -44,7 +45,7 @@ QUEUE=r'''
 const fs=require('node:fs'),dir='/run/model-queue';let result=null;if(fs.existsSync(dir)){for(const name of fs.readdirSync(dir).slice(0,128)){if(!/^[a-f0-9-]{36}\.request$/.test(name))continue;const path=dir+'/'+name;if(fs.statSync(path).size>3*1024*1024)process.exit(2);result=JSON.parse(fs.readFileSync(path));fs.unlinkSync(path);break}}console.log(JSON.stringify(result));
 '''
 RESPOND=r'''
-const fs=require('node:fs');let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const value=JSON.parse(input);if(!/^[a-f0-9-]{36}$/.test(value.id))process.exit(2);fs.writeFileSync('/run/model-queue/'+value.id+'.response',JSON.stringify(value.response),{flag:'wx'})});
+const fs=require('node:fs');let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const value=JSON.parse(input);if(!/^[a-f0-9-]{36}$/.test(value.id))process.exit(2);const output='/run/model-queue/'+value.id+'.response',pending=output+'.pending';fs.writeFileSync(pending,JSON.stringify(value.response),{flag:'wx'});fs.renameSync(pending,output)});
 '''
 
 
@@ -52,7 +53,7 @@ class ManagedClient:
     expected_directory='/workspace'
     confined=True
 
-    def __init__(self,root,policy,configuration,control=None,allow_inference=False):
+    def __init__(self,root,policy,configuration,control=None,allow_inference=False,bridge=None):
         import secrets
         import shutil
         ready=status(root,operation='opencode')
@@ -63,9 +64,20 @@ class ManagedClient:
         with using(policy):self.folder,self.code=snapshot(root,self.host_directory)
         self.docker=ready['docker'];self.name='smelter-opencode-'+__import__('uuid').uuid4().hex
         self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference
+        self.bridge=bridge
         self.password=secrets.token_urlsafe(32);self.stop_event=threading.Event();self.thread=None;self.model_socket=None;self.lock=threading.Lock();self.closed=False;self.error=None;self.model_calls=0;self.relay_calls=0;self.cleanup_confirmed=None
         environment=dict(os.environ);environment.update(SMELTER_MODEL=self.model,SMELTER_TIMEOUT=str(self.settings['timeout_seconds']),SMELTER_AGENT_PASSWORD=self.password)
-        command=_flags(self.docker,self.name,self.code)+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_AGENT_PASSWORD',ready['configured']['opencode_image'],'node','-e',BOOT]
+        flags=_flags(self.docker,self.name,self.code)
+        if bridge and bridge.tools:
+            assets=self.folder/'bridge';assets.mkdir(mode=0o755)
+            proxy=Path(__file__).with_name('opencode_mcp_proxy.mjs').read_bytes()
+            (assets/'proxy.mjs').write_bytes(proxy)
+            (assets/'tools.json').write_text(json.dumps(bridge.manifest(self.settings['timeout_seconds'])),encoding='utf-8')
+            for item in assets.iterdir():item.chmod(0o644)
+            flags+=['--mount','type=bind,source='+str(assets)+',target=/opt/smelter-bridge,readonly']
+            environment['SMELTER_BRIDGE']='1'
+        else:environment['SMELTER_BRIDGE']='0'
+        command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',BOOT]
         self.image=ready['configured']['opencode_image']
         record_owner(self.folder,self.name,self.image,'opencode')
         try:
@@ -90,13 +102,24 @@ class ManagedClient:
         headers={'Content-Type':'application/json','x-opencode-directory':'/workspace',
                  'Authorization':'Basic '+base64.b64encode(('opencode:'+self.password).encode()).decode()}
         try:
-            result=json.loads(self._exec(REQUEST,{'path':path,'method':method,'body':body,'headers':headers}).stdout)
+            maximum=8*1024*1024 if path=='/provider' and method=='GET' else 4*1024*1024
+            script=REQUEST.replace('bytes>4*1024*1024','bytes>'+str(maximum))
+            result=json.loads(self._exec(script,{'path':path,'method':method,'body':body,'headers':headers},maximum=maximum*2).stdout)
             raw=base64.b64decode(result['body'],validate=True)
             if result['status'] not in (200,201,202,204):raise ValueError('Confined OpenCode HTTP '+str(result['status']))
             return json.loads(raw) if raw.strip() else None
         except (__import__('subprocess').SubprocessError,OSError) as exc:raise ValueError('Confined OpenCode request failed') from exc
 
     def _response(self,item):
+        if item.get('kind') == 'mcp':
+            if not self.allow_inference or not getattr(self,'bridge',None):
+                raise ValueError('MCP tool actions were not approved for this session')
+            if self.stop_event.is_set():raise ValueError('Agent relay is closed')
+            try:
+                result=self.bridge.call(item.get('name'),item.get('arguments'))
+            except ValueError as exc:
+                result={'content':[{'type':'text','text':str(exc)[:1000]}],'isError':True}
+            return {'mcp_result':result}
         route=item.get('path');method=item.get('method')
         if (method,route) not in (('GET','/v1/models'),('POST','/v1/chat/completions')):raise ValueError('Denied model relay route')
         raw=base64.b64decode(item.get('body',''),validate=True)
@@ -198,17 +221,18 @@ class ManagedClient:
                 item=json.loads(self._exec(QUEUE,maximum=4*1024*1024).stdout)
                 if item:
                     self.relay_calls+=1
-                    if self.relay_calls>48:raise ValueError('Model relay packet budget exhausted')
+                    if self.relay_calls>128:raise ValueError('Agent relay packet budget exhausted')
                     if not isinstance(item,dict) or not isinstance(item.get('id'),str) or not re.fullmatch(r'[a-f0-9-]{36}',item['id']):raise ValueError('Invalid model relay packet')
                     response=self._response(item)
                     if not self.stop_event.is_set():self._exec(RESPOND,{'id':item['id'],'response':response},maximum=16384)
                 self.stop_event.wait(.15)
-        except (ValueError,TypeError,KeyError,OSError,__import__('subprocess').SubprocessError) as exc:
+        except (ValueError,TypeError,KeyError,OSError,__import__('subprocess').SubprocessError,__import__('chat_jobs').ChatCancelled) as exc:
             if not self.stop_event.is_set():self.error='Confined model relay failed: '+str(exc)[:300]
 
     def close(self):
         if self.closed:return self.cleanup_confirmed
         self.closed=True;self.stop_event.set()
+        if getattr(self,'bridge',None):self.bridge.close()
         with self.lock:
             if self.model_socket:
                 try:self.model_socket.shutdown(__import__('socket').SHUT_RDWR)

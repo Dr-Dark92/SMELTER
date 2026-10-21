@@ -13,7 +13,7 @@ const SmelterOpenCode = (() => {
         const result=await api('/api/opencode/agent');
         output.textContent='Server: '+result.endpoint+'\nVersion: '+result.version+'\nDirectory: '+result.directory+'\nExpected: '+result.expected_directory+'\n'+result.reason;
         for(const model of result.models||[]){const option=doc.createElement('option');option.value=model.key;option.textContent=model.key;models.append(option)}
-        approval.disabled=!result.read_only_ready;
+        approval.disabled=!(result.agent_ready??result.read_only_ready);
       }catch(error){output.textContent=error.message}
       finally{button.disabled=false}
     };

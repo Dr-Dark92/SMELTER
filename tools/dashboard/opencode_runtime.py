@@ -32,7 +32,7 @@ RULES = [
 ]
 
 
-def session_rules(directory, policy=None, host_directory=None):
+def session_rules(directory, policy=None, host_directory=None, tool_names=()):
     # Limit source content reads independently of the server's VCS worktree.
     # A non-Git project can report worktree '/', which is not a useful scope.
     bases = {str(Path(directory)), Path(directory).as_posix()}
@@ -60,6 +60,8 @@ def session_rules(directory, policy=None, host_directory=None):
                     rules.append({'permission':'read','pattern':pattern,'action':'deny'})
                     if pattern.endswith('/**'):
                         rules.append({'permission':'read','pattern':pattern[:-3],'action':'deny'})
+    rules.extend({'permission':'smelter_' + name,'pattern':'*','action':'allow'}
+                 for name in tool_names)
     return rules
 
 
@@ -86,13 +88,16 @@ class Client:
         data = None if body is None else json.dumps(body).encode()
         if data is not None:
             headers['Content-Type'] = 'application/json'
+        # 1.19.3 returns the full provider catalogue (~7 MiB), even when only
+        # one local provider is connected. Other routes retain the 4 MiB cap.
+        limit=8*1024*1024 if path=='/provider' and method=='GET' else LIMIT
         try:
             with self.opener.open(Request(BASE + path, data=data, headers=headers, method=method), timeout=timeout) as response:
-                raw = response.read(LIMIT + 1)
+                raw = response.read(limit + 1)
         except HTTPError as exc:
             raise ValueError('OpenCode HTTP ' + str(exc.code) + ' at ' + path.split('?')[0]) from exc
-        if len(raw) > LIMIT:
-            raise ValueError('OpenCode API response exceeds 4 MiB')
+        if len(raw) > limit:
+            raise ValueError('OpenCode API response exceeds its bounded size limit at '+path.split('?')[0])
         return json.loads(raw) if raw.strip() else None
 
 
@@ -145,7 +150,7 @@ def status(root, client=None, policy=None):
     matches = isinstance(directory, str) and Path(directory).resolve() == expected.resolve()
     result = {'endpoint':BASE, 'version':health.get('version'), 'expected_version':VERSION,
         'directory':directory, 'expected_directory':str(expected), 'directory_matches':matches,
-        'worktree':paths.get('worktree'), 'models':[], 'read_only_ready':False,
+        'worktree':paths.get('worktree'), 'models':[], 'read_only_ready':False, 'agent_ready':False,
         'status':'connected', 'note':'Connection only; no model task was submitted. Working directory is not an OS sandbox.'}
     if not matches:
         result['reason'] = 'Restart OpenCode from the expected V2 directory'
@@ -183,6 +188,7 @@ def status(root, client=None, policy=None):
                 result['models'].append({'key':pid + '/' + mid, 'providerID':pid, 'modelID':mid})
     result['models'] = result['models'][:50]
     result['read_only_ready'] = bool(result['models'])
+    result['agent_ready'] = result['read_only_ready']
     result['reason'] = 'Ready for an explicitly approved fixture read-only session' if result['models'] else 'No connected model with an explicit local Ollama baseURL was found'
     if getattr(client,'confined',False):
         result.update(note='Managed container connection only; no model task was submitted or validated.',endpoint='managed Docker exec relay (no network)',host_directory=str(client.host_directory),confinement='no-network container; read-only code snapshot and local-model relay')
@@ -226,6 +232,7 @@ def _progress(messages):
                 fallback = hashlib.sha256(json.dumps([name,arguments],sort_keys=True).encode()).hexdigest()
                 event_id = str(part.get('id', part.get('callID', fallback)))[:200]
                 events.append({'external_id':event_id, 'tool':'opencode/' + name, 'transport':'opencode',
+                    'source':'opencode', 'independently_verified':False,
                     'executed':state_name == 'completed', 'reused':False,
                     'result':{'status':state_name, 'path':str(path)[:1024] if path else None,
                               'error':str(state.get('error',''))[:500],
@@ -259,25 +266,37 @@ def conversation_prompt(chat, prompt):
 
 
 def ask(root, conversation_id, prompt, *, model_key=None, approval=False, control=None,
-        image=None, skills=None, auto_skills=False, tool_permissions=None, client=None, _managed_cleanup=None):
+        image=None, skills=None, auto_skills=False, tool_permissions=None, client=None,
+        _managed_cleanup=None, agent_mode=False, bridge=None):
     from chats import read_chat, _db, EXECUTION_SCHEMA
     from chat_jobs import ChatCancelled
     if approval is not True:
-        raise ValueError('Approve one read-only OpenCode session before sending')
-    if image is not None or skills or auto_skills or tool_permissions:
+        raise ValueError('Approve one OpenCode session before sending')
+    if image is not None:
+        raise ValueError('OpenCode accepts text tasks; images are not forwarded')
+    if not agent_mode and (skills or auto_skills or tool_permissions):
         raise ValueError('This first OpenCode adapter accepts text-only read-only sessions; other grants are not forwarded')
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
         raise ValueError('Prompt must be 1–1800 characters')
     chat = read_chat(root, conversation_id)
     from access_policy import current
     policy=control.access_policy if control and control.access_policy else current(root)
+    if agent_mode and bridge is None:
+        from agent_bridge import AgentBridge
+        bridge=AgentBridge(root,conversation_id,prompt,skills=skills,auto_skills=auto_skills,
+                           grants=tool_permissions,policy=policy,control=control)
+    if bridge:
+        bridge.control=control
+        if control:control.file_activity=bridge.session.file_activity
     if client is None:
         from opencode_sandbox import ManagedClient
         from task_contract import configuration
         effective=control.configuration if control and control.configuration else configuration(root)
-        managed=ManagedClient(root,policy,effective,control,allow_inference=True)
+        managed=ManagedClient(root,policy,effective,control,allow_inference=True,bridge=bridge)
         try:
-            return ask(root,conversation_id,prompt,model_key=model_key,approval=approval,control=control,client=managed,_managed_cleanup=managed.close)
+            return ask(root,conversation_id,prompt,model_key=model_key,approval=approval,
+                       control=control,client=managed,_managed_cleanup=managed.close,
+                       agent_mode=agent_mode,bridge=bridge)
         finally:managed.close()
     check = status(root, client, policy=policy)
     if not check['read_only_ready']:
@@ -285,6 +304,10 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
     selected = next((m for m in check['models'] if m['key'] == model_key), None)
     if selected is None:
         raise ValueError('Select a verified local OpenCode model')
+    if bridge and bridge.tools:
+        mcp=client.request('/mcp')
+        if not isinstance(mcp,dict) or mcp.get('smelter',{}).get('status')!='connected':
+            raise ValueError('OpenCode did not connect the approved SMELTER MCP bridge; no task was submitted')
     from python_tools import _plain_path
     folder = _plain_path(Path(root) / '.smelter/tool-runs')
     folder.mkdir(parents=True, exist_ok=True)
@@ -299,11 +322,13 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
     session_id, answer, events, cancelled, abort_error, failed = None, '', [], False, None, False
     observed = {}
     output_limited = False
-    rules = session_rules(check['directory'],policy,host_directory=getattr(client,'host_directory',None))
-    record('requested', directory=check['directory'], model=model_key, permission=rules)
+    rules = session_rules(check['directory'],policy,host_directory=getattr(client,'host_directory',None),
+                          tool_names=[item['name'] for item in bridge.tools] if bridge else ())
+    bridge_summary=bridge.summary() if bridge else None
+    record('requested', directory=check['directory'], model=model_key, permission=rules,bridge=bridge_summary)
     try:
-        update('OpenCode: creating read-only session')
-        session = client.request('/session', 'POST', {'title':'SMELTER read-only: ' + chat['title'][:80], 'permission':rules})
+        update('OpenCode: creating scoped agent session' if bridge else 'OpenCode: creating read-only session')
+        session = client.request('/session', 'POST', {'title':'SMELTER agent: ' + chat['title'][:80], 'permission':rules})
         if not isinstance(session, dict):
             raise ValueError('Invalid OpenCode session response')
         session_id = _sid(session.get('id'))
@@ -315,17 +340,19 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         body = {'agent':'build', 'model':{'providerID':selected['providerID'], 'modelID':selected['modelID']},
             'system':'You are performing a read-only source inspection for SMELTER. You may use the read tool for README.md and files under tools/ and skills/ in the current directory. Start with README.md and tools/dashboard/dashboard.py. Do not modify files, execute commands, delegate, or access external directories. Other tools are denied in this pilot. Report observations with file paths. Mark guesses as unverified.',
             'parts':[{'type':'text', 'text':conversation_prompt(chat, prompt)}]}
+        if bridge:body['system']=bridge.instructions()
         record('prompt_requested', session_id=session_id)
         client.request('/session/' + session_id + '/prompt_async', 'POST', body, timeout=10)
         task_timeout=control.configuration['runtime']['timeout_seconds'] if control and control.configuration else 300
         deadline = time.monotonic() + task_timeout
         while time.monotonic() < deadline:
-            update('OpenCode: inspecting source · read only')
+            update('OpenCode: running task · approved tools only' if bridge else 'OpenCode: inspecting source · read only')
             messages = client.request('/session/' + session_id + '/message?limit=50')
             answer, updates, finished, failure = _progress(messages)
             for event in updates:
                 observed[event['external_id']] = event
             events = list(observed.values())[-100:]
+            if bridge:events += [dict(event,source='controller') for event in bridge.session.events]
             if control:
                 with control.lock:
                     control.output_text, control.tool_activity = answer, events
@@ -357,16 +384,30 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
                 abort_error = 'Abort was not confirmed; check the OpenCode server before submitting another task'
         answer = ('OpenCode request stopped.' if cancelled else 'OpenCode task failed: ' + str(exc)) + ('\n' + answer if answer else '')
     cleanup_confirmed=_managed_cleanup() if _managed_cleanup else None
+    if bridge:
+        bridge.close()
+        bridge.session.file_activity.settle(cancelled)
+        events=list(observed.values())[-100:]+[dict(event,source='controller') for event in bridge.session.events]
+        failed=failed or any(event.get('result',{}).get('status') in
+                            {'error','rea_failed','mcp_failed','workspace_validation_failed'}
+                            for event in bridge.session.events)
     if cleanup_confirmed is False:
         failed=True
         answer+='\nOwned container cleanup was not confirmed; inspect the managed container before another task.'
     record('result', cleanup_confirmed=cleanup_confirmed, session_id=session_id, cancelled=cancelled, failed=failed, abort_error=abort_error, events=events)
     if abort_error:
         answer += '\n' + abort_error
+    receipt=bridge.session.receipt() if bridge else ''
+    model_text=answer
+    if receipt:
+        answer=answer[:max(0,64000-len(receipt)-32)]+receipt
     execution = {'source':'controller', 'engine':'opencode', 'session_id':session_id,
-        'cleanup_confirmed':cleanup_confirmed, 'permissions':{'opencode_read_only':True}, 'policy_revision':policy.revision, 'events':events, 'files':[],
-        'audit_path':str(audit), 'cancelled':cancelled, 'model_text':answer, 'confinement':'managed no-network container' if getattr(client,'confined',False) else 'injected fixture',
-        'verification_scope':'Model narrative and tool activity are reported by OpenCode; not independently fact-checked'}
+        'cleanup_confirmed':cleanup_confirmed, 'permissions':{'opencode_native_read_only':True,**(bridge_summary['permissions'] if bridge else {'opencode_read_only':True})},
+        'skills':bridge.skills['selected'] if bridge else [], 'skill_snapshots':bridge.skills['snapshots'] if bridge else [],
+        'bridge':bridge_summary,'policy_revision':policy.revision, 'events':events,
+        'files':bridge.session.file_activity.snapshot() if bridge else [],
+        'audit_path':str(audit), 'cancelled':cancelled, 'model_text':model_text, 'confinement':'managed no-network container' if getattr(client,'confined',False) else 'injected fixture',
+        'verification_scope':'SMELTER bridge receipts establish tool results; native activity and narrative are reported by OpenCode and are not fact-checked'}
     from execution_store import finalize
-    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=answer[:1000] if failed else OUTPUT_LIMIT_ERROR if output_limited else None,partial=bool(events) or output_limited,cancelled=cancelled)
+    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=model_text[:1000] if failed else OUTPUT_LIMIT_ERROR if output_limited else None,partial=bool(events) or output_limited,cancelled=cancelled,receipt=receipt)
     return {**result,'engine':'opencode','session_id':session_id}

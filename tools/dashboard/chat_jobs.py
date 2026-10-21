@@ -200,14 +200,22 @@ class Jobs:
         if supplied.get('mcp_tools'):
             raise ValueError('External MCP execution requires a confined runner; no process was started')
         engine = data.get('engine', 'ollama')
-        if engine not in ('ollama', 'opencode_readonly'):
+        if engine not in ('ollama', 'opencode', 'opencode_readonly'):
             raise ValueError('Unknown execution engine')
-        if engine == 'opencode_readonly':
+        bridge=None
+        if engine in ('opencode','opencode_readonly'):
             if data.get('opencode_approval') is not True:
-                raise ValueError('Approve this read-only OpenCode session before sending')
+                raise ValueError('Approve this OpenCode session before sending')
+            if data.get('image') is not None:
+                raise ValueError('OpenCode accepts text tasks; images are not forwarded')
+            if engine=='opencode':
+                from agent_bridge import AgentBridge
+                bridge=AgentBridge(root,data['id'],prompt,skills=data.get('skills'),
+                    auto_skills=data.get('auto_skills',False),grants=supplied,policy=policy)
             from functools import partial
             from opencode_runtime import ask as opencode_ask
-            worker = partial(opencode_ask, model_key=data.get('opencode_model'), approval=True)
+            worker = partial(opencode_ask, model_key=data.get('opencode_model'), approval=True,
+                             agent_mode=engine=='opencode',bridge=bridge)
         from task_contract import configuration
         effective=configuration(root)
         if data.get('configuration_revision') and data['configuration_revision']!=effective['revision']:
@@ -227,6 +235,9 @@ class Jobs:
             job['control'].admitted_at=job['started']
             job['control'].access_policy = policy
             job['control'].configuration = effective
+            if bridge:
+                bridge.control=job['control']
+                job['control'].file_activity=bridge.session.file_activity
             from job_store import admit
             admit(root,{'id':job['id'],'conversation_id':job['conversation_id'],'engine':engine,'state':'running','error':None,'phase':'Admitted','policy_revision':policy.revision,'configuration':effective,'elapsed_seconds':0,'prompt':data['content']})
             self.jobs[job['id']] = job

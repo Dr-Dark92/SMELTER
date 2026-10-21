@@ -9,23 +9,23 @@ const SmelterAccess = (() => {
     const taskNote=doc.createElement('p');taskNote.textContent='Select a subset of registered access for the next Send. Skills cannot expand permissions. OpenCode uses a managed container and local-model relay; arbitrary external MCP remains blocked.';
     const effectiveContext=doc.createElement('p');effectiveContext.className='effective-task-context';taskPanel.prepend(taskNote,effectiveContext);
     const agentAccess=doc.createElement('div');agentAccess.id='openCodeTaskAccess';
-    const agentHeading=doc.createElement('h4');agentHeading.textContent='Confined OpenCode · read-only';agentAccess.append(agentHeading);
+    const agentHeading=doc.createElement('h4');agentHeading.textContent='OpenCode · selected skills + MCP tools';agentAccess.append(agentHeading);
     const check=doc.getElementById('opencodeServerCheck'),connection=doc.getElementById('opencodeServerStatus');
     const model=doc.getElementById('opencodeAgentModel').closest('label'),approval=doc.getElementById('opencodeAgentApprove').closest('label');
     agentAccess.append(check,connection,model,approval);taskPanel.append(agentAccess);
     let policy=null;
     function updateSummary() {
       const engine=doc.getElementById('chatEngine').value;
-      const direct=engine==='ollama';permissions.hidden=!direct;agentAccess.hidden=direct;
+      const direct=engine==='ollama';permissions.hidden=false;agentAccess.hidden=direct;
       const names=[];
       if(doc.getElementById('approveInventory').checked)names.push('folder inventory');
       if(doc.getElementById('approveDiagnostics').checked)names.push('new reports');
       if(doc.getElementById('approveRea').checked)names.push('REA');
       if(doc.getElementById('approveFrontendWorkspace').checked)names.push('V2 CSS/tests/preview');
       if(doc.querySelector('#modelInspectionGrants input:checked'))names.push('selected GLB metadata');
-      const detailedSummary=direct?'Ollama · '+(policy?.model||'loading model…')+' · ctx '+(policy?.configuration?.runtime.context_tokens||'?')+' / output '+(policy?.configuration?.runtime.max_output_tokens||'?')+' / '+(policy?.configuration?.runtime.timeout_seconds||'?')+'s · '+(names.join(', ')||'no file tools selected'):'OpenCode · confined read-only workspace';
-      summary.textContent=direct?'Direct chat · '+(names.join(', ')||'No tools approved'):'OpenCode · Read-only';summary.title=detailedSummary;effectiveContext.textContent=detailedSummary;
-      doc.getElementById('chatinput').placeholder=direct?'Message the selected local model':'Request a read-only source inspection';
+      const detailedSummary=(direct?'Ollama':'OpenCode → Ollama')+' · '+(policy?.model||'loading model…')+' · ctx '+(policy?.configuration?.runtime.context_tokens||'?')+' / output '+(policy?.configuration?.runtime.max_output_tokens||'?')+' / '+(policy?.configuration?.runtime.timeout_seconds||'?')+'s · '+(names.join(', ')||'no host file tools selected');
+      summary.textContent=(direct?'Direct chat':'OpenCode')+' · '+(names.join(', ')||'No host tools approved');summary.title=detailedSummary;effectiveContext.textContent=detailedSummary;
+      doc.getElementById('chatinput').placeholder=direct?'Message the selected local model':'Describe a task using selected skills and approved tools';
     }
     function applyContext(report){
       policy=report;window.smelterTaskConfiguration=policy.configuration;window.smelterTaskPolicyRevision=policy.revision;SmelterWorkbench.context(policy.configuration,doc);

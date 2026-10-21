@@ -1,78 +1,114 @@
-# OpenCode read-only GUI pilot
+# OpenCode agent: selected skills and approved MCP tools
 
-This adapter connects to an already-running OpenCode **1.19.3** server at
-`http://127.0.0.1:4096`. It does not launch the CLI, install dependencies,
-change global/provider settings, edit the V2 copy, or stop an unrelated server.
-It uses Python's standard-library HTTP client with redirects and proxies
-disabled. Existing direct Ollama chat remains the default engine.
+The primary GUI agent route is:
 
-Start the server in a dedicated PowerShell terminal:
+GUI -> SMELTER admission/controller -> confined OpenCode -> local Ollama -> Qwen.
+OpenCode receives selected skill snapshots as reference instructions and calls
+approved host capabilities through its `smelter` stdio MCP connection. Direct
+Ollama chat remains an explicitly selectable alternative. A failed OpenCode
+check never silently switches engines or starts an unrestricted host agent.
 
-```powershell
-Set-Location C:\SMELTERV2
-opencode serve --pure --hostname 127.0.0.1 --port 4096
-```
+## Prerequisites and readiness
 
-Restart the main SMELTER dashboard after updating its code. Existing V2 source
-can be inspected without recreating it or refreshing its CSS workspace marker.
-In **Configuration > AI & Models > OpenCode**, click **Check OpenCode server**.
-Connection checks are GET requests only and do not submit an AI prompt.
-
-The adapter verifies health/version, actual directory, the live OpenAPI
-session-permission schema, and connected models explicitly configured with
-`options.baseURL: http://127.0.0.1:11434/v1`. It returns model IDs and readiness
-without exposing provider API keys. This establishes configuration; it does
-not prove that inference works until a task runs.
-
-If no model is listed, the running server has not exposed a compatible local
-provider. Do not select a cloud model as a fallback. Configure the local
-provider and restart OpenCode, then check again. The older isolated provider
-configuration in SMELTER is only a staged file; staging does not apply it to a
-running server.
-
-Select **OpenCode > read-only pilot** beside the chat composer, select a local
-model, and approve one session. Create/select a titled chat and send:
+Install the optional pinned MCP SDK into the dashboard Python environment:
 
 ```text
-Read README.md and tools/dashboard/dashboard.py. Explain how the frontend is
-assembled and identify its styling and API integration points. Cite file paths.
-Do not edit files, execute commands, or delegate work.
+python -m pip install -r tools/dashboard/requirements-mcp.txt
 ```
 
-Each message creates its own OpenCode session. Before submitting the prompt,
-SMELTER checks the session's returned directory and exact permission rules.
-Unconfirmed permissions block inference. The default is deny; source reads
-are allowed only for README.md, tools/, and skills/ under V2, using relative
-and absolute patterns. Editing, shell commands, subagents, network tools,
-external MCP tools and external directories are denied. This is an application
-permission policy, **not an operating-system sandbox**. A `worktree: /` value
-does not expand the adapter's read allowlist.
+The production adapter requires the locally installed Docker engine and an
+explicit immutable OpenCode image ID in Settings. The image must provide
+OpenCode 1.19.3 and Node. The existing Dockerfile is an operator-build example;
+SMELTER never builds or pulls an image during a task or connection check.
+Use a reviewed immutable base digest for production image builds.
 
-The first adapter intentionally does not forward SMELTER skill selections,
-images, GLBs or per-message MCP grants. Native skill/MCP bridging, editing,
-permission replies, browser review and generalized file snapshot cards remain
-follow-up work. No claim of complete coding-agent parity is made.
+In Settings > Task access select **Check managed OpenCode**. This creates a
+short-lived owned inspection container and verifies health, exact version,
+working directory, API permission schema and the configured local model.
+It does not submit a model prompt or perform host tool actions. Inspection
+containers are removed afterwards. Readiness establishes configuration,
+not successful inference. The provider catalogue has a dedicated 8 MiB cap;
+other API responses retain a 4 MiB cap.
 
-Task submission uses `prompt_async`; SMELTER polls message/tool parts for live
-text and tool activity, rather than consuming SSE in this first version. It
-stores the final response, OpenCode session ID and tool receipts in the
-existing chat database and writes an audit under `.smelter/tool-runs/`.
-OpenCode-reported tool activity and model explanations are not independent
-filesystem or factual verification.
+## Run a task
 
-Stop requests abort only this adapter's session. Tasks have a five-minute
-polling deadline. An unconfirmed abort is reported for operator follow-up;
-SMELTER does not kill the OpenCode server. Refresh reconnects to the existing
-SMELTER job while the dashboard process remains running. There is no durable
-job recovery across a dashboard restart in this pilot.
+1. Select/create a titled conversation and select **OpenCode - skills + approved
+   tools** in the composer.
+2. Select ready/enabled skills in the Skills manager, or use automatic selection.
+   New/changed manifests require review and dashboard restart as before.
+3. In Task access select the desired subset of registered location permissions
+   and built-in tools for the next Send. An approval cannot expand the registered
+   policy. OpenCode host tools always use the built-in MCP transport.
+4. Check the managed runtime and approve this one OpenCode session.
+5. Send the request and inspect actual controller receipts and file activity.
 
-For an authenticated OpenCode server, start the dashboard with
-`SMELTER_OPENCODE_PASSWORD` (or `OPENCODE_SERVER_PASSWORD`) in its environment;
-the username defaults to `opencode`, overridable with
-`OPENCODE_SERVER_USERNAME`. Credentials are not placed in browser responses.
+Skill selections and exact loaded instruction hashes are recorded in execution
+metadata. Skill text is lower-trust reference data and grants no tools. The same
+selection resolver is used by direct chat and OpenCode. Images are not forwarded;
+explicitly approved saved GLBs can be inspected as metadata through the existing
+tool. No visual interpretation of GLB bytes is implied.
 
-Tests cover readiness without POSTs, local-provider restrictions, policy echo
-verification, cancellation, intermediate tool-call steps, audit/chat
-persistence, explicit approval and HTTP request construction. Browser QA uses
-a local HTTP API fixture: it is not evidence that a real Qwen/OpenCode task
-has succeeded on the user's Windows machine.
+## Execution boundary
+
+The container has no network, host credentials or Docker socket. Its code
+snapshot stays read-only. Native source reads are scoped to README.md, tools/
+and skills/ with registered exclusions. Native edits, shell commands, subagents,
+external directories and unapproved MCP tools remain denied. Only exact
+`smelter_<tool>` permissions are admitted for the selected built-in descriptors.
+
+A bounded Node stdio proxy inside the container passes MCP calls through a tmpfs
+queue. The host relay uses the existing ToolSession -> built-in Python MCP server
+path, with frozen location policy, grants, skill fingerprints, call budgets,
+write deduplication and audits. Preview launch remains owned by the dashboard;
+it is not launched by the short-lived MCP server. Skills do not need individual
+connectors. A capability needs a real registered backend implementation.
+
+The frontend workspace grant still permits CSS-only destination changes, listed
+reads, fixed sandbox validation and preview launch. It does not grant generic
+multi-file editing. The snapshot does not refresh after host edits; the agent
+must use read_frontend_file to inspect current destination content.
+
+OpenCode-reported native activity is labelled as reported activity. Controller
+MCP receipts establish actual built-in results and saved bytes. Model narrative
+is not fact-checked. Completed receipts survive model-follow-up failures.
+Cancellation blocks subsequent bridge calls; an admitted fixed operation can
+finish within its own bound. Unconfirmed container cleanup is reported.
+
+Arbitrary external MCP servers remain blocked. A host server discovered through
+the MCP SDK is not automatically confined by SMELTER location flags.
+
+## Smoke tests
+
+Contract regressions, including real Python MCP writes and denials:
+
+```text
+python -m unittest discover -s tools/dashboard -p 'test_agent_bridge.py'
+```
+
+Full production transport with real OpenCode/MCP and a synthetic Ollama fixture:
+
+```text
+python tools/analysis/smoke_agent_bridge.py --image sha256:YOUR_EXISTING_IMAGE_ID
+```
+
+This uses disposable state and requires fixture port 11434 to be free. It fails
+if occupied; no existing Ollama service is stopped. It validates selected skill
+instructions, actual saved bytes/hash, controller/MCP audits, chat persistence,
+unapproved-write denial and container cleanup. No Qwen inference occurs.
+
+On the rig, an explicit live Qwen smoke uses the existing Ollama service:
+
+```text
+python tools/analysis/smoke_agent_bridge.py --image sha256:YOUR_EXISTING_IMAGE_ID --live
+```
+
+An explicit `--process-fixture --opencode /absolute/path/to/opencode` alternative
+runs real OpenCode and MCP in disposable local process state with synthetic
+model responses. This is a test harness, not a production host fallback; it does
+not establish Docker confinement or Qwen quality. It needs free ports 4096 and
+11434 and never stops existing services.
+
+The legacy incoming engine ID opencode_readonly remains accepted for inspection
+clients. New GUI tasks use opencode and forward selected skills and grants.
+The production adapter does not connect to a manually started host OpenCode
+server. Its HTTP Client remains available for injected tests only.
