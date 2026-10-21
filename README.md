@@ -112,3 +112,5 @@ Settings now includes confined execution, storage/recovery/backup and capabiliti
 Run `python tools/analysis/offline_gui_fixture.py` from the checkout and open its printed launch URL. It serves the actual GUI with synthetic replies and temporary SQLite/report state on port 18771. No live Ollama/OpenCode/Docker service is used. Ctrl+C removes fixture state. See [office GUI workflow](docs/OFFICE_GUI_WORKFLOW.md) for fish commands and checks.
 
 Registered locations now use a staged permission table with folder browsing and atomic Apply. See [location controls](docs/REGISTERED_LOCATIONS.md).
+
+The [2026-10-21 runtime review](docs/reviews/2026-10-21/REVIEW.md) records seven open reproduced defects across policy, jobs, model protocols, GLB lifecycle and workspace recovery, with a separate action plan, progress tracker and handover. This is a review record, not a repair release.

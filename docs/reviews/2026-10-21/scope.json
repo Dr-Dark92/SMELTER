@@ -1,0 +1,266 @@
+{
+  "source_revision": "a609148fab2dec8915da24ca46550f9cd275b694",
+  "verified_scripts": 247,
+  "mismatches": [],
+  "trace_files": [
+    {
+      "path": "tools/dashboard/dashboard.py",
+      "declarations": 5,
+      "largest_branch_estimate": 4,
+      "largest_branch_symbol": "handler.Handler.reply"
+    },
+    {
+      "path": "tools/dashboard/dashboard_api.py",
+      "declarations": 52,
+      "largest_branch_estimate": 11,
+      "largest_branch_symbol": "ApiRoutes.do_GET"
+    },
+    {
+      "path": "tools/dashboard/dashboard_shell.js",
+      "declarations": 94,
+      "largest_branch_estimate": 40,
+      "largest_branch_symbol": "executionCards"
+    },
+    {
+      "path": "tools/dashboard/settings_ui.js",
+      "declarations": 15,
+      "largest_branch_estimate": 3,
+      "largest_branch_symbol": "activate"
+    },
+    {
+      "path": "tools/dashboard/access_ui.js",
+      "declarations": 7,
+      "largest_branch_estimate": 13,
+      "largest_branch_symbol": "updateSummary"
+    },
+    {
+      "path": "tools/dashboard/locations_ui.js",
+      "declarations": 42,
+      "largest_branch_estimate": 20,
+      "largest_branch_symbol": "controls"
+    },
+    {
+      "path": "tools/dashboard/location_browser.py",
+      "declarations": 2,
+      "largest_branch_estimate": 19,
+      "largest_branch_symbol": "browse"
+    },
+    {
+      "path": "tools/dashboard/location_browser.js",
+      "declarations": 17,
+      "largest_branch_estimate": 16,
+      "largest_branch_symbol": "load"
+    },
+    {
+      "path": "tools/dashboard/attachments_ui.js",
+      "declarations": 12,
+      "largest_branch_estimate": 4,
+      "largest_branch_symbol": "menu.onkeydown"
+    },
+    {
+      "path": "tools/dashboard/chat_renderer.js",
+      "declarations": 7,
+      "largest_branch_estimate": 17,
+      "largest_branch_symbol": "parseBlocks"
+    },
+    {
+      "path": "tools/dashboard/opencode_agent_ui.js",
+      "declarations": 3,
+      "largest_branch_estimate": 4,
+      "largest_branch_symbol": "button.onclick"
+    },
+    {
+      "path": "tools/dashboard/mcp_ui.js",
+      "declarations": 17,
+      "largest_branch_estimate": 13,
+      "largest_branch_symbol": "refreshApprovals"
+    },
+    {
+      "path": "tools/dashboard/chat_jobs.py",
+      "declarations": 19,
+      "largest_branch_estimate": 22,
+      "largest_branch_symbol": "Jobs.start"
+    },
+    {
+      "path": "tools/dashboard/job_store.py",
+      "declarations": 10,
+      "largest_branch_estimate": 6,
+      "largest_branch_symbol": "identity"
+    },
+    {
+      "path": "tools/dashboard/execution_store.py",
+      "declarations": 1,
+      "largest_branch_estimate": 13,
+      "largest_branch_symbol": "finalize"
+    },
+    {
+      "path": "tools/dashboard/task_contract.py",
+      "declarations": 3,
+      "largest_branch_estimate": 6,
+      "largest_branch_symbol": "outcome"
+    },
+    {
+      "path": "tools/dashboard/chat_inference.py",
+      "declarations": 3,
+      "largest_branch_estimate": 24,
+      "largest_branch_symbol": "ask"
+    },
+    {
+      "path": "tools/dashboard/ollama_turn.py",
+      "declarations": 3,
+      "largest_branch_estimate": 15,
+      "largest_branch_symbol": "OllamaTurn.infer"
+    },
+    {
+      "path": "tools/dashboard/context_budget.py",
+      "declarations": 2,
+      "largest_branch_estimate": 6,
+      "largest_branch_symbol": "bounded.estimate"
+    },
+    {
+      "path": "tools/dashboard/ollama.py",
+      "declarations": 1,
+      "largest_branch_estimate": 14,
+      "largest_branch_symbol": "list_models"
+    },
+    {
+      "path": "tools/dashboard/runtime_settings.py",
+      "declarations": 3,
+      "largest_branch_estimate": 8,
+      "largest_branch_symbol": "validate"
+    },
+    {
+      "path": "tools/dashboard/model_preferences.py",
+      "declarations": 4,
+      "largest_branch_estimate": 10,
+      "largest_branch_symbol": "load_preferences"
+    },
+    {
+      "path": "tools/dashboard/config_store.py",
+      "declarations": 4,
+      "largest_branch_estimate": 18,
+      "largest_branch_symbol": "_validate"
+    },
+    {
+      "path": "tools/dashboard/database.py",
+      "declarations": 4,
+      "largest_branch_estimate": 17,
+      "largest_branch_symbol": "select_database"
+    },
+    {
+      "path": "tools/dashboard/chats.py",
+      "declarations": 8,
+      "largest_branch_estimate": 18,
+      "largest_branch_symbol": "read_chat"
+    },
+    {
+      "path": "tools/dashboard/opencode_runtime.py",
+      "declarations": 13,
+      "largest_branch_estimate": 40,
+      "largest_branch_symbol": "ask"
+    },
+    {
+      "path": "tools/dashboard/opencode_sandbox.py",
+      "declarations": 7,
+      "largest_branch_estimate": 47,
+      "largest_branch_symbol": "ManagedClient._native_response"
+    },
+    {
+      "path": "tools/dashboard/sandbox.py",
+      "declarations": 12,
+      "largest_branch_estimate": 17,
+      "largest_branch_symbol": "snapshot"
+    },
+    {
+      "path": "tools/dashboard/sandbox_preview.py",
+      "declarations": 4,
+      "largest_branch_estimate": 12,
+      "largest_branch_symbol": "start.Handler.relay"
+    },
+    {
+      "path": "tools/dashboard/process_runner.py",
+      "declarations": 6,
+      "largest_branch_estimate": 47,
+      "largest_branch_symbol": "run"
+    },
+    {
+      "path": "tools/dashboard/mcp_connections.py",
+      "declarations": 13,
+      "largest_branch_estimate": 38,
+      "largest_branch_symbol": "validate_config"
+    },
+    {
+      "path": "tools/dashboard/mcp_server.py",
+      "declarations": 4,
+      "largest_branch_estimate": 4,
+      "largest_branch_symbol": "serve"
+    },
+    {
+      "path": "tools/dashboard/python_tools.py",
+      "declarations": 13,
+      "largest_branch_estimate": 42,
+      "largest_branch_symbol": "inventory"
+    },
+    {
+      "path": "tools/dashboard/tool_registry.py",
+      "declarations": 2,
+      "largest_branch_estimate": 7,
+      "largest_branch_symbol": "schemas"
+    },
+    {
+      "path": "tools/dashboard/access_policy.py",
+      "declarations": 13,
+      "largest_branch_estimate": 39,
+      "largest_branch_symbol": "validate"
+    },
+    {
+      "path": "tools/dashboard/frontend_workspace.py",
+      "declarations": 19,
+      "largest_branch_estimate": 19,
+      "largest_branch_symbol": "prepare"
+    },
+    {
+      "path": "tools/dashboard/skill_context.py",
+      "declarations": 1,
+      "largest_branch_estimate": 18,
+      "largest_branch_symbol": "build_skill_context"
+    },
+    {
+      "path": "tools/dashboard/skill_router.py",
+      "declarations": 1,
+      "largest_branch_estimate": 10,
+      "largest_branch_symbol": "route_skills"
+    },
+    {
+      "path": "tools/dashboard/skill_runtime.py",
+      "declarations": 14,
+      "largest_branch_estimate": 15,
+      "largest_branch_symbol": "inspect_skill"
+    },
+    {
+      "path": "tools/dashboard/model_assets.py",
+      "declarations": 8,
+      "largest_branch_estimate": 48,
+      "largest_branch_symbol": "inspect_glb"
+    },
+    {
+      "path": "tools/dashboard/model_preview.js",
+      "declarations": 14,
+      "largest_branch_estimate": 9,
+      "largest_branch_symbol": "video.onclick"
+    },
+    {
+      "path": "tools/dashboard/model_animations.js",
+      "declarations": 15,
+      "largest_branch_estimate": 10,
+      "largest_branch_symbol": "refresh"
+    },
+    {
+      "path": "tools/dashboard/turntable.js",
+      "declarations": 26,
+      "largest_branch_estimate": 13,
+      "largest_branch_symbol": "record"
+    }
+  ],
+  "method": "Manual critical-path trace plus pinned AST index; not exhaustive branch or runtime coverage"
+}

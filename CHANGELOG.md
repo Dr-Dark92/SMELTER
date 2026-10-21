@@ -2,6 +2,10 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## Runtime layer review — 2026-10-21
+
+Reviewed GitHub head `a609148fab2dec8915da24ca46550f9cd275b694`; all 247 scripts matched Git blobs. Added [findings](docs/reviews/2026-10-21/REVIEW.md), action plan, progress, handover and fixture evidence. Seven new defects reproduced; no production code repaired. Actual GLB preview/playback/PNG and one WebM export checked alongside lifecycle races. No live Qwen/Ollama/OpenCode/Docker tests.
+
 ## Registered locations GUI — 2026-10-21
 
 Application commit: `e27036e0da3a3052273bca938faa4cb185f4aaba`. Refreshed graph pins this revision (242 scripts).

@@ -1,0 +1,74 @@
+{
+  "source_revision": "a609148fab2dec8915da24ca46550f9cd275b694",
+  "results": [
+    {
+      "name": "Tabern.glb",
+      "loaded": true,
+      "clips": 0,
+      "visible": true,
+      "png": true,
+      "animationLabel": false
+    },
+    {
+      "name": "wargreymon.glb",
+      "loaded": true,
+      "clips": 23,
+      "visible": true,
+      "png": true,
+      "animationLabel": true
+    },
+    {
+      "finding": "R04",
+      "animationControlsDisabledAfterReleaseExportReload": true,
+      "staleLoadEnablesReleasedCapture": true
+    },
+    {
+      "name": "metalgreymon.glb",
+      "loaded": true,
+      "clips": 42,
+      "visible": true,
+      "png": true,
+      "animationLabel": true
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "liveModel": false,
+  "renderer": "Chromium software WebGL",
+  "webm": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_name": "vp8",
+        "width": 960,
+        "height": 600
+      }
+    ],
+    "format": {
+      "duration": "5.916109",
+      "size": "719441"
+    }
+  },
+  "inputs": [
+    {
+      "filename": "Tabern.glb",
+      "bytes": 3872852,
+      "sha256": "cd6c251804f3709fc7b164b1359dc47e2893da9f20f215daff6f47a1b4bd4704"
+    },
+    {
+      "filename": "metalgreymon.glb",
+      "bytes": 17867180,
+      "sha256": "4454b7ee6cbfb13c313a1de2c7ae74660e25af08f91d468130143282cd4b20ef"
+    },
+    {
+      "filename": "wargreymon.glb",
+      "bytes": 16449200,
+      "sha256": "1b2f057c526f472fcfc1dc688ce86d3306ac87992d7b7ad94348d27da3070804"
+    }
+  ],
+  "limits": [
+    "User asset bytes and preview outputs are not committed",
+    "One WebM export verified; no GIF encoder implemented",
+    "Native GPU performance not measured"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "source_revision": "a609148fab2dec8915da24ca46550f9cd275b694",
+  "mode": "temporary fixtures only",
+  "live_qwen": false,
+  "live_ollama": false,
+  "live_docker": false,
+  "observations": {
+    "R01": {
+      "readme_denied_by_policy": true,
+      "readme_selected_for_copy": true,
+      "denied_readme_actually_copied": true,
+      "report_denied_by_policy": true,
+      "write_status": "written",
+      "denied_report_exists": true
+    },
+    "R03": {
+      "direct_status": "completed",
+      "direct_text": "truncated fixture answer",
+      "opencode_length_recognized_finished": false
+    },
+    "R05": {
+      "malformed_stream_error": "AttributeError",
+      "detail": "'list' object has no attribute 'get'",
+      "after_tool_error": "AttributeError",
+      "transcript_messages": 0,
+      "tool_file_exists": true,
+      "audit_result_recorded": true
+    },
+    "R06": {
+      "platform": "linux",
+      "distinct_directories": true,
+      "policy_error": "Duplicate access location"
+    },
+    "R07": {
+      "new_workspace_removed": true,
+      "new_preview_data_left_behind": true,
+      "retry_error": "Isolated preview data directory already exists; refusing to reuse it"
+    },
+    "R02": {
+      "stop_not_delivered_while_other_post_held_lock": true,
+      "requests": {
+        "probe": {
+          "status": 200,
+          "seconds": 0.354
+        },
+        "stop": {
+          "status": 200,
+          "seconds": 0.352
+        }
+      }
+    }
+  }
+}
