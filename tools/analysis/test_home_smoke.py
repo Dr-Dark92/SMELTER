@@ -190,6 +190,41 @@ class HomeSmokeTests(unittest.TestCase):
         self.assertNotIn('secret', result['detail'])
         self.assertFalse(any(argv[:3] == ['docker', 'image', 'inspect'] for argv in calls))
 
+    def test_unverified_saved_image_ids_never_count_as_resolved_images(self):
+        selected = dict(python_image='sha256:' + 'a' * 64, node_image='sha256:' + 'b' * 64,
+                        opencode_image='sha256:' + 'c' * 64)
+        packet = dict(ServerVersion='29.8.2', OSType='linux', MemoryLimit=True,
+                      SwapLimit=True, CpuCfsQuota=True, PidsLimit=True,
+                      SecurityOptions=['name=seccomp,profile=builtin'])
+        for failed in ('daemon', selected['python_image']):
+            with self.subTest(failed=failed):
+                def command(argv, **kwargs):
+                    if argv[0] == 'node':
+                        output = 'v24.20.0'
+                    elif argv[:3] == ['docker', 'context', 'inspect']:
+                        output = 'npipe:////./pipe/dockerDesktopLinuxEngine'
+                    elif argv[:2] == ['docker', 'info']:
+                        if failed == 'daemon':
+                            raise subprocess.CalledProcessError(1, argv, stderr='Engine unavailable')
+                        output = json.dumps(packet)
+                    else:
+                        self.assertEqual(argv[:3], ['docker', 'image', 'inspect'])
+                        if argv[-1] == failed:
+                            raise subprocess.CalledProcessError(1, argv, stderr='No such image')
+                        output = argv[-1]
+                    return subprocess.CompletedProcess(argv, 0, output, '')
+                with patch.object(home_smoke, 'configured_images', return_value=dict(selected)), \
+                     patch.object(home_smoke, 'version', return_value='1.30.0'):
+                    checks, images = home_smoke.preflight(Path('.'), runtime=True, command=command,
+                                                          lookup=lambda name: name)
+                self.assertIsNone(images['python_image'])
+                if failed == 'daemon':
+                    self.assertTrue(all(value is None for value in images.values()))
+                else:
+                    self.assertEqual(images['node_image'], selected['node_image'])
+                    self.assertEqual(images['opencode_image'], selected['opencode_image'])
+                    self.assertIn('No such image', next(row for row in checks if row['name'] == 'python_image')['detail'])
+
     def test_ecc_pin_mismatch_fails_before_install(self):
         from install_ecc_skills import preview
         with self.assertRaisesRegex(ValueError, 'integrity mismatch'):

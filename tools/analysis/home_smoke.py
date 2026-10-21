@@ -90,6 +90,8 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
         else:
             images['opencode_image'] = image
     if runtime:
+        selected_images = images
+        images = {key: None for key in selected_images}
         docker = lookup('docker')
         try:
             if not docker:
@@ -116,11 +118,11 @@ def preflight(root, *, runtime=False, live=False, image=None, command=run, looku
             record('Docker confinement prerequisites', 'PASS', info)
             for key, tag in [('opencode_image', 'smelter-opencode:1.19.3'),
                              ('python_image', 'python:3.12-alpine'), ('node_image', 'node:22-alpine')]:
-                wanted = images[key] or tag
+                wanted = selected_images[key] or tag
                 try:
                     actual = command([docker, 'image', 'inspect', '--format', '{{.Id}}', wanted],
                                      timeout=8, text=True, check=True).stdout.strip()
-                    if not IMAGE.fullmatch(actual) or images[key] and images[key] != actual:
+                    if not IMAGE.fullmatch(actual) or selected_images[key] and selected_images[key] != actual:
                         raise ValueError('Image identity mismatch')
                     images[key] = actual
                     record(key, 'PASS', actual)

@@ -42,7 +42,7 @@ does not establish the original probe's cause or a completed smoke run.
 
 The follow-up runner uses the backend's standard JSON info probe, retains bounded
 redacted native errors, and requires both test images in full preflight-only
-mode. All 22 analysis tests passed locally. The comprehensive application CI
+mode. All 23 analysis tests passed locally. The comprehensive application CI
 above remains evidence for its exact audited source; new local test counts are
 not substituted into that historical run. The next operator action is
 `python tools/analysis/home_smoke.py --full --preflight-only`, then the live run
