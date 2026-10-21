@@ -34,3 +34,33 @@ jobs:
       - run: python -m unittest discover -s tools/analysis -p "test_*.py"
       - shell: bash
         run: node --test tools/dashboard/test_*.js
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SMELTER_VISION_LIVE: "0"
+      SMELTER_TEST_DOCKER: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install explicit browser test dependencies
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/smelter-browser" --ignore-scripts --save-exact playwright@1.56.1
+          "$RUNNER_TEMP/smelter-browser/node_modules/.bin/playwright" install --with-deps chromium
+          npm install --prefix .smelter/tooling/model-viewer --ignore-scripts --save-exact @google/model-viewer@4.1.0
+          echo "SMELTER_TEST_PLAYWRIGHT=$RUNNER_TEMP/smelter-browser/node_modules/playwright" >> "$GITHUB_ENV"
+      - name: Verify real UI and GLB lifecycle without inference
+        run: node tools/analysis/check_workbench_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workbench-browser-evidence
+          path: .smelter/ui-checks
+          retention-days: 14

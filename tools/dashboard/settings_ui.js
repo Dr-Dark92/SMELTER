@@ -23,7 +23,7 @@ const SmelterSettings=(()=>{
    deck.scrollTop=0;picker.value=id;const entry=entries.find(x=>x.id===id);current.textContent=entry?entry.category+' / '+entry.label:'';
    if(dialog.open)nav.querySelector('[data-panel="'+id+'"]')?.scrollIntoView({block:'nearest'});
   }
-  function filter(){const query=search.value.trim().toLowerCase();let count=0;for(const row of entries){const show=(row.label+' '+row.category).toLowerCase().includes(query);row.button.hidden=!show;row.option.hidden=!show;row.option.disabled=!show;if(show)count++}for(const [label,section]of groups){const show=entries.some(x=>x.category===label&&!x.button.hidden);section.hidden=!show;options.get(label).hidden=!show}empty.hidden=count!==0}
+  function filter(){const query=search.value.trim().toLowerCase();const aliases={accessPolicyPanel:'locations folders paths read write execute',runtimePanel:'timeout tokens context thinking',taskAccessPanel:'permissions grants tools approval',skillsPanel:'instructions collections skills',mcpPanel:'connections servers protocol',systemStatusPanel:'cpu ram gpu resources storage'};let count=0;for(const row of entries){const show=(row.label+' '+row.category+' '+(aliases[row.id]||'')).toLowerCase().includes(query);row.button.hidden=!show;row.option.hidden=!show;row.option.disabled=!show;if(show)count++}for(const [label,section]of groups){const show=entries.some(x=>x.category===label&&!x.button.hidden);section.hidden=!show;options.get(label).hidden=!show}empty.hidden=count!==0}
   function open(panel){
    const opening=!dialog.open;if(opening){previous=doc.activeElement;dialog.showModal()}
    search.value='';filter();const id=panel||activePanel;const button=nav.querySelector('[data-panel="'+id+'"]');

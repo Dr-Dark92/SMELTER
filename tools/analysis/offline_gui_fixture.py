@@ -21,7 +21,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 
-def serve(port=18771):
+def serve(port=18771,viewer_root=None):
     repo=Path(__file__).resolve().parents[2]
     sys.path.insert(0,str(repo/'tools/dashboard'))
     import dashboard
@@ -88,6 +88,13 @@ def serve(port=18771):
         patches.enter_context(patch.object(Control,'infer',infer))
         initialize(root)
         changed=root/'.smelter/managed-skills/collections/demo-design/contrast/SKILL.md';changed.write_text(demo['contrast']+'\nChanged fixture instructions.\n')
+        if viewer_root is not None:
+            # Explicit test dependency: reuse a validated local viewer bundle.
+            # No package installation or asset fetching occurs in this fixture.
+            import model_assets
+            bundle=model_assets.viewer_bundle(Path(viewer_root).resolve())
+            patches.enter_context(patch.object(dashboard,'viewer_bundle',lambda _:bundle))
+            patches.enter_context(patch.object(dashboard,'viewer_status',lambda _:{'status':'installed','version':model_assets.VIEWER_VERSION}))
         token=secrets.token_urlsafe(32)
         handler=dashboard.handler(token)
         class FixtureHandler(handler):
@@ -110,7 +117,8 @@ def serve(port=18771):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--port',type=int,default=18771)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--port',type=int,default=18771);parser.add_argument('--viewer-root',type=Path)
     def stop(*_):raise KeyboardInterrupt
     signal.signal(signal.SIGTERM,stop)
-    serve(parser.parse_args().port)
+    args=parser.parse_args()
+    serve(args.port,args.viewer_root)
