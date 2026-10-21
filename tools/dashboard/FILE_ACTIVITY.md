@@ -18,8 +18,10 @@ is required. Earlier messages without snapshots cannot reconstruct old files.
 
 File text is rendered as text, never HTML. Previews are bounded to 12 cards
 and 128 Ki characters per original/updated file; truncation is labeled. No new
-filesystem or editing permissions are granted. Only the six frontend files
-already exposed by built-in workspace tools are observed. External MCP servers
+filesystem or editing permissions are granted. Only frontend files
+already exposed by built-in workspace tools are observed. The OpenCode bridge
+uses the same controller tracker for those calls, including actual saved CSS.
+OpenCode native reads remain reported activity without reconstructed snapshots. External MCP servers
 need an explicit file-event adapter before their edits can be shown reliably.
 
 Updates follow real model/tool events. Ollama may deliver complete tool

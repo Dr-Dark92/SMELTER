@@ -1,8 +1,8 @@
 # System relationships and graph provenance
 
-The generated graph/function index now describes the repaired application commit pinned by [source manifest](graph/source-manifest.json). The [historical review](DEEP_CODE_REVIEW.md) describes an older baseline; [repair status](REPAIR_STATUS_20261021.md) gives current defect disposition. The explorer is inspired by Graphify-style navigation; Graphify was not installed or run.
+The generated graph/function index describes the overhaul commit pinned by [source manifest](graph/source-manifest.json), before the subsequent [agent bridge](AGENT_BRIDGE_PLAN.md). The manually maintained runtime diagram below includes that bridge; the generated explorer has not yet been regenerated for it. The [historical review](DEEP_CODE_REVIEW.md) describes an older baseline. The explorer is inspired by Graphify-style navigation; Graphify was not installed or run.
 
-Current inventory: **244 scripts, 1,626 declarations/callbacks, 2,603 static relationships, 9,207 unresolved call expressions and 59 manually reviewed runtime links**. Source commit: `43ff086bac02a42c6257c91db983a307ff345f15`. Unresolved expressions are not a defect count.
+Pinned overhaul inventory: **244 scripts, 1,626 declarations/callbacks, 2,603 static relationships, 9,207 unresolved call expressions and 59 manually reviewed runtime links**. Source commit: `43ff086bac02a42c6257c91db983a307ff345f15`. Unresolved expressions are not a defect count.
 
 ## Artifacts and meaning
 
@@ -24,7 +24,10 @@ flowchart TD
   UI["Browser shell and Settings"] --> API["API composition and policy"]
   API --> JOB["Admission and durable jobs"]
   JOB --> DIRECT["Ollama turn"]
-  JOB --> AGENT["Managed read-only OpenCode"]
+  JOB --> AGENT["Managed OpenCode agent"]
+  SKILLS["Selected skill snapshots"] --> AGENT
+  AGENT --> BRIDGE["Task MCP proxy and host bridge"]
+  BRIDGE --> TOOLS
   DIRECT --> TOOLS["ToolSession and receipts"]
   TOOLS --> REG["Fixed registry"]
   TOOLS --> MCP["Transient built-in MCP"]

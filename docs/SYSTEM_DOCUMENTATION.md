@@ -38,7 +38,7 @@ Older `test_*` core/bootstrap programs may invoke real models, Blender or Docker
 | `python_tools.py`, `tool_registry.py` | Fixed schemas/dispatch, normalized grants, audits, receipts and explicit deduplication |
 | `access_policy.py` | Context-local registered paths, flags, exclusions and immutable task snapshot |
 | `mcp_connections.py`, `mcp_server.py` | Built-in stdio transport and parent policy/skill snapshot propagation |
-| `opencode_runtime.py`, `opencode_sandbox.py` | Version/schema/session checks, read-only agent task, no-network worker and admitted-model relay |
+| `opencode_runtime.py`, `opencode_sandbox.py`, `agent_bridge.py`, `opencode_mcp_proxy.mjs` | Version/schema/session checks, selected skill snapshots, scoped MCP agent tools, no-network worker and admitted-model relay |
 | `sandbox.py`, `sandbox_preview.py` | Code snapshots, immutable images, limits, labelled ownership/cleanup and loopback preview relay |
 | `process_runner.py` | Fixed argv, simultaneous bounded pipe capture, deadlines/cancellation and process-group/Windows-job cleanup |
 | `skills_catalog.py`, runtime/context/manager modules | One identity/catalog, startup fingerprints, bounded instructions and explicit install/enable operations |
@@ -75,7 +75,7 @@ Tests/preview/OpenCode get a read-only filtered source snapshot, UID/GID 65534, 
 
 Frontend tests run fixed Python/JS commands. Preview uses temporary container state and a fixed dashboard-owned relay on loopback 8770, no container published port, one-hour lifetime, request/reply limits 2/6 MiB. It is a small-fixture UI preview; large asset transfers are outside that relay's contract. Old unconfined validation markers cannot launch it. Existing V2 is preserved and must be archived explicitly before preparing a fresh copy after source changes.
 
-OpenCode is also a managed container. Only its read-only snapshot is visible. Host polls a tmpfs queue through fixed Docker exec commands; only admitted local-model requests reach fixed loopback Ollama. Native translation enforces context/output settings and tool-call/packet limits. Check sessions cannot prompt a model. No shell/edit/delegation grants, skills, images, GLBs or SMELTER write permissions are forwarded. Session rules are default-deny and must be echoed before prompt submission. Prior conversation is bounded; sessions are fresh. Source directory checks alone are not the OS boundary.
+OpenCode is also a managed container with a read-only source snapshot. The host polls a tmpfs queue through fixed Docker exec commands. Admitted model requests reach fixed loopback Ollama; approved MCP calls reach the host-owned AgentBridge and existing ToolSession/Python MCP server. Selected skill instructions and exact text hashes are frozen for the task. Native translation enforces context/output settings and request limits. Check sessions cannot prompt a model or invoke host tools. Native shell/edit/delegation remain denied; exact approved smelter_ tool names receive session permissions and host calls are revalidated. This supports existing narrowly granted reports, inspections and frontend CSS work; it does not add generic code editing. Images are not forwarded. Approved saved GLBs are accessible only through the metadata tool. Session rules are default-deny and must be echoed before prompt submission. Prior conversation is bounded; sessions are fresh. Source directory checks alone are not the OS boundary. See [current runtime and smoke instructions](../tools/dashboard/OPENCODE_RUNTIME.md).
 
 **Not all host processes are confined.** Fixed native REA/7z/FFprobe/Blender checks remain trusted approved host processes, with bounded output and owned process cleanup. Built-in MCP is app-controlled transport. Arbitrary external MCP remains blocked. Low-level explicitly invoked library helpers are not a third-party sandbox. See repair status for unverified Docker/Windows paths.
 
@@ -111,7 +111,7 @@ All API calls require the launch token. Static page/assets are separate allowlis
 | GET/POST sandbox | Observational prerequisite checks, operator image config, stop owned preview |
 | GET/POST maintenance | Quota/jobs/ownership status, retention plan/apply, new backup, explicit integrity/reconcile |
 | GET/POST mcp | Built-in SDK/config/discovery with gates; external execution blocked |
-| GET opencode/agent | Managed read-only connection check, no prompt; runtime version/schema/provider checks |
+| GET opencode/agent | Managed connection check, no model prompt or host tool actions; runtime version/schema/provider checks |
 | GET opencode/status/provider-preview/validate; POST deploy | Legacy installation/config staging helpers; not managed container activation |
 | GET/POST ollama preferences/models; extensions | Saved roles/discovery controls; lightweight remains configuration-only |
 | GET models/status or models/{id}; POST models | Viewer readiness, stored GLB, upload/animation-label operation |
@@ -149,7 +149,7 @@ python tools/dashboard/maintenance.py prune --root C:\SMELTER --days 30
 
 ## Validation and troubleshooting
 
-See README for offline suites and the repair handover for counts, image setup and explicit real-container smoke. Current verification used Linux/Python 3.12, MCP fixtures and Chromium; it did not establish Windows/Docker Desktop/OpenCode-image/live-model correctness.
+See README and the agent bridge handover for current counts and evidence. CI runs native Windows/Linux contracts and Chromium, plus real OpenCode/MCP in a no-network Docker container with synthetic model replies. This does not establish live Qwen quality or Docker Desktop behavior on the user's rig.
 
 | Symptom | Inspect |
 | --- | --- |

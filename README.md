@@ -1,6 +1,6 @@
 # SMELTER
 
-SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`, with local Ollama chat, registered Python tools, optional built-in MCP transport, and a confined OpenCode **read-only** source-inspection adapter.
+SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`. The primary agent route is **GUI -> SMELTER -> OpenCode -> Ollama/Qwen**, with selected skill instructions and approved built-in tools connected through MCP. Direct Ollama chat remains selectable. OpenCode's source snapshot stays read-only; approved host tools retain their existing narrow read/write/execute contracts.
 
 The repository also contains older CLI experiments, game-specific research scripts, reusable Blender/asset adapters, and Studio scaffolding. Those components are not automatically connected to the dashboard. Installing a skill provides instructions; it does not install dependencies or grant tools.
 
@@ -17,7 +17,7 @@ python tools/dashboard/dashboard.py
 
 Open the authenticated launch URL printed in that terminal. The dashboard binds to loopback on port **8768** by default. Keep its launch token private. A restart changes the token; use the new URL. On first use, select an absolute SQLite storage directory outside the checkout. Initialization refuses to overwrite an existing database.
 
-The standard dashboard backend uses the Python standard library. Local inference additionally requires a separately running Ollama server at `127.0.0.1:11434` and an installed model. The fallback reasoning model is `qwen3.5:9b`; the saved reasoning preference controls direct inference. Python 3.13 is the user's Windows environment; current automated verification here used Linux/Python 3.12. Hardware, drivers and model performance require local validation.
+The standard dashboard backend uses the Python standard library. Local inference additionally requires a separately running Ollama server at `127.0.0.1:11434` and an installed model. The default reasoning model is `qwen3.5:9b`; the saved reasoning preference controls admitted inference. The OpenCode route additionally requires the managed Docker runtime and pinned MCP SDK. Automated contracts run on native Windows and Linux/Python 3.13. Hardware, drivers and model performance require local validation.
 
 Optional MCP support:
 
@@ -40,18 +40,20 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 | Capability | Current behavior |
 | --- | --- |
 | Direct local chat | Selected reasoning model, bounded context estimate, streaming job progress, cancellation and saved receipts |
-| Skills | Bounded manifest instructions; startup fingerprints; changed/new manifests require dashboard restart |
+| Skills | Shared bounded instruction selection for direct chat/OpenCode; exact OpenCode task hashes; changed/new manifests require dashboard restart |
 | Python/MCP tools | Fixed registered operations, per-message grants, audits and application path checks |
 | Frontend work | Create/reuse sibling V2; read approved files; **CSS replacement only**; confined fixed tests and temporary small-fixture preview on port 8770 |
 | GLB | Browser preview, animation selection, frame/turntable export and stored animation labels; no automatic semantic naming |
 | REA | Pinned adapter exposes capabilities and static PE resource inspection, not general native decompilation or game-container extraction |
-| OpenCode | Managed no-network container, pinned 1.19.3, read-only code snapshot, admitted local-model relay; requires reviewed immutable image and live rig smoke test |
+| OpenCode | Managed no-network container, pinned 1.19.3, selected skills and approved MCP tools; native code snapshot remains read-only; live rig inference still requires validation |
 | Workflow planner | Dry-run dependency planning; not an autonomous execution workflow |
 | Legacy CLI/core | Shared skill/capability catalog; explicit scoped Registry bridge; other adapters labelled library-only |
 
 An enabled skill, detected executable, open port, successful save, or completed model explanation proves only that specific observation. Tool receipts are evidence of tool results, not independent verification of every AI statement.
 
 ## Documentation
+
+See the [agent bridge plan](docs/AGENT_BRIDGE_PLAN.md) and [runtime/smoke instructions](tools/dashboard/OPENCODE_RUNTIME.md) for the current OpenCode/skills/MCP route. General multi-file coding and arbitrary external MCP remain future work.
 
 | File | Contents |
 | --- | --- |

@@ -1,7 +1,7 @@
 import hashlib
 import json
 import tempfile
-import threading
+import io
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -11,7 +11,7 @@ from chat_jobs import ChatCancelled, Control, Jobs
 from chats import create_chat, read_chat
 from database import select_database
 from mcp_connections import sdk_status
-from opencode_runtime import ask, session_rules
+from opencode_runtime import ask, session_rules, Client
 from test_opencode_runtime import Fixture
 
 
@@ -24,7 +24,7 @@ class BridgeTests(unittest.TestCase):
         self.cid=create_chat(self.root,'Bridge test')['id']
         folder=self.root/'skills/documentation';folder.mkdir(parents=True)
         self.reference='# Documentation\n\n## Purpose\nUse verified receipts. BRIDGE_REFERENCE_MARKER\n'
-        (folder/'SKILL.md').write_text(self.reference,encoding='utf-8')
+        (folder/'SKILL.md').write_bytes(self.reference.encode('utf-8'))
 
     def bridge(self,**kwargs):
         with patch('mcp_connections.sdk_status',return_value={'status':'installed'}):
@@ -38,6 +38,13 @@ class BridgeTests(unittest.TestCase):
         result=bridge.call('write_diagnostic_markdown',{'filename':'denied.md','content':'Denied'})
         self.assertTrue(result['isError'])
         self.assertFalse((self.root/'diagnostics/denied.md').exists())
+
+    def test_snapshot_hash_describes_actual_crlf_instructions(self):
+        raw=self.reference.replace('\n','\r\n').encode('utf-8')
+        (self.root/'skills/documentation/SKILL.md').write_bytes(raw)
+        bridge=self.bridge(skills=['documentation'])
+        self.assertEqual(bridge.skills['snapshots'][0]['sha256'],hashlib.sha256(raw).hexdigest())
+        self.assertIn(raw.decode('utf-8'),bridge.instructions())
 
     def test_auto_selection_and_explicit_selection_share_context(self):
         self.assertEqual(self.bridge(auto_skills=True).skills['selected'],['documentation'])
@@ -70,6 +77,14 @@ class BridgeTests(unittest.TestCase):
         rules=session_rules(self.target,tool_names=['write_diagnostic_markdown'])
         self.assertIn({'permission':'smelter_write_diagnostic_markdown','pattern':'*','action':'allow'},rules)
         self.assertFalse(any(x['action']=='allow' and x['permission'] in ('edit','shell','bash','task') for x in rules))
+
+    def test_large_provider_catalogue_does_not_expand_message_limit(self):
+        payload=json.dumps({'catalogue':'x'*(5*1024*1024)}).encode()
+        client=Client()
+        with patch.object(client.opener,'open',return_value=io.BytesIO(payload)):
+            self.assertEqual(len(client.request('/provider')['catalogue']),5*1024*1024)
+        with patch.object(client.opener,'open',return_value=io.BytesIO(payload)),self.assertRaisesRegex(ValueError,'size limit'):
+            client.request('/session/fixture/message')
 
     @unittest.skipUnless(sdk_status()['status']=='installed','Pinned MCP SDK required')
     def test_real_mcp_inventory_rejects_escape_and_freezes_registered_exclusions(self):

@@ -177,8 +177,8 @@ def run(args):
             (folder/'tools/dashboard').mkdir(parents=True);(folder/'skills/documentation').mkdir(parents=True)
             (folder/'tools/dashboard/dashboard.py').write_text('HTML="<style>body{color:red}</style>"\n')
         reference=(REPO/'skills/documentation/SKILL.md').read_text(encoding='utf-8')
-        (root/'skills/documentation/SKILL.md').write_text(reference,encoding='utf-8')
-        (target/'skills/documentation/SKILL.md').write_text(reference,encoding='utf-8')
+        (root/'skills/documentation/SKILL.md').write_bytes(reference.encode('utf-8'))
+        (target/'skills/documentation/SKILL.md').write_bytes(reference.encode('utf-8'))
         select_database(root,str(base/'data'))
         if args.image:save_config(root,'sandbox.json',{'schema_version':1,'python_image':None,'node_image':None,'opencode_image':args.image})
         save_config(root,'runtime_settings.json',{'schema_version':1,'settings':{
