@@ -77,8 +77,9 @@ typing. A proposal is explicitly labelled unsaved until application succeeds.
 
 The Python profile runs unittest discovery for `tools/dashboard/test_*.py`.
 The Node profile runs existing `tools/dashboard/test_*.js` files. No test command
-or arguments are supplied by the model. Each invocation has an 80-second inner
-deadline and 90-second host process bound, read-only code, tmpfs state, dropped
+or arguments are supplied by the model. Each invocation has a 60-second inner
+deadline and 70-second host process bound, leaving room for checks and cleanup
+inside the 120-second host MCP envelope. It uses read-only code, tmpfs state, dropped
 capabilities, a non-root user, resource limits, no network, and owned cleanup.
 
 | Result | Meaning |

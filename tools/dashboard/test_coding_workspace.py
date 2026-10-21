@@ -222,6 +222,9 @@ class CodingWorkspaceTests(unittest.TestCase):
                     result = coding_test(self.root,target,'python')
                 self.assertEqual(result['stage'],expected)
                 command = runner.call_args.args[0]
+                # Leave room for image checks, snapshot and owned cleanup inside
+                # the fixed 120-second host MCP operation envelope.
+                self.assertLessEqual(runner.call_args.kwargs['timeout'],75)
                 self.assertIn('--network',command)
                 self.assertIn('none',command)
                 self.assertIn('--read-only',command)

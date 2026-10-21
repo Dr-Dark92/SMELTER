@@ -162,7 +162,7 @@ def tests(root,target):
 
 CODING_PYTHON = r'''
 import json,os,sys,threading,unittest
-timer=threading.Timer(80,lambda:os._exit(124));timer.daemon=True;timer.start()
+timer=threading.Timer(60,lambda:os._exit(124));timer.daemon=True;timer.start()
 suite=unittest.defaultTestLoader.discover('tools/dashboard',pattern='test_*.py')
 result=unittest.TextTestRunner(verbosity=2).run(suite)
 print('SMELTER_TEST_RESULT|'+json.dumps({'tests':result.testsRun,'failures':len(result.failures),
@@ -175,7 +175,7 @@ const fs=require('node:fs'),cp=require('node:child_process');
 const files=fs.readdirSync('tools/dashboard').filter(n=>/^test_[A-Za-z0-9_.-]+\.js$/.test(n)).sort();
 if(!files.length||files.length>64)process.exit(2);
 const child=cp.spawn(process.execPath,['--test',...files.map(n=>'tools/dashboard/'+n)],{stdio:'inherit'});
-const timer=setTimeout(()=>process.exit(124),80000);
+const timer=setTimeout(()=>process.exit(124),60000);
 child.on('error',()=>process.exit(2));child.on('exit',code=>{clearTimeout(timer);process.exit(code??2)});
 '''
 
@@ -195,7 +195,7 @@ def coding_test(root,target,profile):
     try:
         record_owner(folder,name,image,'tests')
         result=run(_flags(ready['docker'],name,code)+['--rm',image,*command],
-                   timeout=90,max_output=2*1024*1024)
+                   timeout=70,max_output=2*1024*1024)
         raw=result.stdout+result.stderr
         output=raw.decode('utf-8',errors='replace')
         counts={}
