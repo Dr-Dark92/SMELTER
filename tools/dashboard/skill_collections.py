@@ -4,7 +4,6 @@ Only SKILL.md is fetched and stored. No scripts or dependencies are executed.
 """
 from __future__ import annotations
 import re
-from pathlib import Path
 from github_skill_discovery import discover_github_skill, parse_github_skill
 from skill_manager import _paths, _state, _write_state
 from skill_manifest import parse_skill_manifest

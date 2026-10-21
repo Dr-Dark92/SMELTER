@@ -117,6 +117,8 @@ def attach_model(root, data):
     except ValueError as exc:
         raise ValueError('Invalid GLB upload encoding') from exc
     metadata = inspect_glb(raw)
+    from storage_budget import require
+    require(root,len(raw))
     aid = str(uuid4())
     folder = _plain_path(Path(root) / '.smelter/model-assets')
     folder.mkdir(parents=True, exist_ok=True)

@@ -3,6 +3,7 @@ import http.client
 import io
 import json
 import socket
+import sqlite3
 import threading
 import time
 from uuid import uuid4
@@ -62,6 +63,8 @@ class Control:
         self.tool_activity = []
         self.access_policy = None
         self.context_budget = None
+        self.configuration = None
+        self.terminal_result = None
 
     def check(self):
         if self.cancelled.is_set():
@@ -165,12 +168,15 @@ class Control:
 
 class Jobs:
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.jobs = {}
 
     def start(self, root, data, worker=None):
         from chats import read_chat
         read_chat(root, data.get('id'))
+        from job_store import recover,active
+        recover(root)
+        if active(root):raise ValueError('A recorded task is still owned by a live process; inspect it before starting another')
         prompt = data.get('content')
         if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
             raise ValueError('Prompt must be 1–1800 characters')
@@ -190,14 +196,23 @@ class Jobs:
             from functools import partial
             from opencode_runtime import ask as opencode_ask
             worker = partial(opencode_ask, model_key=data.get('opencode_model'), approval=True)
+        from task_contract import configuration
+        effective=configuration(root)
+        if data.get('configuration_revision') and data['configuration_revision']!=effective['revision']:
+            raise ValueError('Task configuration changed; refresh task access before sending')
+        if data.get('policy_revision') and data['policy_revision']!=policy.revision:
+            raise ValueError('Access policy changed; refresh task access before sending')
         with self.lock:
             if any(j['state'] == 'running' for j in self.jobs.values()):
                 raise ValueError('A chat request is already running; finish or stop it first')
             if len(self.jobs) >= 50:
                 del self.jobs[next(iter(self.jobs))]
             job = {'id': str(uuid4()), 'conversation_id': data['id'], 'state': 'running',
-                   'started': time.monotonic(), 'control': Control(), 'error': None, 'engine':engine}
+                   'started': time.monotonic(), 'control': Control(), 'error': None, 'engine':engine, 'root':root,'prompt':data['content']}
             job['control'].access_policy = policy
+            job['control'].configuration = effective
+            from job_store import admit
+            admit(root,{'id':job['id'],'conversation_id':job['conversation_id'],'engine':engine,'state':'running','error':None,'phase':'Admitted','policy_revision':policy.revision,'configuration':effective,'elapsed_seconds':0,'prompt':data['content']})
             self.jobs[job['id']] = job
         threading.Thread(target=self._run, args=(root, data, job, worker), daemon=True).start()
         return self.status(job['id'])
@@ -209,9 +224,13 @@ class Jobs:
             result = (worker or ask)(root, data['id'], data['content'], image=data.get('image'),
                 skills=data.get('skills'), auto_skills=data.get('auto_skills', False),
                 tool_permissions=data.get('tool_permissions'), control=control)
-            state, error = ('cancelled', None) if control.cancelled.is_set() else ('done', None)
-            if state == 'done' and isinstance(result, dict) and result.get('status') in ('error', 'partial'):
-                state, error = result['status'], str(result.get('error', 'Agent task failed'))[:1000]
+            from task_contract import job_state
+            with control.lock:
+                terminal = control.terminal_result or result or {}
+                state = job_state(terminal)
+                error = terminal.get('error')
+                if not control.completed and control.cancelled.is_set():state='cancelled'
+                control.completed=True
         except ChatCancelled:
             state, error = 'cancelled', None
         except Exception as exc:
@@ -220,16 +239,24 @@ class Jobs:
             control.file_activity.settle(state == 'cancelled')
         with self.lock:
             job.update(state=state, error=error, ended=time.monotonic())
+            from job_store import save
+            try:save(root,self.status(job['id']))
+            except (ValueError,OSError,TypeError,sqlite3.Error) as exc:
+                job.update(state='error',error='Task ended but durable job status could not be saved: '+str(exc)[:500])
 
-    def status(self, jid):
+    def status(self, jid, root=None):
         with self.lock:
             if jid not in self.jobs:
+                if root is not None:
+                    from job_store import read
+                    return read(root,jid)
                 raise ValueError('Chat request not found; the server may have restarted')
             job = self.jobs[jid]
-            return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error')} | {
+            return {k: job[k] for k in ('id', 'conversation_id', 'state', 'error','prompt')} | {
                 'engine': job['engine'],
                 'policy_revision': job['control'].access_policy.revision if job['control'].access_policy else None,
                 'context_budget': job['control'].context_budget,
+                'configuration': job['control'].configuration,
                 'phase': job['control'].phase,
                 'output_text': job['control'].output_text,
                 'tool_activity': job['control'].tool_activity,

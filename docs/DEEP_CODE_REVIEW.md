@@ -1,4 +1,8 @@
-# Deep code review — remaining issues and function relationships
+# Deep code review — historical baseline and function relationships
+
+> **Superseded defect status:** F01–F11 were addressed in the 2026-10-21 repair. Read [current repair status](REPAIR_STATUS_20261021.md) for implementation, tests and remaining Docker/Windows verification. The following analysis/counts describe the older pinned application, while the graph/function index now describes the repaired application.
+>
+> **F06 correction:** the baseline already validated top-level JSON objects. Its original finding below overstated the gap. The repair extracts the common boundary and adds real HTTP regression coverage; it does not claim that a previously absent guard was invented.
 
 **Baseline:** `c9e541e9e0d53fcaba109170f8e5a201b500340d`, SMELTERV1. This is a review after the scoped dashboard repair, not a repetition of already fixed findings. Application source is unchanged by this documentation revision. Do not delete functions based only on static graph output.
 

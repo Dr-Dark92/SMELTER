@@ -1,6 +1,5 @@
 """Read-only host counters, storage and local Ollama allocation; no execution."""
 from __future__ import annotations
-import os
 import shutil
 import time
 from pathlib import Path

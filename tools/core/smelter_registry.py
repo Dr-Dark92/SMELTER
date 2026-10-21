@@ -59,29 +59,41 @@ class Registry:
         json.dumps(result)
         return result
 
+    @staticmethod
+    def _dashboard_modules():
+        # Trusted sibling implementation, independent of caller's working directory.
+        import sys
+        source=Path(__file__).resolve().parents[1]/'dashboard'
+        if str(source) not in sys.path:sys.path.insert(0,str(source))
+
     def skills(self) -> list[dict[str, str]]:
-        base = self.root / ".agents" / "skills"
-        found = []
-        if not base.is_dir():
-            return found
-        for child in sorted(base.iterdir()):
-            path = child / "SKILL.md"
-            if not path.is_file():
-                continue
-            raw = path.read_text(encoding="utf-8-sig", errors="replace")
-            description = ""
-            if raw.startswith("---"):
-                parts = raw.split("---", 2)
-                if len(parts) == 3:
-                    for line in parts[1].splitlines():
-                        if line.startswith("description:"):
-                            description = line.partition(":")[2].strip().strip("'\"")
-                            break
-            found.append({"id": child.name, "description": description, "path": str(path)})
-        return found
+        self._dashboard_modules()
+        from skills_catalog import catalog_skills
+        from skill_runtime import skill_folder
+        return [{**skill,'path':str(skill_folder(self.root,skill)/'SKILL.md')} for skill in catalog_skills(self.root)['skills']]
 
     def skill_instructions(self, skill_id: str, *, limit: int = 16000) -> str:
-        known = {skill["id"]: skill["path"] for skill in self.skills()}
-        if skill_id not in known:
-            raise ValueError("Unknown skill")
-        return Path(known[skill_id]).read_text(encoding="utf-8-sig", errors="replace")[:limit]
+        self._dashboard_modules()
+        from skill_context import build_skill_context
+        from skill_runtime import monitor
+        monitor(self.root)
+        known={s['id'] for s in self.skills()}
+        canonical=skill_id if skill_id in known else 'legacy/'+skill_id
+        return build_skill_context(self.root,[canonical])[:min(max(1,limit),48000)]
+
+    def connect_dashboard(self, grants, conversation_id=None):
+        """Explicit compatibility adapter to the same scoped/audited tool session.
+
+        Does not register or execute code from skill text. Writes also retain
+        Registry.invoke's allow_writes gate and all ToolSession restrictions.
+        """
+        self._dashboard_modules()
+        from python_tools import ToolSession
+        session=ToolSession(self.root,grants,conversation_id)
+        read_only={'frontend_workspace_info','read_frontend_file','read_enabled_design_skill','inventory_directory','inspect_model_attachment','rea_capabilities','rea_inspect_pe_resources'}
+        for tool in session.tools:
+            function=tool['function'];name=function['name']
+            def handler(value,name=name):
+                return session.execute({'function':{'name':name,'arguments':value['arguments']}})
+            self.register(Capability('smelter/'+name,function['description'],{'arguments':'object'},handler,name in read_only))
+        return session

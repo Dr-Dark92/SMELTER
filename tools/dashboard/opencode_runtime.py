@@ -1,7 +1,7 @@
-"""First OpenCode GUI bridge: explicit, bounded, read-only V2 sessions.
+"""Explicit read-only agent sessions in an owned, no-network OpenCode container.
 
-Connects to an existing loopback server; never launches a CLI or patches its
-configuration. Session rules are application permissions, not an OS sandbox.
+Application rules supplement the OS boundary. The legacy loopback Client remains
+an explicitly injectable compatibility adapter; production requests use ManagedClient.
 """
 import base64
 import hashlib
@@ -31,7 +31,7 @@ RULES = [
 ]
 
 
-def session_rules(directory, policy=None):
+def session_rules(directory, policy=None, host_directory=None):
     # Limit source content reads independently of the server's VCS worktree.
     # A non-Git project can report worktree '/', which is not a useful scope.
     bases = {str(Path(directory)), Path(directory).as_posix()}
@@ -43,7 +43,7 @@ def session_rules(directory, policy=None):
                 patterns.add(base.rstrip('/\\') + '\\' + suffix.replace('/','\\'))
     rules = [RULES[0]] + [{'permission':'read','pattern':p,'action':'allow'} for p in sorted(patterns)] + RULES[1:]
     if policy is not None:
-        target = Path(directory).resolve()
+        target = Path(host_directory or directory).resolve()
         for row in sorted(policy.value['locations'],key=lambda x:len(Path(x['path']).parts)):
             location=Path(row['path']).resolve()
             if not row['enabled'] or not (location == target or location.is_relative_to(target)):
@@ -55,7 +55,7 @@ def session_rules(directory, policy=None):
             for exclusion in denied:
                 if not prefix and exclusion in ('.git/**','.smelter/**','projects/**'):continue
                 relative='/'.join(x for x in (prefix,exclusion) if x)
-                for pattern in (relative,str(target).replace('\\','/')+'/'+relative):
+                for pattern in (relative,str(directory).replace('\\','/')+'/'+relative):
                     rules.append({'permission':'read','pattern':pattern,'action':'deny'})
                     if pattern.endswith('/**'):
                         rules.append({'permission':'read','pattern':pattern[:-3],'action':'deny'})
@@ -123,12 +123,19 @@ def _session_contract(spec):
 
 def status(root, client=None, policy=None):
     from frontend_workspace import target_path
-    client = client or Client()
-    expected = target_path(root)
     from access_policy import current
-    policy = policy or current(root)
-    policy.authorize(expected / 'tools', 'read')
-    policy.authorize(expected / 'skills', 'read')
+    policy=policy or current(root)
+    expected_host=target_path(root)
+    policy.authorize(expected_host/'tools','read');policy.authorize(expected_host/'skills','read')
+    if client is None:
+        from opencode_sandbox import ManagedClient
+        from task_contract import configuration
+        managed=ManagedClient(root,policy,configuration(root))
+        try:result=status(root,managed,policy)
+        finally:confirmed=managed.close()
+        if not confirmed:raise ValueError('OpenCode inspection ended but owned container cleanup was not confirmed')
+        return result
+    expected=Path(getattr(client,'expected_directory',expected_host))
     health = client.request('/global/health')
     paths = client.request('/path')
     if not isinstance(health, dict) or health.get('healthy') is not True or not isinstance(paths, dict):
@@ -175,7 +182,9 @@ def status(root, client=None, policy=None):
                 result['models'].append({'key':pid + '/' + mid, 'providerID':pid, 'modelID':mid})
     result['models'] = result['models'][:50]
     result['read_only_ready'] = bool(result['models'])
-    result['reason'] = 'Ready for an explicitly approved read-only session' if result['models'] else 'No connected model with an explicit local Ollama baseURL was found'
+    result['reason'] = 'Ready for an explicitly approved fixture read-only session' if result['models'] else 'No connected model with an explicit local Ollama baseURL was found'
+    if getattr(client,'confined',False):
+        result.update(note='Managed container connection only; no model task was submitted or validated.',endpoint='managed Docker exec relay (no network)',host_directory=str(client.host_directory),confinement='no-network container; read-only code snapshot and local-model relay')
     return result
 
 
@@ -245,7 +254,7 @@ def conversation_prompt(chat, prompt):
 
 
 def ask(root, conversation_id, prompt, *, model_key=None, approval=False, control=None,
-        image=None, skills=None, auto_skills=False, tool_permissions=None, client=None):
+        image=None, skills=None, auto_skills=False, tool_permissions=None, client=None, _managed_cleanup=None):
     from chats import read_chat, _db, EXECUTION_SCHEMA
     from chat_jobs import ChatCancelled
     if approval is not True:
@@ -255,9 +264,16 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1800:
         raise ValueError('Prompt must be 1–1800 characters')
     chat = read_chat(root, conversation_id)
-    client = client or Client()
     from access_policy import current
-    policy = control.access_policy if control and control.access_policy else current(root)
+    policy=control.access_policy if control and control.access_policy else current(root)
+    if client is None:
+        from opencode_sandbox import ManagedClient
+        from task_contract import configuration
+        effective=control.configuration if control and control.configuration else configuration(root)
+        managed=ManagedClient(root,policy,effective,control,allow_inference=True)
+        try:
+            return ask(root,conversation_id,prompt,model_key=model_key,approval=approval,control=control,client=managed,_managed_cleanup=managed.close)
+        finally:managed.close()
     check = status(root, client, policy=policy)
     if not check['read_only_ready']:
         raise ValueError(check['reason'])
@@ -277,7 +293,7 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             control.update(phase)
     session_id, answer, events, cancelled, abort_error, failed = None, '', [], False, None, False
     observed = {}
-    rules = session_rules(check['directory'], policy)
+    rules = session_rules(check['directory'],policy,host_directory=getattr(client,'host_directory',None))
     record('requested', directory=check['directory'], model=model_key, permission=rules)
     try:
         update('OpenCode: creating read-only session')
@@ -295,7 +311,8 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             'parts':[{'type':'text', 'text':conversation_prompt(chat, prompt)}]}
         record('prompt_requested', session_id=session_id)
         client.request('/session/' + session_id + '/prompt_async', 'POST', body, timeout=10)
-        deadline = time.monotonic() + 300
+        task_timeout=control.configuration['runtime']['timeout_seconds'] if control and control.configuration else 300
+        deadline = time.monotonic() + task_timeout
         while time.monotonic() < deadline:
             update('OpenCode: inspecting source · read only')
             messages = client.request('/session/' + session_id + '/message?limit=50')
@@ -318,7 +335,7 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             else:
                 time.sleep(0.5)
         else:
-            raise ValueError('OpenCode task exceeded five minutes')
+            raise ValueError('OpenCode task exceeded its admitted timeout')
     except (ValueError, OSError, ChatCancelled) as exc:
         cancelled = isinstance(exc, ChatCancelled)
         failed = not cancelled
@@ -328,23 +345,17 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             except (ValueError, OSError):
                 abort_error = 'Abort was not confirmed; check the OpenCode server before submitting another task'
         answer = ('OpenCode request stopped.' if cancelled else 'OpenCode task failed: ' + str(exc)) + ('\n' + answer if answer else '')
-    record('result', session_id=session_id, cancelled=cancelled, failed=failed, abort_error=abort_error, events=events)
+    cleanup_confirmed=_managed_cleanup() if _managed_cleanup else None
+    if cleanup_confirmed is False:
+        failed=True
+        answer+='\nOwned container cleanup was not confirmed; inspect the managed container before another task.'
+    record('result', cleanup_confirmed=cleanup_confirmed, session_id=session_id, cancelled=cancelled, failed=failed, abort_error=abort_error, events=events)
     if abort_error:
         answer += '\n' + abort_error
     execution = {'source':'controller', 'engine':'opencode', 'session_id':session_id,
-        'permissions':{'opencode_read_only':True}, 'policy_revision':policy.revision, 'events':events, 'files':[],
-        'audit_path':str(audit), 'cancelled':cancelled, 'model_text':answer,
+        'cleanup_confirmed':cleanup_confirmed, 'permissions':{'opencode_read_only':True}, 'policy_revision':policy.revision, 'events':events, 'files':[],
+        'audit_path':str(audit), 'cancelled':cancelled, 'model_text':answer, 'confinement':'managed no-network container' if getattr(client,'confined',False) else 'injected fixture',
         'verification_scope':'Model narrative and tool activity are reported by OpenCode; not independently fact-checked'}
-    lock = control.lock if control else nullcontext()
-    with lock:
-        with closing(sqlite3.connect(_db(root), timeout=5)) as conn, conn:
-            conn.execute('PRAGMA foreign_keys=ON')
-            conn.execute('INSERT INTO messages(conversation_id,role,content) VALUES(?,?,?)', (conversation_id,'user',prompt.strip()))
-            mid = conn.execute('INSERT INTO messages(conversation_id,role,content) VALUES(?,?,?)', (conversation_id,'assistant',answer)).lastrowid
-            conn.execute(EXECUTION_SCHEMA)
-            conn.execute('INSERT INTO message_execution(message_id,payload) VALUES(?,?)', (mid,json.dumps(execution)))
-        if control:
-            control.completed = True
-    return {'reply':answer, 'stored':True, 'engine':'opencode', 'session_id':session_id,
-            'status':'error' if failed else 'cancelled' if cancelled else 'completed',
-            'error':answer[:1000] if failed else None}
+    from execution_store import finalize
+    result=finalize(root,conversation_id,prompt,answer,execution,control=control,error=answer[:1000] if failed else None,partial=bool(events),cancelled=cancelled)
+    return {**result,'engine':'opencode','session_id':session_id}

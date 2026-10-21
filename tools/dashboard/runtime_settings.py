@@ -7,6 +7,7 @@ LIMITS = {'context_tokens': (2048, 131072), 'max_output_tokens': (128, 8192), 't
 PROFILES = {
     'office': {'context_tokens': 16384, 'max_output_tokens': 1024, 'timeout_seconds': 900, 'thinking': False},
     'home': dict(DEFAULTS),
+    'frontend': {**DEFAULTS, 'max_output_tokens':4096,'timeout_seconds':900},
 }
 
 

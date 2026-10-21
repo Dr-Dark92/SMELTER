@@ -1,183 +1,166 @@
 # SMELTER system documentation
 
-Application baseline: **SMELTERV1, c9e541e9e0d53fcaba109170f8e5a201b500340d**. This document describes inspected source, not an assurance about installed models, external packages, Windows processes or private game assets. The accompanying review separates reproduced defects, static findings and intentional limits.
+This document describes the V1.7 operational repair on SMELTERV1, based on `9ee0f6dbd6c4bd790ef3bf31421f1b6f9573baf3`. The graph manifest pins the exact repaired application commit. Read [repair status](REPAIR_STATUS_20261021.md) for evidence and unverified platform paths. Installed models, Windows processes, container images and game assets are not verified by source review.
 
-## 1. Executables and operating model
+## Start and operating model
 
-| Entry point | Purpose | Dependencies / boundary |
-| --- | --- | --- |
-| `python tools/dashboard/dashboard.py` | Active local web dashboard | Python standard library; optional integrations separately installed |
-| `tools/dashboard/start_dashboard.ps1` | Windows dashboard launcher | PowerShell and Python |
-| `python tools/setup/setup_web.py` | Separate vanilla setup UI | Explicit setup actions; not the chat runtime |
-| `tools/setup/start_setup.ps1` | Setup launcher | PowerShell |
-| `python tools/web/smelter_console.py` | Earlier standalone local console | Separate state/handlers; not a second layer of the active UI |
-| `python tools/dashboard/mcp_server.py --root …` | Per-call built-in stdio tool server | Pinned optional MCP SDK; launcher-supplied grants/snapshots |
-| `opencode serve …` | External headless agent server | Started separately by operator; dashboard never launches it |
-| `tools/bootstraps/*.ps1` | Install/configure/diagnose/probe stages | Script-specific approvals and dependencies; inspect individually |
-| `tools/core/test_*.py` | Historical agent/asset integration experiments | Some call Ollama, Blender or Docker; names do not imply offline safety |
+Run `python tools/dashboard/dashboard.py` from the checkout. The active dashboard binds to `127.0.0.1:8768` and prints an authenticated URL. Keep its token private; use the new URL after restart. Stop its owning terminal with Ctrl+C. A browser refresh does not reload backend code or startup skill fingerprints.
 
-### Start and stop
+First use initializes SQLite in an absolute directory outside the checkout. `.smelter/database-location.json` selects it. Initialization refuses an existing database and cleans up only its own failed attempt. Current extension, model, runtime, access and sandbox configurations live in SQLite `config_snapshots`. Old JSON configuration is a compatibility/import surface, not dashboard truth.
 
-Run from the checkout root. The dashboard creates a launch token and binds to `127.0.0.1:8768`; use its printed URL including the token fragment. The browser authentication helper reads the current fragment and sends the API token header. Do not paste launch URLs into reports. On restart, reconnect using the new token. Stop the owning terminal with Ctrl+C. A browser refresh does not restart the backend or adopt changed startup skill fingerprints.
-
-On first run, initialize a SQLite database outside the checkout. The marker remains inside `.smelter/database-location.json`. Existing database selection is immutable through the initialization endpoint; relocation needs a separate migration. A failed fresh initialization cleans up only files created by that attempt. Legacy extension/model JSON is imported once and preserved.
-
-### External services
-
-| Component | Expected endpoint/version in adapter | Meaning of verification |
-| --- | --- | --- |
-| Ollama | `http://127.0.0.1:11434`; `/api/chat`, `/api/tags`, `/api/ps` | Model enumeration/allocation and actual request replies are different observations |
-| OpenCode | `http://127.0.0.1:4096`; adapter pins 1.19.3 | Health, directory, live permission schema, local provider and echoed session rules checked |
-| REA | `rea-agents` 6.7.0 under `.smelter/tooling/rea` | Package presence checked separately from approved live CLI invocation |
-| MCP | SDK 1.30.0 in `requirements-mcp.txt` | Installed SDK enables stdio transport; does not install tool servers |
-| GLB viewer | model-viewer 4.1.0 local bundle | Browser rendering dependency, independent of model inference |
-| 7-Zip / FFprobe / Blender | Discovered executables; adapter-specific checks | Version/dependency checks do not prove content conversion or agent connectivity |
-
-These describe the code's expectations; they are not recommendations to upgrade to unverified current versions.
-
-## 2. Layer responsibilities
-
-| Layer / modules | Responsibility | Calls / data boundary |
-| --- | --- | --- |
-| `dashboard.py` + browser JS | HTML, auth, API routing, UI state, polling, settings | Calls controllers; still contains a large inline script |
-| `access_ui.js` | Settings surface, location editor, task-access summary | `/api/access-policy`; existing engine/task controls moved into one dialog |
-| `chat_jobs.py` | One active task, admission, cancellation, status and bounded job retention | Chooses direct Ollama or OpenCode worker; keeps state in memory |
-| `chat_inference.py`, `context_budget.py` | Prompt/history/skill assembly, bounded model-tool loop, outcome persistence | Local Ollama; ToolSession; SQLite transcripts |
-| `python_tools.py`, `tool_registry.py` | Normalize grants, schemas, fixed dispatch, receipts, audits and deduplication | Registered adapters only; no arbitrary shell/editor |
-| `access_policy.py` | Registered-location matching, flags, exclusions, immutable revision | Context-local checks around built-in execution; no OS sandbox |
-| `mcp_connections.py`, `mcp_server.py` | SDK exchange, stdio lifecycle, descriptors and child snapshot transfer | Built-in calls create transient child processes |
-| `opencode_runtime.py` | Existing-server validation, session rules, prompt submission, polling/abort | Separate OpenCode process and its own provider/configuration |
-| `database.py`, `config_store.py`, `chats.py` | Bootstrap/readiness, authoritative configuration, paginated transcripts | SQLite plus a filesystem database-location marker |
-| `skills_catalog.py`, `skill_manager.py`, `skill_collections.py` | Discover, enable/disable, import approved instruction text | Bundled and managed manifests; state remains JSON |
-| `skill_runtime.py`, `skill_context.py`, `skill_router.py` | Startup fingerprints, bounded instruction text, deterministic suggestions | Changed/new manifests require restart; at most three explicit skills |
-| `frontend_workspace.py`, `file_activity.py/.js` | Managed V2 copy, CSS-only edits, tests/preview and file cards | Hash/structure checks, isolated preview database, fixed operations |
-| `model_assets.py`, preview/animation/turntable JS | GLB validation/storage, local browser preview, clip labels/exports | Saved attachments and SQLite metadata; no animation-meaning inference |
-| `execution.py`, `media.py`, `blender.py`, `rea_connection.py` | Fixed explicitly approved inspection processes | Subprocess timeout and argument validation; not general execution tools |
-| `resource_metrics.py`, `system_status.py`, `startup.py` | Host counters, Ollama allocation and startup checks | Observations, not CPU/RAM/VRAM reservations |
-| `tools/core/smelter_registry.py` and adapters | Older capability registry and asset/material/integrity experiments | Not imported into dashboard tool dispatch automatically |
-
-## 3. Chat execution contracts
-
-### Direct Ollama
-
-1. Browser consumes the next-message approvals and sends `action=start`, conversation ID, text, optional image/skills and tool permissions.
-2. `Jobs.start` validates admission, captures the access policy and denies an overlapping active job or unconfined external MCP selection. A worker thread is created.
-3. `chat_inference.ask` loads the conversation, saved reasoning model and runtime settings. It selects explicit/suggested skills and creates a ToolSession.
-4. Prompt/history, skill text and schemas are bounded. The estimate uses UTF-8 bytes and reserves, not the model's tokenizer. Oversized current work is rejected instead of silently trimming required instructions.
-5. `Control.infer` owns a cancellable HTTP transport and assembles Ollama stream chunks. The GUI polls job status for partial content, phase, receipts and file activity.
-6. Model tool calls must name an approved schema and use valid arguments. ToolSession writes a request audit before dispatch. Policy checks and adapter restrictions both apply.
-7. Tool results are added to the model conversation. The loop has a bounded call budget; repeated create/write/launch calls use an explicit deduplication set.
-8. Final user/assistant messages and controller execution data are stored. Tool/model follow-up failures after actions preserve receipts and return partial outcomes. Cancellation does not roll back completed writes.
-
-Legacy `action=ask` now follows the same asynchronous controller and returns HTTP 202/job information. It is no longer a synchronous reply endpoint.
-
-### OpenCode read-only
-
-The operator starts OpenCode from the sibling V2 directory. Check the existing server in **Review task access** while the OpenCode engine is selected, select a verified local model and approve one session. The dashboard checks version, directory, live permission schema and local Ollama provider configuration. A fresh session is created with default-deny rules and a limited read allowlist for README, tools and skills; nested policy exclusions add denials. The server must echo the exact requested permissions and directory before any prompt is sent.
-
-The fresh session receives up to twelve earlier user/assistant texts within a bounded character budget. This preserves useful context while avoiding reuse of prior grants. Skills, images, GLBs, SMELTER MCP grants, shell commands, edits and delegation are not forwarded. Session reuse is not implemented. Polling currently has a fixed five-minute limit and reads the latest fifty external messages. Stop requests abort only the owned session; abort failure is reported. Remaining final-completion/cancellation consistency defects are recorded in the review.
-
-### Built-in MCP
-
-Selecting built-in MCP changes transport, not authority. The launcher transmits normalized grants, the fixed task policy and parent skill fingerprints to the child. Discovery/call connections close afterward. A changed manifest cannot become active just because a fresh child was started. Persistent frontend preview launch is handled by the dashboard owner even when other tools use MCP, so transient-child cleanup does not own the preview lifetime.
-
-Arbitrary external servers are saved configuration only: GUI discovery and task execution are blocked pending confinement. Low-level exchange helpers can still be called by explicit operator Python code; they are not a sandbox for third-party servers.
-
-## 4. Access model and tool catalog
-
-**Effective authority = registered location policy ∩ per-message grants ∩ adapter's fixed operation contract.** An enabled skill is instruction text and cannot add authority.
-
-Policies allow at most 32 locations. Local absolute paths are required; whole filesystem/drive roots, UNC, traversal, reparse/symlink paths and alternate streams are rejected. Most-specific enabled matching location wins. Relative exclusions deny access within that row. A disabled nested row is ignored; an enabled row with all flags off denies the subtree. Execute selects from `tests`, `preview`, `rea`, `archive`, `media`, `blender`, not arbitrary executable names or arguments.
-
-| Exposed model tool | Extra restriction |
+| Entry point / dependency | Role / boundary |
 | --- | --- |
-| `inventory_directory` | Approved registered folder; bounded metadata traversal, no file-content reads |
-| `write_diagnostic_markdown` | New plain `.md` basename in diagnostics; no overwrite; saved-byte digest |
-| `rea_capabilities` | Explicit process approval, enabled REA skill and registered REA execution directory |
-| `rea_inspect_pe_resources` | Same plus approved readable folder, relative `.exe/.dll`, MZ signature and 64 MiB limit |
-| `frontend_workspace_info` | Fixed original/sibling locations and actual supported surface |
-| `prepare_frontend_workspace` | Refuses unmanaged existing target; isolated database; checks copied source/destination paths |
-| `read_enabled_design_skill` | Actual enabled design-skill ID and active manifest snapshot |
-| `read_frontend_file` | Listed readable files; dashboard CSS only; bounded pagination |
-| `replace_frontend_css` | Exact substring and CSS SHA-256; original/backend/HTML/JS preserved |
-| `validate_frontend_workspace` | Registered tests operation; fixed test commands; no model-chosen shell |
-| `launch_frontend_preview` | Registered preview operation, validated current content, fixed port and startup health check |
-| `inspect_model_attachment` | Explicit saved-attachment ID; bounded metadata/clip timing inspection |
+| `tools/dashboard/dashboard.py` | Active standard-library dashboard composition root; optional MCP installed separately |
+| `tools/setup/setup_web.py` | Separate explicit setup UI, not the chat controller |
+| `tools/web/smelter_console.py` | Older standalone console, not the active dashboard |
+| `tools/dashboard/mcp_server.py --root …` | Transient built-in stdio server; pinned SDK 1.30.0 |
+| Ollama `127.0.0.1:11434` | Direct/native local-model transport; selected reasoning model, fallback qwen3.5:9b |
+| Managed OpenCode 1.19.3 | Container-local 4096; no host port/network; fixed Docker-exec API relay |
+| REA rea-agents 6.7.0 | Separate package presence and approved live static PE invocation |
+| model-viewer 4.1.0 | Browser rendering dependency, separate from inference |
+| 7z / FFprobe / Blender | Fixed approved native inspections with bounded process IO; not arbitrary shell |
+| Docker Engine 28+ | Local Linux-container daemon with required resource/seccomp support; reviewed local immutable images, no automatic pull |
 
-Application-owned database, audits, installed skill text/runtime dependencies, uploaded attachments and preview bookkeeping are handled by dedicated application operations. Path policy does not grant general access to `.smelter`. Operator configuration/installation APIs are distinct from model tools. Executed tests/previews still run as the OS user: permitted working directories do not confine child code's filesystem or network access.
+Older `test_*` core/bootstrap programs may invoke real models, Blender or Docker. Run only the documented offline suites unless deliberately exercising those integrations.
 
-## 5. API map
+## Layers and calls
 
-All active dashboard APIs require the launch token. Static page/assets are served separately. The paths below are source contracts, not a second independent public service specification.
-
-| Method / path | Operations / implementation |
+| Owner | Responsibility / next layer |
 | --- | --- |
-| GET `/api/startup` | Database/configuration/dependency startup report |
-| POST `/api/database/select` | First database selection/initialization |
-| GET `/api/system/status` | CPU/RAM/disk, database, Ollama model allocation |
-| GET `/api/extensions`; POST same | Catalog / enable state in SQLite |
-| GET `/api/ollama/models` | Installed model discovery, gated by extension/dependency state |
-| GET `/api/ollama/preferences`; POST same | Read/save installed reasoning or lightweight model preference |
-| GET `/api/runtime` | Effective direct-chat settings and source attribution |
-| POST `/api/chats`, `action=runtime_settings` | Save runtime settings; does not reload a model |
-| GET `/api/chats`; GET `/api/chats/{id}` | Conversation list / latest or `before` message page |
-| POST `/api/chats` | Create, note, rename, delete, ask/start or stop; action dispatch in handler |
-| GET `/api/chat-jobs/{id}` | In-memory task progress/outcome; restart loses these jobs |
-| GET/POST `/api/access-policy` | Effective policy/model summary / save operator policy |
-| GET `/api/skills`, `/api/skills/status`, `/api/skills/review/{id}` | Catalog, active/restart status, current manifest review |
-| POST `/api/skills/manage` | Explicit add/enable/disable/remove managed instruction operations |
-| POST `/api/skills/discover`, `/api/skills/discover-repository`, `/api/skills/collection-preview` | Preview-only GitHub manifest discovery / collection review |
-| GET `/api/mcp/status`; POST `/api/mcp` | SDK/config status, save/probe/discover with current gates |
-| GET `/api/rea/status` | Package/launcher status; not live target analysis |
-| GET `/api/opencode/status`, `/api/opencode/provider-preview`, `/api/opencode/validate` | Detection, in-memory config preview, offline staged validation |
-| POST `/api/opencode/deploy` | Explicit create-only isolated config staging; no server launch |
-| GET `/api/opencode/agent` | Live read-only bridge compatibility check |
-| GET `/api/models/status`; GET `/api/models/{id}` | Viewer dependency status / saved attachment bytes |
-| POST `/api/models` | GLB attachment or animation-label operation |
-| GET `/api/workflows`, `/api/workflows/reports` | Dry-run definitions / recent report view |
-| POST `/api/workflows/plan` | Dry-run dependency/input checks and report write |
-| POST `/api/archive/inspect`, `/api/media/inspect`, `/api/blender/inspect` | Fixed explicitly approved inspection processes |
-| POST `/api/aero/classify` | Deterministic aerodynamic classification helper; not part of agent execution |
+| `dashboard.py` | HTML, auth, HTTP server, injected services; composes `dashboard_api.ApiRoutes` |
+| `dashboard_shell.js` | Browser navigation, chat state, task submission/polling, startup |
+| `settings_ui.js` | Owns Settings/dialog/task surface before child controls mount; focus restoration |
+| `access_ui.js`, `operations_ui.js` | Registered locations, admitted task summary, operator confinement/storage/project controls |
+| `chat_jobs.py` | One active task, frozen admission contract, cancellation and live progress |
+| `job_store.py` | Cross-controller atomic admission, durable lifecycle, PID identities and interrupted recovery |
+| `chat_inference.py`, `ollama_turn.py`, `context_budget.py` | Prompt/skills, bounded model/tool loop, cancellable local transport and context estimate |
+| `task_contract.py`, `execution_store.py` | Common configuration revision and atomic saved outcome for both engines |
+| `python_tools.py`, `tool_registry.py` | Fixed schemas/dispatch, normalized grants, audits, receipts and explicit deduplication |
+| `access_policy.py` | Context-local registered paths, flags, exclusions and immutable task snapshot |
+| `mcp_connections.py`, `mcp_server.py` | Built-in stdio transport and parent policy/skill snapshot propagation |
+| `opencode_runtime.py`, `opencode_sandbox.py` | Version/schema/session checks, read-only agent task, no-network worker and admitted-model relay |
+| `sandbox.py`, `sandbox_preview.py` | Code snapshots, immutable images, limits, labelled ownership/cleanup and loopback preview relay |
+| `process_runner.py` | Fixed argv, simultaneous bounded pipe capture, deadlines/cancellation and process-group/Windows-job cleanup |
+| `skills_catalog.py`, runtime/context/manager modules | One identity/catalog, startup fingerprints, bounded instructions and explicit install/enable operations |
+| `capability_catalog.py`, core `Registry` | Common descriptors; explicitly scoped/audited bridge for registered dashboard tools; other adapters library-only |
+| `frontend_workspace.py`, file activity modules | Managed V2, CSS-only exact/hash edits, confined validation/preview, six-card-style file progress |
+| `database.py`, `config_store.py`, `chats.py`, `model_assets.py` | SQLite/configuration/transcripts and separately owned attachment bytes |
+| `storage_budget.py`, `maintenance.py` | Conservative artifacts quota, reviewed retention, verified backup and offline restore |
+| startup/status/resource modules | Host/model observations and timestamped dependency cache; no implied allocation reservation |
 
-See `handler.Handler.do_GET` and `do_POST` in the function index for exact action names, schemas and error handling. The review identifies the lack of a uniform JSON-object validation boundary. Some invalid top-level request types currently yield an uncaught error instead of a consistent JSON 400.
+## Task admission and outcome
 
-## 6. Persistent and transient state
+1. Browser consumes next-message approvals and submits conversation, text, optional skills/image and selected engine. It includes the displayed access/config revisions.
+2. `Jobs.start` validates grants, rejects stale supplied revisions and overlapping tasks, and freezes policy plus model/runtime. `job_store.admit` atomically checks the external database across controllers.
+3. Direct Ollama assembles bounded history/instructions/schemas. Context estimation uses UTF-8 bytes/reserves, not the actual tokenizer. Oversized current work fails explicitly. Saved context/output/timeout values apply without a hidden frontend increase.
+4. ToolSession audits before a fixed registered action. Both adapter restrictions and policy apply. Model text cannot grant tools or add executable names. Output/evidence is bounded, and tool actions followed by model failures retain receipts.
+5. Stop shuts down the owned local-model socket. Active registered tools finish or hit their own bound; Stop does not roll back completed writes. Each engine finalizes transcript/execution atomically under the cancellation lock. Committed completion wins over a later Stop.
+6. Job outcome is saved. Restart recovers dead/reused-PID running records as **interrupted**, without replay. Live chunks/cards are memory-only; saved transcript and audits are the durable evidence.
 
-| State | Location | Ownership/lifecycle |
-| --- | --- | --- |
-| SQLite selection | `.smelter/database-location.json` | Path marker; do not manually relocate without migration |
-| Metadata/configuration | External `smelter.sqlite3`: metadata, config_snapshots | Extensions, models, runtime settings and access policy authoritative here |
-| Transcripts | conversations, messages, message_execution | Execution JSON contains engine/tool evidence; narrative not independently fact-checked |
-| GLB attachment records | model_attachments | References message plus metadata, original clip names and user labels |
-| GLB bytes | `.smelter/model-assets/{id}.glb` | Separate disk storage; chat deletion currently leaves orphan files |
-| Skill state | `.smelter/skill-state.json`, managed-skills/collections | Separate JSON/instruction storage, not SQLite config snapshots |
-| Skill startup baseline | SkillMonitor in memory | Dashboard restart required to activate changed/new manifest text |
-| Tool audits | `.smelter/tool-runs/*.jsonl` | Request/result evidence; sensitive local data and launch URLs may occur |
-| REA evidence | `.smelter/rea-evidence/*.json` | Retained raw output and digest; no automatic retention policy |
-| Workflow reports | `.smelter/reports/` | Create-only reports; returned list bounded, total disk files are not |
-| Preview workspace | Sibling V2 and V2-Data, managed marker in destination | Preserved/reused, not reset by source updates |
-| Runtime jobs | `Jobs.jobs`, Control and file-activity objects | Memory only; no crash recovery/resume |
-| Resource counters | In-memory sample and live `/api/ps` | Measurements; no enforced allocation budget |
+Execution records include admitted configuration, policy revision, engine, normalized outcome/error/cancelled state and tool results. A successful model explanation is not independent fact-checking of the filesystem.
 
-Back up the selected SQLite database and required application-owned state together using a consistent database backup procedure. A copy of the repository alone does not include conversation storage or managed skills. No automated complete-backup/restore transaction exists. Do not publish raw audits without reviewing tokens, paths and sensitive content.
+## Authority and confinement
 
-## 7. Verification and troubleshooting
+**Effective operation = registered location policy ∩ next-message grants ∩ fixed adapter contract.** Skills provide instruction text only.
 
-Run offline dashboard/setup/analysis unit suites and JavaScript tests from the root; commands are in README. With the optional SDK installed, stdio integration tests start only fixture/built-in processes. The recorded application suite had 294 tests with one skip, setup 32 and JavaScript 10. Documentation-analysis tests are separate. This is component verification, not proof that every feature or external service works on Windows.
+At most 32 absolute local locations, most-specific enabled match, relative exclusions, read/write/registered-execute flags. Whole drives/filesystem roots, UNC, traversal, links/reparse paths and alternate streams are rejected. Disabled rows are ignored; an enabled nested all-false row denies a subtree. Fixed operation names are tests/preview/rea/archive/media/blender. No general shell/editor is exposed.
 
-| Symptom | First evidence to inspect |
+Default original source is readable, sibling V2 permits registered frontend work/tests/preview, and diagnostics permits new Markdown reports. `.git`, `.smelter` and projects are excluded from general agent access. Dedicated app state operations are separate from model path access.
+
+### Confined execution
+
+Settings accepts only installed immutable `sha256:` image IDs. The runner verifies a local Unix/npipe Docker endpoint, Linux containers, Engine 28+, resource controls and seccomp support. It never downloads/builds images automatically.
+
+Tests/preview/OpenCode get a read-only filtered source snapshot, UID/GID 65534, no network, no host credentials/socket mounts, dropped capabilities, no-new-privileges, bounded tmpfs, memory/CPU/PIDs/logs and internal/host deadlines. There is no native host fallback. Host snapshots have a conservative total budget and ownership records. Cleanup inspects the random container name and matching ownership label; incomplete cleanup is reported and retained for explicit reconciliation.
+
+Frontend tests run fixed Python/JS commands. Preview uses temporary container state and a fixed dashboard-owned relay on loopback 8770, no container published port, one-hour lifetime, request/reply limits 2/6 MiB. It is a small-fixture UI preview; large asset transfers are outside that relay's contract. Old unconfined validation markers cannot launch it. Existing V2 is preserved and must be archived explicitly before preparing a fresh copy after source changes.
+
+OpenCode is also a managed container. Only its read-only snapshot is visible. Host polls a tmpfs queue through fixed Docker exec commands; only admitted local-model requests reach fixed loopback Ollama. Native translation enforces context/output settings and tool-call/packet limits. Check sessions cannot prompt a model. No shell/edit/delegation grants, skills, images, GLBs or SMELTER write permissions are forwarded. Session rules are default-deny and must be echoed before prompt submission. Prior conversation is bounded; sessions are fresh. Source directory checks alone are not the OS boundary.
+
+**Not all host processes are confined.** Fixed native REA/7z/FFprobe/Blender checks remain trusted approved host processes, with bounded output and owned process cleanup. Built-in MCP is app-controlled transport. Arbitrary external MCP remains blocked. Low-level explicitly invoked library helpers are not a third-party sandbox. See repair status for unverified Docker/Windows paths.
+
+## Catalog and model tools
+
+Bundled `skills/`, managed `.smelter/managed-skills`, legacy `.agents/skills` and contract `agents/skills` share namespaced identities. Legacy/contract entries start disabled until reviewed/enabled. Duplicate identities fail closed. Only SKILL.md and optional declarative smelter.json enter fingerprinted context; skill code is not auto-run. Changed/new text requires a dashboard restart. Dependencies found on PATH are observations, not proof of working adapters.
+
+| Model tool group | Fixed contract |
 | --- | --- |
-| No UI / wrong port | Owning terminal's current launch URL and process; active dashboard 8768, preview 8770, OpenCode 4096 are different |
-| Unauthorized after restart | Current fragment/token; database initialization does not repair authentication |
-| Skill enabled but no tool | Actual ToolSession schema and grants; a manifest does not install executables or register capabilities |
-| Skill changes ignored | Skills status/review and restart-required baseline |
-| Tool denied | Registered location, most-specific row, exclusions, operation and next-message approval; inspect receipt |
-| Config saved but OpenCode unchanged | Staging is separate from the independently running server's effective config |
-| Slow/empty model response | Runtime settings, context estimate, actual Ollama logs/allocation; GPU allocation is not utilization |
-| Preview unchanged | Existing V2 is preserved; source and destination are different trees; inspect CSS hash and validation receipt |
-| Task says partial | Read tool receipts and follow-up error; successful file writes remain real even if explanation failed |
-| Stop disagrees with OpenCode transcript | Known final-completion race; inspect external session/audit before relying on completion state |
+| inventory_directory | Approved registered folder, bounded metadata, no general content reader |
+| write_diagnostic_markdown | New plain basename in diagnostics, no overwrite, byte digest |
+| rea_capabilities / rea_inspect_pe_resources | Explicit process approval, enabled skill, registered scope; relative bounded MZ PE files for inspection |
+| frontend workspace/info/prepare/read/skill | Fixed source/sibling, managed copy, bounded source reads, actual enabled fingerprinted design skill |
+| replace_frontend_css | Exact substring + current SHA; CSS-only, preserves backend/HTML/JS |
+| validate_frontend_workspace / launch_frontend_preview | Current-content checks plus registered execution and confined runner prerequisites |
+| inspect_model_attachment | Saved attachment ID, bounded metadata/clip timing; no semantic animation inference |
 
-## 8. Maintenance direction
+Capability descriptors identify actual adapter/schema, source, dependency, availability, permitted operations and transport. `Registry.connect_dashboard` is an explicit bridge into the same policy/audit ToolSession. Other legacy capability adapters remain library-only. Project-contract inspection is operator-only and applies read policy to the project and required files.
 
-Prioritize lifecycle correctness and access-policy contract tests before adding broad execution tools. Then split the dashboard HTTP router and inline script, extract the inference loop into explicit phases, and normalize job results across engines. Introduce a confined runner before exposing arbitrary MCP or general editing/commands. Retain compatibility adapters until their consumers are migrated. Full findings and proposed acceptance checks are in the deep review.
+## HTTP contracts
+
+All API calls require the launch token. Static page/assets are separate allowlisted files. POST requires bounded JSON objects; malformed input gets structured 400, database failures 503. State mutations serialize through the composition-root RLock. Disconnected-client writes do not trigger a second response.
+
+| API | Contract |
+| --- | --- |
+| GET startup/system/status/runtime | Cheap readiness, cached dependency observations, host/model metrics, effective settings |
+| POST database/select | First create-only external DB initialization |
+| GET/POST access-policy | Location policy and effective model/config revision / save |
+| GET/POST chats; GET chats/{id} | List, create/title, rename/delete/note/start/stop/runtime; paginated latest transcript |
+| GET chat-jobs/{id} | Live state or durable historical/interrupted record |
+| GET skills/status/review; POST skills/manage/discover/collection-preview | Shared catalog, activation/review, explicit instruction management/discovery |
+| GET capabilities; POST project-contract | Common descriptors / policy-checked project documentation inspection |
+| GET/POST sandbox | Observational prerequisite checks, operator image config, stop owned preview |
+| GET/POST maintenance | Quota/jobs/ownership status, retention plan/apply, new backup, explicit integrity/reconcile |
+| GET/POST mcp | Built-in SDK/config/discovery with gates; external execution blocked |
+| GET opencode/agent | Managed read-only connection check, no prompt; runtime version/schema/provider checks |
+| GET opencode/status/provider-preview/validate; POST deploy | Legacy installation/config staging helpers; not managed container activation |
+| GET/POST ollama preferences/models; extensions | Saved roles/discovery controls; lightweight remains configuration-only |
+| GET models/status or models/{id}; POST models | Viewer readiness, stored GLB, upload/animation-label operation |
+| GET workflows/reports; POST workflows/plan | Dry-run plans / bounded report listing |
+| POST archive/media/blender inspect | Fixed approved host inspections |
+| POST aero/classify | Deterministic classification helper, outside agent loop |
+
+Full route paths/action names live in `dashboard_api.ApiRoutes` and the generated function index. Legacy `action=ask` uses the asynchronous job controller, returning 202 rather than a synchronous model reply.
+
+## Storage, maintenance and recovery
+
+| State | Ownership / lifecycle |
+| --- | --- |
+| External SQLite | Config, conversations/messages/execution, GLB metadata/labels, task_jobs |
+| `.smelter/model-assets` | UUID GLBs; deleting chat removes its bytes after SQL commit; failures reported |
+| skill-state + managed manifests | Explicit instruction management; JSON/files separate from SQLite |
+| tool-runs / rea-evidence / reports | Bounded evidence; conservative total 1 GiB/10,000-file artifact budget before writes |
+| sandbox-runs | Filtered code snapshots and ownership/PID/image records; bounded staging; explicit interrupted cleanup |
+| V2 + V2-Data | Managed frontend copy and initial isolated DB, preserved across pulls; container preview uses temporary state instead |
+| In-memory streams/skill baselines/metrics | Lost on restart; restart adopts reviewed current skill text |
+
+Retention previews server-side hash/size/mtime plans, expires after ten minutes and requires explicit approval. It protects referenced GLBs, skips changed files and targets recognized UUID artifacts only. No blanket startup deletion. Newest 100 workflow reports are retained unless older age policy selects them. Backup/retention/reconcile require idle recorded jobs.
+
+Backup uses SQLite.backup plus verified managed manifests, skill-state, GLBs, reports, audits and REA evidence. It rejects existing destinations and concurrent observed changes. A manifest records byte hashes. Source, legacy skill directories, dependencies, weights and running containers are outside this backup. Restore is offline/create-only, verifies hashes/paths/schema/integrity, and never replays actions.
+
+```powershell
+python tools/dashboard/maintenance.py status --root C:\SMELTER
+python tools/dashboard/maintenance.py integrity --root C:\SMELTER
+python tools/dashboard/maintenance.py backup --root C:\SMELTER --directory D:\SMELTER-Backup-New --approve
+# Offline: fresh checkout has no .smelter; external data destination must not exist.
+python tools/dashboard/maintenance.py restore --root C:\SMELTER-Restored --directory D:\SMELTER-Backup-New --data-directory D:\SMELTER-Restored-Data --approve
+# Dry-run only; Settings supports reviewing then applying the same expiring plan.
+python tools/dashboard/maintenance.py prune --root C:\SMELTER --days 30
+```
+
+## Validation and troubleshooting
+
+See README for offline suites and the repair handover for counts, image setup and explicit real-container smoke. Current verification used Linux/Python 3.12, MCP fixtures and Chromium; it did not establish Windows/Docker Desktop/OpenCode-image/live-model correctness.
+
+| Symptom | Inspect |
+| --- | --- |
+| Wrong page / unauthorized | Current launch URL/token; dashboard 8768 differs from preview 8770 |
+| Skill enabled but unavailable | Shared catalog identity, restart fingerprint, actual dependency/adapter/grant |
+| Tool unavailable | Fixed exposed schema, admitted policy and next-message grant; MCP does not invent adapters |
+| Preview/tests/agent blocked | Confined execution status, local immutable images/engine; no host fallback |
+| Stale V2 after pull | Preserve/archive old V2/V2-Data, then prepare from updated source |
+| Interrupted task / cleanup pending | Maintenance task and ownership records, receipts; reconcile after process/storage repair; do not replay writes blindly |
+| Model slow / context rejected | Admitted model/context/output/timeout and actual Ollama logs; host GPU metrics are observations |
+| Quota reached | Preview retention/backup; nothing is silently deleted |
+| DB corruption concern | Explicit integrity operation; cheap readiness does not run quick_check on every read |
+
+Do not publish raw audits, databases, credentials, launch tokens or game assets. AI narrative, saved file bytes, successful tool receipts and independent content verification are different claims.

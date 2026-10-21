@@ -1,6 +1,6 @@
 # SMELTER
 
-SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`, with local Ollama chat, registered Python tools, optional built-in MCP transport, and an OpenCode **read-only** source-inspection adapter.
+SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`, with local Ollama chat, registered Python tools, optional built-in MCP transport, and a confined OpenCode **read-only** source-inspection adapter.
 
 The repository also contains older CLI experiments, game-specific research scripts, reusable Blender/asset adapters, and Studio scaffolding. Those components are not automatically connected to the dashboard. Installing a skill provides instructions; it does not install dependencies or grant tools.
 
@@ -33,7 +33,7 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 - **Review task access** selects permissions for the next message. Skills cannot expand them. Existing adapter restrictions still apply.
 - By default the original checkout is readable, its sibling `SMELTERV2` permits registered frontend work/tests/preview, and `diagnostics/` permits new Markdown reports. Unregistered locations are denied. `.git`, `.smelter` and `projects` are excluded from general agent access.
 - Policy changes affect new tasks. Each admitted task keeps its policy snapshot. Application-owned database, logs, skill installations and preview bookkeeping are separate from general agent file access.
-- These checks are **not an OS sandbox**. External MCP discovery/execution from the GUI is blocked until a confined runner exists. Built-in SMELTER MCP remains available.
+- Location checks are application policy. Frontend tests/preview and managed OpenCode additionally require the no-network container runner; they have no host fallback. Fixed native inspection adapters remain bounded host processes. Arbitrary external MCP remains blocked; built-in SMELTER MCP is available.
 
 ## Current capability boundaries
 
@@ -42,12 +42,12 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 | Direct local chat | Selected reasoning model, bounded context estimate, streaming job progress, cancellation and saved receipts |
 | Skills | Bounded manifest instructions; startup fingerprints; changed/new manifests require dashboard restart |
 | Python/MCP tools | Fixed registered operations, per-message grants, audits and application path checks |
-| Frontend work | Create/reuse sibling V2; read approved files; **CSS replacement only**; fixed tests and preview on port 8770 |
+| Frontend work | Create/reuse sibling V2; read approved files; **CSS replacement only**; confined fixed tests and temporary small-fixture preview on port 8770 |
 | GLB | Browser preview, animation selection, frame/turntable export and stored animation labels; no automatic semantic naming |
 | REA | Pinned adapter exposes capabilities and static PE resource inspection, not general native decompilation or game-container extraction |
-| OpenCode | Existing local server on 4096, validated version 1.19.3 and provider, fresh read-only session with bounded conversation text |
+| OpenCode | Managed no-network container, pinned 1.19.3, read-only code snapshot, admitted local-model relay; requires reviewed immutable image and live rig smoke test |
 | Workflow planner | Dry-run dependency planning; not an autonomous execution workflow |
-| Legacy CLI/core | Separate experiments and registries; no implicit GUI bridge |
+| Legacy CLI/core | Shared skill/capability catalog; explicit scoped Registry bridge; other adapters labelled library-only |
 
 An enabled skill, detected executable, open port, successful save, or completed model explanation proves only that specific observation. Tool receipts are evidence of tool results, not independent verification of every AI statement.
 
@@ -60,7 +60,8 @@ An enabled skill, detected executable, open port, successful save, or completed 
 | [Interactive graph](docs/graph/system-graph.html) | Offline, searchable file/function explorer; download and open locally |
 | [Graph JSON](docs/graph/system-graph.json) | Machine-readable files, symbols, call/reference/import candidates and unresolved expressions |
 | [Function index](docs/FUNCTION_INDEX.md) | Every indexed application function/callback and script, source links and complexity estimates |
-| [Deep review](docs/DEEP_CODE_REVIEW.md) | Remaining defects, unused candidates, complexity hotspots and prioritized follow-up work |
+| [Repair status / handover](docs/REPAIR_STATUS_20261021.md) | F01–F11 disposition, evidence, deployment limits and Windows rollout |
+| [Deep review](docs/DEEP_CODE_REVIEW.md) | Historical baseline findings, unused candidates and complexity analysis |
 | [Changelog](CHANGELOG.md) | Verified revision history and documentation scope |
 | [Patch notes](tools/dashboard/REVISION_PATCHES.md) | Configuration/access repair details and rollout constraints |
 
@@ -77,7 +78,7 @@ GitHub shows the graph HTML as source; download it to use the interactive view. 
 | `tools/web/` | Earlier standalone console; separate from the active dashboard |
 | `tools/analysis/` | Static graph generation, review reproductions and analysis tests |
 | `skills/` | Bundled dashboard skills and declarative skill policy |
-| `agents/skills/` | Agent contracts/scaffolding; distinct from dashboard's managed catalog and legacy `.agents/skills` |
+| `agents/skills/` | Agent contracts/scaffolding; namespaced manifest discovery in the shared catalog, disabled until reviewed/enabled |
 | `studio/` | Frontend/backend scaffolding, not the active dashboard |
 | `automation/` | Repository state helper and workflow/handover scaffolding |
 | `diagnostics/` | Committed historical evidence and locally created reports |
@@ -94,4 +95,10 @@ node --test tools/dashboard/test_chat_renderer.js tools/dashboard/test_session_a
 
 Check each exit code before continuing. Some scripts named `test_*` under `tools/core` and `tools/bootstraps` are opt-in model/Docker/Blender experiments, not ordinary offline unit tests; do not run all repository scripts indiscriminately.
 
-Do not commit credentials, launch tokens, game binaries, extracted game assets, model weights, local databases or generated workspaces. Existing managed V2 copies are preserved; pulling this branch does not update an already prepared V2 copy. Read the deep review before treating the application as a general coding or reverse-engineering agent.
+Do not commit credentials, launch tokens, game binaries, extracted game assets, model weights, local databases or generated workspaces. Existing managed V2 copies are preserved; pulling this branch does not update an already prepared V2 copy. Read the repair handover for container setup, backup/restore, preserved V2 copies and platform verification requirements.
+
+## Operational repair (V1.7)
+
+Settings now includes confined execution, storage/recovery/backup and capabilities/project checks. Tasks keep an admitted model/settings/policy snapshot and durable lifecycle record; interrupted work is reported without replay. Artifact storage has conservative quotas and an explicitly reviewed retention plan. Database integrity checks are operator-triggered; dependency probes have a short timestamped cache.
+
+**Docker is optional for ordinary chat and existing fixed native inspections, but mandatory for frontend tests/preview and managed OpenCode.** There is no automatic image pull or unconfined fallback. Live Docker/Windows execution remains to be validated on the rig. See the [repair handover](docs/REPAIR_STATUS_20261021.md).

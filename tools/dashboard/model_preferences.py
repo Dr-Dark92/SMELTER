@@ -52,4 +52,4 @@ def configured_status(preferences: dict, discovery: dict) -> dict:
     return {"preferences": preferences, "availability": {
         role: ("available" if discovery.get("status") == "connected" and model in installed
                else "unavailable") for role, model in preferences["models"].items()
-    }, "inference_enabled": True}
+    }, "inference_enabled": True, "role_usage":{"reasoning":"Direct Ollama chat", "lightweight":"Saved for operator/provider configuration; automatic routing is not implemented"}}

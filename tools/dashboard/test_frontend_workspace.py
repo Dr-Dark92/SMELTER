@@ -108,23 +108,16 @@ class FrontendWorkspaceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             workspace.execute(self.root, {}, 'prepare_frontend_workspace', {})
 
-    def test_validation_uses_fixed_commands_and_new_edits_invalidate_launch(self):
+    def test_validation_uses_confined_runner_and_new_edits_invalidate_launch(self):
         self.prepare()
-        def runner(command, **kwargs):
-            self.assertEqual(kwargs['cwd'], workspace.target_path(self.root))
-            self.assertFalse(kwargs['shell'])
-            self.assertEqual(kwargs['creationflags'], 0x08000000)
-            kwargs['stdout'].write(b'fixture checks passed')
-            return subprocess.CompletedProcess(command, 0)
-        with patch('frontend_workspace.subprocess.run', side_effect=runner), patch('frontend_workspace.shutil.which', return_value=None), patch.object(subprocess, 'CREATE_NO_WINDOW', 0x08000000, create=True):
-            result = workspace.validate(self.root, {})
-        self.assertEqual(result['status'], 'workspace_validated')
-        self.assertEqual(result['checks'][0]['command'][1:4], ['-m', 'unittest', 'discover'])
+        checks=[{'command':['python','-m','unittest','discover'],'exit_code':0,'output':b'fixture passed','sandbox':'docker-no-network','image':'sha256:fixture'}]
+        with patch('sandbox.tests',return_value=checks) as runner:
+            result=workspace.validate(self.root,{})
+        runner.assert_called_once_with(self.root,workspace.target_path(self.root))
+        self.assertEqual(result['status'],'workspace_validated')
+        self.assertEqual(result['sandbox'],'docker-no-network')
         self.edit()
-        with self.assertRaisesRegex(ValueError, 'after the last CSS edit'):
-            workspace.launch(self.root, {})
-        with patch('frontend_workspace.subprocess.run', return_value=subprocess.CompletedProcess([], 1)), patch('frontend_workspace.shutil.which', return_value=None):
-            self.assertEqual(workspace.validate(self.root, {})['status'], 'workspace_validation_failed')
+        with self.assertRaisesRegex(ValueError,'after the last CSS edit'):workspace.launch(self.root,{})
 
     def test_workspace_reads_are_not_cached_after_css_changes(self):
         self.prepare()
@@ -139,49 +132,27 @@ class FrontendWorkspaceTests(unittest.TestCase):
 
     def test_failed_validation_invalidates_previous_pass(self):
         self.prepare()
-        with patch('frontend_workspace.subprocess.run', return_value=subprocess.CompletedProcess([], 0)), patch('frontend_workspace.shutil.which', return_value=None):
-            workspace.validate(self.root, {})
-        record = workspace.target_path(self.root) / '.smelter/frontend-validation/passed.json'
+        def checks(code):return [{'command':['python'],'exit_code':code,'output':b'fixture','sandbox':'docker-no-network'}]
+        with patch('sandbox.tests',return_value=checks(0)):workspace.validate(self.root,{})
+        record=workspace.target_path(self.root)/'.smelter/frontend-validation/passed.json'
         self.assertTrue(record.is_file())
-        with patch('frontend_workspace.subprocess.run', return_value=subprocess.CompletedProcess([], 1)), patch('frontend_workspace.shutil.which', return_value=None):
-            workspace.validate(self.root, {})
+        with patch('sandbox.tests',return_value=checks(1)):workspace.validate(self.root,{})
         self.assertFalse(record.exists())
-        with self.assertRaisesRegex(ValueError, 'validation'):
-            workspace.launch(self.root, {})
+        with self.assertRaisesRegex(ValueError,'validation'):workspace.launch(self.root,{})
 
-    def test_preview_checks_chat_database_without_startup_scans(self):
-        self._exercise_preview_launch(False)
+    def test_preview_uses_confined_runner_and_rejects_legacy_pass(self):
+        self.prepare();folder=workspace.target_path(self.root)/'.smelter/frontend-validation';folder.mkdir()
+        record=folder/'passed.json';record.write_text(json.dumps({'dashboard_sha256':workspace._digest(self.original)}))
+        with patch('sandbox.preview') as preview:
+            with self.assertRaisesRegex(ValueError,'confined'):workspace.launch(self.root,{})
+            preview.assert_not_called()
+        record.write_text(json.dumps({'dashboard_sha256':workspace._digest(self.original),'sandbox':'docker-no-network'}))
+        with patch('sandbox.preview',return_value={'url':'http://127.0.0.1:8770/#token=fixture','sandbox':'docker-no-network'}) as preview:
+            self.assertEqual(workspace.launch(self.root,{})['status'],'workspace_launched')
+            preview.assert_called_once_with(self.root,workspace.target_path(self.root))
 
-    def test_preview_deadline_stops_only_its_new_process(self):
-        self._exercise_preview_launch(True)
-
-    def _exercise_preview_launch(self, timeout):
+    def test_unavailable_confinement_has_no_host_fallback(self):
         self.prepare()
-        folder = workspace.target_path(self.root) / '.smelter/frontend-validation'
-        folder.mkdir()
-        (folder / 'passed.json').write_text(json.dumps({'dashboard_sha256': workspace._digest(self.original)}))
-        process = Mock(pid=12345)
-        process.poll.return_value = None
-        def spawn(command, **kwargs):
-            kwargs['stdout'].write(b'SMELTER dashboard: http://127.0.0.1:8770/#token=fixture-token\n')
-            kwargs['stdout'].flush()
-            return process
-        clock = [0, 0, 0, 11] if timeout else [0, 0, 0]
-        with patch.object(workspace.socket, 'socket', return_value=Mock()), \
-                patch.object(workspace.subprocess, 'Popen', side_effect=spawn) as popen, \
-                patch.object(workspace, 'urlopen', side_effect=OSError('slow response') if timeout else None,
-                             return_value=io.StringIO('{"conversations":[]}')) as opener, \
-                patch.object(workspace.time, 'monotonic', side_effect=clock), \
-                patch.object(workspace.time, 'sleep'):
-            if timeout:
-                with self.assertRaisesRegex(ValueError, 'readiness'):
-                    workspace.launch(self.root, {})
-                process.terminate.assert_called_once()
-            else:
-                self.assertEqual(workspace.launch(self.root, {})['status'], 'workspace_launched')
-                process.terminate.assert_not_called()
-        popen.assert_called_once()
-        opener.assert_called_once()
-        request = opener.call_args.args[0]
-        self.assertEqual(request.full_url, 'http://127.0.0.1:8770/api/chats')
-        self.assertEqual(request.get_header('X-smelter-token'), 'fixture-token')
+        with patch('sandbox.status',return_value={'ready':False,'reason':'fixture unavailable'}),patch('subprocess.Popen') as spawn:
+            with self.assertRaisesRegex(ValueError,'Confined tests unavailable'):workspace.validate(self.root,{})
+            spawn.assert_not_called()

@@ -3,6 +3,7 @@
 Only invokes Blender's built-in --version; never loads .blend files or scripts.
 """
 from __future__ import annotations
+from process_runner import run as bounded_run
 import os
 import subprocess
 from datetime import datetime, timezone
@@ -14,7 +15,7 @@ APPROVAL = "CHECK BLENDER"
 MAX_OUTPUT = 12000
 
 def inspect_blender(approval: str, state: dict, tool_status: dict,
-                    runner=subprocess.run, finder=find_executable) -> dict:
+                    runner=bounded_run, finder=find_executable) -> dict:
     if approval != APPROVAL:
         raise ValueError("Explicit CHECK BLENDER approval required")
     if "blender" not in state.get("enabled", []):

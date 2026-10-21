@@ -7,7 +7,7 @@ def startup_report(root: Path, scan_tools, ollama_probe) -> dict:
     db = inspect_database(root)
     checks = [{"name": "database", "status": db["status"], "required": True}]
     if not db["ready"]:
-        return {**db, "checks": checks, "services": {"dashboard": "running", "ollama": "not_started", "opencode": "not_started"}}
+        return {**db, "checks": checks, "services": {"dashboard": "running", "ollama": "not_checked", "opencode": "not_checked"}}
     try:
         tools = scan_tools()
         statuses = {item["name"]: item["status"] for item in tools["tools"]}
@@ -30,4 +30,4 @@ def startup_report(root: Path, scan_tools, ollama_probe) -> dict:
         checks.append({"name": "ollama", "status": "degraded", "required": False, "error": str(exc)})
     ready = db["ready"] and all(x["status"] == "valid" for x in checks if x["required"] and x["name"] != "database")
     return {**db, "ready": ready, "status": "ready" if ready else "validation_failed",
-            "checks": checks, "services": {"dashboard": "running", "ollama": "health_checked_only", "opencode": "not_started"}}
+            "checks": checks, "services": {"dashboard": "running", "ollama": "health_checked_only", "opencode": "not_checked"}}

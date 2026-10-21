@@ -30,9 +30,8 @@ def build_skill_context(root, selected):
     for name in selected:
         if name not in known:
             raise ValueError("Skill unavailable or incomplete: " + name)
-        folder = (base if known[name]["source"] == "bundled" else Path(root) / ".smelter" / "managed-skills") / name
-        if known[name]["source"] == "collection":
-            folder = Path(root) / ".smelter" / "managed-skills" / "collections" / name
+        from skill_runtime import skill_folder
+        folder=skill_folder(root,known[name])
         manifest = folder / "SKILL.md"
         if folder.is_symlink() or manifest.is_symlink() or not manifest.is_file():
             raise ValueError("Unsafe skill path")

@@ -89,13 +89,22 @@ def rename_chat(root: Path, cid: str, title: str) -> dict:
 
 def delete_chat(root: Path, cid: str) -> dict:
     cid = _id(cid)
+    attachments=[]
     with closing(sqlite3.connect(_db(root))) as conn, conn:
+        conn.execute('BEGIN IMMEDIATE')
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_attachments'").fetchone():
+            attachments=[r[0] for r in conn.execute('SELECT a.id FROM model_attachments a JOIN messages m ON m.id=a.message_id WHERE m.conversation_id=?',(cid,))]
             conn.execute('DELETE FROM model_attachments WHERE message_id IN (SELECT id FROM messages WHERE conversation_id=?)', (cid,))
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_execution'").fetchone():
             conn.execute("DELETE FROM message_execution WHERE message_id IN (SELECT id FROM messages WHERE conversation_id=?)", (cid,))
         conn.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
         if not conn.execute("DELETE FROM conversations WHERE id=?", (cid,)).rowcount:
             raise ValueError("Conversation not found")
-    return {"deleted": True}
+    # SQL commits first. Interrupted/failed file cleanup is recoverable by maintenance.
+    cleanup_errors=[]
+    from python_tools import _plain_path
+    for aid in attachments:
+        try:_plain_path(Path(root)/'.smelter/model-assets'/(_id(aid)+'.glb')).unlink(missing_ok=True)
+        except (OSError,ValueError):cleanup_errors.append(aid)
+    return {'deleted':True,'attachments_removed':len(attachments)-len(cleanup_errors),'cleanup_pending':cleanup_errors}
 

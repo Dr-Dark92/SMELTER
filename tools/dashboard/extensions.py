@@ -8,7 +8,7 @@ EXTENSIONS = {
     "blender": {"label": "Blender", "tool": "blender", "permissions": ["local_process"], "description": "3D asset preparation"},
     "ffmpeg": {"label": "FFmpeg", "tool": "ffmpeg", "permissions": ["local_process"], "description": "Media processing"},
     "7z": {"label": "7-Zip", "tool": "7z", "permissions": ["local_process"], "description": "Archive inspection"},
-    "ollama": {"label": "Ollama", "tool": "ollama", "permissions": ["loopback_http_read"], "description": "Local model discovery (Qwen and other models)"},
+    "ollama": {"label": "Ollama discovery", "tool": "ollama", "permissions": ["loopback_http_read"], "description": "Model discovery only; this toggle does not disable direct chat inference"},
     "opencode": {"label": "OpenCode", "tool": "opencode", "permissions": ["version_probe_only"], "description": "Coding-agent availability; execution not enabled"},
 }
 DEFAULT = {"schema_version": 1, "enabled": []}

@@ -6,7 +6,6 @@ Discovery never executes skill content, follows symlinks, or writes files.
 from __future__ import annotations
 
 from pathlib import Path
-import re
 from skill_manifest import parse_skill_manifest
 
 MAX_SKILL_BYTES = 64 * 1024
@@ -18,9 +17,12 @@ def catalog_skills(root):
     root = Path(root)
     state = enabled_map(root)
     found = []
-    sources = ((root / "skills", "bundled"), (root / ".smelter" / "managed-skills", "managed"))
+    sources = ((root / "skills", "bundled"), (root / ".smelter" / "managed-skills", "managed"), (root/".agents/skills","legacy"), (root/"agents/skills","contract"))
     seen = set()
     for base, source in sources:
+        from python_tools import _plain_path
+        try:_plain_path(base)
+        except ValueError:continue
         if not base.is_dir() or base.is_symlink():
             continue
         for folder in sorted(base.iterdir(), key=lambda p: p.name.casefold()):
@@ -48,9 +50,10 @@ def catalog_skills(root):
                         status = "incomplete"
                 except (UnicodeError, OSError):
                     status = "unreadable"
-            enabled = state.get(folder.name, True) and status == "ready"
+            skill_id=(source+"/"+folder.name) if source in ("legacy","contract") else folder.name
+            enabled = state.get(skill_id, source not in ("legacy","contract")) and status == "ready"
             found.append({
-                "id": folder.name, "name": name, "description": description,
+                "id": skill_id, "name": name, "description": description,
                 "status": status, "enabled": enabled, "source": source,
                 "removable": source == "managed", "bytes": size,
                 "loaded_into_model": False, "executable": False,
@@ -87,4 +90,12 @@ def catalog_skills(root):
                     "removable": False, "bytes": size,
                     "loaded_into_model": False, "executable": False,
                 })
-    return {"skills": found, "count": len(found), "read_only": True}
+    # Canonical IDs must not silently select a different source directory.
+    from collections import Counter
+    counts=Counter(skill['id'] for skill in found);unique={}
+    for skill in found:
+        if counts[skill['id']]>1:
+            skill={**skill,'status':'identity_conflict','enabled':False,'error':'Duplicate skill identity across source locations; review before use'}
+        unique.setdefault(skill['id'],skill)
+    found=list(unique.values())
+    return {"skills":found,"count":len(found),"read_only":True}

@@ -110,7 +110,7 @@ def probe(name: str, argv: list[str], policy: str) -> dict:
     except (OSError, subprocess.TimeoutExpired):
         return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}
 
-def scan() -> dict:
+def _scan() -> dict:
     py_ok = sys.version_info >= (3, 12)
     return {
         "schema_version": 1,
@@ -126,6 +126,27 @@ def scan() -> dict:
             "A detected tool is not proof of compatibility with a particular extension.",
         ],
     }
+
+# Cache discovery only, never mutable tool output or operation receipts.
+import threading as _threading
+import time as _time
+import copy as _copy
+_scan_lock=_threading.Lock()
+_scan_cache=None
+
+
+def scan(*, refresh=False, max_age=30):
+    global _scan_cache
+    key=(id(probe),tuple(sys.version_info),os.environ.get('PATH',''))
+    with _scan_lock:
+        now=_time.monotonic()
+        if refresh or _scan_cache is None or _scan_cache[0]!=key or now-_scan_cache[1]>=max_age:
+            _scan_cache=(key,now,_scan())
+        result=_copy.deepcopy(_scan_cache[2])
+        result['cache_age_seconds']=round(_time.monotonic()-_scan_cache[1],2)
+        result['cache_ttl_seconds']=max_age
+        return result
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)

@@ -1,6 +1,7 @@
 """SMELTER V1.4.2: tightly scoped, explicitly approved archive listing."""
 from __future__ import annotations
 
+from process_runner import run as bounded_run
 import os
 import subprocess
 from pathlib import Path
@@ -14,7 +15,7 @@ MAX_OUTPUT = 12000
 APPROVAL = "LIST ARCHIVE"
 
 def inspect_archive(path: str, approval: str, state: dict, tool_status: dict,
-                    runner=subprocess.run, finder=find_executable) -> dict:
+                    runner=bounded_run, finder=find_executable) -> dict:
     """List archive metadata via 7z l; no extraction or shell execution."""
     if approval != APPROVAL:
         raise ValueError("Explicit LIST ARCHIVE approval required")

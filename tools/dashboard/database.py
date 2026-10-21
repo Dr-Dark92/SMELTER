@@ -82,7 +82,7 @@ def select_database(root: Path, directory: str) -> dict:
         raise
     return {"status": "configured", "path": str(db), "legacy_files_preserved": True}
 
-def inspect_database(root: Path) -> dict:
+def inspect_database(root: Path, *, integrity=False) -> dict:
     db = chosen_database(root)
     if db is None:
         return {"status": "setup_required", "database": None, "ready": False}
@@ -91,9 +91,9 @@ def inspect_database(root: Path) -> dict:
     try:
         with closing(sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=3)) as connection:
             schema = connection.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()
-            integrity = connection.execute("PRAGMA quick_check").fetchone()
+            integrity_result = connection.execute("PRAGMA quick_check").fetchone() if integrity else ("not_requested",)
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        ready = schema == ("1",) and integrity == ("ok",) and {"config_snapshots", "conversations", "messages"}.issubset(tables)
-        return {"status": "ready" if ready else "invalid_schema", "database": str(db), "ready": ready}
+        ready = schema == ("1",) and (not integrity or integrity_result == ("ok",)) and {"config_snapshots", "conversations", "messages"}.issubset(tables)
+        return {"status": "ready" if ready else "invalid_schema", "database": str(db), "ready": ready, "integrity":integrity_result[0]}
     except sqlite3.Error as exc:
         return {"status": "database_error", "database": str(db), "ready": False, "error": str(exc)}

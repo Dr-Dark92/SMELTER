@@ -11,6 +11,9 @@ _monitors = {}
 
 
 def skill_folder(root, skill):
+    if skill['source'] in ('legacy','contract'):
+        base='.agents/skills' if skill['source']=='legacy' else 'agents/skills'
+        return Path(root)/base/skill['id'].split('/',1)[1]
     if skill['source'] == 'bundled':
         return Path(root) / 'skills' / skill['id']
     base = Path(root) / '.smelter/managed-skills'
@@ -78,7 +81,7 @@ class SkillMonitor:
                 json.dumps({sid: x.get('fingerprint') for sid, x in current.items()}, sort_keys=True).encode()).hexdigest()
             return {'skills': skills, 'count': len(skills), 'changes': changes, 'revision': signature,
                     'read_only': True,
-                    'restart_required': bool(changes), 'watched': [str(self.root / 'skills'), str(self.root / '.smelter/managed-skills')],
+                    'restart_required': bool(changes), 'watched': [str(self.root / folder) for folder in ('skills','.smelter/managed-skills','.agents/skills','agents/skills')],
                     'scope': 'SKILL.md and optional smelter.json in supported skill folders; scripts are not executed or monitored'}
 
     def manifest(self, sid):

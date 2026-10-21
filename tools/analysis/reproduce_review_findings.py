@@ -13,6 +13,9 @@ from pathlib import Path
 
 
 def main():
+    import argparse
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--revision',required=True)
+    revision=parser.parse_args().revision
     repo=Path(__file__).resolve().parents[2]
     sys.path.insert(0,str(repo/'tools/dashboard'))
     from database import select_database, chosen_database
@@ -46,7 +49,7 @@ def main():
         def opener(req,timeout):requests.append(json.loads(req.data));return io.BytesIO(b'{"message":{"content":"fixture"}}')
         direct_ask(root,cid,'Show workspace information',opener=opener,tool_permissions={'frontend_workspace':True})
         override={'saved_output_tokens':128,'actual_num_predict':requests[0]['options']['num_predict']}
-        print(json.dumps({'source_revision':'c9e541e9e0d53fcaba109170f8e5a201b500340d',
+        print(json.dumps({'source_revision':revision,
                          'glb_lifecycle':orphan,'opencode_completion_cancel_race':cancellation,'frontend_runtime_override':override},indent=2))
 
 

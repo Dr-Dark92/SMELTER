@@ -20,7 +20,7 @@ class StartupTests(unittest.TestCase):
         select_database(self.root, str(self.data))
         report = startup_report(self.root, lambda: {"tools":[{"name":"ollama","status":"missing"}]}, lambda a,b: {"status":"offline"})
         self.assertTrue(report["ready"])
-        self.assertEqual(report["services"]["opencode"], "not_started")
+        self.assertEqual(report["services"]["opencode"], "not_checked")
     def test_corrupt_configuration_blocks(self):
         select_database(self.root, str(self.data))
         from database import chosen_database

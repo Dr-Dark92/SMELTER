@@ -2,13 +2,10 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from pathlib import Path
 from uuid import UUID
 
 MAX_INPUTS = 16
-MAX_REPORTS = 100
 
 def validate_inputs(paths: list[str] | None) -> list[dict]:
     if paths is None:
@@ -50,6 +47,8 @@ def save_report(folder: Path, report: dict) -> Path:
     identifier = str(UUID(report["run_id"]))
     folder.mkdir(parents=True, exist_ok=True)
     destination = folder / (identifier + ".json")
+    from storage_budget import require
+    if folder.parent.name=='.smelter':require(folder.parent.parent,len(json.dumps(report).encode())+1)
     # Exclusive creation avoids replacing an existing report.
     with destination.open("x", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2)

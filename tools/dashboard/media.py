@@ -1,5 +1,6 @@
 """SMELTER V1.4.3: approved, read-only FFprobe media inspection."""
 from __future__ import annotations
+from process_runner import run as bounded_run
 import os
 import json
 import subprocess
@@ -21,7 +22,7 @@ def resolve_ffprobe(finder=find_executable) -> str | None:
     return str(companion) if companion.is_file() else None
 
 def inspect_media(path: str, approval: str, state: dict, tool_status: dict,
-                  runner=subprocess.run, resolver=resolve_ffprobe) -> dict:
+                  runner=bounded_run, resolver=resolve_ffprobe) -> dict:
     if approval != APPROVAL:
         raise ValueError("Explicit PROBE MEDIA approval required")
     if "ffmpeg" not in state.get("enabled", []):

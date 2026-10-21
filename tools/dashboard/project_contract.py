@@ -13,7 +13,11 @@ HANDOVER_HEADINGS = (
 )
 
 def inspect_project(project_path):
-    root = Path(project_path).expanduser().resolve(strict=True)
+    from python_tools import _plain_path
+    from access_policy import require
+    root = _plain_path(Path(project_path).expanduser()).resolve(strict=True)
+    require(root,'read')
+    for name in REQUIRED+RECOMMENDED:require(root/name,'read')
     if not root.is_dir():
         raise ValueError("Project path must be a directory")
     required = {name: (root / name).is_file() for name in REQUIRED}

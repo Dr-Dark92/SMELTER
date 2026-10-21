@@ -2,16 +2,9 @@
 import ast
 import hashlib
 import json
-import os
 import re
 import shutil
-import socket
-import subprocess
-import sys
-import time
-from contextlib import closing
 from pathlib import Path
-from urllib.request import Request, urlopen
 from python_tools import _plain_path, _linked
 
 DASHBOARD = 'tools/dashboard/dashboard.py'
@@ -303,97 +296,39 @@ def replace_css(root, arguments):
 
 
 def validate(root, arguments):
-    if arguments:
-        raise ValueError('Workspace validation takes no arguments')
+    if arguments:raise ValueError('Workspace validation takes no arguments')
     _, source = _check(root)
-    target = target_path(root)
+    target=target_path(root)
     from access_policy import require
-    require(target, 'execute', 'tests')
-    commands = [[sys.executable, '-m', 'unittest', 'discover', '-s', 'tools/dashboard', '-p', 'test_*.py']]
-    node = shutil.which('node')
-    if node:
-        commands.append([node, '--test', 'tools/dashboard/test_chat_renderer.js', 'tools/dashboard/test_session_auth.js', 'tools/dashboard/test_file_activity.js'])
-    checks = []
-    folder = _plain_path(target / '.smelter/frontend-validation')
-    folder.mkdir(exist_ok=True)
-    _plain_path(folder / 'passed.json').unlink(missing_ok=True)
-    deadline = time.monotonic() + 90
-    for index, command in enumerate(commands):
-        log = folder / ('check-' + str(index) + '.log')
-        try:
-            with log.open('wb') as output:
-                completed = subprocess.run(command, cwd=target, stdin=subprocess.DEVNULL,
-                    stdout=output, stderr=subprocess.STDOUT, timeout=max(0.1, deadline - time.monotonic()), shell=False,
-                    creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-            code = completed.returncode
-        except subprocess.TimeoutExpired:
-            code = None
-        raw = log.read_bytes()
-        checks.append({'command': command, 'exit_code': code, 'log_path': str(log),
-                       'log_sha256': _digest(raw), 'tail': raw[-5000:].decode('utf-8', errors='replace')})
-        if code != 0:
-            return {'status': 'workspace_validation_failed', 'checks': checks,
-                    'message': 'Validation failed or timed out; preview launch is blocked.'}
-    _check(root)
-    record = {'dashboard_sha256': _digest(source.encode()), 'checks': checks}
-    (folder / 'passed.json').write_text(json.dumps(record), encoding='utf-8')
-    return {'status': 'workspace_validated', 'checks': checks, 'backend_unchanged': True,
-            'javascript_unchanged': True, 'visual_inspection': 'not performed',
-            'message': 'Backend and JavaScript preservation checks and fixed tests passed.' + ('' if node else ' Node unavailable: JavaScript test execution skipped.')}
+    require(target,'execute','tests')
+    folder=_plain_path(target/'.smelter/frontend-validation');folder.mkdir(exist_ok=True)
+    _plain_path(folder/'passed.json').unlink(missing_ok=True)
+    from sandbox import tests
+    results=tests(root,target)
+    checks=[]
+    for index,result in enumerate(results):
+        raw=result.pop('output');log=folder/('check-'+str(index)+'.log')
+        with log.open('wb') as output:output.write(raw)
+        checks.append({**result,'log_path':str(log),'log_sha256':_digest(raw),'tail':raw[-5000:].decode('utf-8',errors='replace')})
+    passed=bool(checks) and all(x['exit_code']==0 for x in checks)
+    digest=_digest(source.encode())
+    if passed:(folder/'passed.json').write_text(json.dumps({'dashboard_sha256':digest,'sandbox':'docker-no-network','checks':checks}))
+    return {'status':'workspace_validated' if passed else 'workspace_validation_failed','checks':checks,
+            'backend_unchanged':True,'javascript_preserved':True,'sandbox':'docker-no-network','visual_inspection':'not performed'}
 
 
 def launch(root, arguments):
-    if arguments:
-        raise ValueError('Workspace launch takes no arguments')
-    marker, source = _check(root)
-    target = target_path(root)
+    if arguments:raise ValueError('Workspace launch takes no arguments')
+    marker,source=_check(root);target=target_path(root)
     from access_policy import require
-    require(target, 'execute', 'preview')
-    record_path = _plain_path(target / '.smelter/frontend-validation/passed.json')
-    if not record_path.is_file() or json.loads(record_path.read_text()).get('dashboard_sha256') != _digest(source.encode()):
+    require(target,'execute','preview')
+    record=_plain_path(target/'.smelter/frontend-validation/passed.json')
+    if not record.is_file() or json.loads(record.read_text()).get('dashboard_sha256')!=_digest(source.encode()):
         raise ValueError('Run workspace validation after the last CSS edit before launch')
-    with closing(socket.socket()) as probe:
-        try:
-            probe.bind(('127.0.0.1', PORT))
-        except OSError as exc:
-            raise ValueError('Preview port 8770 is occupied; no process was stopped') from exc
-    log = _plain_path(target / '.smelter/frontend-preview.log')
-    options = {'creationflags': subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
-    environment = dict(os.environ)
-    environment['PYTHONUNBUFFERED'] = '1'
-    with log.open('wb') as output:
-        process = subprocess.Popen([sys.executable, str(target / DASHBOARD), '--port', str(PORT), '--no-browser'],
-            cwd=target, env=environment, stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT,
-            close_fds=True, shell=False, **options)
-    url = None
-    deadline = time.monotonic() + 10
-    while time.monotonic() < deadline:
-        text = log.read_text(encoding='utf-8', errors='replace')
-        found = re.search(r'http://127\.0\.0\.1:8770/#token=([A-Za-z0-9_-]+)', text)
-        if found:
-            url = found.group(0)
-            try:
-                # Startup performs external version probes. Polling it with a
-                # short timeout leaves scanners running in abandoned HTTP
-                # threads. This existing endpoint checks auth and the fresh
-                # database without launching any tool or model processes.
-                request = Request('http://127.0.0.1:8770/api/chats', headers={'X-Smelter-Token': found.group(1)})
-                with urlopen(request, timeout=max(0.1, min(2, deadline - time.monotonic()))) as response:
-                    report = json.load(response)
-                if isinstance(report.get('conversations'), list):
-                    return {'status': 'workspace_launched', 'pid': process.pid, 'url': url,
-                            'log_path': str(log), 'data_directory': marker['data_directory'],
-                            'visual_inspection': 'not performed',
-                            'message': 'Authenticated chat database check passed; startup tool scans were not run. Open the URL to inspect the design. Original app was not stopped.'}
-            except (OSError, ValueError):
-                pass
-        if process.poll() is not None:
-            raise ValueError('Preview process exited; inspect ' + str(log))
-        time.sleep(0.1)
-    # This handle belongs to the process started in this invocation only.
-    process.terminate()
-    process.wait(timeout=5)
-    raise ValueError('Preview readiness was not confirmed; only the new preview process was stopped')
+    if json.loads(record.read_text()).get('sandbox')!='docker-no-network':
+        raise ValueError('Run confined workspace validation before launch; legacy host validation is not accepted')
+    from sandbox import preview
+    return {'status':'workspace_launched',**preview(root,target),'data_directory':'temporary container tmpfs'}
 
 
 OPERATIONS = {'frontend_workspace_info': info, 'prepare_frontend_workspace': prepare,

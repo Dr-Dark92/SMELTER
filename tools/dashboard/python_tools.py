@@ -339,6 +339,18 @@ class ToolSession:
         with using(self.policy):
             return self._execute(call)
 
+    def _invoke(self,name,arguments,event):
+        event['transport']='mcp' if name in self.external_tools else self.transport
+        if name=='launch_frontend_preview' and name not in self.external_tools:
+            event.update(transport='python',process_owner='dashboard')
+            from tool_registry import execute_builtin
+            return execute_builtin(self.root,self.grants,name,arguments)
+        if name in self.external_tools or self.transport=='mcp':
+            from mcp_connections import call
+            return call(self.root,self.grants,name,arguments,self.external_tools.get(name))
+        from tool_registry import execute_builtin
+        return execute_builtin(self.root,self.grants,name,arguments)
+
     def _execute(self, call):
         if len(self.events) >= self.call_limit:
             raise ValueError("Python tool call limit reached")
@@ -353,8 +365,10 @@ class ToolSession:
             event["skill_id"] = REA_SKILL_ID
         # Check audit availability before any action; record the request before execution.
         audit = self._audit()
-        with audit.open("a", encoding="utf-8", newline="\n") as out:
-            out.write(json.dumps({**event, "phase": "requested", "arguments": arguments}, ensure_ascii=True) + "\n")
+        from storage_budget import require
+        requested=json.dumps({**event,"phase":"requested","arguments":arguments},ensure_ascii=True)+"\n"
+        require(self.root,len(requested.encode())+3*1024*1024,new_file=not audit.exists())
+        with audit.open("a",encoding="utf-8",newline="\n") as out:out.write(requested)
         try:
             if not isinstance(name, str) or name not in {tool["function"]["name"] for tool in self.tools}:
                 raise ValueError("Tool not approved for this message")
@@ -367,22 +381,8 @@ class ToolSession:
                 result = self.cache[key]
                 event["reused"] = True
             else:
-                event['transport'] = 'mcp' if name in self.external_tools else self.transport
-                event['executed'] = True
-                if name == 'launch_frontend_preview' and name not in self.external_tools:
-                    # A preview must outlive the per-call MCP server. Windows
-                    # MCP cleanup terminates that server's entire process tree.
-                    # Launch from the dashboard owner and record the true route.
-                    event['transport'] = 'python'
-                    event['process_owner'] = 'dashboard'
-                    from tool_registry import execute_builtin
-                    result = execute_builtin(self.root, self.grants, name, arguments)
-                elif name in self.external_tools or self.transport == 'mcp':
-                    from mcp_connections import call as mcp_call
-                    result = mcp_call(self.root, self.grants, name, arguments, self.external_tools.get(name))
-                else:
-                    from tool_registry import execute_builtin
-                    result = execute_builtin(self.root, self.grants, name, arguments)
+                event['executed']=True
+                result=self._invoke(name,arguments,event)
                 if cacheable:
                     self.cache[key] = result
         except (ValueError, OSError, UnicodeError) as exc:
@@ -390,8 +390,9 @@ class ToolSession:
         event["result"] = result
         self.file_activity.finish(call, result)
         self.events.append(event)
-        with audit.open("a", encoding="utf-8", newline="\n") as out:
-            out.write(json.dumps({**event, "phase": "result"}, ensure_ascii=True) + "\n")
+        recorded=json.dumps({**event,"phase":"result"},ensure_ascii=True)+"\n"
+        if len(recorded.encode())>3*1024*1024:raise ValueError('Tool receipt exceeds reserved audit budget')
+        with audit.open("a",encoding="utf-8",newline="\n") as out:out.write(recorded)
         return result
 
     def receipt(self):

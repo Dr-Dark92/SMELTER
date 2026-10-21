@@ -34,7 +34,7 @@ class ModelAssetTests(unittest.TestCase):
         self.assertEqual(message['role'], 'user')
         path = model_path(self.root, result['id'])
         delete_chat(self.root, self.cid)
-        self.assertTrue(path.is_file())
+        self.assertFalse(path.exists())
         with self.assertRaises(ValueError):
             model_path(self.root, result['id'])
 

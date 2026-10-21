@@ -5,6 +5,7 @@ arbitrary CLI commands are intentionally not part of this adapter.
 """
 from __future__ import annotations
 
+from process_runner import run as bounded_run
 import hashlib
 import json
 import os
@@ -88,7 +89,7 @@ def _preview(value, depth=0):
     return value
 
 
-def run_rea(root, grants, name, arguments, runner=subprocess.run, finder=shutil.which):
+def run_rea(root, grants, name, arguments, runner=bounded_run, finder=shutil.which):
     from python_tools import _plain_path
     if grants.get("rea_analysis") is not True:
         raise ValueError("REA process execution was not approved for this message")
@@ -157,6 +158,8 @@ def run_rea(root, grants, name, arguments, runner=subprocess.run, finder=shutil.
     folder = _plain_path(Path(root).resolve() / ".smelter" / "rea-evidence")
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / (str(uuid4()) + ".json")
+    from storage_budget import require
+    require(root,len(raw))
     with path.open("xb") as output:
         output.write(raw)
     digest = hashlib.sha256(raw).hexdigest()

@@ -4,8 +4,6 @@ Never writes to the user's OpenCode settings or SMELTER projects.
 """
 from __future__ import annotations
 import json
-import os
-import tempfile
 from pathlib import Path
 
 APPROVAL = "DEPLOY ISOLATED CONFIG"

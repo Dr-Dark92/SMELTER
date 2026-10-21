@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from database import chosen_database, inspect_database
 
-ALLOWED = {"extensions.json", "model_preferences.json", "runtime_settings.json", "access_policy.json"}
+ALLOWED = {"extensions.json", "model_preferences.json", "runtime_settings.json", "access_policy.json", "sandbox.json"}
 
 def _db(root: Path) -> Path:
     status = inspect_database(root)
@@ -20,6 +20,9 @@ def load_config(root: Path, name: str) -> dict:
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn:
         row = conn.execute("SELECT payload FROM config_snapshots WHERE name=?", (name,)).fetchone()
     if row is None:
+        if name == 'sandbox.json':
+            from sandbox import DEFAULT
+            return dict(DEFAULT)
         if name == 'access_policy.json':
             from access_policy import defaults
             return defaults(root)
@@ -33,7 +36,10 @@ def load_config(root: Path, name: str) -> dict:
 def _validate(name: str, value: dict) -> None:
     if not isinstance(value, dict) or value.get("schema_version") != 1:
         raise ValueError("Invalid configuration schema")
-    if name == 'access_policy.json':
+    if name == 'sandbox.json':
+        from sandbox import validate
+        validate(value)
+    elif name == 'access_policy.json':
         from access_policy import validate
         validate(value)
     elif name == "extensions.json":

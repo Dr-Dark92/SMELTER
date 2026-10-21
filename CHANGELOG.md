@@ -2,6 +2,16 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## V1.7 operational repair — 2026-10-21
+
+- Addressed review findings F01–F11; see [repair handover](docs/REPAIR_STATUS_20261021.md) for evidence and deployment conditions. Corrected the earlier F06 top-level-object assertion.
+- Added fail-closed owned Docker execution for tests, temporary preview and read-only OpenCode, with local immutable images and a narrow approved-model relay. No host fallback or arbitrary external MCP execution.
+- Added bounded process IO/tree cleanup, shared atomic engine outcomes, admitted model/runtime snapshots, attachment cleanup, durable interrupted-task records, artifact quotas, reviewed retention and verified backup/offline restore.
+- Unified skill identities/capability descriptors and added an explicit scoped legacy Registry bridge plus operator project-contract checks.
+- Separated readiness/integrity checks, cached dependency probes, clarified discovery/lightweight/host-resource status, consolidated Settings/skills ownership and extracted HTTP/browser/inference modules.
+- Validation: 321 dashboard tests OK (two opt-in skips), 32 setup tests, 10 JavaScript tests, four analysis tests; desktop/mobile fixture flows passed. Real Docker/OpenCode-image and native Windows process paths require rig smoke tests; no live model/game tested here.
+- Existing user state and V2 are preserved. Containers use temporary state; backup scope and rollout are explicit. Refreshed source graph/function index pins the repaired app commit in a following documentation commit.
+
 ## Documentation and source review — 2026-10-20
 
 Reviewed application revision: `c9e541e9e0d53fcaba109170f8e5a201b500340d` on `SMELTERV1`.
