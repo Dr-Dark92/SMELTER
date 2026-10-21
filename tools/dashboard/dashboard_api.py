@@ -20,7 +20,7 @@ class ApiRoutes:
         '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
         '/assets/turntable.js':'turntable.js','/assets/model-animations.js':'model_animations.js',
-        '/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
+        '/assets/workbench-ui.js':'workbench_ui.js','/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
         '/assets/location-browser.js':'location_browser.js','/assets/locations-ui.js':'locations_ui.js','/assets/skills-ui.js':'skills_ui.js','/assets/attachments-ui.js':'attachments_ui.js','/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
         '/assets/operations-ui.js':'operations_ui.js','/assets/dashboard-shell.js':'dashboard_shell.js'}
 

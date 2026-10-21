@@ -53,7 +53,7 @@ function initShell(){
  const renderPending=(content)=>{const bubble=document.createElement('article');bubble.className='message message-user';const header=document.createElement('header');header.className='message-label';header.textContent='You · submitting';const body=document.createElement('div');body.className='message-content';body.textContent=content;bubble.append(header,body);log.append(bubble);log.scrollTop=log.scrollHeight;return header};
  stop.onclick=async()=>{if(!currentJob)return;stop.disabled=true;try{const job=await api('/api/chats','POST',{action:'stop',job_id:currentJob});requestStatus.textContent=job.phase}catch(e){requestStatus.textContent='Could not stop: '+e.message;stop.disabled=false}};
  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
- send.onclick=async()=>{if(!activeChat){alert('Create a titled conversation first');return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
+ send.onclick=async()=>{if(!activeChat){requestStatus.textContent='Name this conversation, then send your message.';newChat.click();return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
  const toolPermissions=executionEngine==='opencode_readonly'?{}:{...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
@@ -88,7 +88,7 @@ function initShell(){
  const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
  const attachments=SmelterAttachments.mount(composer,{imageInput,modelInput:modelFile,canAttach:()=>!send.disabled,onError:message=>requestStatus.textContent=message});const attachModel=attachments.button;
  modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(!activeChat){requestStatus.textContent='Create a titled conversation before attaching a model.';modelFile.value='';return}if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
- composer.append(input,imageInput,modelFile,send,stop,reconnect);center.append(title,log,engineLabel,requestStatus,composer);settings.task.append(permissionsBox);
+ composer.append(input,imageInput,modelFile,engineLabel,send,stop,reconnect);center.append(title,log,requestStatus,composer);settings.task.append(permissionsBox);
 
  const entries=[['toolsPanel','Installed tools',0,'Tools'],['workflowPanel','Workflow planner',1,'Tools'],['archivePanel','Archive inspection',2,'Tools'],['mediaPanel','Media inspection',3,'Tools'],['blenderPanel','Blender',4,'Tools'],['ollamaPanel','Ollama models',5,'AI & runtime'],['opencodePanel','OpenCode',6,'AI & runtime']];
  for(const [id,label,index,category] of entries)settings.addPanel(id,label,sections[index],category);
@@ -123,7 +123,7 @@ function initShell(){
  const footer=document.createElement('footer');footer.id='sysfooter';footer.textContent='Host observations · CPU: pending · RAM: pending · GPU: pending · Disk: pending · AI: not started';
  main.append(shell,footer);
  const aeroPanel=document.createElement('div');aeroPanel.className='panel';aeroPanel.id='aeroPanel';
- const aeroInput=document.createElement('textarea');aeroInput.rows=3;aeroInput.placeholder='Describe an engineering task for read-only classification';aeroInput.style.width='100%';aeroInput.style.boxSizing='border-box';
+ const aeroInput=document.createElement('textarea');aeroInput.id='aeroInput';aeroInput.rows=3;aeroInput.placeholder='Describe an engineering task for read-only classification';aeroInput.style.width='100%';aeroInput.style.boxSizing='border-box';
  const aeroButton=document.createElement('button');aeroButton.textContent='Preview AERO classification';
  const aeroResult=document.createElement('pre');aeroResult.style.whiteSpace='pre-wrap';aeroResult.style.overflowWrap='anywhere';
  aeroButton.onclick=async()=>{try{const result=await api('/api/aero/classify','POST',{task:aeroInput.value});aeroResult.textContent=JSON.stringify(result,null,2)}catch(e){aeroResult.textContent=e.message}};
@@ -135,6 +135,8 @@ function initShell(){
  skillsNav.onclick=()=>{settings.activate('skillsPanel');skillsView.load()};
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
  const statusNav=settings.addPanel('systemStatusPanel','System status',statusPanel,'System');statusNav.onclick=async()=>{settings.activate('systemStatusPanel');await refreshSystem()};
+ const showEmpty=()=>SmelterWorkbench.empty(log,{hasConversation:!!activeChat,onNew:()=>newChat.click(),onSettings:id=>settings.open(id),onAttach:()=>activeChat?modelFile.click():newChat.click()});
+ SmelterWorkbench.mount({main,shell,left,workspace:center,log,input,newChat,settings,engineLabel,status:requestStatus,onAttach:()=>modelFile.click(),onEmpty:showEmpty});
 }
 let systemStatusBusy=false;
 async function refreshSystem(){
@@ -145,7 +147,7 @@ async function refreshSystem(){
   const gpu=s.gpu.status==='ready'?gb(s.gpu.allocated_bytes)+' model allocation':'unavailable';
   const models=s.models.status==='ready'?(s.models.models.map(m=>m.name).join(', ')||'no model loaded'):'Ollama unavailable';
   const summary='Host CPU: '+cpu+' · Host RAM: '+ram+' · Ollama GPU allocation: '+gpu+' · AI: '+models+' · Disk free: '+gb(s.storage.free_bytes)+' · DB: '+s.database.status;
-  const footer=document.getElementById('sysfooter');footer.textContent=summary;footer.title='Live host metrics. GPU means Ollama-reported model allocation, not utilization; iGPU memory is shared with RAM. Updated '+new Date(s.timestamp*1000).toLocaleTimeString();
+  const footer=document.getElementById('sysfooter');SmelterWorkbench.resources(s,SmelterSettings.current);footer.title='Live host metrics. GPU means Ollama-reported model allocation, not utilization; iGPU memory is shared with RAM. Updated '+new Date(s.timestamp*1000).toLocaleTimeString();
   document.getElementById('systemStatusPanel').textContent=summary+' · Database: '+(s.database.path||'not selected');
  }catch(e){document.getElementById('sysfooter').textContent='System status unavailable: '+e.message}
  finally{systemStatusBusy=false}
@@ -171,7 +173,7 @@ function renderChatHistory(){
  for(const chat of matches){const row=document.createElement('div');row.className='history-row';row.dataset.chatId=chat.id;
  const open=document.createElement('button');open.className='chat-open';open.title=chat.title;const title=document.createElement('span');title.className='history-title';title.textContent=chat.title;const date=document.createElement('small');date.textContent=localTimestamp(chat.created_at);open.append(title,date);open.onclick=()=>{if(document.getElementById('chatinput').disabled)return;openChat(chat.id)};
  const rename=document.createElement('button');rename.className='chat-action';rename.textContent='✎';rename.title='Rename';rename.setAttribute('aria-label','Rename '+chat.title);rename.onclick=()=>editConversationTitle(chat);
- const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){alert('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'”, its messages and attached 3D files? Diagnostic reports and audit logs remain.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){alert(e.message)}};
+ const del=document.createElement('button');del.className='chat-action';del.textContent='×';del.title='Delete';del.setAttribute('aria-label','Delete '+chat.title);del.onclick=async()=>{if(document.getElementById('chatinput').disabled){SmelterWorkbench.notify('Finish or stop the active request first');return}if(!confirm('Delete conversation “'+chat.title+'”, its messages and attached 3D files? Diagnostic reports and audit logs remain.'))return;try{await api('/api/chats','POST',{action:'delete',id:chat.id});if(activeChat===chat.id){activeChat=null;document.getElementById('chatTitle').textContent='SMELTER · Local chat';document.getElementById('chatlog').textContent='Conversation deleted. Create or select another conversation.'}await refreshChats()}catch(e){SmelterWorkbench.notify(e.message)}};
  row.append(open,rename,del);history.append(row)}highlightChat();
 }
 async function refreshChats(){const data=await api('/api/chats');conversationHistory=data.conversations;renderChatHistory()}
@@ -196,8 +198,8 @@ async function openChat(id,before=null){
  if(chat.has_older){const older=document.createElement('button');older.textContent='Load older messages';older.onclick=()=>openChat(id,chat.older_cursor);log.append(older)}if(before){const latest=document.createElement('button');latest.textContent='Return to latest messages';latest.onclick=()=>openChat(id);log.append(latest)}
  for(const msg of chat.messages){const bubble=document.createElement('article');bubble.className='message '+(msg.role==='user'?'message-user':'message-assistant');const label=document.createElement('header');label.className='message-label';const speaker=msg.role==='user'?'You':msg.role==='assistant'?(msg.execution?.engine==='opencode'?'SMELTER · OpenCode response':'SMELTER · AI response'):'System';label.textContent=speaker+' · '+localTimestamp(msg.created_at);const body=document.createElement('div');body.className='message-content';const text=msg.execution?.source==='controller'?msg.execution.model_text:msg.content;if(msg.role==='assistant'){SmelterChat.render(text,body);label.append(SmelterChat.copyButton(text,'Copy response'))}else body.textContent=text;bubble.append(label,body);if(msg.model_attachment)SmelterModels.mount(msg.model_attachment,bubble);log.append(bubble);
  if(msg.role==='assistant'){if(msg.execution?.source==='controller')log.append(executionCards(msg.execution));else{const legacy=document.createElement('small');legacy.textContent='Historical transcript: structured tool execution records are unavailable for this message.';log.append(legacy)}}}
- if(!chat.messages.length)log.textContent='Start the conversation below.';log.scrollTop=log.scrollHeight;
- }catch(e){alert(e.message)}
+ if(!chat.messages.length)window.showEmptyConversation?.();log.scrollTop=log.scrollHeight;
+ }catch(e){SmelterWorkbench.notify(e.message)}
 }
 initShell();
 const el=id=>document.getElementById(id);

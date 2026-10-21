@@ -13,7 +13,7 @@ const SmelterMcp = (() => {
     const discoveryStatus = document.createElement('p'); discoveryStatus.id='mcpDiscoveryStatus'; discoveryStatus.textContent='Last discovery: not tested in this page session.';
     const approvals = document.createElement('p'); approvals.id='mcpApprovals';
     let discoverySnapshot = null;
-    const note = document.createElement('p'); note.textContent = 'Local stdio servers run as your OS user. Tool selection is not an OS sandbox. Saving does not start a server; discovery does. Connections close after each discovery or call.';
+    const note = document.createElement('p'); note.textContent = 'Built-in MCP uses the same scoped tools as direct Python. External servers are blocked until a confined adapter is available. Saving configuration starts no server; built-in discovery starts a temporary process.';
     const install = document.createElement('code'); install.textContent = 'python -m pip install -r tools/dashboard/requirements-mcp.txt';
     const editor = document.createElement('textarea'); editor.rows = 12; editor.style.cssText = 'width:100%;box-sizing:border-box'; editor.setAttribute('aria-label', 'MCP server configuration');
     const save = document.createElement('button'); save.textContent = 'Save MCP configuration';
@@ -21,7 +21,8 @@ const SmelterMcp = (() => {
     const choose = document.createElement('select'); choose.setAttribute('aria-label', 'MCP server');
     const probe = document.createElement('button'); probe.textContent = 'Start server and discover tools';
     const details = document.createElement('div');
-    panel.append(heading, info, discoveryStatus, approvals, note, install, editor, save, refresh, choose, probe, details);
+    const advanced=document.createElement('details');advanced.className='advanced-settings';const advancedTitle=document.createElement('summary');advancedTitle.textContent='Advanced server configuration';advanced.append(advancedTitle,editor,save);
+    panel.append(heading, info, discoveryStatus, approvals, note, refresh, choose, probe, details, advanced, install);
     function refreshApprovals() {
       const grants=getGrants(), names=[];
       if(grants.inventory_root)names.push('inventory_directory');
@@ -42,9 +43,9 @@ const SmelterMcp = (() => {
         info.textContent = 'SDK: ' + data.sdk.status + ' · required ' + data.sdk.required_version + ' · stdio · no persistent server';
         editor.value = JSON.stringify(data.config, null, 2); choose.replaceChildren();
         for (const sid of ['smelter', ...data.config.servers.filter(x => x.enabled).map(x => x.id)]) {
-          const option = document.createElement('option'); option.value = sid; option.textContent = sid; choose.append(option);
+          const option = document.createElement('option'); option.value = sid; option.textContent = sid==='smelter'?'smelter · built-in scoped tools':sid+' · blocked (confinement unavailable)'; option.disabled=sid!=='smelter'; choose.append(option);
         }
-        probe.disabled = data.sdk.status !== 'installed';refreshApprovals();
+        probe.disabled = data.sdk.status !== 'installed';install.hidden=data.sdk.status==='installed';refreshApprovals();
       } catch (error) { info.textContent = error.message; }
     }
     button=SmelterSettings.current.addPanel('mcpPanel','MCP connections',panel,'Skills & integrations');

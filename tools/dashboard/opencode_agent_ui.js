@@ -8,7 +8,7 @@ const SmelterOpenCode = (() => {
     approval.disabled=true;
     button.onclick=async()=>{
       button.disabled=true;approval.checked=false;approval.disabled=true;models.replaceChildren();
-      output.textContent='Checking existing local server…';
+      output.textContent='Starting an owned inspection container and checking its API…';
       try{
         const result=await api('/api/opencode/agent');
         output.textContent='Server: '+result.endpoint+'\nVersion: '+result.version+'\nDirectory: '+result.directory+'\nExpected: '+result.expected_directory+'\n'+result.reason;
