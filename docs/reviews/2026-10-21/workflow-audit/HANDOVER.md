@@ -54,6 +54,13 @@ tools and manual rig performance. Synthetic inference verified transport/tool
 wiring only. No game library was
 inspected, launched or extracted.
 
+The next ECC smoke now discloses the exact test/fix contents already required
+by its acceptance checks. This removes an undisclosed formatting requirement;
+RED-before-fix, GREEN, current-tree and saved-byte checks remain strict. Source
+`b0182d5a3efc3bcf3a1474d85221fbf85f4c27a9` passed [all four CI jobs](https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168):
+409 dashboard, 32 setup, 30 analysis and 16 JS tests on Windows/Linux, plus actual
+confined OpenCode/MCP/CSS/ECC and Chromium checks. CI inference was synthetic.
+
 ## Known issues
 
 See [action plan](ACTION_PLAN.md). Priorities are deliverable acceptance versus

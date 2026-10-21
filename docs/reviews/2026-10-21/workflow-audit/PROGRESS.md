@@ -127,3 +127,20 @@ a successful separate recheck does not explain its original byte/hash mismatch
 or create a single full acceptance pack. Continue with the targeted managed and
 ECC steps in [the runbook](../../../FULL_SMOKE_TEST.md), then record manual GUI
 acceptance. Preserve both results rather than relabelling the earlier failure.
+
+## ECC live fixture contract correction
+
+Before the next live stage, source review found that the ECC task required exact
+saved test/fix bytes without disclosing those exact contents to the model. The
+task now supplies those JSON strings, including final LF, while keeping the
+actual RED-before-fix, GREEN, current-tree, source-preservation, saved-byte and
+cleanup acceptance checks. This tests execution of a supplied fixture, not
+independent test design or general coding competence.
+
+Source `b0182d5a3efc3bcf3a1474d85221fbf85f4c27a9` passed all four jobs in
+[CI 39656768168](https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168). Each Windows/Linux native job
+passed 409 dashboard, 32 setup, 30 analysis and 16 JS tests (3/2 dashboard skips).
+The added regression intercepts the live ask boundary before inference and checks
+that the accepted exact file contract is actually disclosed. Real confined
+OpenCode/MCP/CSS/ECC and Chromium checks passed; model responses in CI were
+synthetic. Managed OpenCode/ECC live acceptance on the rig remains pending.

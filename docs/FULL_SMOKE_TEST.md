@@ -237,6 +237,9 @@ and existing Ollama. The ECC task starts only after the managed report passes.
 ```powershell
 & {
     Set-Location C:\SMELTER -ErrorAction Stop
+    if ((git branch --show-current) -ne 'SMELTERV1') { throw 'Expected SMELTERV1.' }
+    git pull --ff-only origin SMELTERV1
+    if ($LASTEXITCODE -ne 0) { throw 'Update failed.' }
 
     # Reuse the reviewed ECC manifests retained by your earlier smoke run.
     $smelterManifests = 'diagnostics\home-smoke-20261021T181245Z-416ecc68\ecc-manifests'
@@ -273,8 +276,10 @@ cleanup. The ECC result must show `test_stages: [RED, GREEN]`, current tests pas
 original source unchanged, actual MCP audits and confirmed cleanup. RED alone is
 not completion; runner ERROR does not count as the intended failing assertion.
 
-These are bounded disposable tasks, not a broad coding-quality or performance
-benchmark. Keep the original failed run and the later successful direct recheck.
+The ECC task supplies the exact fixture test/fix contents to the model because
+acceptance requires those exact bytes. It still requires observed RED before the
+fix and current GREEN afterwards. These are bounded disposable tasks, not a test
+design, broad coding-quality or performance benchmark. Keep the original failed run and the later successful direct recheck.
 Separate stage passes do not rewrite the old full-pack summary. After both live
 routes pass, the comprehensive command above creates one acceptance pack; manual
 GUI/vision/native-tool observations remain separate.

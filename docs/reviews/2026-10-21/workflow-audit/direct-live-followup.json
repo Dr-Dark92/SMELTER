@@ -366,5 +366,89 @@
     "manual_gui": "PENDING",
     "single_complete_live_pack": "NOT_YET_PASSED",
     "original_full_run": "Historical FAIL retained"
+  },
+  "ecc_prompt_contract_followup": {
+    "application_sha": "b0182d5a3efc3bcf3a1474d85221fbf85f4c27a9",
+    "defect": "Exact saved test/fix bytes were required by acceptance but not disclosed in the live task prompt",
+    "repair": "Supply the exact expected UTF-8 file contents as JSON, including final LF; retain RED-before-fix and all other acceptance checks",
+    "acceptance_weakened": false,
+    "benchmark_scope": "Execution of a supplied fixture, not independent test design or broad coding competence",
+    "new_regression": "Intercept the actual live ask boundary before inference and verify disclosure of the acceptance file contents",
+    "local_execution_environment_available": false,
+    "ci": {
+      "run_id": 39656768168,
+      "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168",
+      "status": "completed",
+      "conclusion": "success",
+      "model_responses": "synthetic; no live Qwen used",
+      "jobs": [
+        {
+          "id": 119418995668,
+          "name": "contracts (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119418996037,
+          "name": "contracts (ubuntu-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119418996042,
+          "name": "agent-bridge-smoke",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119418996073,
+          "name": "browser",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "native": {
+        "linux": {
+          "dashboard": 409,
+          "skipped": 2,
+          "setup": 32,
+          "analysis": 30,
+          "javascript": 16
+        },
+        "windows": {
+          "dashboard": 409,
+          "skipped": 3,
+          "setup": 32,
+          "analysis": 30,
+          "javascript": 16
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12372257546,
+          "name": "workbench-browser-evidence",
+          "expires_at": "2026-11-04T18:55:51Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168/artifacts/12372257546"
+        },
+        {
+          "id": 12371727881,
+          "name": "agent-bridge-smoke-evidence",
+          "expires_at": "2026-11-04T18:55:22Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168/artifacts/12371727881"
+        },
+        {
+          "id": 12370978927,
+          "name": "workflow-smoke-windows-latest",
+          "expires_at": "2026-11-04T18:55:03Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168/artifacts/12370978927"
+        },
+        {
+          "id": 12370938780,
+          "name": "workflow-smoke-ubuntu-latest",
+          "expires_at": "2026-11-04T18:54:17Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39656768168/artifacts/12370938780"
+        }
+      ]
+    }
   }
 }

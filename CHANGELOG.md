@@ -4,6 +4,8 @@ This file records verified changes. Older research rounds are preserved in their
 
 ## Direct live acceptance evidence follow-up — 2026-10-21
 
+- Before the next live ECC stage, fix an undisclosed byte contract: provide the exact fixture test/fix contents already required by acceptance. Keep actual RED-before-fix, GREEN, current review, source preservation, saved bytes and cleanup checks. Add a regression at the live ask boundary, intercepted before inference. CI 39656768168 passed all four jobs at source `b0182d5a3efc3bcf3a1474d85221fbf85f4c27a9`; analysis is now 30 tests per native platform. CI inference was synthetic; managed OpenCode/ECC with live Qwen remains pending.
+
 - Later operator-supplied direct live recheck: PASS, one executed MCP write, exact 23 bytes and matching SHA-256/receipt; all six checks true. Managed OpenCode/ECC live tasks remain unrun. Preserve the original failed run and its unresolved cause. No model configuration or runtime code was changed for this documentation update.
 
 - The next desktop run passed all prerequisites and eight phases, including both real coding profiles and CSS tests/preview. Direct Qwen reached a completed single-event/file-presence check, then failed the combined exact-content/receipt-hash check. The supplied log cannot distinguish those causes; managed OpenCode/ECC live tasks were skipped.
