@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-22T01:48:40.728Z",
+  "application_sha": "33f4fd323095d60187f456edc6e63021b479c3e8",
+  "previous_sha": "6ded85574e1a0784d6182b2b8a6755a7b4386e71",
+  "feature": "Operator system status and fixed component lifecycle controls",
+  "components": [
+    "Ollama",
+    "selected Qwen/model",
+    "managed OpenCode",
+    "MCP",
+    "Docker",
+    "Python",
+    "Node.js",
+    "SQLite",
+    "GLB viewer"
+  ],
+  "semantics": {
+    "ollama": "Native hidden dashboard-owned child; external instances observed, never adopted or killed by process name",
+    "model": "Installed tag versus memory residency; explicit empty load/unload, no pull or user prompt",
+    "opencode_mcp": "Persisted enabled/disabled gates; fresh inspection/session processes closed after their operation",
+    "other_dependencies": "Read-only Status/Reload; OS-managed Docker lifecycle stays external"
+  },
+  "boundaries": [
+    "Authenticated operator-only fixed API; no model tool or arbitrary command/path/port fields",
+    "Active task and interleaved admission guards",
+    "Stale selected model rejection",
+    "Observed residency confirmation",
+    "Failed provider enable rolls back prior flag",
+    "Bounded local operator action log"
+  ],
+  "local": {
+    "dashboard_tests": 422,
+    "skipped": 2,
+    "analysis_tests": 30,
+    "javascript_tests": 16,
+    "focused_lifecycle_http_tests": 13,
+    "missing_optional_sdk_fixture_tests": 13,
+    "real_mcp_operator_stop_start": {
+      "status": "completed",
+      "actual_stdio": true,
+      "returned_runtime": "on_demand",
+      "standing_process": false,
+      "live_model_used": false,
+      "audit_events": 2
+    }
+  },
+  "initial_ci": {
+    "id": 39706590665,
+    "application_sha": "b69090edf6bea095584de790af9aab5e888222f3",
+    "conclusion": "failure",
+    "failure": "CSS Python validation in the intentionally SDK-free test image; mocked provider-start fixture had assumed SDK installation",
+    "repair": "Explicit SDK observation in that controlled unit fixture; production SDK requirements unchanged"
+  },
+  "ci": {
+    "id": 39707087492,
+    "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119589553870,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119589554162,
+        "name": "contracts (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119589554197,
+        "name": "contracts (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119589554314,
+        "name": "agent-bridge-smoke",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "native": {
+      "linux": {
+        "dashboard": 422,
+        "skipped": 2,
+        "setup": 32,
+        "analysis": 30,
+        "javascript": 16
+      },
+      "windows": {
+        "dashboard": 422,
+        "skipped": 3,
+        "setup": 32,
+        "analysis": 30,
+        "javascript": 16
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12395367795,
+        "name": "workflow-smoke-windows-latest",
+        "expires_at": "2026-11-05T01:43:50Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492/artifacts/12395367795"
+      },
+      {
+        "id": 12395274036,
+        "name": "workbench-browser-evidence",
+        "expires_at": "2026-11-05T01:43:19Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492/artifacts/12395274036"
+      },
+      {
+        "id": 12395253987,
+        "name": "agent-bridge-smoke-evidence",
+        "expires_at": "2026-11-05T01:43:22Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492/artifacts/12395253987"
+      },
+      {
+        "id": 12394919111,
+        "name": "workflow-smoke-ubuntu-latest",
+        "expires_at": "2026-11-05T01:41:43Z",
+        "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492/artifacts/12394919111"
+      }
+    ],
+    "browser": {
+      "result": "passed",
+      "system_component_controls": true,
+      "desktop_and_375px": true,
+      "status_refresh": true,
+      "actual_mcp_stop_flag": true,
+      "disabled_nonservice_controls": true,
+      "telemetry_preserves_table": true,
+      "page_errors": [],
+      "external_requests": []
+    },
+    "container_profiles": "PASS",
+    "managed_report": "passed",
+    "frontend": "PASS",
+    "ecc": "passed",
+    "model_responses": "Synthetic; no live Qwen inference in CI",
+    "cleanup_confirmed": true
+  },
+  "pending": [
+    "Live desktop Ollama owned-service startup/stop and real model memory load/unload acceptance",
+    "OS-native service/tray control remains external by design; shared Docker engine controls remain in the OS service manager"
+  ],
+  "graph_note": "CI generates a current graph artifact; the committed graph remains its explicitly pinned historical audit snapshot."
+}

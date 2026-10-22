@@ -44,7 +44,7 @@ for duplicate execution. Finish/Stop the chat first, then use component controls
 The authenticated operator-only API is GET/POST `/api/system/components`. POST
 accepts a fixed component and action; Qwen mutations also require the model name
 observed by the GUI. It accepts no commands, paths, ports or executable arguments
-and is not exposed as a model tool. Actions retain a bounded local operator log
+and is not exposed as a model tool. Lifecycle changes retain a bounded local operator log
 at `.smelter/component-events.jsonl`; audit failure is reported separately from
 an operation that already completed. An unconfirmed state remains an error.
 
@@ -58,3 +58,20 @@ HTTP authentication/payload rejection. Browser coverage checks table rendering,
 operator Stop, disabled non-service controls, telemetry preservation and 375px
 layout. Model operations in tests use controlled responses; desktop Ollama and
 GPU behavior require the operator's live acceptance.
+
+## Verified build and desktop acceptance
+
+Source 33f4fd323095d60187f456edc6e63021b479c3e8 passed all four jobs in
+[CI 39707087492](https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492):
+422 dashboard, 32 setup, 30 analysis and 16 JS tests per native platform, actual
+browser/GLB checks, and confined OpenCode/MCP/CSS/ECC checks. Dashboard skips were
+2 on Linux and 3 on Windows. CI inference was synthetic. A separate local real
+MCP provider Stop/Start passed. See [progress and evidence](reviews/2026-10-22/system-status/PROGRESS.md).
+
+On the desktop, stop the old dashboard with Ctrl+C, update SMELTERV1 and relaunch.
+Use the newly printed authenticated URL. Open Settings → System status and click
+Refresh all statuses. Compare installed versus running/loaded states. The first
+live model Start/Stop and dashboard-owned Ollama lifecycle remain desktop
+acceptance; those operations were simulated in automated tests. Finish active
+chat work before trying them. Model Stop unloads memory; later chats can load it
+again. Reload an enabled MCP/OpenCode provider to run an actual connection check.
