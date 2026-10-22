@@ -22,3 +22,13 @@ No live Qwen inference or actual desktop Ollama lifecycle was run here.
 
 Use [System status](../../../SYSTEM_STATUS.md) for semantics and manual acceptance.
 [Evidence](EVIDENCE.json) records source, CI jobs, artifacts and remaining limits.
+
+## Confirmed cleanup ownership follow-up
+
+A failed Ollama Stop now retains its owned process handle until exit is observed,
+so a cleanup timeout remains a structured error with a retryable owned handle.
+The added regression passes alongside the other 13 focused tests. Final source
+`0bef3a9f77c63c907fea1fc7fbcf95db856ddbee` passed [all four CI jobs](https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907).
+Windows/Linux each passed 423 dashboard, 32 setup, 30 analysis and 16 JS tests
+(3/2 dashboard skips). Browser and actual container workflows passed. CI model
+responses were synthetic; desktop Ollama/model lifecycle acceptance remains.

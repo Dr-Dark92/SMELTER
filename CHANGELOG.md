@@ -7,7 +7,8 @@ This file records verified changes. Older research rounds are preserved in their
 - Add a System status table with installation/runtime/version distinctions for Ollama, the selected Qwen model, managed OpenCode, MCP, Docker, Python, Node, SQLite and the GLB viewer. Keep host resource telemetry intact.
 - Add authenticated fixed operator actions, cached bounded observations, actual model load/unload verification, and owned hidden Ollama process cleanup. External Ollama/shared Docker services retain OS ownership; unsupported controls explain their limits.
 - OpenCode/MCP Start/Stop controls enable/disable their existing on-demand lifecycles. Persist and enforce stops at admission and runtime boundaries; reject lifecycle mutations during active work and stale model operations. Record bounded operator action events.
-- Verification: source `33f4fd323095d60187f456edc6e63021b479c3e8` passed all four CI jobs (39707087492): 422 dashboard, 32 setup, 30 analysis, 16 JS tests per native platform; actual browser and confined container workflows passed. A real local MCP Stop/Start also passed. Live Qwen and desktop Ollama/model lifecycle remain separate acceptance.
+- Failed Ollama termination retains the owned handle for retry; ownership clears only after observed exit. Fourteen focused lifecycle/HTTP regressions pass.
+- Verification: source `0bef3a9f77c63c907fea1fc7fbcf95db856ddbee` passed all four CI jobs (39708077907): 423 dashboard, 32 setup, 30 analysis, 16 JS tests per native platform; actual browser and confined container workflows passed. A real local MCP Stop/Start also passed. Live Qwen and desktop Ollama/model lifecycle remain separate acceptance.
 - Add focused lifecycle/HTTP regressions and actual browser table/control/responsive coverage. See [System status](docs/SYSTEM_STATUS.md) for semantics and manual acceptance.
 
 

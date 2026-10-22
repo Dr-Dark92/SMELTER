@@ -61,9 +61,9 @@ GPU behavior require the operator's live acceptance.
 
 ## Verified build and desktop acceptance
 
-Source 33f4fd323095d60187f456edc6e63021b479c3e8 passed all four jobs in
-[CI 39707087492](https://github.com/Dr-Dark92/SMELTER/actions/runs/39707087492):
-422 dashboard, 32 setup, 30 analysis and 16 JS tests per native platform, actual
+Source 0bef3a9f77c63c907fea1fc7fbcf95db856ddbee passed all four jobs in
+[CI 39708077907](https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907):
+423 dashboard, 32 setup, 30 analysis and 16 JS tests per native platform, actual
 browser/GLB checks, and confined OpenCode/MCP/CSS/ECC checks. Dashboard skips were
 2 on Linux and 3 on Windows. CI inference was synthetic. A separate local real
 MCP provider Stop/Start passed. See [progress and evidence](reviews/2026-10-22/system-status/PROGRESS.md).
@@ -75,3 +75,6 @@ live model Start/Stop and dashboard-owned Ollama lifecycle remain desktop
 acceptance; those operations were simulated in automated tests. Finish active
 chat work before trying them. Model Stop unloads memory; later chats can load it
 again. Reload an enabled MCP/OpenCode provider to run an actual connection check.
+
+If termination is unconfirmed, Stop reports an error and retains the owned
+process handle for retry. Ownership is cleared only after observed exit.

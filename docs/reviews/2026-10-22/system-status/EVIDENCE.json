@@ -147,5 +147,86 @@
     "Live desktop Ollama owned-service startup/stop and real model memory load/unload acceptance",
     "OS-native service/tray control remains external by design; shared Docker engine controls remain in the OS service manager"
   ],
-  "graph_note": "CI generates a current graph artifact; the committed graph remains its explicitly pinned historical audit snapshot."
+  "graph_note": "CI generates a current graph artifact; the committed graph remains its explicitly pinned historical audit snapshot.",
+  "latest_application_sha": "0bef3a9f77c63c907fea1fc7fbcf95db856ddbee",
+  "cleanup_followup": {
+    "application_sha": "0bef3a9f77c63c907fea1fc7fbcf95db856ddbee",
+    "change": "Retain the owned Ollama process handle after unconfirmed termination; clear it only after observed exit; expose a structured failure for retry",
+    "focused_tests": 14,
+    "ci": {
+      "id": 39708077907,
+      "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119592705940,
+          "name": "agent-bridge-smoke",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119592706216,
+          "name": "browser",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119592706237,
+          "name": "contracts (ubuntu-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 119592706243,
+          "name": "contracts (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "native": {
+        "linux": {
+          "dashboard": 423,
+          "skipped": 2,
+          "setup": 32,
+          "analysis": 30,
+          "javascript": 16
+        },
+        "windows": {
+          "dashboard": 423,
+          "skipped": 3,
+          "setup": 32,
+          "analysis": 30,
+          "javascript": 16
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12396540049,
+          "name": "workflow-smoke-windows-latest",
+          "expires_at": "2026-11-05T01:53:34Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907/artifacts/12396540049"
+        },
+        {
+          "id": 12396286027,
+          "name": "agent-bridge-smoke-evidence",
+          "expires_at": "2026-11-05T01:53:22Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907/artifacts/12396286027"
+        },
+        {
+          "id": 12395951456,
+          "name": "workbench-browser-evidence",
+          "expires_at": "2026-11-05T01:54:03Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907/artifacts/12395951456"
+        },
+        {
+          "id": 12395398725,
+          "name": "workflow-smoke-ubuntu-latest",
+          "expires_at": "2026-11-05T01:52:10Z",
+          "url": "https://github.com/Dr-Dark92/SMELTER/actions/runs/39708077907/artifacts/12395398725"
+        }
+      ]
+    },
+    "live_qwen_used": false
+  }
 }
