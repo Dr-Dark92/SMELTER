@@ -1,14 +1,12 @@
 import http.client
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch, Mock
-from types import SimpleNamespace
+from unittest.mock import patch
 
 import component_controls as cc
 from database import select_database
@@ -137,7 +135,8 @@ class ComponentControlsTests(unittest.TestCase):
 
     def test_provider_start_verifies_then_closes_inspection_not_persistent_service(self):
         self.controls.action('mcp', 'stop')
-        with patch('mcp_connections.exchange', return_value={'status': 'connected'}) as probe:
+        with patch('mcp_connections.sdk_status', return_value={'status': 'installed', 'version': '1.30.0'}), \
+             patch('mcp_connections.exchange', return_value={'status': 'connected'}) as probe:
             result = self.controls.action('mcp', 'start')
         probe.assert_called_once_with(self.root, timeout=20)
         row = next(x for x in result['snapshot']['components'] if x['id'] == 'mcp')
