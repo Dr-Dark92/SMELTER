@@ -6,7 +6,7 @@ import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import component_controls as cc
 from database import select_database
@@ -93,6 +93,20 @@ class ComponentControlsTests(unittest.TestCase):
         self.controls.action('ollama', 'stop')
         self.assertIsNotNone(process.poll())
         self.assertFalse(self.controls.owned())
+
+    def test_unconfirmed_stop_retains_owned_handle_for_retry(self):
+        process = Mock(pid=12345)
+        process.poll.return_value = None
+        process.wait.side_effect = subprocess.TimeoutExpired(['owned-fixture'], 5)
+        self.controls.process = process
+        with patch('component_controls.os.killpg', create=True):
+            with self.assertRaisesRegex(ValueError, 'ownership is retained'):
+                self.controls._stop_owned()
+        self.assertIs(self.controls.process, process)
+        process.poll.return_value = 0
+        process.wait.side_effect = None
+        self.controls.close()
+        self.assertIsNone(self.controls.process)
 
     def test_model_lifecycle_uses_empty_bounded_requests_and_verified_residency(self):
         self.controls.action('qwen', 'stop')

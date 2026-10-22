@@ -211,16 +211,19 @@ class Components:
         process = self.process
         try:
             if os.name == 'nt':
-                if self.job: self.job.close()
+                if self.job and self.job.handle: self.job.close()
                 elif process.poll() is None: process.kill()
             else:
                 try:
                     if process.poll() is None: os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError: pass
             process.wait(timeout=5)
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise ValueError('Owned Ollama termination was not confirmed; ownership is retained for retry') from exc
         finally:
-            if self.job: self.job.close()
-            self.process = self.job = None
+            if process.poll() is not None:
+                if self.job: self.job.close()
+                self.process = self.job = None
 
     def close(self):
         with self.lock:
