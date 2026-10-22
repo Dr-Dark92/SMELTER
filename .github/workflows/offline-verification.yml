@@ -145,7 +145,7 @@ jobs:
         run: |
           import base64
           from pathlib import Path
-          for name in ('workbench-desktop.png', 'settings-locations-desktop.png', 'chat-375.png', 'failure.png'):
+          for name in ('workbench-desktop.png', 'settings-locations-desktop.png', 'chat-375.png', 'system-status-desktop.png', 'system-status-375.png', 'failure.png'):
               path = Path('.smelter/ui-checks') / name
               if path.is_file():
                   print('SMELTER_PREVIEW|' + name + '|' + base64.b64encode(path.read_bytes()).decode())

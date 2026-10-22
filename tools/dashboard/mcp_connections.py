@@ -85,7 +85,8 @@ def save_config(root, data):
 
 
 def status(root):
-    return {'sdk': sdk_status(), 'transport': 'stdio', 'builtin': 'smelter', 'config': load_config(root),
+    from component_controls import settings
+    return {'sdk': sdk_status(), 'enabled': settings(root)['mcp'], 'transport': 'stdio', 'builtin': 'smelter', 'config': load_config(root),
             'config_path': str(config_path(root)), 'running': False,
             'lifecycle': 'A fresh process per discovery or call; closed when that operation finishes',
             'limits': 'Local stdio only. No network MCP, automatic installation, shell wrapping, or OS sandbox.'}
@@ -160,6 +161,8 @@ async def _exchange(server, name=None, arguments=None, expected_schema=None, tim
 
 
 def exchange(root, sid='smelter', grants=None, name=None, arguments=None, expected=None, timeout=120):
+    from component_controls import require_enabled
+    require_enabled(root, 'mcp')
     if sdk_status()['status'] != 'installed':
         raise ValueError('Install the optional MCP dependency with this dashboard Python: python -m pip install -r tools/dashboard/requirements-mcp.txt')
     server = _server(root, sid, grants or {})

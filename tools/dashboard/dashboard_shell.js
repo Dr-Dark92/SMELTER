@@ -136,8 +136,8 @@ function initShell(){
  const skillsPanel=document.createElement('section');const skillsNav=settings.addPanel('skillsPanel','Skills',skillsPanel,'Skills & integrations');skillsNav.id='skillsManagerButton';
  const skillsView=SmelterSkills.mount(skillsPanel,api,{get:()=>({selected:selectedSkills,automatic:autoSkills}),set:value=>{selectedSkills=value.selected;autoSkills=value.automatic}},document);
  skillsNav.onclick=()=>{settings.activate('skillsPanel');skillsView.load()};
- const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';statusPanel.textContent='Loading system status…';
- const statusNav=settings.addPanel('systemStatusPanel','System status',statusPanel,'System');statusNav.onclick=async()=>{settings.activate('systemStatusPanel');await refreshSystem()};
+ const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';const systemComponents=SmelterSystem.mount(statusPanel,api,document);
+ const statusNav=settings.addPanel('systemStatusPanel','System status',statusPanel,'System');statusNav.onclick=async()=>{settings.activate('systemStatusPanel');await Promise.all([refreshSystem(),systemComponents.load()])};
  const showEmpty=()=>SmelterWorkbench.empty(log,{hasConversation:!!activeChat,onNew:()=>newChat.click(),onSettings:id=>settings.open(id),onAttach:()=>activeChat?modelFile.click():newChat.click()});
  SmelterWorkbench.mount({main,shell,left,workspace:center,log,input,newChat,settings,engineLabel,status:requestStatus,onAttach:()=>modelFile.click(),onEmpty:showEmpty});
 }
@@ -151,7 +151,7 @@ async function refreshSystem(){
   const models=s.models.status==='ready'?(s.models.models.map(m=>m.name).join(', ')||'no model loaded'):'Ollama unavailable';
   const summary='Host CPU: '+cpu+' · Host RAM: '+ram+' · Ollama GPU allocation: '+gpu+' · AI: '+models+' · Disk free: '+gb(s.storage.free_bytes)+' · DB: '+s.database.status;
   const footer=document.getElementById('sysfooter');SmelterWorkbench.resources(s,SmelterSettings.current);footer.title='Live host metrics. GPU means Ollama-reported model allocation, not utilization; iGPU memory is shared with RAM. Updated '+new Date(s.timestamp*1000).toLocaleTimeString();
-  document.getElementById('systemStatusPanel').textContent=summary+' · Database: '+(s.database.path||'not selected');
+  const resources=document.getElementById('systemResourceSummary');if(resources)resources.textContent=summary+' · Database: '+(s.database.path||'not selected');
  }catch(e){document.getElementById('sysfooter').textContent='System status unavailable: '+e.message}
  finally{systemStatusBusy=false}
 }

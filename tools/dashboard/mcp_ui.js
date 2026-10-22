@@ -41,12 +41,12 @@ const SmelterMcp = (() => {
     async function load() {
       try {
         const data = await request('/api/mcp/status');
-        info.textContent = 'SDK: ' + data.sdk.status + ' · required ' + data.sdk.required_version + ' · stdio · no persistent server';
+        info.textContent = 'SDK: ' + data.sdk.status + ' · required ' + data.sdk.required_version + ' · stdio · no persistent server' + (data.enabled===false?' · STOPPED in System status':'');
         editor.value = JSON.stringify(data.config, null, 2); choose.replaceChildren();
         for (const sid of ['smelter', ...data.config.servers.filter(x => x.enabled).map(x => x.id)]) {
           const option = document.createElement('option'); option.value = sid; option.textContent = sid==='smelter'?'smelter · built-in scoped tools':sid+' · blocked (confinement unavailable)'; option.disabled=sid!=='smelter'; choose.append(option);
         }
-        probe.disabled = data.sdk.status !== 'installed';install.hidden=data.sdk.status==='installed';refreshApprovals();
+        probe.disabled = data.sdk.status !== 'installed'||data.enabled===false;install.hidden=data.sdk.status==='installed';refreshApprovals();
       } catch (error) { info.textContent = error.message; }
     }
     button=SmelterSettings.current.addPanel('mcpPanel','MCP connections',panel,'Skills & integrations');

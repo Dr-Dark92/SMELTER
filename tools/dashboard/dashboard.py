@@ -29,6 +29,7 @@ from database import select_database
 from config_store import load_config, save_config
 from startup import startup_report
 from system_status import system_status
+from component_controls import manager as component_manager, close_all as close_components
 from chats import list_chats, create_chat, read_chat, add_note, rename_chat, delete_chat
 from skill_manager import remove_skill, set_skill_enabled
 from github_skill_discovery import discover_github_skill, discover_github_repository, install_discovered_skill
@@ -200,6 +201,8 @@ dialog::backdrop{background:#030810c9;backdrop-filter:blur(4px)}.settings-header
  #skillNotice{font-size:11px;padding:7px 10px;gap:6px}#skillNoticeText{min-width:100px}#skillNotice button{font-size:11px;padding:4px 8px;min-height:34px}
  .resource-grid{padding-bottom:6px}#sysfooter{padding-bottom:max(8px,env(safe-area-inset-bottom))}.workbench-empty h2{font-size:24px}
 }
+
+.component-toolbar,.component-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.component-toolbar{margin:20px 0}.component-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}.component-table{width:100%;border-collapse:collapse;text-align:left;min-width:780px}.component-table caption{text-align:left;padding:14px;color:var(--muted);font-size:13px}.component-table th,.component-table td{padding:14px;vertical-align:top;border-top:1px solid var(--border)}.component-table thead{background:#1b2735}.component-table tbody th{width:19%}.component-table td:nth-child(3){width:33%}.component-table small{display:block;line-height:1.5;margin-top:6px;font-weight:400}.component-actions button{min-height:36px;padding:6px 10px;font-size:12px}.component-state{display:inline-block;padding:2px 9px;border-radius:20px;background:#30251d;color:var(--warning);font-size:12px;text-transform:capitalize}.component-state-running,.component-state-loaded,.component-state-ready,.component-state-on_demand,.component-state-available{background:#16352e;color:var(--teal)}.component-state-missing,.component-state-unavailable,.component-state-blocked{background:#422630;color:var(--danger)}
 </style><main><h1>SMELTER</h1><p>V1.7 · Scoped local workbench</p>
 <section class="panel"><h2>Extensions</h2><p>Extensions are disabled by default. Activation only records configuration; execution permissions remain ungranted.</p>
 <button id="refresh">Rescan tools</button><p id="error"></p><div id="items">Loading…</div></section>
@@ -237,7 +240,7 @@ dialog::backdrop{background:#030810c9;backdrop-filter:blur(4px)}.settings-header
 <p>Configure a reviewed OpenCode image in Confined execution, check the managed server, then approve one task. Selected skills and approved built-in MCP tools are forwarded. Native source access stays read-only; images and external MCP servers are unsupported.</p>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2 id="startupHeading">SMELTER startup</h2><div id="databaseSetup"><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\SMELTER-Data"><button id="dbselect">Initialize database</button></div><div id="authRecovery" hidden><p>This page is not authorized for the running dashboard. Use the current launch URL printed in its terminal. Restarting the server changes the token; database initialization will not fix authorization.</p><label>Current launch URL or token<input id="sessionToken" type="password" autocomplete="off" spellcheck="false" aria-label="Current launch URL or token"></label><button id="sessionReconnect">Reconnect session</button></div><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script src="/assets/skills-ui.js"></script><script src="/assets/attachments-ui.js"></script><script src="/assets/workbench-ui.js"></script><script src="/assets/settings-ui.js"></script><script src="/assets/location-browser.js"></script><script src="/assets/locations-ui.js"></script><script src="/assets/access-ui.js"></script><script src="/assets/operations-ui.js"></script><script src="/assets/dashboard-shell.js"></script></main></html>"""
+<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script src="/assets/skills-ui.js"></script><script src="/assets/attachments-ui.js"></script><script src="/assets/workbench-ui.js"></script><script src="/assets/settings-ui.js"></script><script src="/assets/location-browser.js"></script><script src="/assets/locations-ui.js"></script><script src="/assets/access-ui.js"></script><script src="/assets/operations-ui.js"></script><script src="/assets/system-components.js"></script><script src="/assets/dashboard-shell.js"></script></main></html>"""
 
 def handler(token: str):
     from dashboard_api import ApiRoutes,Context
@@ -285,6 +288,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        close_components()
         server.server_close()
 
 if __name__ == "__main__":

@@ -236,6 +236,8 @@ class Jobs:
         if data.get('policy_revision') and data['policy_revision']!=policy.revision:
             raise ValueError('Access policy changed; refresh task access before sending')
         with self.lock:
+            from component_controls import check_admission
+            check_admission(root, engine, mcp_required=supplied.get('transport') == 'mcp' or bool(bridge and bridge.tools))
             if any(j['state'] == 'running' for j in self.jobs.values()):
                 raise ValueError('A chat request is already running; finish or stop it first')
             if len(self.jobs) >= 50:

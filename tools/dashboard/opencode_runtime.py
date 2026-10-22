@@ -268,6 +268,8 @@ def conversation_prompt(chat, prompt):
 def ask(root, conversation_id, prompt, *, model_key=None, approval=False, control=None,
         image=None, skills=None, auto_skills=False, tool_permissions=None, client=None,
         _managed_cleanup=None, agent_mode=False, bridge=None):
+    from component_controls import require_enabled
+    require_enabled(root, 'opencode')
     from chats import read_chat, _db, EXECUTION_SCHEMA
     from chat_jobs import ChatCancelled
     if approval is not True:
@@ -285,6 +287,8 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         from agent_bridge import AgentBridge
         bridge=AgentBridge(root,conversation_id,prompt,skills=skills,auto_skills=auto_skills,
                            grants=tool_permissions,policy=policy,control=control)
+    if bridge and bridge.tools:
+        require_enabled(root, 'mcp')
     if bridge:
         bridge.control=control
         if control:control.file_activity=bridge.session.file_activity

@@ -120,6 +120,25 @@ try{
  phase='GLB error and reload';await load();await card.locator('model-viewer').evaluate(v=>v.dispatchEvent(new CustomEvent('error')));assert.equal(await card.getByRole('button',{name:'Save PNG',exact:true}).isDisabled(),true);await load();assert.equal(await card.getByLabel('Animation clip',{exact:true}).isDisabled(),false);await page.screenshot({path:path.join(output,'chat-and-glb-desktop.png')});await card.getByRole('button',{name:'Release preview',exact:true}).click();
  phase='responsive layouts';for(const width of [375,768,1024,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Page overflow at '+width);if(width===375){await page.getByRole('button',{name:'Open conversations',exact:true}).click();assert.equal(await page.locator('#leftbar').isVisible(),true);assert.equal(await page.locator('#workspace').evaluate(n=>n.inert),true);await page.keyboard.press('Escape');assert.equal(await page.locator('#leftbar').isVisible(),false);assert.equal(await page.locator('#workspace').evaluate(n=>n.inert),false)}await page.screenshot({path:path.join(output,'chat-'+width+'.png')});await page.getByRole('button',{name:'Settings',exact:true}).click();if(width<=800){await page.getByRole('combobox',{name:'Settings section',exact:true}).selectOption('accessPolicyPanel');await page.locator('.locations-table').waitFor()}else await page.getByRole('button',{name:'Workspaces & Access',exact:true}).click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Settings overflow at '+width);await page.screenshot({path:path.join(output,'settings-'+width+'.png')});await page.getByRole('button',{name:'Close settings',exact:true}).click()}
  phase='reduced motion';await page.emulateMedia({reducedMotion:'reduce'});assert(await page.getByRole('button',{name:'Settings',exact:true}).evaluate(node=>parseFloat(getComputedStyle(node).transitionDuration)<.02));
+ phase='system component status and operator controls';
+ await page.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByRole('button',{name:'System status',exact:true}).click();
+ await page.locator('.component-table tbody tr[data-component="python"]').waitFor();
+ assert.equal(await page.locator('.component-table tbody tr').count(),9);
+ assert.equal(await page.getByRole('button',{name:'Start Python',exact:true}).isDisabled(),true);
+ await page.getByRole('button',{name:'Status Python',exact:true}).click();
+ await page.getByText('Status check completed.',{exact:true}).waitFor();
+ await page.evaluate(()=>refreshSystem());
+ assert.equal(await page.locator('.component-table tbody tr').count(),9);
+ await page.getByRole('button',{name:'Stop MCP',exact:true}).click();
+ await page.locator('tr[data-component="mcp"] .component-state').filter({hasText:'disabled'}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Stop MCP',exact:true}).isDisabled(),true);
+ await page.screenshot({path:path.join(output,'system-status-desktop.png')});
+ await page.setViewportSize({width:375,height:900});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'System status page overflow');
+ await page.screenshot({path:path.join(output,'system-status-375.png')});
+ await page.getByRole('button',{name:'Close settings',exact:true}).click();
+ findings.systemComponentControls=true;
  assert.deepEqual(findings.pageErrors,[]);assert.deepEqual(findings.externalRequests,[]);
  Object.assign(findings,{result:'passed',settingsSearch:true,registeredLocations:true,folderBrowse:true,skillsBulk:true,titledChat:true,attachmentMenu:true,glbRender:true,animationPlaybackAndLabels:true,png:true,webm:true,releaseDuringExport:true,lateLoadIgnored:true,latePngIgnored:true,errorReload:true,widths:[375,768,1024,1440],reducedMotion:true});
  fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(findings,null,2));console.log(JSON.stringify(findings));

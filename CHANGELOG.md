@@ -2,6 +2,14 @@
 
 This file records verified changes. Older research rounds are preserved in their source scripts and historical diagnostics; their filenames are not treated as release guarantees.
 
+## System component status and lifecycle controls — 2026-10-22
+
+- Add a System status table with installation/runtime/version distinctions for Ollama, the selected Qwen model, managed OpenCode, MCP, Docker, Python, Node, SQLite and the GLB viewer. Keep host resource telemetry intact.
+- Add authenticated fixed operator actions, cached bounded observations, actual model load/unload verification, and owned hidden Ollama process cleanup. External Ollama/shared Docker services retain OS ownership; unsupported controls explain their limits.
+- OpenCode/MCP Start/Stop controls enable/disable their existing on-demand lifecycles. Persist and enforce stops at admission and runtime boundaries; reject lifecycle mutations during active work and stale model operations. Record bounded operator action events.
+- Add focused lifecycle/HTTP regressions and actual browser table/control/responsive coverage. See [System status](docs/SYSTEM_STATUS.md) for semantics and manual acceptance.
+
+
 ## Direct live acceptance evidence follow-up — 2026-10-21
 
 - Before the next live ECC stage, fix an undisclosed byte contract: provide the exact fixture test/fix contents already required by acceptance. Keep actual RED-before-fix, GREEN, current review, source preservation, saved bytes and cleanup checks. Add a regression at the live ask boundary, intercepted before inference. CI 39656768168 passed all four jobs at source `b0182d5a3efc3bcf3a1474d85221fbf85f4c27a9`; analysis is now 30 tests per native platform. CI inference was synthetic; managed OpenCode/ECC with live Qwen remains pending.

@@ -131,3 +131,5 @@ Registered locations now use a staged permission table with folder browsing and 
 The [historical runtime review](docs/reviews/2026-10-21/REVIEW.md) records seven reproduced defects. They are implemented and regression checked in the [UI/UX overhaul](docs/UI_UX_OVERHAUL.md), with current [progress](docs/reviews/2026-10-21/PROGRESS.md) and [handover](docs/OVERHAUL_HANDOVER_20261021.md).
 
 The workbench now has grouped searchable Settings, a responsive conversation drawer, an integrated composer and explicit permission/resource context. See the [design system](design-system/smelter/MASTER.md) and [rollout guide](docs/UI_UX_OVERHAUL.md) before refreshing an existing V2 workspace.
+
+Component installation, runtime health and lifecycle controls are documented in [System status](docs/SYSTEM_STATUS.md).

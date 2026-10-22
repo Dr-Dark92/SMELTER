@@ -14,10 +14,12 @@ class Context:
 
 class ApiRoutes:
     GET_ROUTES={'/': '_get_page', '/api/access-policy': '_get_api_access_policy', '/api/opencode/agent': '_get_api_opencode_agent', '/api/mcp/status': '_get_api_mcp_status', '/api/models/status': '_get_api_models_status', '/api/skills': '_get_api_skills', '/api/skills/status': '_get_api_skills_status', '/api/rea/status': '_get_api_rea_status', '/api/runtime': '_get_api_runtime', '/api/system/status': '_get_api_system_status', '/api/chats': '_get_api_chats', '/api/startup': '_get_api_startup', '/api/opencode/validate': '_get_api_opencode_validate', '/api/opencode/provider-preview': '_get_api_opencode_provider_preview', '/api/opencode/status': '_get_api_opencode_status', '/api/ollama/preferences': '_get_api_ollama_preferences', '/api/ollama/models': '_get_api_ollama_models', '/api/workflows/reports': '_get_api_workflows_reports', '/api/workflows': '_get_api_workflows', '/api/extensions': '_get_api_extensions'}
+    GET_ROUTES['/api/system/components'] = '_get_api_system_components'
     GET_PREFIXES=[('/api/models/', '_get_api_models_item'), ('/api/chat-jobs/', '_get_api_chat_jobs_item'), ('/api/skills/review/', '_get_api_skills_review_item'), ('/api/chats/', '_get_api_chats_item')]
     POST_ROUTES={'/api/access-policy': '_post_api_access_policy', '/api/mcp': '_post_api_mcp', '/api/models': '_post_api_models', '/api/skills/collection-preview': '_post_api_skills_collection_preview', '/api/skills/discover-repository': '_post_api_skills_discover_repository', '/api/skills/discover': '_post_api_skills_discover', '/api/skills/manage': '_post_api_skills_manage', '/api/aero/classify': '_post_api_aero_classify', '/api/chats': '_post_api_chats', '/api/database/select': '_post_api_database_select', '/api/opencode/deploy': '_post_api_opencode_deploy', '/api/ollama/preferences': '_post_api_ollama_preferences', '/api/blender/inspect': '_post_api_blender_inspect', '/api/media/inspect': '_post_api_media_inspect', '/api/archive/inspect': '_post_api_archive_inspect', '/api/workflows/plan': '_post_api_workflows_plan', '/api/extensions': '_post_api_extensions'}
+    POST_ROUTES['/api/system/components'] = '_post_api_system_components'
     ASSETS={
-        '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
+        '/assets/system-components.js':'system_components.js', '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
         '/assets/turntable.js':'turntable.js','/assets/model-animations.js':'model_animations.js',
         '/assets/workbench-ui.js':'workbench_ui.js','/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
@@ -119,6 +121,18 @@ class ApiRoutes:
             return self.reply(200, self.app.load_runtime(self.app.ROOT))
         except (OSError, ValueError) as e:
             return self.reply(400, {'error': str(e)})
+
+    def _get_api_system_components(self, route, data=None):
+        return self.reply(200, self.app.component_manager(self.app.ROOT).snapshot())
+
+    def _post_api_system_components(self, route, data):
+        if set(data) not in ({'component', 'action'}, {'component', 'action', 'expected_model'}) or not isinstance(data['component'], str) or not isinstance(data['action'], str):
+            raise ValueError('Choose a component and fixed lifecycle action')
+        if 'expected_model' in data and (data['component'] != 'qwen' or not isinstance(data['expected_model'], str)):
+            raise ValueError('Invalid expected model')
+        if data['component'] == 'qwen' and data['action'] != 'status' and not data.get('expected_model'):
+            raise ValueError('Refresh System status and confirm the selected model')
+        return self.reply(200, self.app.component_manager(self.app.ROOT).action(data['component'], data['action'], **({'expected_model': data['expected_model']} if 'expected_model' in data else {})))
 
     def _get_api_system_status(self, route, data=None):
         try:
