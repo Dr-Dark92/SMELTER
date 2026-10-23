@@ -1,12 +1,11 @@
 """Declarative SMELTER V1 profiles. Planning only: no installation commands."""
 from __future__ import annotations
 
-PROFILES = {
-    "vanilla": {"label": "Vanilla", "requires": (), "description": "Python standard-library core"},
-    "developer": {"label": "Developer", "requires": ("git", "node", "npm", "gh"), "description": "Git and JavaScript workflows"},
-    "local_ai": {"label": "Local AI", "requires": ("ollama",), "description": "Optional local model runtime"},
-    "game_modding": {"label": "Game Modding", "requires": ("blender", "ffmpeg", "7z"), "description": "Deferred game asset tools"},
-}
+from requirements_catalog import CATALOG
+
+# Profiles come from system-requirements.json at the repository root.
+PROFILES = {name: {"label": p["label"], "requires": tuple(p.get("requires", ())), "description": p["description"]}
+            for name, p in CATALOG["profiles"].items()}
 
 def catalog() -> list[dict]:
     return [{"id": name, **{"label": value["label"], "description": value["description"],

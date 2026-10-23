@@ -10,17 +10,12 @@ import json
 import shutil
 import sys
 
-# Package IDs are exact winget IDs; versions and publisher should be checked
-# interactively by winget before acceptance. No silent or agreement flags.
-WINGET_IDS = {
-    "git": "Git.Git",
-    "node": "OpenJS.NodeJS.LTS",
-    "gh": "GitHub.cli",
-    "ollama": "Ollama.Ollama",
-    "blender": "BlenderFoundation.Blender",
-    "ffmpeg": "Gyan.FFmpeg",
-    "7z": "7zip.7zip",
-}
+from requirements_catalog import CATALOG
+
+# Package IDs are exact winget IDs from system-requirements.json; versions and
+# publisher should be checked interactively by winget before acceptance. No
+# silent or agreement flags.
+WINGET_IDS = {name: tool["winget"] for name, tool in CATALOG["tools"].items() if "winget" in tool}
 
 def build_actions(preview: dict, requested: list[str]) -> dict:
     if not isinstance(requested, list) or len(requested) > len(WINGET_IDS):

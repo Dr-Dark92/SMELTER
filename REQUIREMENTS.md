@@ -14,6 +14,22 @@ This is the requirements baseline for the `SMELTERV1` branch. Requirements are d
 
 The vanilla runtime must start without an AI model, external skill package, Node.js, Java, Docker, Blender, or Ghidra. The current Python package requirements are in [`requirements.txt`](requirements.txt), intentionally without third-party dependencies.
 
+## Requirements file
+
+[`system-requirements.json`](system-requirements.json) is the machine-readable source for tool checks, setup profiles and winget package IDs. The requirements scanner, the setup wizard's profile preview and the approved install queue all read it. To add or change a tool, edit that file; the tables below describe it.
+
+## What each dashboard feature needs
+
+| Feature | Needs |
+| --- | --- |
+| Dashboard | Python 3.12+ and a browser |
+| Direct chat | Ollama running at `127.0.0.1:11434` with a model installed (default `qwen3.5:9b`; `qwen3.5:4b` for GPUs with 4 GB or less) |
+| Skills | Nothing extra. A skill provides instructions only; it does not install software or require WSL |
+| Built-in MCP tools | Pinned MCP SDK: `python -m pip install -r tools/dashboard/requirements-mcp.txt` |
+| Managed OpenCode agent | Ollama + model, MCP SDK, **Docker Desktop** (which needs **WSL 2** on Windows) and the pinned OpenCode 1.19.3 container image built per [OPENCODE_RUNTIME.md](tools/dashboard/OPENCODE_RUNTIME.md). The native `opencode` CLI is not used |
+| Frontend tests/preview and coding workspace tests | **Docker Desktop** (WSL 2 on Windows). There is no host fallback |
+| GPU inference | A current NVIDIA driver. Old drivers can make Ollama fall back to an unstable backend or to the CPU |
+
 ## Developer conveniences
 
 | Tool | Purpose | Policy |
@@ -23,7 +39,8 @@ The vanilla runtime must start without an AI model, external skill package, Node
 | PowerShell 7 | Windows automation | Optional; Windows PowerShell may suffice for basic commands |
 | Node.js LTS + npm | JavaScript/TypeScript builds and tooling | Optional until a selected frontend/tool requires it |
 | C/C++ compiler and build tools | Native extension compilation | Optional, extension-dependent |
-| Docker Desktop / Docker Engine | Containers and isolated services | Optional |
+| WSL 2 | Linux backend for Docker Desktop on Windows | Required for Docker features on Windows; `wsl --install` as administrator, then restart |
+| Docker Desktop / Docker Engine | No-network containers for managed OpenCode, frontend tests/preview and coding workspace tests | Required for those features; not needed for the dashboard or direct chat |
 
 ## Extension-dependent runtimes and applications
 
@@ -35,8 +52,9 @@ The vanilla runtime must start without an AI model, external skill package, Node
 | Ghidra | Reverse engineering | Optional |
 | FFmpeg | Audio/video processing | Optional |
 | 7-Zip | Archive workflows | Optional |
-| Ollama / other local AI runtime | User-selected AI core | Optional |
-| GPU drivers and acceleration libraries | GPU-enabled local inference or graphics | Optional, hardware/model dependent |
+| Ollama / other local AI runtime | User-selected AI core | Required for chat and OpenCode |
+| OpenCode 1.19.3 container image | Managed OpenCode agent route | Required for that route; operator-built, never pulled or built by SMELTER during a task |
+| GPU drivers and acceleration libraries | GPU-enabled local inference or graphics | Optional, hardware/model dependent; keep NVIDIA drivers current |
 | Playwright and browser binaries | Browser automation/testing | Optional; install only when selected |
 | SearXNG / internet search provider | Internet research | Optional; network required |
 | MCP adapters or gateway | External tool/agent compatibility | Optional |
@@ -58,15 +76,15 @@ If the branch is not yet tracked locally, use `git switch --track origin/SMELTER
 
 The web wizard can now prepare and run a separate, explicitly approved Windows `winget` queue for allowlisted optional tools. This is **opt-in**: selecting a profile does not install anything. The queue displays exact package IDs and commands before approval; execution is sequential and stops on first failure. Each successful command is followed by a requirements rescan to verify the tool is detected.
 
-Supported allowlist: Git (`Git.Git`), Node LTS (`OpenJS.NodeJS.LTS`), GitHub CLI (`GitHub.cli`), Ollama (`Ollama.Ollama`), Blender (`BlenderFoundation.Blender`), FFmpeg (`Gyan.FFmpeg`), 7-Zip (`7zip.7zip`). This feature requires Windows and `winget`. It deliberately does **not** use silent mode, automatically accept agreements, elevate privileges, or install dependencies merely because a profile was selected. Some packages may require an interactive prompt or elevation that this browser-driven background process cannot satisfy; those installs may fail and must be completed manually in a terminal. Installation rollback and cancellation are not implemented. Restarting the shell may be needed for PATH updates before verification.
+Supported allowlist (every tool with a `winget` ID in `system-requirements.json`): Git (`Git.Git`), Node LTS (`OpenJS.NodeJS.LTS`), GitHub CLI (`GitHub.cli`), WSL (`Microsoft.WSL`), Docker Desktop (`Docker.DockerDesktop`), Ollama (`Ollama.Ollama`), Blender (`BlenderFoundation.Blender`), FFmpeg (`Gyan.FFmpeg`), 7-Zip (`7zip.7zip`). WSL and Docker Desktop usually need elevation and a restart, so expect to finish them in an administrator terminal. This feature requires Windows and `winget`. It deliberately does **not** use silent mode, automatically accept agreements, elevate privileges, or install dependencies merely because a profile was selected. Some packages may require an interactive prompt or elevation that this browser-driven background process cannot satisfy; those installs may fail and must be completed manually in a terminal. Installation rollback and cancellation are not implemented. Restarting the shell may be needed for PATH updates before verification.
 
 Run all tests with `py -3 -m unittest discover -s tools\setup -p "test_*.py" -v`. Windows integration and actual `winget` installs have not yet been verified.
 
 ## Optional profile preview (V1.1)
 
-The local setup wizard now exposes **Developer**, **Local AI**, and **Game Modding** profiles in addition to Vanilla. Profile selection produces a read-only dependency preview using the requirements scanner. Missing or unverified dependencies are marked for manual review. **No optional tool installation commands are generated or executed.** The approved Vanilla setup flow remains independent of preview selections.
+The local setup wizard now exposes **Developer**, **Local AI**, **OpenCode Agent** (Ollama, WSL, Docker), and **Game Modding** profiles in addition to Vanilla. Profile selection produces a read-only dependency preview using the requirements scanner. Missing or unverified dependencies are marked for manual review. **No optional tool installation commands are generated or executed.** The approved Vanilla setup flow remains independent of preview selections.
 
-The profile catalog and resolver are defined in `tools/setup/profiles.py`; their unit tests are in `tools/setup/test_profiles.py`. Re-run all setup tests with:
+Profiles are declared in `system-requirements.json` and resolved by `tools/setup/profiles.py`; their unit tests are in `tools/setup/test_profiles.py`. Re-run all setup tests with:
 
 ```powershell
 py -3 -m unittest discover -s tools\setup -p 'test_*.py' -v

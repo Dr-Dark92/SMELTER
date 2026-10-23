@@ -13,22 +13,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-TOOLS = {
-    "git": (["git", "--version"], "recommended"),
-    "node": (["node", "--version"], "optional"),
-    "npm": (["npm", "--version"], "optional"),
-    "java": (["java", "-version"], "optional"),
-    "javac": (["javac", "-version"], "optional"),
-    "gh": (["gh", "--version"], "optional"),
-    "powershell": (["powershell", "-NoProfile", "-NonInteractive", "-Command", "$PSVersionTable.PSVersion.ToString()"], "optional"),
-    "pwsh": (["pwsh", "--version"], "optional"),
-    "docker": (["docker", "--version"], "optional"),
-    "ollama": (["ollama", "--version"], "optional"),
-    "opencode": (["opencode", "--version"], "optional"),
-    "blender": (["blender", "--version"], "optional"),
-    "ffmpeg": (["ffmpeg", "-version"], "optional"),
-    "7z": (["7z", "i"], "optional"),
-}
+from requirements_catalog import CATALOG
+
+# Tool checks come from system-requirements.json at the repository root.
+TOOLS = {name: (tool["check"], tool["policy"]) for name, tool in CATALOG["tools"].items()}
 
 def windows_path_entries() -> list[str]:
     """Read current Windows user/system PATH from registry without modifying it."""

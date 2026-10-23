@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "description": "Machine-readable SMELTER system requirements. tools/setup reads this file for the requirements scan, setup profiles and the approved winget queue. REQUIREMENTS.md explains it.",
+  "tools": {
+    "git": {"check": ["git", "--version"], "policy": "recommended", "purpose": "Version control and branch management", "winget": "Git.Git"},
+    "node": {"check": ["node", "--version"], "policy": "optional", "purpose": "JavaScript/TypeScript builds and tooling", "winget": "OpenJS.NodeJS.LTS"},
+    "npm": {"check": ["npm", "--version"], "policy": "optional", "purpose": "Node package manager, installed with Node.js"},
+    "java": {"check": ["java", "-version"], "policy": "optional", "purpose": "Ghidra and Java-based extensions"},
+    "javac": {"check": ["javac", "-version"], "policy": "optional", "purpose": "Java compiler for Java-based extensions"},
+    "gh": {"check": ["gh", "--version"], "policy": "optional", "purpose": "Authenticated GitHub workflows", "winget": "GitHub.cli"},
+    "powershell": {"check": ["powershell", "-NoProfile", "-NonInteractive", "-Command", "$PSVersionTable.PSVersion.ToString()"], "policy": "optional", "purpose": "Windows automation"},
+    "pwsh": {"check": ["pwsh", "--version"], "policy": "optional", "purpose": "PowerShell 7 automation"},
+    "wsl": {"check": ["wsl", "--version"], "policy": "optional", "purpose": "Windows Subsystem for Linux 2, required by Docker Desktop on Windows", "winget": "Microsoft.WSL", "manual": "Run 'wsl --install' in an administrator PowerShell, then restart Windows."},
+    "docker": {"check": ["docker", "--version"], "policy": "optional", "purpose": "No-network containers for managed OpenCode, frontend tests/preview and coding workspace tests", "winget": "Docker.DockerDesktop", "manual": "Install Docker Desktop with the WSL 2 backend, start it once and accept its terms."},
+    "ollama": {"check": ["ollama", "--version"], "policy": "optional", "purpose": "Local model runtime for direct chat and OpenCode", "winget": "Ollama.Ollama"},
+    "opencode": {"check": ["opencode", "--version"], "policy": "optional", "purpose": "Native OpenCode CLI; the dashboard agent route uses a container image instead", "manual": "Build the pinned OpenCode 1.19.3 image as described in tools/dashboard/OPENCODE_RUNTIME.md."},
+    "blender": {"check": ["blender", "--version"], "policy": "optional", "purpose": "3D asset conversion, scene and animation automation", "winget": "BlenderFoundation.Blender"},
+    "ffmpeg": {"check": ["ffmpeg", "-version"], "policy": "optional", "purpose": "Audio/video processing", "winget": "Gyan.FFmpeg"},
+    "7z": {"check": ["7z", "i"], "policy": "optional", "purpose": "Archive workflows", "winget": "7zip.7zip"}
+  },
+  "profiles": {
+    "vanilla": {"label": "Vanilla", "requires": [], "description": "Python standard-library core"},
+    "developer": {"label": "Developer", "requires": ["git", "node", "npm", "gh"], "description": "Git and JavaScript workflows"},
+    "local_ai": {"label": "Local AI", "requires": ["ollama"], "description": "Optional local model runtime"},
+    "opencode_agent": {"label": "OpenCode Agent", "requires": ["ollama", "wsl", "docker"], "description": "Managed OpenCode in a no-network container; also needs the OpenCode image and the MCP SDK"},
+    "game_modding": {"label": "Game Modding", "requires": ["blender", "ffmpeg", "7z"], "description": "Deferred game asset tools"}
+  }
+}
