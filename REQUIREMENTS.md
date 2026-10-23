@@ -33,6 +33,7 @@ The requirements scanner, the setup wizard's profile preview, the approved winge
 | `image_opencode` | `docker build -f tools/dashboard/Dockerfile.opencode -t smelter-opencode:1.19.3 .` | Managed OpenCode; select its `sha256` ID in Settings |
 | `glb_viewer` | `npm install --prefix .smelter/tooling/model-viewer @google/model-viewer@4.1.0` | GLB preview and PNG capture |
 | `rea` | `npm install --prefix .smelter/tooling/rea rea-agents@6.7.0` | REA analysis |
+| `ghidra` | `tools/bootstraps/Setup-Smelter-Ghidra.ps1`: latest official release, SHA-256 checked, into `C:\Tools\Ghidra`; sets user `JAVA_HOME`, `GHIDRA_INSTALL_DIR`, `REA_ANALYSIS_PROVIDER=ghidra`. Needs JDK 21 (Temurin or Microsoft) | Ghidra binary-analysis scripts in `tools/bootstraps`; not used by the dashboard |
 | `playwright`, `chromium` | Playwright 1.56.1 in `.smelter/tooling/browser` plus its Chromium | Full smoke test only |
 
 Profiles: `local_ai`, `opencode_agent`, `media`, `reverse_engineering`, `smoke_test`, `developer`, `game_modding`.

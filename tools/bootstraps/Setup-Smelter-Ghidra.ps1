@@ -44,9 +44,11 @@ try {
   $headless=Join-Path $GhidraHome 'support\analyzeHeadless.bat'
  }
  if(-not (Test-Path $headless)){throw 'Ghidra not detected. Download skipped or installation failed.'}
- $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue |
-  Where-Object Name -match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
- if(-not $jdk){throw 'Temurin JDK 21 not found. Install prerequisites first.'}
+ # Temurin (Install-Smelter-Prerequisites) or Microsoft OpenJDK (system-requirements.json).
+ $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -match '^jdk-21' -and (Test-Path (Join-Path $_.FullName 'bin\java.exe')) } |
+  Sort-Object Name -Descending | Select-Object -First 1
+ if(-not $jdk){throw 'JDK 21 (Temurin or Microsoft OpenJDK) not found. Install prerequisites first.'}
  [Environment]::SetEnvironmentVariable('JAVA_HOME',$jdk.FullName,'User')
  [Environment]::SetEnvironmentVariable('GHIDRA_INSTALL_DIR',$GhidraHome,'User')
  [Environment]::SetEnvironmentVariable('REA_ANALYSIS_PROVIDER','ghidra','User')

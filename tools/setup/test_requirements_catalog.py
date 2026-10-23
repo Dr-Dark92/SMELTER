@@ -60,6 +60,17 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual(steps["rea"]["package"], "rea-agents@6.7.0")
         self.assertEqual(steps["playwright"]["package"], "playwright@1.56.1")
         self.assertIn("image_node", steps["image_opencode"]["after"])
+        self.assertEqual(steps["ghidra"]["script"], "tools/bootstraps/Setup-Smelter-Ghidra.ps1")
+        self.assertTrue((CATALOG_PATH.parent / steps["ghidra"]["script"]).is_file())
+        self.assertIn("ghidra", CATALOG["profiles"]["reverse_engineering"]["setup"])
+
+    def test_ghidra_setup_accepts_the_catalog_jdk(self):
+        # The catalog installs Microsoft OpenJDK 21; the Ghidra script must find it.
+        self.assertEqual(CATALOG["tools"]["java"]["winget"], "Microsoft.OpenJDK.21")
+        for script in (CATALOG_PATH.parent / "tools/bootstraps").glob("*.ps1"):
+            text = script.read_text(encoding="utf-8-sig")
+            if r"'C:\Program Files\Eclipse Adoptium'" in text:
+                self.assertIn(r"'C:\Program Files\Microsoft'", text, script.name)
 
     def test_opencode_profile_includes_its_images(self):
         setup = CATALOG["profiles"]["opencode_agent"]["setup"]

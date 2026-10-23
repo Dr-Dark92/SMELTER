@@ -60,6 +60,7 @@ SETUP_FIELDS = {
     "docker_build": ("image", "dockerfile"),
     "npm_prefix": ("prefix", "package"),
     "playwright_browser": ("browser",),
+    "powershell_script": ("script", "check_path"),
 }
 
 

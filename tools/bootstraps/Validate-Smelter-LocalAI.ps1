@@ -17,7 +17,7 @@ try {
  if(-not(Test-Path (Join-Path $ghidra 'support\analyzeHeadless.bat'))){throw 'Ghidra headless launcher missing'}
  $env:GHIDRA_INSTALL_DIR=$ghidra
  $env:REA_ANALYSIS_PROVIDER='ghidra'
- $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue | Where-Object Name -match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
+ $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue | Where-Object Name -match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
  if(-not $jdk){throw 'JDK 21 not found'}
  $env:JAVA_HOME=$jdk.FullName
  $env:Path=(Join-Path $jdk.FullName 'bin')+';'+$prefix+';'+$env:Path

@@ -13,7 +13,7 @@ $targetItem=Get-Item -LiteralPath $Target
 if($targetItem.Length -gt 100MB){throw 'Safety limit: input binary exceeds 100 MiB'}
 $headless='C:\Tools\Ghidra\support\analyzeHeadless.bat'
 if(-not(Test-Path -LiteralPath $headless)){throw 'Ghidra headless not installed'}
-$jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue | Where-Object Name -Match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
+$jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue | Where-Object Name -Match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
 if(-not $jdk){throw 'JDK21 not found'}
 $env:JAVA_HOME=$jdk.FullName
 $env:PATH=(Join-Path $jdk.FullName 'bin')+';'+$env:PATH

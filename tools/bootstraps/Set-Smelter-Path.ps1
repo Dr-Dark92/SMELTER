@@ -24,7 +24,7 @@ $npm = Join-Path $env:APPDATA 'npm'
 if((Test-Path $npm) -and (($user -split ';') -notcontains $npm)) {
  [Environment]::SetEnvironmentVariable('Path',(($user.TrimEnd(';')+';'+$npm).TrimStart(';')),'User')
 }
-$jdk = Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue |
+$jdk = Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue |
  Where-Object Name -match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
 if($jdk) {
  [Environment]::SetEnvironmentVariable('JAVA_HOME',$jdk.FullName,'User')

@@ -9,7 +9,7 @@ foreach($tool in $tools) {
  $found=Get-Command $tool -ErrorAction SilentlyContinue
  Write-Host ("{0}: {1}" -f $tool,$(if($found){$found.Source}else{'NOT FOUND'}))
 }
-$jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue |
+$jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue |
  Where-Object Name -match '^jdk-21' | Select-Object -First 1
 if($jdk) {
  [Environment]::SetEnvironmentVariable('JAVA_HOME',$jdk.FullName,'User')

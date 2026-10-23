@@ -149,6 +149,18 @@ function Get-SetupState($id, $step) {
             if ((Test-Path $manifest) -and ((Get-Content $manifest -Raw | ConvertFrom-Json).version -eq $want)) { return @{state='done'} }
             return @{state='todo'; argv=@($npmExe, 'install', '--prefix', $step.prefix, '--save-exact') + @($step.flags | Where-Object { $_ }) + @($step.package)}
         }
+        'powershell_script' {
+            # check_path is relative to the tool's home: the user's saved env var, else default_home.
+            $homes = @()
+            if ($step.home_env) { $homes += [Environment]::GetEnvironmentVariable($step.home_env, 'User') }
+            $homes += $step.default_home
+            $found = @($homes | Where-Object { $_ } | Where-Object { Test-Path (Join-Path $_ $step.check_path) })
+            if ($found.Count) { return @{state='done'; note="found in $($found[0])"} }
+            $needs = @($step.needs) | Where-Object { $_ -and $status[$_] -ne 'installed' }
+            if ($needs) { return @{state='blocked'; why="needs $($needs -join ', ') installed first"} }
+            $shell = (Get-Command powershell -CommandType Application | Select-Object -First 1).Source
+            return @{state='todo'; argv=@($shell, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $step.script, '-Root', $root)}
+        }
         'playwright_browser' {
             if (-not $nodeExe) { return @{state='blocked'; why='Node.js is not installed'} }
             if (Get-ChildItem "$env:LOCALAPPDATA\ms-playwright\$($step.browser)-*" -Directory -ErrorAction SilentlyContinue) { return @{state='done'} }

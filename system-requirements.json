@@ -26,6 +26,7 @@
     "image_opencode": {"kind": "docker_build", "image": "smelter-opencode:1.19.3", "dockerfile": "tools/dashboard/Dockerfile.opencode", "needs": ["docker"], "after": ["image_node"], "purpose": "Managed OpenCode agent container; select its sha256 ID in Settings > Confined execution"},
     "glb_viewer": {"kind": "npm_prefix", "prefix": ".smelter/tooling/model-viewer", "package": "@google/model-viewer@4.1.0", "flags": ["--ignore-scripts"], "needs": ["node"], "purpose": "Interactive GLB preview and PNG capture in the dashboard"},
     "rea": {"kind": "npm_prefix", "prefix": ".smelter/tooling/rea", "package": "rea-agents@6.7.0", "flags": ["--omit=optional"], "needs": ["node"], "purpose": "REA static analysis adapter; needs Node 22.19+, 24.11+ or 26+"},
+    "ghidra": {"kind": "powershell_script", "script": "tools/bootstraps/Setup-Smelter-Ghidra.ps1", "check_path": "support/analyzeHeadless.bat", "home_env": "GHIDRA_INSTALL_DIR", "default_home": "C:/Tools/Ghidra", "needs": ["java"], "purpose": "Ghidra headless analysis for the tools/bootstraps binary-analysis scripts. Downloads the latest official release, verifies its SHA-256, installs to C:/Tools/Ghidra and sets user JAVA_HOME, GHIDRA_INSTALL_DIR and REA_ANALYSIS_PROVIDER"},
     "playwright": {"kind": "npm_prefix", "prefix": ".smelter/tooling/browser", "package": "playwright@1.56.1", "flags": ["--ignore-scripts"], "needs": ["node"], "purpose": "Browser automation for the full smoke test"},
     "chromium": {"kind": "playwright_browser", "browser": "chromium", "needs": ["node"], "after": ["playwright"], "purpose": "Chromium for the full smoke test's GUI and GLB checks"}
   },
@@ -35,7 +36,7 @@
     "local_ai": {"label": "Local AI", "requires": ["ollama"], "setup": ["ollama_model", "mcp_sdk"], "description": "Local model runtime, model and built-in MCP tools"},
     "opencode_agent": {"label": "OpenCode Agent", "requires": ["ollama", "node", "wsl", "docker"], "setup": ["mcp_sdk", "ollama_model", "image_node", "image_python", "image_opencode"], "description": "Managed OpenCode and confined tests in no-network containers"},
     "media": {"label": "Media & GLB", "requires": ["node", "blender", "ffmpeg", "7z"], "setup": ["glb_viewer"], "description": "GLB preview, Blender, media and archive tools"},
-    "reverse_engineering": {"label": "Reverse Engineering", "requires": ["node", "java"], "setup": ["rea"], "description": "REA adapter and Java for Ghidra-based extensions"},
+    "reverse_engineering": {"label": "Reverse Engineering", "requires": ["node", "java"], "setup": ["rea", "ghidra"], "description": "REA adapter, JDK 21 and Ghidra"},
     "smoke_test": {"label": "Full Smoke Test", "requires": ["node", "docker", "ollama"], "setup": ["mcp_sdk", "ollama_model", "image_node", "image_python", "image_opencode", "glb_viewer", "playwright", "chromium"], "description": "Everything docs/FULL_SMOKE_TEST.md checks"},
     "game_modding": {"label": "Game Modding", "requires": ["blender", "ffmpeg", "7z"], "setup": [], "description": "Deferred game asset tools"}
   }

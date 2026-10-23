@@ -16,7 +16,7 @@ try {
  $ghidra=[Environment]::GetEnvironmentVariable('GHIDRA_INSTALL_DIR','User')
  if(-not $ghidra){$ghidra='C:\Tools\Ghidra'}
  if(-not (Test-Path (Join-Path $ghidra 'support\analyzeHeadless.bat'))){throw "Ghidra headless missing: $ghidra"}
- $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -ErrorAction SilentlyContinue |
+ $jdk=Get-ChildItem 'C:\Program Files\Eclipse Adoptium','C:\Program Files\Microsoft' -Directory -ErrorAction SilentlyContinue |
   Where-Object Name -match '^jdk-21' | Sort-Object Name -Descending | Select-Object -First 1
  if(-not $jdk){throw 'JDK 21 missing'}
  $env:JAVA_HOME=$jdk.FullName
