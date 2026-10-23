@@ -35,7 +35,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missin
 | --- | --- | --- |
 | Extensions | 7z, blender, ffmpeg, ollama, opencode enabled | REA not enabled yet |
 | Models | reasoning and lightweight `qwen3.5:4b` | |
-| Runtime | 32768 context, thinking **on**, 2048 output, **180 s** | Change to thinking off, 1024 output, 900 s for OpenCode on this laptop (C05/C06) |
+| Runtime | 32768 context, thinking **on**, 2048 output, **180 s** | Set thinking off and 1024 output. After Phase 0 the OpenCode task has its own timeout (default 900 s); the 180 s now bounds each model turn only |
 | Confined execution | all three image IDs saved | |
 | Locations | Original source `C:\SMELTER` (read), V2 `C:\SMELTERV2` (read/write/execute), diagnostics (read/write), `C:\SMELTER\skills` (read) | |
 

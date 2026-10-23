@@ -18,6 +18,18 @@ otherwise.
 | 0.5 | `start_dashboard.ps1` finds Python like `install_missing.ps1` does; README commands work without Python on PATH | C09 | Launch works on this laptop with `python` and `py` absent from PATH |
 | 0.6 | Ignore `.smelter/` in `.gitignore` | C10 | `git status` clean after a dashboard run |
 
+**Status 2026-10-24: Phase 0 done.** 0.1 engine default is direct chat, the last
+choice is remembered per browser, and the OpenCode approval message opens Task
+access. 0.2 adds `opencode_timeout_seconds` (default 900, 60–3600) for the whole
+task; `timeout_seconds` still bounds each model turn, and older callers that save
+four settings keep the stored task timeout. 0.3 presets list each field they
+change and leave equal fields alone. 0.4 replaces bytes/2 with a character-class
+estimate measured against `qwen3.5:4b`: English 1.13–1.28×, JSON 1.18–1.56×,
+**code 1.36–1.75×** (the 25 % target is not met for code), and at or above the
+real count for CJK, Arabic, emoji, base64 and hashes, which bytes/2 under-counted
+for dense JSON (0.87×) and hashes (0.51×). 0.5 `start_dashboard.ps1` finds Python
+without PATH. 0.6 `.smelter/` is ignored.
+
 ## Phase 1 — configuration automated by deployment
 
 Add a `defaults` section to `system-requirements.json` and a
