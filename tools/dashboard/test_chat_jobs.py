@@ -119,6 +119,13 @@ class ChatJobsTests(unittest.TestCase):
         release.set()
         self.assertTrue(done.wait(2))
         self.assertTrue(jobs.jobs[job['id']]['control'].cancelled.is_set())
+        # The job thread persists its outcome after the worker returns. Wait for
+        # that under Jobs.lock so cleanup never races an open SQLite handle.
+        import time
+        deadline = time.monotonic() + 5
+        while jobs.status(job['id'])['state'] == 'running' and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual(jobs.status(job['id'])['state'], 'cancelled')
 
     def test_completed_request_cannot_be_cancelled_after_commit(self):
         control = Control()
