@@ -18,6 +18,15 @@ The vanilla runtime must start without an AI model, external skill package, Node
 
 [`system-requirements.json`](system-requirements.json) is the machine-readable source for tool checks, setup profiles and winget package IDs. The requirements scanner, the setup wizard's profile preview and the approved install queue all read it. To add or change a tool, edit that file; the tables below describe it.
 
+To install every missing tool that has a `winget` or pinned `npm` source, run from an **administrator** PowerShell in the checkout:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -DryRun   # show the plan only
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1           # install after typing yes
+```
+
+`-Only docker,wsl` limits the run to named tools. The script runs the scanner, prints exact commands, asks before installing, does not auto-accept agreements, and summarizes each result. Restart Windows after WSL, then start Docker Desktop once.
+
 ## What each dashboard feature needs
 
 | Feature | Needs |

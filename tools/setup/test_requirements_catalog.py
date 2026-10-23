@@ -41,6 +41,16 @@ class RequirementsCatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "check command"):
             self._load(data)
 
+    def test_npm_package_must_be_pinned(self):
+        data = {"schema_version": 1, "profiles": {"vanilla": {"requires": []}},
+                "tools": {"x": {"check": ["x"], "policy": "optional", "npm": "opencode-ai"}}}
+        with self.assertRaisesRegex(ValueError, "version-pinned"):
+            self._load(data)
+
+    def test_every_missing_tool_has_an_install_source(self):
+        for name, tool in CATALOG["tools"].items():
+            self.assertTrue("winget" in tool or "npm" in tool or "manual" in tool or name in ("npm", "powershell"), name)
+
     def test_unknown_schema_rejected(self):
         with self.assertRaisesRegex(ValueError, "schema"):
             self._load({"schema_version": 2})

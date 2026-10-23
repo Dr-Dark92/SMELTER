@@ -26,6 +26,8 @@ def load(path: Path = CATALOG_PATH) -> dict:
             raise ValueError(f"Tool {name} has an unknown policy")
         if "winget" in tool and not isinstance(tool["winget"], str):
             raise ValueError(f"Tool {name} has an invalid winget ID")
+        if "npm" in tool and not (isinstance(tool["npm"], str) and "@" in tool["npm"].lstrip("@")):
+            raise ValueError(f"Tool {name} needs a version-pinned npm package")
     for name, profile in profiles.items():
         unknown = [tool for tool in profile.get("requires", []) if tool not in tools]
         if unknown:
