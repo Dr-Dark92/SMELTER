@@ -1,27 +1,48 @@
-<#
+﻿<#
 .SYNOPSIS
-  Install the SMELTER tools that the requirements scan reports as missing.
+  Install the SMELTER tools and setup steps that are not done yet.
 
 .DESCRIPTION
-  Reads system-requirements.json at the repository root, runs the read-only
-  requirements scanner, and installs each missing tool that declares a
-  "winget" package ID or a version-pinned "npm" package. Shows the exact plan
-  and asks before installing. Agreements are not auto-accepted: winget and
-  each installer show their own prompts. Run from an administrator
-  PowerShell so WSL and Docker Desktop can install.
+  Reads system-requirements.json at the repository root. Part 1 installs
+  missing tools that declare a "winget" package ID or a version-pinned "npm"
+  package. Part 2 checks each setup step (MCP SDK, Ollama model, Docker
+  images, pinned npm tooling, Playwright Chromium) and runs the ones that are
+  not done. Shows the exact plan and asks before changing anything.
+  Agreements are not auto-accepted. Run from an administrator PowerShell so
+  WSL and Docker Desktop can install.
 
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -DryRun
+.EXAMPLE
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -Profile opencode_agent
 #>
 param(
     [string[]]$Only,
+    [Alias('Profile')][string[]]$ProfileName,
     [switch]$DryRun,
     [switch]$Yes,
     [string]$Python
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+Set-Location $root
 $catalog = Get-Content (Join-Path $root 'system-requirements.json') -Raw | ConvertFrom-Json
+# Windows PowerShell 5.1 turns native stderr (winget/docker/npm progress) into
+# terminating errors under 'Stop'. Native results are judged by exit code instead.
+$ErrorActionPreference = 'Continue'
+
+# Read-only probes get a timeout: a half-started Docker engine can hang
+# "docker image inspect" indefinitely. Returns $null on timeout.
+function Test-Native([string]$exe, [string[]]$argv, [int]$seconds = 20) {
+    $info = New-Object System.Diagnostics.ProcessStartInfo $exe
+    $info.Arguments = ($argv | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }) -join ' '
+    $info.UseShellExecute = $false; $info.CreateNoWindow = $true
+    $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
+    $proc = [System.Diagnostics.Process]::Start($info)
+    $proc.StandardOutput.ReadToEndAsync() | Out-Null; $proc.StandardError.ReadToEndAsync() | Out-Null
+    if (-not $proc.WaitForExit($seconds * 1000)) { try { $proc.Kill() } catch {}; return $null }
+    return ($proc.ExitCode -eq 0)
+}
 
 function Find-Python {
     if ($Python) { return $Python }
@@ -35,72 +56,185 @@ function Find-Python {
     throw 'Python 3.12+ was not found. Pass -Python C:\path\to\python.exe'
 }
 
-function Get-Scan($python) {
-    $json = & $python (Join-Path $root 'tools\setup\check_requirements.py') --json
-    if ($LASTEXITCODE -ne 0 -and -not $json) { throw 'Requirements scan failed.' }
-    return ($json | Out-String | ConvertFrom-Json)
+# Tools installed earlier in this session may not be on this window's PATH yet.
+function Find-Exe($name) {
+    # Prefer npm.cmd: npm.ps1 can be blocked by the execution policy.
+    $cmd = Get-Command "$name.cmd", $name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { return $cmd.Source }
+    $known = @{
+        docker = "$env:ProgramFiles\Docker\Docker\resources\bin\docker.exe"
+        ollama = "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"
+        node   = "$env:ProgramFiles\nodejs\node.exe"
+        npm    = "$env:ProgramFiles\nodejs\npm.cmd"
+    }
+    if ($known.ContainsKey($name) -and (Test-Path $known[$name])) { return $known[$name] }
+    return $null
 }
 
 $python = Find-Python
-$scan = Get-Scan $python
+$selectedTools = @($catalog.tools.PSObject.Properties.Name)
+$selectedSetup = @($catalog.setup.PSObject.Properties.Name)
+if ($ProfileName) {
+    $selectedTools = @(); $selectedSetup = @()
+    foreach ($p in $ProfileName) {
+        $entry = $catalog.profiles.$p
+        if (-not $entry) { throw "Unknown profile '$p'. Known: $($catalog.profiles.PSObject.Properties.Name -join ', ')" }
+        $selectedTools += @($entry.requires); $selectedSetup += @($entry.setup)
+    }
+}
+if ($Only) {
+    $selectedTools = @($selectedTools | Where-Object { $Only -contains $_ })
+    $selectedSetup = @($selectedSetup | Where-Object { $Only -contains $_ })
+}
+# Keep file order so "after" dependencies (image_node before image_opencode) hold.
+$selectedSetup = @($catalog.setup.PSObject.Properties.Name | Where-Object { $selectedSetup -contains $_ })
+
+# ---- Part 1: tools ---------------------------------------------------------
+$scan = (& $python (Join-Path $root 'tools\setup\check_requirements.py') --json | Out-String | ConvertFrom-Json)
 $status = @{}
 foreach ($t in $scan.tools) { $status[$t.name] = $t.status }
 
-# Build the plan from the requirements file: one entry per package, so tools
-# sharing a package (java and javac) install once.
-$plan = [ordered]@{}
+$toolPlan = [ordered]@{}
 $manual = @()
-foreach ($prop in $catalog.tools.PSObject.Properties) {
-    $name = $prop.Name; $tool = $prop.Value
-    if ($Only -and $Only -notcontains $name) { continue }
+foreach ($name in $selectedTools | Select-Object -Unique) {
+    $tool = $catalog.tools.$name
     if ($status[$name] -eq 'installed') { continue }
+    # npm shims are reported unverified rather than executed; the shim existing is enough.
+    if ($status[$name] -eq 'detected_unverified' -and $tool.npm) { continue }
     if ($tool.winget) { $key = "winget:$($tool.winget)" }
     elseif ($tool.npm) { $key = "npm:$($tool.npm)" }
     else { $manual += $name; continue }
-    if (-not $plan.Contains($key)) { $plan[$key] = @() }
-    $plan[$key] += $name
+    if (-not $toolPlan.Contains($key)) { $toolPlan[$key] = @() }
+    $toolPlan[$key] += $name
 }
 
-Write-Host "SMELTER missing tools (from system-requirements.json)" -ForegroundColor Cyan
-if ($plan.Count -eq 0) { Write-Host 'Nothing to install.' }
-foreach ($key in $plan.Keys) {
+# ---- Part 2: setup steps ---------------------------------------------------
+$dockerExe = Find-Exe 'docker'
+$dockerUp = $false
+if ($dockerExe) { $dockerUp = (Test-Native $dockerExe @('info', '--format', '{{.ServerVersion}}')) -eq $true }
+$ollamaModels = $null
+try { $ollamaModels = @((Invoke-RestMethod http://127.0.0.1:11434/api/tags -TimeoutSec 3).models | ForEach-Object { $_.name }) } catch {}
+$nodeExe = Find-Exe 'node'
+$npmExe = Find-Exe 'npm'
+
+function Get-NpmName($package) { return ($package -replace '(?<=.)@[^@]+$', '') }
+
+function Get-SetupState($id, $step) {
+    switch ($step.kind) {
+        'pip' {
+            $v = & $python -c "from importlib.metadata import version as v; print(v('$($step.package)'))" 2>$null
+            if ("$v".Trim() -eq $step.version) { return @{state='done'} }
+            return @{state='todo'; argv=@($python, '-m', 'pip', 'install', '-r', $step.requirements)}
+        }
+        'ollama_pull' {
+            if ($null -eq $ollamaModels) { return @{state='blocked'; why='Ollama is not running; start it and re-run'} }
+            $ok = @(@($step.model) + @($step.alternatives) | Where-Object { $ollamaModels -contains $_ })
+            if ($ok.Count) { return @{state='done'; note="has $($ok[0])"} }
+            return @{state='todo'; argv=@((Find-Exe 'ollama'), 'pull', $step.model)}
+        }
+        { $_ -in 'docker_pull', 'docker_build' } {
+            if (-not $dockerExe) { return @{state='blocked'; why='Docker is not installed'} }
+            if (-not $dockerUp) { return @{state='blocked'; why='Docker engine is not running; start Docker Desktop and re-run'} }
+            $present = Test-Native $dockerExe @('image', 'inspect', $step.image)
+            if ($null -eq $present) { return @{state='blocked'; why='Docker did not answer within 20 s; wait for Docker Desktop to finish starting'} }
+            if ($present) { return @{state='done'} }
+            if ($step.kind -eq 'docker_pull') { return @{state='todo'; argv=@($dockerExe, 'pull', $step.image)} }
+            return @{state='todo'; argv=@($dockerExe, 'build', '-f', $step.dockerfile, '-t', $step.image, '.')}
+        }
+        'npm_prefix' {
+            if (-not $npmExe) { return @{state='blocked'; why='npm is not installed (install Node.js first)'} }
+            $name = Get-NpmName $step.package
+            $manifest = Join-Path $root "$($step.prefix)\node_modules\$name\package.json"
+            $want = $step.package.Substring($name.Length + 1)
+            if ((Test-Path $manifest) -and ((Get-Content $manifest -Raw | ConvertFrom-Json).version -eq $want)) { return @{state='done'} }
+            return @{state='todo'; argv=@($npmExe, 'install', '--prefix', $step.prefix, '--save-exact') + @($step.flags | Where-Object { $_ }) + @($step.package)}
+        }
+        'playwright_browser' {
+            if (-not $nodeExe) { return @{state='blocked'; why='Node.js is not installed'} }
+            if (Get-ChildItem "$env:LOCALAPPDATA\ms-playwright\$($step.browser)-*" -Directory -ErrorAction SilentlyContinue) { return @{state='done'} }
+            $cli = '.smelter/tooling/browser/node_modules/playwright/cli.js'
+            return @{state='todo'; argv=@($nodeExe, $cli, 'install', $step.browser)}
+        }
+    }
+}
+
+$setupPlan = [ordered]@{}
+$setupReport = @()
+foreach ($id in $selectedSetup) {
+    $step = $catalog.setup.$id
+    $s = Get-SetupState $id $step
+    $setupReport += [pscustomobject]@{Step=$id; State=$s.state; Detail=$(if ($s.why) { $s.why } elseif ($s.note) { $s.note } else { $step.purpose })}
+    if ($s.state -eq 'todo') { $setupPlan[$id] = $s.argv }
+}
+
+# ---- Plan ------------------------------------------------------------------
+Write-Host 'SMELTER install plan (from system-requirements.json)' -ForegroundColor Cyan
+Write-Host 'Tools:' -ForegroundColor Cyan
+if ($toolPlan.Count -eq 0) { Write-Host '  all selected tools are installed' }
+foreach ($key in $toolPlan.Keys) {
     $kind, $package = $key -split ':', 2
     if ($kind -eq 'winget') { $cmd = "winget install --id $package --exact --source winget" }
-    else { $cmd = "npm install --global --allow-scripts=$($package -replace '@[^@]+$','') $package" }
-    Write-Host ("  {0,-14} {1}" -f ($plan[$key] -join ','), $cmd)
+    else { $cmd = "npm install --global --allow-scripts=$(Get-NpmName $package) $package" }
+    Write-Host ("  {0,-16} {1}" -f ($toolPlan[$key] -join ','), $cmd)
 }
-foreach ($name in $manual) { Write-Host ("  {0,-14} manual: {1}" -f $name, $catalog.tools.$name.manual) -ForegroundColor Yellow }
-if ($DryRun -or $plan.Count -eq 0) { exit 0 }
+foreach ($name in $manual) { Write-Host ("  {0,-16} manual: {1}" -f $name, $catalog.tools.$name.manual) -ForegroundColor Yellow }
+Write-Host 'Setup steps:' -ForegroundColor Cyan
+foreach ($r in $setupReport) {
+    $color = @{done='Green'; todo='White'; blocked='Yellow'}[$r.State]
+    $line = "  {0,-16} {1,-8} " -f $r.Step, $r.State
+    if ($r.State -eq 'todo') { $line += ((@($setupPlan[$r.Step]) | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join ' ') }
+    else { $line += $r.Detail }
+    Write-Host $line -ForegroundColor $color
+}
+if ($DryRun -or ($toolPlan.Count -eq 0 -and $setupPlan.Count -eq 0)) {
+    if ($setupReport | Where-Object State -eq 'blocked') { Write-Host 'Fix the blocked items above, then run this script again.' -ForegroundColor Yellow }
+    exit 0
+}
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $admin) { Write-Host 'Not running as administrator: WSL and Docker Desktop may fail or ask for elevation.' -ForegroundColor Yellow }
+if (-not $admin -and $toolPlan.Count) { Write-Host 'Not running as administrator: WSL and Docker Desktop may fail or ask for elevation.' -ForegroundColor Yellow }
 if (-not $Yes) {
-    $answer = Read-Host 'Install these now? Type yes to continue'
-    if ($answer -ne 'yes') { Write-Host 'Cancelled. Nothing was installed.'; exit 1 }
+    $answer = Read-Host 'Run this plan now? Type yes to continue'
+    if ($answer -ne 'yes') { Write-Host 'Cancelled. Nothing was changed.'; exit 1 }
 }
 
+# ---- Run -------------------------------------------------------------------
 $results = @()
-foreach ($key in $plan.Keys) {
+foreach ($key in $toolPlan.Keys) {
     $kind, $package = $key -split ':', 2
-    $names = $plan[$key] -join ','
+    $names = $toolPlan[$key] -join ','
     Write-Host "`n==> $names ($package)" -ForegroundColor Cyan
     if ($kind -eq 'winget') {
         & winget install --id $package --exact --source winget
     } else {
-        $npm = Get-Command npm -ErrorAction SilentlyContinue
-        if (-not $npm) { $results += [pscustomobject]@{Tool=$names; Result='skipped: npm not found (install Node.js first)'}; continue }
-        & npm install --global "--allow-scripts=$($package -replace '@[^@]+$','')" $package
+        if (-not $npmExe) { $results += [pscustomobject]@{Item=$names; Result='skipped: npm not found (install Node.js first)'}; continue }
+        & $npmExe install --global "--allow-scripts=$(Get-NpmName $package)" $package
     }
     # 0x8A15002B (-1978335189): winget found it already installed, nothing to upgrade.
     if ($LASTEXITCODE -eq 0) { $r = 'installed' }
     elseif ($LASTEXITCODE -eq -1978335189) { $r = 'already installed' }
     else { $r = "failed (exit $LASTEXITCODE)" }
-    $results += [pscustomobject]@{Tool=$names; Result=$r}
+    $results += [pscustomobject]@{Item=$names; Result=$r}
+}
+$failedSetup = @()
+foreach ($id in $setupPlan.Keys) {
+    $after = @($catalog.setup.$id.after) | Where-Object { $_ -and $failedSetup -contains $_ }
+    if ($after) { $results += [pscustomobject]@{Item=$id; Result="skipped: $($after -join ',') failed"}; $failedSetup += $id; continue }
+    $argv = @($setupPlan[$id])
+    Write-Host "`n==> $id" -ForegroundColor Cyan
+    & $argv[0] $argv[1..($argv.Count - 1)]
+    if ($LASTEXITCODE -eq 0) { $r = 'done' } else { $r = "failed (exit $LASTEXITCODE)"; $failedSetup += $id }
+    $results += [pscustomobject]@{Item=$id; Result=$r}
 }
 
 Write-Host "`nSummary" -ForegroundColor Cyan
 $results | Format-Table -AutoSize | Out-String | Write-Host
-Write-Host 'Restart Windows after installing WSL, then start Docker Desktop once and accept its terms.'
-Write-Host 'Open a new PowerShell window and re-run the scan so PATH changes are picked up:'
-Write-Host "  & `"$python`" tools\setup\check_requirements.py"
+if ($catalog.setup.image_opencode -and $dockerUp) {
+    $id = & $dockerExe image inspect $catalog.setup.image_opencode.image --format '{{.Id}}' 2>$null
+    if ($LASTEXITCODE -eq 0) { Write-Host "OpenCode image ID for Settings > Confined execution: $id" }
+}
+if ($toolPlan.Count) {
+    Write-Host 'Restart Windows after installing WSL, start Docker Desktop once, then open a new PowerShell window'
+    Write-Host 'and run this script again to finish the setup steps that needed the new tools.'
+}
 if ($results | Where-Object { $_.Result -like 'failed*' }) { exit 1 }

@@ -21,7 +21,7 @@ class RequirementsCatalogTests(unittest.TestCase):
                          {n: t["winget"] for n, t in CATALOG["tools"].items() if "winget" in t})
 
     def test_opencode_agent_profile_needs_wsl_and_docker(self):
-        self.assertEqual(set(profiles.PROFILES["opencode_agent"]["requires"]), {"ollama", "wsl", "docker"})
+        self.assertEqual(set(profiles.PROFILES["opencode_agent"]["requires"]), {"ollama", "node", "wsl", "docker"})
         self.assertEqual(install_actions.WINGET_IDS["docker"], "Docker.DockerDesktop")
         self.assertEqual(install_actions.WINGET_IDS["wsl"], "Microsoft.WSL")
 
@@ -50,6 +50,31 @@ class RequirementsCatalogTests(unittest.TestCase):
     def test_every_missing_tool_has_an_install_source(self):
         for name, tool in CATALOG["tools"].items():
             self.assertTrue("winget" in tool or "npm" in tool or "manual" in tool or name in ("npm", "powershell"), name)
+
+    def test_documented_setup_steps_are_declared(self):
+        steps = CATALOG["setup"]
+        self.assertEqual(steps["mcp_sdk"]["version"], "1.30.0")
+        self.assertEqual({steps[s]["image"] for s in ("image_python", "image_node", "image_opencode")},
+                         {"python:3.12-alpine", "node:22-alpine", "smelter-opencode:1.19.3"})
+        self.assertEqual(steps["glb_viewer"]["package"], "@google/model-viewer@4.1.0")
+        self.assertEqual(steps["rea"]["package"], "rea-agents@6.7.0")
+        self.assertEqual(steps["playwright"]["package"], "playwright@1.56.1")
+        self.assertIn("image_node", steps["image_opencode"]["after"])
+
+    def test_opencode_profile_includes_its_images(self):
+        setup = CATALOG["profiles"]["opencode_agent"]["setup"]
+        self.assertTrue({"mcp_sdk", "ollama_model", "image_opencode", "image_node"} <= set(setup))
+
+    def test_setup_step_kind_and_fields_validated(self):
+        base = {"schema_version": 1, "tools": {}, "profiles": {"vanilla": {"requires": []}}}
+        with self.assertRaisesRegex(ValueError, "unknown kind"):
+            self._load({**base, "setup": {"x": {"kind": "curl"}}})
+        with self.assertRaisesRegex(ValueError, "needs dockerfile"):
+            self._load({**base, "setup": {"x": {"kind": "docker_build", "image": "a:1"}}})
+        with self.assertRaisesRegex(ValueError, "version-pinned"):
+            self._load({**base, "setup": {"x": {"kind": "npm_prefix", "prefix": "p", "package": "@google/model-viewer"}}})
+        with self.assertRaisesRegex(ValueError, "unknown setup steps"):
+            self._load({**base, "profiles": {"vanilla": {"requires": [], "setup": ["nope"]}}})
 
     def test_unknown_schema_rejected(self):
         with self.assertRaisesRegex(ValueError, "schema"):

@@ -28,11 +28,39 @@ def load(path: Path = CATALOG_PATH) -> dict:
             raise ValueError(f"Tool {name} has an invalid winget ID")
         if "npm" in tool and not (isinstance(tool["npm"], str) and "@" in tool["npm"].lstrip("@")):
             raise ValueError(f"Tool {name} needs a version-pinned npm package")
+    setup = data.setdefault("setup", {})
+    if not isinstance(setup, dict):
+        raise ValueError(f"Requirements file {path} has an invalid setup section")
+    for name, step in setup.items():
+        if step.get("kind") not in SETUP_FIELDS:
+            raise ValueError(f"Setup step {name} has an unknown kind")
+        missing = [field for field in SETUP_FIELDS[step["kind"]] if not isinstance(step.get(field), str)]
+        if missing:
+            raise ValueError(f"Setup step {name} needs {', '.join(missing)}")
+        if step["kind"] in ("npm_prefix",) and "@" not in step["package"].lstrip("@"):
+            raise ValueError(f"Setup step {name} needs a version-pinned npm package")
+        unknown = [t for t in step.get("needs", []) if t not in tools] + [s for s in step.get("after", []) if s not in setup]
+        if unknown:
+            raise ValueError(f"Setup step {name} references unknown entries: {', '.join(unknown)}")
     for name, profile in profiles.items():
         unknown = [tool for tool in profile.get("requires", []) if tool not in tools]
         if unknown:
             raise ValueError(f"Profile {name} requires unknown tools: {', '.join(unknown)}")
+        unknown = [step for step in profile.get("setup", []) if step not in setup]
+        if unknown:
+            raise ValueError(f"Profile {name} uses unknown setup steps: {', '.join(unknown)}")
     return data
+
+
+# Required string fields per setup step kind; install_missing.ps1 implements each kind.
+SETUP_FIELDS = {
+    "pip": ("requirements", "package", "version"),
+    "ollama_pull": ("model",),
+    "docker_pull": ("image",),
+    "docker_build": ("image", "dockerfile"),
+    "npm_prefix": ("prefix", "package"),
+    "playwright_browser": ("browser",),
+}
 
 
 CATALOG = load()

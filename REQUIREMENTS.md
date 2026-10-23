@@ -16,16 +16,35 @@ The vanilla runtime must start without an AI model, external skill package, Node
 
 ## Requirements file
 
-[`system-requirements.json`](system-requirements.json) is the machine-readable source for tool checks, setup profiles and winget package IDs. The requirements scanner, the setup wizard's profile preview and the approved install queue all read it. To add or change a tool, edit that file; the tables below describe it.
+[`system-requirements.json`](system-requirements.json) is the machine-readable source for:
 
-To install every missing tool that has a `winget` or pinned `npm` source, run from an **administrator** PowerShell in the checkout:
+- **tools**: executables, their version checks, winget IDs or pinned npm packages;
+- **setup**: project steps that run after the tools are installed (below);
+- **profiles**: which tools and setup steps each kind of use needs.
+
+The requirements scanner, the setup wizard's profile preview, the approved winget queue and `install_missing.ps1` all read it. To add or change anything, edit that file; the tables below describe it.
+
+| Setup step | What it does | Needed for |
+| --- | --- | --- |
+| `mcp_sdk` | `pip install -r tools/dashboard/requirements-mcp.txt` (`mcp==1.30.0`) | Built-in MCP tools, OpenCode |
+| `ollama_model` | `ollama pull qwen3.5:9b` (an installed `qwen3.5:4b` also counts) | Chat, OpenCode; the full smoke test expects `9b` |
+| `image_python` | `docker pull python:3.12-alpine` | Confined Python tests |
+| `image_node` | `docker pull node:22-alpine` | Confined Node tests, CSS preview, OpenCode image base |
+| `image_opencode` | `docker build -f tools/dashboard/Dockerfile.opencode -t smelter-opencode:1.19.3 .` | Managed OpenCode; select its `sha256` ID in Settings |
+| `glb_viewer` | `npm install --prefix .smelter/tooling/model-viewer @google/model-viewer@4.1.0` | GLB preview and PNG capture |
+| `rea` | `npm install --prefix .smelter/tooling/rea rea-agents@6.7.0` | REA analysis |
+| `playwright`, `chromium` | Playwright 1.56.1 in `.smelter/tooling/browser` plus its Chromium | Full smoke test only |
+
+Profiles: `local_ai`, `opencode_agent`, `media`, `reverse_engineering`, `smoke_test`, `developer`, `game_modding`.
+
+To install everything that is missing, run from an **administrator** PowerShell in the checkout:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -DryRun   # show the plan only
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1           # install after typing yes
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1           # run after typing yes
 ```
 
-`-Only docker,wsl` limits the run to named tools. The script runs the scanner, prints exact commands, asks before installing, does not auto-accept agreements, and summarizes each result. Restart Windows after WSL, then start Docker Desktop once.
+`-Profile opencode_agent` limits the run to one profile; `-Only docker,image_opencode` to named tools or steps. The script prints exact commands, marks steps **blocked** when a prerequisite is not ready (for example Docker Desktop not started), asks before changing anything, does not auto-accept agreements, and summarizes each result. Docker steps need Docker Desktop running. After installing WSL or Docker, restart Windows, start Docker Desktop once, open a new PowerShell and run the script again to finish the setup steps.
 
 ## What each dashboard feature needs
 

@@ -18,11 +18,25 @@
     "ffmpeg": {"check": ["ffmpeg", "-version"], "policy": "optional", "purpose": "Audio/video processing", "winget": "Gyan.FFmpeg"},
     "7z": {"check": ["7z", "i"], "policy": "optional", "purpose": "Archive workflows", "winget": "7zip.7zip"}
   },
+  "setup": {
+    "mcp_sdk": {"kind": "pip", "requirements": "tools/dashboard/requirements-mcp.txt", "package": "mcp", "version": "1.30.0", "needs": [], "purpose": "Built-in MCP tools and the OpenCode bridge"},
+    "ollama_model": {"kind": "ollama_pull", "model": "qwen3.5:9b", "alternatives": ["qwen3.5:4b"], "needs": ["ollama"], "purpose": "Reasoning model for chat and OpenCode; qwen3.5:4b suits GPUs with 4 GB or less. The full smoke test expects qwen3.5:9b"},
+    "image_python": {"kind": "docker_pull", "image": "python:3.12-alpine", "needs": ["docker"], "purpose": "Confined Python tests in the coding workspace"},
+    "image_node": {"kind": "docker_pull", "image": "node:22-alpine", "needs": ["docker"], "purpose": "Confined Node tests, CSS validation/preview and the OpenCode image base"},
+    "image_opencode": {"kind": "docker_build", "image": "smelter-opencode:1.19.3", "dockerfile": "tools/dashboard/Dockerfile.opencode", "needs": ["docker"], "after": ["image_node"], "purpose": "Managed OpenCode agent container; select its sha256 ID in Settings > Confined execution"},
+    "glb_viewer": {"kind": "npm_prefix", "prefix": ".smelter/tooling/model-viewer", "package": "@google/model-viewer@4.1.0", "flags": ["--ignore-scripts"], "needs": ["node"], "purpose": "Interactive GLB preview and PNG capture in the dashboard"},
+    "rea": {"kind": "npm_prefix", "prefix": ".smelter/tooling/rea", "package": "rea-agents@6.7.0", "flags": ["--omit=optional"], "needs": ["node"], "purpose": "REA static analysis adapter; needs Node 22.19+, 24.11+ or 26+"},
+    "playwright": {"kind": "npm_prefix", "prefix": ".smelter/tooling/browser", "package": "playwright@1.56.1", "flags": ["--ignore-scripts"], "needs": ["node"], "purpose": "Browser automation for the full smoke test"},
+    "chromium": {"kind": "playwright_browser", "browser": "chromium", "needs": ["node"], "after": ["playwright"], "purpose": "Chromium for the full smoke test's GUI and GLB checks"}
+  },
   "profiles": {
-    "vanilla": {"label": "Vanilla", "requires": [], "description": "Python standard-library core"},
-    "developer": {"label": "Developer", "requires": ["git", "node", "npm", "gh"], "description": "Git and JavaScript workflows"},
-    "local_ai": {"label": "Local AI", "requires": ["ollama"], "description": "Optional local model runtime"},
-    "opencode_agent": {"label": "OpenCode Agent", "requires": ["ollama", "wsl", "docker"], "description": "Managed OpenCode in a no-network container; also needs the OpenCode image and the MCP SDK"},
-    "game_modding": {"label": "Game Modding", "requires": ["blender", "ffmpeg", "7z"], "description": "Deferred game asset tools"}
+    "vanilla": {"label": "Vanilla", "requires": [], "setup": [], "description": "Python standard-library core"},
+    "developer": {"label": "Developer", "requires": ["git", "node", "npm", "gh"], "setup": [], "description": "Git and JavaScript workflows"},
+    "local_ai": {"label": "Local AI", "requires": ["ollama"], "setup": ["ollama_model", "mcp_sdk"], "description": "Local model runtime, model and built-in MCP tools"},
+    "opencode_agent": {"label": "OpenCode Agent", "requires": ["ollama", "node", "wsl", "docker"], "setup": ["mcp_sdk", "ollama_model", "image_node", "image_python", "image_opencode"], "description": "Managed OpenCode and confined tests in no-network containers"},
+    "media": {"label": "Media & GLB", "requires": ["node", "blender", "ffmpeg", "7z"], "setup": ["glb_viewer"], "description": "GLB preview, Blender, media and archive tools"},
+    "reverse_engineering": {"label": "Reverse Engineering", "requires": ["node", "java"], "setup": ["rea"], "description": "REA adapter and Java for Ghidra-based extensions"},
+    "smoke_test": {"label": "Full Smoke Test", "requires": ["node", "docker", "ollama"], "setup": ["mcp_sdk", "ollama_model", "image_node", "image_python", "image_opencode", "glb_viewer", "playwright", "chromium"], "description": "Everything docs/FULL_SMOKE_TEST.md checks"},
+    "game_modding": {"label": "Game Modding", "requires": ["blender", "ffmpeg", "7z"], "setup": [], "description": "Deferred game asset tools"}
   }
 }
