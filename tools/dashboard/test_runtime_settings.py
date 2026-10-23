@@ -62,3 +62,35 @@ class RuntimeSettingsTests(unittest.TestCase):
         self.assertEqual(len(bodies), 2)
         self.assertTrue(all(body['options']['num_ctx'] == 16384 for body in bodies))
         self.assertEqual(load_runtime(self.root)['settings']['context_tokens'], 32768)
+
+    def test_opencode_task_timeout_is_separate_and_optional_when_saving(self):
+        self.assertEqual(load_runtime(self.root)['settings']['opencode_timeout_seconds'], 900)
+        save_runtime(self.root, {**PROFILES['office'], 'opencode_timeout_seconds': 1500})
+        # An older caller that sends only the original four settings keeps the saved task timeout.
+        older = {k: v for k, v in PROFILES['home'].items() if k != 'opencode_timeout_seconds'}
+        save_runtime(self.root, older)
+        settings = load_runtime(self.root)['settings']
+        self.assertEqual(settings['timeout_seconds'], 180)
+        self.assertEqual(settings['opencode_timeout_seconds'], 1500)
+        for bad in (30, 4000, True):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                save_runtime(self.root, {**older, 'opencode_timeout_seconds': bad})
+        with self.assertRaisesRegex(ValueError, 'Provide all'):
+            save_runtime(self.root, {'context_tokens': 8192})
+
+    def test_opencode_task_deadline_uses_the_task_timeout(self):
+        from opencode_runtime import ask as agent_ask
+        source = Path(agent_ask.__code__.co_filename).read_text(encoding='utf-8')
+        self.assertIn("runtime.get('opencode_timeout_seconds'", source)
+
+
+class RuntimePresetUiTests(unittest.TestCase):
+    def test_preset_shows_changes_and_keeps_unchanged_fields(self):
+        shell = Path(__file__).with_name('dashboard_shell.js').read_text(encoding='utf-8')
+        self.assertIn("'Preset changes: '", shell)
+        self.assertIn("preset[key]!==undefined&&input.valueAsNumber!==preset[key]", shell)
+        self.assertIn("['opencode_timeout_seconds','OpenCode task timeout (seconds)',60,3600]", shell)
+
+    def test_direct_chat_is_the_default_engine(self):
+        shell = Path(__file__).with_name('dashboard_shell.js').read_text(encoding='utf-8')
+        self.assertIn("[['ollama','Ollama · direct chat'],['opencode',", shell)

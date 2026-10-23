@@ -2,10 +2,17 @@
 import os
 from config_store import load_config, save_config
 
-DEFAULTS = {'context_tokens': 32768, 'max_output_tokens': 2048, 'timeout_seconds': 180, 'thinking': True}
-LIMITS = {'context_tokens': (2048, 131072), 'max_output_tokens': (128, 8192), 'timeout_seconds': (30, 1800)}
+# timeout_seconds bounds one model turn (a direct reply or one OpenCode relay
+# request); opencode_timeout_seconds bounds a whole multi-turn OpenCode task.
+DEFAULTS = {'context_tokens': 32768, 'max_output_tokens': 2048, 'timeout_seconds': 180,
+            'opencode_timeout_seconds': 900, 'thinking': True}
+LIMITS = {'context_tokens': (2048, 131072), 'max_output_tokens': (128, 8192), 'timeout_seconds': (30, 1800),
+          'opencode_timeout_seconds': (60, 3600)}
+# Added after the original four settings; older callers may omit it when saving.
+OPTIONAL = {'opencode_timeout_seconds'}
 PROFILES = {
-    'office': {'context_tokens': 16384, 'max_output_tokens': 1024, 'timeout_seconds': 900, 'thinking': False},
+    'office': {'context_tokens': 16384, 'max_output_tokens': 1024, 'timeout_seconds': 900,
+               'opencode_timeout_seconds': 900, 'thinking': False},
     'home': dict(DEFAULTS),
     'frontend': {**DEFAULTS, 'max_output_tokens':4096,'timeout_seconds':900},
 }
@@ -43,8 +50,11 @@ def load_runtime(root):
 
 def save_runtime(root, value):
     validate(value)
-    if set(value) != set(DEFAULTS):
+    if not (set(DEFAULTS) - OPTIONAL) <= set(value):
         raise ValueError('Provide all runtime settings')
+    if set(DEFAULTS) - set(value):
+        # Keep the saved (or default) value of settings an older caller omitted.
+        value = {**{key: load_runtime(root)['settings'][key] for key in set(DEFAULTS) - set(value)}, **value}
     if value['max_output_tokens'] >= value['context_tokens']:
         raise ValueError('Response limit must be smaller than the context length')
     save_config(root, 'runtime_settings.json', {'schema_version': 1, 'settings': value})

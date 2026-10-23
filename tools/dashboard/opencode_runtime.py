@@ -354,7 +354,9 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         if bridge:body['system']=bridge.instructions()
         record('prompt_requested', session_id=session_id)
         client.request('/session/' + session_id + '/prompt_async', 'POST', body, timeout=10)
-        task_timeout=control.configuration['runtime']['timeout_seconds'] if control and control.configuration else 300
+        # The whole multi-turn task has its own bound; timeout_seconds limits each model turn.
+        runtime=control.configuration['runtime'] if control and control.configuration else {}
+        task_timeout=runtime.get('opencode_timeout_seconds',runtime.get('timeout_seconds',300))
         deadline = time.monotonic() + task_timeout
         while time.monotonic() < deadline:
             update('OpenCode: running task · approved tools only' if bridge else 'OpenCode: inspecting source · read only')
