@@ -75,6 +75,8 @@ class RequirementsCatalogTests(unittest.TestCase):
     def test_opencode_profile_includes_its_images(self):
         setup = CATALOG["profiles"]["opencode_agent"]["setup"]
         self.assertTrue({"mcp_sdk", "ollama_model", "image_opencode", "image_node"} <= set(setup))
+        # Docker needs the Virtual Machine Platform active before any image step.
+        self.assertLess(setup.index("wsl_platform"), setup.index("image_node"))
 
     def test_setup_step_kind_and_fields_validated(self):
         base = {"schema_version": 1, "tools": {}, "profiles": {"vanilla": {"requires": []}}}

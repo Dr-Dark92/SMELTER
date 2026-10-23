@@ -28,6 +28,7 @@ The requirements scanner, the setup wizard's profile preview, the approved winge
 | --- | --- | --- |
 | `mcp_sdk` | `pip install -r tools/dashboard/requirements-mcp.txt` (`mcp==1.30.0`) | Built-in MCP tools, OpenCode |
 | `ollama_model` | `ollama pull qwen3.5:9b` (an installed `qwen3.5:4b` also counts) | Chat, OpenCode; the full smoke test expects `9b` |
+| `wsl_platform` | Checks Virtual Machine Platform is enabled **and active** (no pending restart) and firmware virtualization is on; if not enabled, runs `wsl --install --no-distribution`. winget's `Microsoft.WSL` installs WSL but does not enable this feature | Docker on Windows |
 | `image_python` | `docker pull python:3.12-alpine` | Confined Python tests |
 | `image_node` | `docker pull node:22-alpine` | Confined Node tests, CSS preview, OpenCode image base |
 | `image_opencode` | `docker build -f tools/dashboard/Dockerfile.opencode -t smelter-opencode:1.19.3 .` | Managed OpenCode; select its `sha256` ID in Settings |

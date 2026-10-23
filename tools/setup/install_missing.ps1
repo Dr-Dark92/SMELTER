@@ -149,6 +149,20 @@ function Get-SetupState($id, $step) {
             if ((Test-Path $manifest) -and ((Get-Content $manifest -Raw | ConvertFrom-Json).version -eq $want)) { return @{state='done'} }
             return @{state='todo'; argv=@($npmExe, 'install', '--prefix', $step.prefix, '--save-exact') + @($step.flags | Where-Object { $_ }) + @($step.package)}
         }
+        'wsl_platform' {
+            # wsl --status exits 0 even when WSL 2 cannot start, so read the
+            # Windows feature state, firmware flag and pending restart instead.
+            $vmp = Get-CimInstance Win32_OptionalFeature -Filter "Name='VirtualMachinePlatform'" -ErrorAction SilentlyContinue
+            if (-not $vmp -or $vmp.InstallState -ne 1) {
+                return @{state='todo'; argv=@('wsl.exe', '--install', '--no-distribution'); note='then restart Windows'}
+            }
+            $firmware = @(Get-CimInstance Win32_Processor | ForEach-Object { $_.VirtualizationFirmwareEnabled })
+            if ($firmware -contains $false) { return @{state='blocked'; why='Virtualization is off in the BIOS/UEFI; turn it on, then restart'} }
+            if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') {
+                return @{state='blocked'; why='Virtual Machine Platform is enabled but Windows needs a restart to activate it'}
+            }
+            return @{state='done'}
+        }
         'powershell_script' {
             # check_path is relative to the tool's home: the user's saved env var, else default_home.
             $homes = @()
