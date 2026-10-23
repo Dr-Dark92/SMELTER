@@ -77,6 +77,7 @@ The [current workflow handover](docs/reviews/2026-10-21/workflow-audit/HANDOVER.
 | [Current workflow audit](docs/reviews/2026-10-21/workflow-audit/REVIEW.md) | W01–W13 repairs, layer coverage, function/call review and remaining limitations |
 | [Action plan](docs/reviews/2026-10-21/workflow-audit/ACTION_PLAN.md) | Remaining work with explicit acceptance criteria |
 | [Full smoke test](docs/FULL_SMOKE_TEST.md) | Home/office commands, automated expectations, manual demos and failure triage |
+| [Laptop deployment review](docs/reviews/2026-10-24/REVIEW.md) · [handover](docs/reviews/2026-10-24/HANDOVER.md) · [next plan](docs/reviews/2026-10-24/NEXT_PLAN.md) | 2026-10-24 first full Windows install: problems fixed and open, machine state, phased plan for automated defaults, readiness and UI/UX |
 | [Changelog](CHANGELOG.md) | Verified revision history and documentation scope |
 | [Patch notes](tools/dashboard/REVISION_PATCHES.md) | Configuration/access repair details and rollout constraints |
 
