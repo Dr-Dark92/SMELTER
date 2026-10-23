@@ -35,10 +35,16 @@ RULES = [
 def session_rules(directory, policy=None, host_directory=None, tool_names=()):
     # Limit source content reads independently of the server's VCS worktree.
     # A non-Git project can report worktree '/', which is not a useful scope.
+    # OpenCode checks read permission against path.relative(worktree, file), so
+    # with worktree '/' a read of /workspace/skills/x is checked as
+    # 'workspace/skills/x'; include that form beside absolute and relative ones.
     bases = {str(Path(directory)), Path(directory).as_posix()}
-    patterns = {'README.md', 'tools/**', 'skills/**'}
+    bases |= {base.lstrip('/\\') for base in bases if base.lstrip('/\\')}
+    # The tools/ and skills/ directories themselves may be listed, not only their files.
+    scope = ('README.md','tools/**','skills/**','tools','skills')
+    patterns = set(scope)
     for base in bases:
-        for suffix in ('README.md','tools/**','skills/**'):
+        for suffix in scope:
             patterns.add(base.rstrip('/\\') + '/' + suffix)
             if '\\' in base:
                 patterns.add(base.rstrip('/\\') + '\\' + suffix.replace('/','\\'))
@@ -56,7 +62,8 @@ def session_rules(directory, policy=None, host_directory=None, tool_names=()):
             for exclusion in denied:
                 if not prefix and exclusion in ('.git/**','.smelter/**','projects/**'):continue
                 relative='/'.join(x for x in (prefix,exclusion) if x)
-                for pattern in (relative,str(directory).replace('\\','/')+'/'+relative):
+                base=str(directory).replace('\\','/')
+                for pattern in (relative,base+'/'+relative,base.lstrip('/')+'/'+relative):
                     rules.append({'permission':'read','pattern':pattern,'action':'deny'})
                     if pattern.endswith('/**'):
                         rules.append({'permission':'read','pattern':pattern[:-3],'action':'deny'})

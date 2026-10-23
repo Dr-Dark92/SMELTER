@@ -160,3 +160,41 @@ class OpenCodeRuntimeTests(unittest.TestCase):
         self.assertEqual(request.full_url, 'http://127.0.0.1:4096/global/health')
         self.assertIn('X-opencode-directory', dict(request.header_items()))
         with self.assertRaises(ValueError):client.request('//example.com')
+
+
+def opencode_allows(rules, permission, pattern):
+    """Mirror OpenCode 1.19's rule evaluation: backslashes become '/', '*' matches
+    anything, matching ignores case, and the last matching rule wins."""
+    import re
+    def match(value, glob):
+        value, glob = value.replace('\\', '/'), glob.replace('\\', '/')
+        regex = re.sub(r'[.+^${}()|[\]\\]', lambda m: '\\' + m.group(0), glob).replace('*', '.*').replace('?', '.')
+        return re.fullmatch(regex, value, re.S | re.I) is not None
+    hit = [r for r in rules if match(permission, r['permission']) and match(pattern, r['pattern'])]
+    return bool(hit) and hit[-1]['action'] == 'allow'
+
+
+class WorktreeRelativeReadTests(unittest.TestCase):
+    # The container snapshot at /workspace is not a Git repository, so OpenCode
+    # reports worktree '/' and checks reads as path.relative('/', file).
+    def test_snapshot_reads_allowed_with_root_worktree(self):
+        rules = session_rules('/workspace')
+        for path in ('workspace/skills/taste/SKILL.md', 'workspace/skills', 'workspace/tools/dashboard/dashboard.py',
+                     'workspace/README.md', 'skills/taste/SKILL.md', 'skills'):
+            self.assertTrue(opencode_allows(rules, 'read', path), path)
+
+    def test_outside_scope_and_secrets_stay_denied(self):
+        rules = session_rules('/workspace')
+        for path in ('etc/passwd', 'workspace', 'workspace/projects/x.txt', 'workspace/skills/.env',
+                     'workspace/tools/.smelter/state.json', 'workspace/tools/.git/config', 'home/app/.ssh/id_rsa'):
+            self.assertFalse(opencode_allows(rules, 'read', path), path)
+        self.assertFalse(opencode_allows(rules, 'bash', 'ls'))
+
+    def test_location_exclusions_apply_to_root_worktree_paths(self):
+        class Policy:
+            value = {'locations': [{'path': str(Path('/host/SMELTER/tools/vendor')), 'enabled': True,
+                                    'read': False, 'exclusions': []}]}
+        rules = session_rules('/workspace', Policy(), host_directory=str(Path('/host/SMELTER')))
+        self.assertFalse(opencode_allows(rules, 'read', 'workspace/tools/vendor/lib.js'))
+        self.assertFalse(opencode_allows(rules, 'read', 'tools/vendor/lib.js'))
+        self.assertTrue(opencode_allows(rules, 'read', 'workspace/tools/dashboard/dashboard.py'))
