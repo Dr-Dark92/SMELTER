@@ -39,6 +39,8 @@ node_modules/
 __pycache__/
 .pytest_cache/
 .external/
+# Dashboard runtime state: database pointer, audits, tooling, sandbox runs.
+.smelter/
 workspace/
 outputs/
 builds/

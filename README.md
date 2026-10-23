@@ -12,8 +12,10 @@ From the existing checkout:
 Set-Location C:\SMELTER
 python -m unittest discover -s tools/dashboard -p "test_*.py"
 if ($LASTEXITCODE -ne 0) { throw "Dashboard tests failed." }
-python tools/dashboard/dashboard.py
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\dashboard\start_dashboard.ps1
 ```
+
+`start_dashboard.ps1` finds Python 3.12+ through `py`, a non-Store `python`, or the standard install folders, so it works when Python is not on PATH. If `python` is not on PATH, run the test command with `py -3` or the full path to `python.exe`.
 
 Open the authenticated launch URL printed in that terminal. The dashboard binds to loopback on port **8768** by default. Keep its launch token private. A restart changes the token; use the new URL. On first use, select an absolute SQLite storage directory outside the checkout. Initialization refuses to overwrite an existing database.
 
