@@ -156,8 +156,11 @@ function Get-SetupState($id, $step) {
             if (-not $vmp -or $vmp.InstallState -ne 1) {
                 return @{state='todo'; argv=@('wsl.exe', '--install', '--no-distribution'); note='then restart Windows'}
             }
+            # Once the Windows hypervisor runs, Win32_Processor reports
+            # VirtualizationFirmwareEnabled as False, so only trust it without one.
+            $hypervisor = (Get-CimInstance Win32_ComputerSystem).HypervisorPresent
             $firmware = @(Get-CimInstance Win32_Processor | ForEach-Object { $_.VirtualizationFirmwareEnabled })
-            if ($firmware -contains $false) { return @{state='blocked'; why='Virtualization is off in the BIOS/UEFI; turn it on, then restart'} }
+            if (-not $hypervisor -and $firmware -contains $false) { return @{state='blocked'; why='Virtualization is off in the BIOS/UEFI; turn it on, then restart'} }
             if (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') {
                 return @{state='blocked'; why='Virtual Machine Platform is enabled but Windows needs a restart to activate it'}
             }
