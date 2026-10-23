@@ -11,8 +11,8 @@ const SmelterAccess = (() => {
     const agentAccess=doc.createElement('div');agentAccess.id='openCodeTaskAccess';
     const agentHeading=doc.createElement('h4');agentHeading.textContent='OpenCode · selected skills + MCP tools';agentAccess.append(agentHeading);
     const check=doc.getElementById('opencodeServerCheck'),connection=doc.getElementById('opencodeServerStatus');
-    const model=doc.getElementById('opencodeAgentModel').closest('label'),approval=doc.getElementById('opencodeAgentApprove').closest('label');
-    agentAccess.append(check,connection,model,approval);taskPanel.append(agentAccess);
+    const model=doc.getElementById('opencodeAgentModel').closest('label'),approval=doc.getElementById('opencodeAgentApprove').closest('label'),keep=doc.getElementById('keepTaskAccess').closest('label');
+    agentAccess.append(check,connection,model,approval);taskPanel.append(agentAccess,keep);
     let policy=null;
     function updateSummary() {
       const engine=doc.getElementById('chatEngine').value;

@@ -59,11 +59,13 @@ function initShell(){
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
  const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
- readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();
+ // Grants apply to one Send unless the operator opted to keep them for following sends.
+ const keepAccess=document.getElementById('keepTaskAccess')?.checked===true;
+ if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();}
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;agentApproval.checked=false;
+ const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;if(!keepAccess)agentApproval.checked=false;
  if(executionEngine==='opencode'&&attachment)throw Error('OpenCode accepts text tasks; images are not forwarded');
  if(executionEngine==='opencode'&&!approved)throw Error('Check managed OpenCode and approve this session in Task access');
  let job=await api('/api/chats','POST',{action:'start',id:conversation,content,configuration_revision:window.smelterTaskConfiguration?.revision,policy_revision:window.smelterTaskPolicyRevision,engine:executionEngine,opencode_approval:approved,opencode_model:document.getElementById('opencodeAgentModel').value,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;reconnect.hidden=true;pending.textContent='You · sent';input.value='';imageInput.value='';

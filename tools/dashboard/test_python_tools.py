@@ -219,6 +219,15 @@ class PythonToolTests(unittest.TestCase):
         self.assertIn("readGrant.checked=false;writeGrant.checked=false", HTML)
         self.assertIn("tool_permissions:toolPermissions", HTML)
 
+    def test_keeping_task_access_is_an_explicit_opt_in(self):
+        from dashboard import HTML
+        shell = Path(__file__).with_name("dashboard_shell.js").read_text(encoding="utf-8")
+        # Unticked by default; grants and OpenCode approval clear unless it is ticked.
+        self.assertIn('<input id="keepTaskAccess" type="checkbox">', HTML)
+        self.assertNotIn('id="keepTaskAccess" type="checkbox" checked', HTML)
+        self.assertIn("if(!keepAccess){readGrant.checked=false;writeGrant.checked=false", shell)
+        self.assertIn("if(!keepAccess)agentApproval.checked=false", shell)
+
     def test_http_chat_route_forwards_explicit_grants(self):
         from dashboard import handler
         from http.server import ThreadingHTTPServer
