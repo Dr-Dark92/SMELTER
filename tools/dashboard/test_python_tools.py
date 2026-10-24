@@ -226,7 +226,9 @@ class PythonToolTests(unittest.TestCase):
         self.assertIn('<input id="keepTaskAccess" type="checkbox">', HTML)
         self.assertNotIn('id="keepTaskAccess" type="checkbox" checked', HTML)
         self.assertIn("if(!keepAccess){readGrant.checked=false;writeGrant.checked=false", shell)
-        self.assertIn("if(!keepAccess)agentApproval.checked=false", shell)
+        # OpenCode approval covers the dashboard session (persistent container), not one send.
+        self.assertNotIn("agentApproval.checked=false", shell)
+        self.assertIn("Allow OpenCode for this dashboard session", HTML)
 
     def test_http_chat_route_forwards_explicit_grants(self):
         from dashboard import handler

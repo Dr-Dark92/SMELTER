@@ -9,7 +9,7 @@ function initShell(){
  const center=document.createElement('section');center.id='workspace';
  const settings=SmelterSettings.create(document);const right=settings.content;center.prepend(settings.toolbar);
  left.innerHTML='<h2>Chat history</h2>';
- const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=()=>editConversationTitle();
+ const newChat=document.createElement('button');newChat.textContent='+ New chat';newChat.onclick=()=>window.startNewConversation?.();
  const historySearch=document.createElement('input');historySearch.id='chatSearch';historySearch.type='search';historySearch.placeholder='Search conversations';historySearch.setAttribute('aria-label','Search conversation titles');historySearch.oninput=renderChatHistory;
  const historyCount=document.createElement('p');historyCount.id='historyCount';historyCount.className='history-count';
  const history=document.createElement('div');history.id='chatHistory';left.append(newChat,historySearch,historyCount,history);
@@ -24,7 +24,7 @@ function initShell(){
  const writeLabel=document.createElement('label');writeLabel.append(writeGrant,document.createTextNode(' Allow new Markdown reports in diagnostics/ (no overwrite)'));
  const reaGrant=document.createElement('input');reaGrant.type='checkbox';reaGrant.id='approveRea';
  const reaLabel=document.createElement('label');reaLabel.append(reaGrant,document.createTextNode(' Allow REA CLI for this message (runs Node; static PE inspection in the folder above)'));
- const reaCheck=document.createElement('button');reaCheck.type='button';reaCheck.textContent='Check REA connection';
+ const reaCheck=document.createElement('button');reaCheck.type='button';reaCheck.id='reaCheck';reaCheck.textContent='Check REA connection';
  const reaStatus=document.createElement('p');reaStatus.id='reaStatus';
  reaCheck.onclick=async()=>{try{const s=await api('/api/rea/status');reaStatus.textContent='REA: '+s.status+' | version: '+(s.installed_version||'not installed')+' | '+s.reason}catch(e){reaStatus.textContent=e.message}};
  const workspaceGrant=document.createElement('input');workspaceGrant.type='checkbox';workspaceGrant.id='approveFrontendWorkspace';
@@ -37,11 +37,14 @@ function initShell(){
  const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. Built-in scopes do not sandbox external MCP servers. Tool results are logged locally.';
  permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,modelGrants,workspaceLabel,codingLabel,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
- const input=document.createElement('textarea');input.rows=3;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
- const send=document.createElement('button');send.textContent='Send';
+ const input=document.createElement('textarea');input.rows=1;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
+ // One line by default; grow with the text up to the CSS max-height, then scroll.
+ const fitInput=()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,200)+'px'};input.addEventListener('input',fitInput);
+ const send=document.createElement('button');send.textContent='Send';send.className='send-button';
+ const chips=document.createElement('div');chips.id='composerChips';chips.className='composer-chips';
  const requestStatus=document.createElement('p');requestStatus.id='requestStatus';requestStatus.setAttribute('role','status');requestStatus.setAttribute('aria-live','polite');requestStatus.textContent='Ready · local workspace';
- const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;
- const reconnect=document.createElement('button');reconnect.type='button';reconnect.textContent='Reconnect task';reconnect.hidden=true;reconnect.onclick=()=>resumeJob();
+ const stop=document.createElement('button');stop.textContent='Stop';stop.type='button';stop.disabled=true;stop.className='stop-button';
+ const reconnect=document.createElement('button');reconnect.type='button';reconnect.textContent='Reconnect task';reconnect.hidden=true;reconnect.className='reconnect-button';reconnect.onclick=()=>resumeJob();
  const jobMessage=job=>{const text=job.state==='done'?'Completed · '+job.elapsed_seconds+'s':job.state==='cancelled'?'Stopped · completed tool actions remain recorded':job.state==='partial'?'Partially completed · '+job.error:job.state==='interrupted'?'Interrupted · '+job.error:job.state==='running'?job.phase+' · '+job.elapsed_seconds+'s':'Request failed: '+job.error;return text+(job.persistence_pending?' · '+job.persistence_error+' Polling or the next admission retries metadata only.':'')};
  const engineLabel=document.createElement('label');engineLabel.textContent='Execution engine ';
  const engineChoice=document.createElement('select');engineChoice.id='chatEngine';engineChoice.setAttribute('aria-label','Execution engine');
@@ -57,7 +60,10 @@ function initShell(){
  const renderPending=(content)=>{const bubble=document.createElement('article');bubble.className='message message-user';const header=document.createElement('header');header.className='message-label';header.textContent='You · submitting';const body=document.createElement('div');body.className='message-content';body.textContent=content;bubble.append(header,body);log.append(bubble);log.scrollTop=log.scrollHeight;return header};
  stop.onclick=async()=>{if(!currentJob)return;stop.disabled=true;try{const job=await api('/api/chats','POST',{action:'stop',job_id:currentJob});requestStatus.textContent=job.phase}catch(e){requestStatus.textContent='Could not stop: '+e.message;stop.disabled=false}};
  input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!send.disabled)send.click()}});
- send.onclick=async()=>{if(!activeChat){requestStatus.textContent='Name this conversation, then send your message.';newChat.click();return}if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}if(engineChoice.value==='opencode'&&!document.getElementById('opencodeAgentApprove').checked){requestStatus.textContent='OpenCode needs approval: in Task access, click Check managed OpenCode and tick Allow one confined OpenCode session. Or switch Execution engine to Ollama · direct chat.';settings.open('taskAccessPanel');return}send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
+ send.onclick=async()=>{if(send.disabled)return;const content=input.value.trim();if(!content){requestStatus.textContent='Enter a message before sending';return}if(engineChoice.value==='opencode'&&!document.getElementById('opencodeAgentApprove').checked){requestStatus.textContent='OpenCode needs approval: tick Allow OpenCode in Tools, next to Send. Or switch to Ollama · direct chat.';window.openAccessPopover?.();return}
+ // No conversation yet: create one titled from the first line of the message.
+ if(!activeChat){send.disabled=true;try{const first=content.split('\n')[0].trim();const created=await api('/api/chats','POST',{action:'create',title:first.length>60?first.slice(0,57).trimEnd()+'…':first});await openChat(created.id);await refreshChats()}catch(e){requestStatus.textContent='Could not start a conversation: '+e.message;send.disabled=false;return}}
+ send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
  const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
@@ -67,10 +73,10 @@ function initShell(){
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
- const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;if(!keepAccess)agentApproval.checked=false;
+ const agentApproval=document.getElementById('opencodeAgentApprove');const approved=agentApproval.checked;/* Approval covers the dashboard session; it is not cleared per send. */
  if(executionEngine==='opencode'&&attachment)throw Error('OpenCode accepts text tasks; images are not forwarded');
  if(executionEngine==='opencode'&&!approved)throw Error('Check managed OpenCode and approve this session in Task access');
- let job=await api('/api/chats','POST',{action:'start',id:conversation,content,configuration_revision:window.smelterTaskConfiguration?.revision,policy_revision:window.smelterTaskPolicyRevision,engine:executionEngine,opencode_approval:approved,opencode_model:document.getElementById('opencodeAgentModel').value,image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;reconnect.hidden=true;pending.textContent='You · sent';input.value='';imageInput.value='';
+ let job=await api('/api/chats','POST',{action:'start',id:conversation,content,configuration_revision:window.smelterTaskConfiguration?.revision,policy_revision:window.smelterTaskPolicyRevision,engine:executionEngine,opencode_approval:approved,opencode_model:SmelterOpenCode.defaultModel(document.getElementById('opencodeAgentModel'),window.smelterTaskConfiguration),image:attachment,skills:selectedSkills,auto_skills:autoSkills,tool_permissions:toolPermissions});currentJob=job.id;stop.disabled=false;reconnect.hidden=true;pending.textContent='You · sent';input.value='';fitInput();imageInput.value='';
  try{sessionStorage.setItem('smelterActiveJob',JSON.stringify({id:job.id,conversation}))}catch(e){}
  while(job.state==='running'){showFileActivity(job);showAgentActivity(job);requestStatus.textContent=job.phase+' · '+Math.floor((Date.now()-started)/1000)+'s';await new Promise(resolve=>setTimeout(resolve,1000));job=await api('/api/chat-jobs/'+encodeURIComponent(currentJob))}showFileActivity(job);showAgentActivity(job);
  currentJob=null;try{sessionStorage.removeItem('smelterActiveJob')}catch(e){}
@@ -94,8 +100,8 @@ function initShell(){
  const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';imageInput.title='Attach PNG, JPEG, or WebP (up to 2 MiB)';imageInput.style.maxWidth='180px';
  const modelFile=document.createElement('input');modelFile.type='file';modelFile.accept='.glb';modelFile.hidden=true;modelFile.id='modelFile';
  const attachments=SmelterAttachments.mount(composer,{imageInput,modelInput:modelFile,canAttach:()=>!send.disabled,onError:message=>requestStatus.textContent=message});const attachModel=attachments.button;
- modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(!activeChat){requestStatus.textContent='Create a titled conversation before attaching a model.';modelFile.value='';return}if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
- composer.append(input,imageInput,modelFile,engineLabel,send,stop,reconnect);center.append(title,log,requestStatus,composer);settings.task.append(permissionsBox);
+ modelFile.onchange=async()=>{const file=modelFile.files[0];if(!file)return;if(!activeChat){requestStatus.textContent='Send a message first to start a conversation, then attach a model.';modelFile.value='';return}if(send.disabled){modelFile.value='';return}if(file.size>25*1024*1024){requestStatus.textContent='GLB exceeds 25 MiB';modelFile.value='';return}const conversation=activeChat;send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;attachModel.disabled=true;requestStatus.textContent='Uploading GLB for local preview…';try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read GLB'));reader.readAsDataURL(file)});await api('/api/models','POST',{conversation_id:conversation,filename:file.name,base64});await openChat(conversation);await refreshChats();requestStatus.textContent='GLB saved. Click Load 3D preview; Qwen was not called.'}catch(e){requestStatus.textContent=e.message}finally{send.disabled=false;newChat.disabled=false;input.disabled=false;imageInput.disabled=false;attachModel.disabled=false;modelFile.value=''}};
+ composer.append(input,imageInput,modelFile,engineLabel,chips,stop,send,reconnect);center.append(title,log,requestStatus,composer);settings.task.append(permissionsBox);
 
  const entries=[['toolsPanel','Installed tools',0,'Tools'],['workflowPanel','Workflow planner',1,'Tools'],['archivePanel','Archive inspection',2,'Tools'],['mediaPanel','Media inspection',3,'Tools'],['blenderPanel','Blender',4,'Tools'],['ollamaPanel','Ollama models',5,'AI & runtime'],['opencodePanel','OpenCode',6,'AI & runtime']];
  for(const [id,label,index,category] of entries)settings.addPanel(id,label,sections[index],category);
@@ -143,7 +149,9 @@ function initShell(){
  skillsNav.onclick=()=>{settings.activate('skillsPanel');skillsView.load()};
  const statusPanel=document.createElement('div');statusPanel.className='panel';statusPanel.id='systemStatusPanel';const systemComponents=SmelterSystem.mount(statusPanel,api,document);
  const statusNav=settings.addPanel('systemStatusPanel','System status',statusPanel,'System');statusNav.onclick=async()=>{settings.activate('systemStatusPanel');await Promise.all([refreshSystem(),systemComponents.load()])};
- const showEmpty=()=>SmelterWorkbench.empty(log,{hasConversation:!!activeChat,onNew:()=>newChat.click(),onSettings:id=>settings.open(id),onAttach:()=>activeChat?modelFile.click():newChat.click()});
+ const showEmpty=()=>SmelterWorkbench.empty(log,{hasConversation:!!activeChat,onNew:()=>input.focus(),onSettings:id=>settings.open(id),onAttach:()=>activeChat?modelFile.click():input.focus()});
+ // New chat clears the view; the conversation is created by the first Send.
+ window.startNewConversation=()=>{if(input.disabled)return;activeChat=null;title.textContent='New conversation';highlightChat();showEmpty();requestStatus.textContent='Ready · local workspace';input.focus()};
  SmelterWorkbench.mount({main,shell,left,workspace:center,log,input,newChat,settings,engineLabel,status:requestStatus,onAttach:()=>modelFile.click(),onEmpty:showEmpty});
 }
 let systemStatusBusy=false;
@@ -215,6 +223,8 @@ initShell();
 const el=id=>document.getElementById(id);
 SmelterAccess.mount(api);
 SmelterOpenCode.mount(api);
+{const chip=document.createElement('button');chip.type='button';chip.id='composerAgent';chip.className='composer-chip';chip.append(document.createElement('span'));el('composerChips').prepend(chip);
+ window.smelterOpenCodeSession=SmelterOpenCode.session(api,{engine:el('chatEngine'),chip})}
 SmelterOperations.mount(api);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(force=false){try{el('error').textContent='';const data=await api('/api/extensions'+(force?'?refresh=1':''));const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
@@ -240,7 +250,7 @@ async function startup(){
   el('databaseSetup').hidden=db.ready;el('dbstatus').textContent=JSON.stringify(db,null,2);
   // Pre-fill the deployment's suggested storage folder; the user still confirms it.
   if(!db.ready&&db.suggested_directory&&!el('dbdirectory').value)el('dbdirectory').value=db.suggested_directory;
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;refresh();loadWorkflows();refreshChats();refreshSystem();window.reloadTaskContext?.();if(window.resumeChatJob)window.resumeChatJob()}
+  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;window.smelterOpenCodeSession?.start();refresh();loadWorkflows();refreshChats();refreshSystem();window.reloadTaskContext?.();if(window.resumeChatJob)window.resumeChatJob()}
  }catch(e){const unauthorized=e.status===401||e.status===403;el('authRecovery').hidden=!unauthorized;el('startupHeading').textContent=unauthorized?'Session authorization required':'SMELTER startup check failed';el('dbstatus').textContent=unauthorized?'The session token is missing, expired, or rejected. Existing database files have not been reinitialized.':e.message}
 }
 el('sessionReconnect').onclick=()=>{try{const previous=location.hash;SmelterAuth.apply(el('sessionToken').value);el('sessionToken').value='';if(previous===location.hash)startup()}catch(error){el('dbstatus').textContent=error.message}};

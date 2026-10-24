@@ -32,9 +32,8 @@ const SmelterWorkbench = (() => {
     const mark=doc.createElement('div');mark.className='empty-mark';mark.append(icon('forge',doc));
     const eyebrow=doc.createElement('p');eyebrow.className='eyebrow';eyebrow.textContent='LOCAL AI WORKBENCH';
     const heading=doc.createElement('h2');heading.textContent=hasConversation?'Conversation ready.':'Start a conversation.';
-    const copy=doc.createElement('p');copy.textContent=hasConversation?'Write a message or attach a model. Choose tool access before asking the AI to work on files.':'Create a titled conversation to inspect assets, explore ideas and keep the evidence together.';
+    const copy=doc.createElement('p');copy.textContent=hasConversation?'Write a message or attach a model. Choose tool access before asking the AI to work on files.':'Type a message below to start. The conversation is named from your first message.';
     box.append(mark,eyebrow,heading,copy);
-    if(!hasConversation){const start=doc.createElement('button');start.className='primary-button icon-label-button';start.append(icon('plus',doc),doc.createTextNode('Create conversation'));start.onclick=onNew;box.append(start)}
     const cards=doc.createElement('div');cards.className='starter-grid';
     for(const [symbol,title,note,action] of [
       ['cube','Preview a 3D model','View GLBs, play clips and export a frame.',onAttach],
@@ -64,12 +63,12 @@ const SmelterWorkbench = (() => {
     left.querySelector('h2').textContent='Conversations';
     const search=doc.getElementById('chatSearch'),searchLabel=doc.createElement('label');searchLabel.htmlFor='chatSearch';searchLabel.className='field-caption';searchLabel.textContent='Find a conversation';search.before(searchLabel);
     const footer=doc.createElement('p');footer.className='sidebar-note';footer.textContent='Local conversations. Explicit access. Recorded results.';left.append(footer);
-    const title=doc.getElementById('chatTitle'),titleRow=doc.createElement('div');titleRow.className='conversation-heading';title.before(titleRow);titleRow.append(title);
-    const subtitleText=doc.createElement('span');subtitleText.className='conversation-caption';subtitleText.textContent='Conversation workspace';titleRow.prepend(subtitleText);
+    // The conversation title leads the workspace toolbar instead of taking its own row.
+    const title=doc.getElementById('chatTitle');settings.toolbar.prepend(title);
     input.placeholder='Ask a question, describe a task, or attach a file…';
     const inputLabel=doc.createElement('label');inputLabel.htmlFor=input.id;inputLabel.className='visually-hidden';inputLabel.textContent='Message';input.before(inputLabel);
     engineLabel.classList.add('composer-engine');
-    const hint=doc.createElement('span');hint.className='composer-hint';hint.textContent='Enter to send · Shift+Enter for a new line';input.parentElement.append(hint);
+    input.title='Enter to send · Shift+Enter for a new line';
     status.classList.add('task-status');
     const statusState=()=>{const text=status.textContent.toLowerCase();status.dataset.state=/failed|error|unavailable|rejected/.test(text)?'error':/partial|unknown|stopp/.test(text)?'warning':/completed|saved|ready/.test(text)?'ready':'working'};
     new MutationObserver(statusState).observe(status,{childList:true,subtree:true,characterData:true});statusState();
@@ -77,7 +76,6 @@ const SmelterWorkbench = (() => {
       const field=doc.getElementById(id);if(!field)continue;const visible=doc.createElement('label');visible.htmlFor=id;visible.className='field-caption';visible.textContent=label;field.before(visible)
     }
     labelButton(settings.toolbar.querySelector('button:last-child'),'settings',doc);
-    labelButton(settings.toolbar.querySelector('button'),'shield',doc);
     const add=doc.querySelector('.attachment-add');if(add){add.replaceChildren(icon('plus',doc))}
     window.showEmptyConversation=onEmpty;onEmpty();
     return {closeHistory};

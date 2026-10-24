@@ -1,4 +1,35 @@
-# UI/UX overhaul and review repairs — 2026-10-21
+# UI/UX overhaul and review repairs
+
+## 2026-10-24: professional overhaul and persistent OpenCode
+
+Driven by operator feedback after the first laptop install (cluttered settings,
+an OpenCode check-and-approve step for every task, a large message box, a dated
+look and a chat flow that needed a title before typing). The visual direction
+came from the ui-ux-pro-max skill's design-system search (developer tool,
+dense dashboard, subtle motion); its FAQ-page pattern and remote Google Fonts
+were not used because the dashboard is an offline loopback app.
+
+| Area | Change |
+| --- | --- |
+| Design system | Tokens on `:root`: slate surfaces (`#0b1120` → `#1b2336`), green run/accent `#22c55e`, info/warning/danger, 6/8/12 px radii, 34 px controls (44 px on touch), 14 px base text. JetBrains Mono (SIL OFL, `tools/dashboard/fonts/`) for code; IBM Plex Sans if installed, else Segoe UI Variable/system UI. Flush panes with hairline borders, visible focus rings, reduced-motion respected. The CSS stays in `dashboard.py`'s `<style>` so the frontend CSS workspace keeps working |
+| Layout | 48 px header; sidebar and workspace as flush panes; the conversation title leads the toolbar; messages in a centred 872 px column; assistant replies flow on the page, user turns are compact bubbles; copy and row actions appear on hover/focus |
+| Composer | One-line message box that grows to ~8 lines; one control row: attach · engine · OpenCode session chip · model chip · Tools chip · Stop · Send. The model chip opens Runtime & profiles; the Tools chip opens a popover with the per-send grants, the OpenCode session approval and Keep permissions |
+| Settings | Five groups in a fixed order: **Model & runtime** (Runtime & profiles, Models, OpenCode agent), **Access & locations**, **Skills & MCP**, **System** (Installed tools, System status, Storage & backup) and **Debugging** (Task diagnostics — the former Next-task tool access, with the OpenCode connection check and REA check — Confined runner, Capabilities & checks, Workflow planner, Archive/Media inspection, Blender check, AERO classification) |
+| OpenCode | `opencode_pool.py` keeps **one confined container per dashboard process**. It starts in the background when the dashboard loads with OpenCode selected or when you switch to it, is reused while image, model, runtime, policy and tool set are unchanged, refreshes the read-only code snapshot in place before each task, attaches the task's control and tool bridge and detaches them afterwards. Approval covers the dashboard session. The session is replaced after a relay error or unconfirmed abort and removed on dashboard exit. Confinement is unchanged |
+| Chat workflow | No title dialog: the first Send creates the conversation, titled from the first line of the message. New chat clears the view and focuses the box. Direct chat is the default engine and the last choice is remembered |
+
+Measured live on the laptop (Docker, no model call): first session start 13–20 s,
+the next task attaches in about 1 s to the same container, and a file added under
+`skills/` is visible inside the running container after the refresh. Browser
+smoke `tools/analysis/check_workbench_browser.mjs` passes at 375/768/1024/1440 px
+with no page errors or external requests.
+
+Screenshots: [chat](screenshots/2026-10-24-chat-desktop.png) ·
+[chat 375 px](screenshots/2026-10-24-chat-375.png) ·
+[settings](screenshots/2026-10-24-settings-desktop.png) ·
+[workbench](screenshots/2026-10-24-workbench-desktop.png).
+
+## 2026-10-21: review repairs
 
 This revision implements the seven reproduced R01–R07 findings and replaces the presentation of the workbench. It preserves existing API routes, request fields, per-message approvals, location-policy semantics and the separation between controller receipts and model narrative.
 

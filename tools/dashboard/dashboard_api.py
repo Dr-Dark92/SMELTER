@@ -15,9 +15,11 @@ class Context:
 class ApiRoutes:
     GET_ROUTES={'/': '_get_page', '/api/access-policy': '_get_api_access_policy', '/api/opencode/agent': '_get_api_opencode_agent', '/api/mcp/status': '_get_api_mcp_status', '/api/models/status': '_get_api_models_status', '/api/skills': '_get_api_skills', '/api/skills/status': '_get_api_skills_status', '/api/rea/status': '_get_api_rea_status', '/api/runtime': '_get_api_runtime', '/api/system/status': '_get_api_system_status', '/api/chats': '_get_api_chats', '/api/startup': '_get_api_startup', '/api/opencode/validate': '_get_api_opencode_validate', '/api/opencode/provider-preview': '_get_api_opencode_provider_preview', '/api/opencode/status': '_get_api_opencode_status', '/api/ollama/preferences': '_get_api_ollama_preferences', '/api/ollama/models': '_get_api_ollama_models', '/api/workflows/reports': '_get_api_workflows_reports', '/api/workflows': '_get_api_workflows', '/api/extensions': '_get_api_extensions'}
     GET_ROUTES['/api/system/components'] = '_get_api_system_components'
+    GET_ROUTES['/api/opencode/session'] = '_get_api_opencode_session'
     GET_PREFIXES=[('/api/models/', '_get_api_models_item'), ('/api/chat-jobs/', '_get_api_chat_jobs_item'), ('/api/skills/review/', '_get_api_skills_review_item'), ('/api/chats/', '_get_api_chats_item')]
     POST_ROUTES={'/api/access-policy': '_post_api_access_policy', '/api/mcp': '_post_api_mcp', '/api/models': '_post_api_models', '/api/skills/collection-preview': '_post_api_skills_collection_preview', '/api/skills/discover-repository': '_post_api_skills_discover_repository', '/api/skills/discover': '_post_api_skills_discover', '/api/skills/manage': '_post_api_skills_manage', '/api/aero/classify': '_post_api_aero_classify', '/api/chats': '_post_api_chats', '/api/database/select': '_post_api_database_select', '/api/opencode/deploy': '_post_api_opencode_deploy', '/api/ollama/preferences': '_post_api_ollama_preferences', '/api/blender/inspect': '_post_api_blender_inspect', '/api/media/inspect': '_post_api_media_inspect', '/api/archive/inspect': '_post_api_archive_inspect', '/api/workflows/plan': '_post_api_workflows_plan', '/api/extensions': '_post_api_extensions'}
     POST_ROUTES['/api/system/components'] = '_post_api_system_components'
+    POST_ROUTES['/api/opencode/session'] = '_post_api_opencode_session'
     ASSETS={
         '/assets/system-components.js':'system_components.js', '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
@@ -25,6 +27,7 @@ class ApiRoutes:
         '/assets/workbench-ui.js':'workbench_ui.js','/assets/model-preview.js':'model_preview.js','/assets/opencode-agent-ui.js':'opencode_agent_ui.js',
         '/assets/location-browser.js':'location_browser.js','/assets/locations-ui.js':'locations_ui.js','/assets/skills-ui.js':'skills_ui.js','/assets/attachments-ui.js':'attachments_ui.js','/assets/settings-ui.js':'settings_ui.js','/assets/access-ui.js':'access_ui.js',
         '/assets/operations-ui.js':'operations_ui.js','/assets/dashboard-shell.js':'dashboard_shell.js'}
+    FONTS={'/assets/fonts/JetBrainsMono-Regular.ttf':'JetBrainsMono-Regular.ttf','/assets/fonts/JetBrainsMono-Bold.ttf':'JetBrainsMono-Bold.ttf'}
 
     def do_GET(self):
         try:
@@ -32,6 +35,9 @@ class ApiRoutes:
             if route in self.ASSETS:
                 source=Path(self.app.__file__).with_name(self.ASSETS[route])
                 return self.reply(200,source.read_text(encoding='utf-8'),'application/javascript')
+            if route in self.FONTS:
+                # Bundled OFL fonts (tools/dashboard/fonts); fixed allowlist, no path input.
+                return self.reply(200,Path(self.app.__file__).with_name('fonts').joinpath(self.FONTS[route]).read_bytes(),'font/ttf')
             if route=='/assets/model-viewer.min.js':
                 try:return self.reply(200,self.app.viewer_bundle(self.app.ROOT).read_bytes(),'application/javascript')
                 except (ValueError,OSError) as error:return self.reply(404,{'error':str(error)})
@@ -66,6 +72,23 @@ class ApiRoutes:
         from task_contract import configuration
         effective = configuration(self.app.ROOT)
         return self.reply(200, {**current(self.app.ROOT).report(), 'model': effective['model'], 'configuration': effective})
+
+    def _get_api_opencode_session(self, route, data=None):
+        import opencode_pool
+        return self.reply(200, opencode_pool.status())
+
+    def _post_api_opencode_session(self, route, data=None):
+        # Persistent OpenCode session: start warms it with the dashboard, stop removes it.
+        import opencode_pool
+        action = (data or {}).get('action')
+        try:
+            if action == 'start':
+                return self.reply(200, opencode_pool.start(self.app.ROOT))
+            if action == 'stop':
+                return self.reply(200, opencode_pool.stop())
+            return self.reply(400, {'error': 'Unknown OpenCode session action'})
+        except ValueError as e:
+            return self.reply(409, {'error': str(e)})
 
     def _get_api_opencode_agent(self, route, data=None):
         from opencode_runtime import status as opencode_agent_status

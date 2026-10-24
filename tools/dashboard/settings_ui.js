@@ -13,9 +13,19 @@ const SmelterSettings=(()=>{
   const content=doc.createElement('div');content.id='rightbar';const nav=doc.createElement('nav');nav.className='settings-nav';nav.setAttribute('aria-label','Settings sections');
   const picker=doc.createElement('select');picker.className='settings-section-picker';picker.setAttribute('aria-label','Settings section');
   const deck=doc.createElement('div');deck.className='settings-content';content.append(picker,nav,deck);dialog.append(header,content);doc.body.append(dialog);
-  const groups=new Map(),options=new Map(),entries=[];let previous=null,activePanel='taskAccessPanel';
+  const groups=new Map(),options=new Map(),entries=[];let previous=null,activePanel='runtimePanel';
+  // Fixed group order; panels registered elsewhere are placed and labelled here.
+  const ORDER=['Model & runtime','Access & locations','Skills & MCP','System','Debugging'];
+  const LAYOUT={
+   runtimePanel:['Model & runtime','Runtime & profiles'],ollamaPanel:['Model & runtime','Models'],opencodePanel:['Model & runtime','OpenCode agent'],
+   accessPolicyPanel:['Access & locations','Locations & permissions'],
+   skillsPanel:['Skills & MCP','Skills'],mcpPanel:['Skills & MCP','MCP connections'],
+   toolsPanel:['System','Installed tools'],systemStatusPanel:['System','System status'],maintenancePanel:['System','Storage & backup'],
+   taskAccessPanel:['Debugging','Task diagnostics'],sandboxPanel:['Debugging','Confined runner'],capabilitiesPanel:['Debugging','Capabilities & checks'],
+   workflowPanel:['Debugging','Workflow planner'],archivePanel:['Debugging','Archive inspection'],mediaPanel:['Debugging','Media inspection'],
+   blenderPanel:['Debugging','Blender check'],aeroPanel:['Debugging','AERO classification']};
   const empty=doc.createElement('p');empty.className='settings-no-results';empty.textContent='No matching settings. Clear or change the search to try again.';empty.setAttribute('role','status');empty.hidden=true;deck.prepend(empty);
-  function group(label){if(!groups.has(label)){const section=doc.createElement('section');section.className='settings-nav-group';const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);nav.append(section);groups.set(label,section);const optionGroup=doc.createElement('optgroup');optionGroup.label=label;picker.append(optionGroup);options.set(label,optionGroup)}return groups.get(label)}
+  function group(label){if(!groups.has(label)){const section=doc.createElement('section');section.className='settings-nav-group';section.dataset.group=label;const heading=doc.createElement('h3');heading.textContent=label;section.append(heading);nav.append(section);groups.set(label,section);const optionGroup=doc.createElement('optgroup');optionGroup.label=label;picker.append(optionGroup);options.set(label,optionGroup)}return groups.get(label)}
   function activate(id){
    const panel=doc.getElementById(id);if(!panel||!deck.contains(panel))return;
    activePanel=id;deck.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x===panel));
@@ -30,18 +40,24 @@ const SmelterSettings=(()=>{
    if(button)button.click();else activate(id);
    if(opening){if(panel)close.focus();else search.focus()}
   }
-  function addPanel(id,label,section,category='Workspace'){
+  function addPanel(id,label,section,category='System'){
+   if(LAYOUT[id])[category,label]=LAYOUT[id];
    section.id=id;section.classList.add('panel');section.setAttribute('aria-label',label);
-   const button=doc.createElement('button');button.type='button';button.className='navbtn';button.dataset.panel=id;button.textContent=label;button.onclick=()=>activate(id);group(category).append(button);
+   const button=doc.createElement('button');button.type='button';button.className='navbtn';button.dataset.panel=id;button.textContent=label;button.onclick=()=>activate(id);
+   // Order items within a group as listed in LAYOUT, whatever order modules register them.
+   const rank=x=>{const i=Object.keys(LAYOUT).indexOf(x);return i<0?999:i};button.dataset.rank=rank(id);
+   const later=[...group(category).querySelectorAll('.navbtn')].find(x=>Number(x.dataset.rank)>rank(id));
+   if(later)later.before(button);else group(category).append(button);
    const option=doc.createElement('option');option.value=id;option.textContent=label;options.get(category).append(option);deck.append(section);entries.push({id,label,category,button,option});return button
   }
+  for(const label of ORDER)group(label);
   picker.onchange=()=>nav.querySelector('[data-panel="'+picker.value+'"]')?.click();search.oninput=filter;
   search.onkeydown=event=>{if(event.key==='Enter'){const first=entries.find(x=>!x.button.hidden);if(first){event.preventDefault();first.button.click();close.focus()}}};
   const toolbar=doc.createElement('div');toolbar.className='workspace-toolbar';
   const summary=doc.createElement('span');summary.id='taskAccessSummary';summary.setAttribute('role','status');
-  const task=doc.createElement('section'),heading=doc.createElement('h3');heading.textContent='Access for the next task';task.append(heading);addPanel('taskAccessPanel','Next-task tool access',task);
-  const review=doc.createElement('button');review.textContent='Review task access';review.onclick=()=>open('taskAccessPanel');
-  const settings=doc.createElement('button');settings.textContent='Settings';settings.onclick=()=>open();toolbar.append(summary,review,settings);
+  const task=doc.createElement('section'),heading=doc.createElement('h3');heading.textContent='Task diagnostics';task.append(heading);addPanel('taskAccessPanel','Task diagnostics',task);
+  // Per-send grants live in the composer's access popover; the toolbar keeps the title and Settings.
+  const settings=doc.createElement('button');settings.textContent='Settings';settings.onclick=()=>open();toolbar.append(summary,settings);
   dialog.addEventListener('close',()=>{if(previous?.isConnected)previous.focus()});
   instance={dialog,content,nav,deck,toolbar,summary,task,open,activate,addPanel};return instance
  }

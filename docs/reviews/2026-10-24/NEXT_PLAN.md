@@ -90,6 +90,16 @@ Build on [UI_UX_OVERHAUL.md](../../UI_UX_OVERHAUL.md); this phase changes struct
 | 4.3 | Keep the launch session across restarts on the same machine, or show the new URL prominently; reload UI assets without a restart in development | U07 | Restart does not strand an open tab |
 | 4.4 | Usability pass on the 375 px and desktop layouts with the new flows; record screenshots as evidence | — | Screenshots for first run, readiness, chat, OpenCode result |
 
+**Status 2026-10-24: Phase 4 largely done, plus a Phase 3 change made at the
+operator's request** (see [UI_UX_OVERHAUL.md](../../UI_UX_OVERHAUL.md)): new design
+system, flush layout, compact composer with chips and a Tools popover, Settings in
+five groups with Debugging, no-dialog chat start, and a persistent OpenCode session
+(`opencode_pool.py`) started with the dashboard and approved once per session.
+Covers U01 partially (no checklist yet), U02 for OpenCode approval, U04 (earlier),
+U05, W03 partly (one access vocabulary not finished). Open: 2.1–2.3 readiness page
+and first-run checklist, 3.1 OpenCode list/glob/grep, 3.2 path mapping, 3.3 result
+panel, 4.3 launch-session persistence.
+
 ## Phase 5 — carried over
 
 From the [2026-10-21 action plan](../2026-10-21/workflow-audit/ACTION_PLAN.md):
