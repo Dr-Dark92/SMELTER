@@ -42,6 +42,16 @@ def load(path: Path = CATALOG_PATH) -> dict:
         unknown = [t for t in step.get("needs", []) if t not in tools] + [s for s in step.get("after", []) if s not in setup]
         if unknown:
             raise ValueError(f"Setup step {name} references unknown entries: {', '.join(unknown)}")
+    defaults = data.setdefault("defaults", {})
+    hardware = defaults.get("hardware_profiles", [])
+    if not isinstance(hardware, list) or any(not isinstance(p, dict) or not isinstance(p.get("model"), str)
+                                             or not isinstance(p.get("runtime_profile"), str) for p in hardware):
+        raise ValueError(f"Requirements file {path} has invalid hardware profiles")
+    if hardware and hardware[-1].get("max_vram_mib") is not None:
+        raise ValueError(f"The last hardware profile in {path} must have no VRAM limit")
+    for key, step in defaults.get("images", {}).items():
+        if setup.get(step, {}).get("kind") not in ("docker_pull", "docker_build"):
+            raise ValueError(f"Default image {key} must name a Docker setup step")
     for name, profile in profiles.items():
         unknown = [tool for tool in profile.get("requires", []) if tool not in tools]
         if unknown:

@@ -21,7 +21,9 @@ param(
     [Alias('Profile')][string[]]$ProfileName,
     [switch]$DryRun,
     [switch]$Yes,
-    [string]$Python
+    [string]$Python,
+    # low | medium | high | extreme | custom; default: detected from the GPU and RAM.
+    [string]$HardwareProfile
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -128,6 +130,15 @@ function Get-SetupState($id, $step) {
         }
         'ollama_pull' {
             if ($null -eq $ollamaModels) { return @{state='blocked'; why='Ollama is not running; start it and re-run'} }
+            # "hardware": the model defaults.hardware_profiles picks for this GPU.
+            if ($step.model -eq 'hardware') {
+                $profileArgs = if ($HardwareProfile) { @('--profile', $HardwareProfile) } else { @() }
+                $wanted = "$(& $python (Join-Path $root 'tools\setup\configure_defaults.py') --show-model @profileArgs 2>$null)".Trim()
+                if (-not $wanted -and $HardwareProfile -eq 'custom') { return @{state='done'; note='custom profile: choose the model in the dashboard'} }
+                if (-not $wanted) { return @{state='blocked'; why='Could not choose a model for this hardware'} }
+                if ($ollamaModels -contains $wanted) { return @{state='done'; note="has $wanted (chosen for this GPU)"} }
+                return @{state='todo'; argv=@((Find-Exe 'ollama'), 'pull', $wanted)}
+            }
             $ok = @(@($step.model) + @($step.alternatives) | Where-Object { $ollamaModels -contains $_ })
             if ($ok.Count) { return @{state='done'; note="has $($ok[0])"} }
             return @{state='todo'; argv=@((Find-Exe 'ollama'), 'pull', $step.model)}
@@ -215,8 +226,17 @@ foreach ($r in $setupReport) {
     else { $line += $r.Detail }
     Write-Host $line -ForegroundColor $color
 }
+# Dashboard first-run values from this machine (only used for settings never saved).
+function Write-DeploymentDefaults([switch]$Preview) {
+    Write-Host "`nDashboard defaults" -ForegroundColor Cyan
+    $arguments = @((Join-Path $root 'tools\setup\configure_defaults.py')) + $(if ($Preview) { @('--dry-run') } else { @() }) +
+        $(if ($HardwareProfile) { @('--profile', $HardwareProfile) } else { @() })
+    & $python @arguments
+}
+
 if ($DryRun -or ($toolPlan.Count -eq 0 -and $setupPlan.Count -eq 0)) {
     if ($setupReport | Where-Object State -eq 'blocked') { Write-Host 'Fix the blocked items above, then run this script again.' -ForegroundColor Yellow }
+    Write-DeploymentDefaults -Preview:$DryRun
     exit 0
 }
 
@@ -266,4 +286,5 @@ if ($toolPlan.Count) {
     Write-Host 'Restart Windows after installing WSL, start Docker Desktop once, then open a new PowerShell window'
     Write-Host 'and run this script again to finish the setup steps that needed the new tools.'
 }
+Write-DeploymentDefaults
 if ($results | Where-Object { $_.Result -like 'failed*' }) { exit 1 }

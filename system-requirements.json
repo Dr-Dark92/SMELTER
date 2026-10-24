@@ -20,7 +20,7 @@
   },
   "setup": {
     "mcp_sdk": {"kind": "pip", "requirements": "tools/dashboard/requirements-mcp.txt", "package": "mcp", "version": "1.30.0", "needs": [], "purpose": "Built-in MCP tools and the OpenCode bridge"},
-    "ollama_model": {"kind": "ollama_pull", "model": "qwen3.5:9b", "alternatives": ["qwen3.5:4b"], "needs": ["ollama"], "purpose": "Reasoning model for chat and OpenCode; qwen3.5:4b suits GPUs with 4 GB or less. The full smoke test expects qwen3.5:9b"},
+    "ollama_model": {"kind": "ollama_pull", "model": "hardware", "alternatives": ["qwen3.5:35b-a3b", "qwen3.5:9b", "qwen3.5:4b"], "needs": ["ollama"], "purpose": "Reasoning model for chat and OpenCode, chosen from GPU memory by defaults.hardware_profiles. The full smoke test expects qwen3.5:9b"},
     "wsl_platform": {"kind": "wsl_platform", "needs": ["wsl"], "purpose": "Virtual Machine Platform enabled and active, firmware virtualization on. winget's Microsoft.WSL does not enable it; 'wsl --install --no-distribution' does, followed by a Windows restart"},
     "image_python": {"kind": "docker_pull", "image": "python:3.12-alpine", "needs": ["docker"], "purpose": "Confined Python tests in the coding workspace"},
     "image_node": {"kind": "docker_pull", "image": "node:22-alpine", "needs": ["docker"], "purpose": "Confined Node tests, CSS validation/preview and the OpenCode image base"},
@@ -30,6 +30,22 @@
     "ghidra": {"kind": "powershell_script", "script": "tools/bootstraps/Setup-Smelter-Ghidra.ps1", "check_path": "support/analyzeHeadless.bat", "home_env": "GHIDRA_INSTALL_DIR", "default_home": "C:/Tools/Ghidra", "needs": ["java"], "purpose": "Ghidra headless analysis for the tools/bootstraps binary-analysis scripts. Downloads the latest official release, verifies its SHA-256, installs to C:/Tools/Ghidra and sets user JAVA_HOME, GHIDRA_INSTALL_DIR and REA_ANALYSIS_PROVIDER"},
     "playwright": {"kind": "npm_prefix", "prefix": ".smelter/tooling/browser", "package": "playwright@1.56.1", "flags": ["--ignore-scripts"], "needs": ["node"], "purpose": "Browser automation for the full smoke test"},
     "chromium": {"kind": "playwright_browser", "browser": "chromium", "needs": ["node"], "after": ["playwright"], "purpose": "Chromium for the full smoke test's GUI and GLB checks"}
+  },
+  "defaults": {
+    "description": "First-run dashboard values written by tools/setup/configure_defaults.py to .smelter/deployment-defaults.json. The dashboard uses them only for settings that were never saved.",
+    "storage_directory": "%LOCALAPPDATA%/SMELTER/data",
+    "extensions": ["7z", "blender", "ffmpeg", "ollama", "opencode"],
+    "hardware_profiles": [
+      {"id": "low", "label": "No NVIDIA GPU (CPU only)", "max_vram_mib": 0, "model": "qwen3.5:4b", "runtime_profile": "low"},
+      {"id": "medium", "label": "Weak GPU, up to 6 GB", "max_vram_mib": 6144, "model": "qwen3.5:4b", "runtime_profile": "medium"},
+      {"id": "high", "label": "Powerful GPU, more than 6 GB up to 16 GB", "max_vram_mib": 16384, "model": "qwen3.5:9b", "runtime_profile": "high"},
+      {"id": "extreme", "label": "GPU over 16 GB with at least 32 GB RAM", "max_vram_mib": null, "min_ram_mib": 30720, "model": "qwen3.5:35b-a3b", "runtime_profile": "extreme", "note": "20.6 GB mixture-of-experts model (about 3B active); layers that do not fit in VRAM run from system RAM"}
+    ],
+    "custom_profile_note": "configure_defaults.py --profile custom seeds extensions, images and storage but leaves the model and runtime for the user to define in the dashboard",
+    "min_nvidia_driver": "531.00",
+    "images": {"python_image": "image_python", "node_image": "image_node", "opencode_image": "image_opencode"},
+    "versions": {"ollama": "0.40.10"},
+    "versions_note": "Host runtimes checked for drift. OpenCode is pinned inside the smelter-opencode image (1.19.3) and verified by Check managed OpenCode; the native CLI is not used by the dashboard"
   },
   "profiles": {
     "vanilla": {"label": "Vanilla", "requires": [], "setup": [], "description": "Python standard-library core"},
