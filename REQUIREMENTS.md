@@ -39,6 +39,27 @@ The requirements scanner, the setup wizard's profile preview, the approved winge
 
 Profiles: `local_ai`, `opencode_agent`, `media`, `reverse_engineering`, `smoke_test`, `developer`, `game_modding`.
 
+### Hardware profiles and dashboard defaults
+
+The last installer step runs `tools/setup/configure_defaults.py`, which detects the GPU, system RAM, Ollama models, Docker image IDs and installed tools and writes `.smelter/deployment-defaults.json`. The dashboard uses those values **only for settings never saved** in it; saving in the dashboard always wins and re-running deployment cannot override it. Precedence: saved › `SMELTER_CONTEXT_LENGTH` › deployment › built-in.
+
+| Profile | Chosen when | Model | Runtime (context · output · turn / task timeout · thinking) |
+| --- | --- | --- | --- |
+| `low` | No NVIDIA GPU | `qwen3.5:4b` (3.1 GB) | 16K · 1024 · 600 / 1800 s · off |
+| `medium` | GPU up to 6 GB | `qwen3.5:4b` | 32K · 1024 · 300 / 900 s · off — verified on a 4 GB GTX 1050 Ti |
+| `high` | GPU over 6 GB up to 16 GB | `qwen3.5:9b` (6.1 GB) | 32K · 2048 · 180 / 900 s · on |
+| `extreme` | GPU over 16 GB and at least 30 GB RAM (else `high`) | `qwen3.5:35b-a3b` (20.6 GB MoE, ~3B active) | 64K · 4096 · 300 / 1800 s · on — not yet measured on a rig |
+| `custom` | Chosen explicitly | You choose | You choose; deployment seeds only extensions, images and storage |
+
+Deployment also enables the extensions whose tools are installed, saves the three Docker image IDs, suggests the storage folder `%LOCALAPPDATA%\SMELTER\data` on first start-up, warns about NVIDIA drivers older than 531 and reports Ollama version drift. Override detection with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -HardwareProfile extreme
+python tools\setup\configure_defaults.py --profile custom --dry-run
+```
+
+The dashboard's runtime presets are the same Low · Medium · High · Extreme · Custom; it shows Custom when your saved values match no preset.
+
 To install everything that is missing, run from an **administrator** PowerShell in the checkout:
 
 ```powershell

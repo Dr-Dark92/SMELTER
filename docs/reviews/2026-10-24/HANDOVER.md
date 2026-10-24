@@ -55,7 +55,7 @@ Docker Desktop and Ollama must be running first. Open the printed URL; it change
 | Ollama on GPU | `ollama ps` showed `50%/50% CPU/GPU` for `qwen3.5:4b` after the driver update and an Ollama restart |
 | Direct chat | Job `e25786ef…` done in 14.4 s |
 | OpenCode container, permissions, cleanup | Audit `47b2a3b2…`: four `read` calls `completed` for `/workspace/skills` and each `SKILL.md`; `cleanup_confirmed: true` |
-| OpenCode full answer | **Not yet.** That task ended `partial` at the 180 s timeout |
+| OpenCode full answer | **Done** after Phase 0 and `651273c`: seven reads of `skills/`, an accurate summary, 323 s, cleanup confirmed (audit `ec8056c9…`, runtime 32K · 1024 · 300 / 900 s · thinking off — now the `medium` profile) |
 
 ## Known traps on this laptop
 

@@ -45,6 +45,21 @@ Add a `defaults` section to `system-requirements.json` and a
 | 1.6 | **Default storage location** `%LOCALAPPDATA%\SMELTER\data`, created if absent, still outside the checkout; the first-run prompt pre-fills it | C08 | First open needs one click; existing databases are never overwritten |
 | 1.7 | **Pin and hold runtimes**: record Ollama and native OpenCode versions in the catalog; setup reports drift; document turning off auto-update | C11 | Setup report shows expected vs actual versions |
 
+**Status 2026-10-24: Phase 1 done, with one item open.** Profiles were renamed
+by hardware at the operator's request: `low` (no GPU, 4B), `medium` (≤ 6 GB, 4B),
+`high` (6–16 GB, 9B), `extreme` (> 16 GB and ≥ 30 GB RAM, `qwen3.5:35b-a3b`) and
+`custom` (user-defined). 1.1 GPU, RAM, driver warning and Ollama version drift
+are reported. 1.2 the `ollama_model` step pulls the profile's model; the fallback
+is the largest installed model that fits. 1.3 one `FALLBACK_MODEL` replaces the
+scattered `qwen3.5:9b` literals, and a missing model now says where to fix it
+(Ollama 404) instead of admission probing Ollama. 1.4 runtime presets match the
+profiles. 1.5 `.smelter/deployment-defaults.json` fills never-saved settings with
+source `deployment`; saved values win. 1.6 first start-up pre-fills
+`%LOCALAPPDATA%\SMELTER\data`. 1.7 Ollama version drift is reported; the
+OpenCode version is pinned in its image. **Open:** the full smoke runner still
+hard-requires `qwen3.5:9b` (1.2 acceptance), and the `extreme` runtime values are
+unmeasured.
+
 ## Phase 2 — readiness inside the dashboard
 
 | # | Work | Findings | Acceptance criteria |
