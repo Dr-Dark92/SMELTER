@@ -9,6 +9,42 @@ from opencode_sandbox import ManagedClient
 from sandbox import _remove
 
 
+class ServerLifetimeTests(unittest.TestCase):
+    """The OpenCode server must outlive the task, not one model turn (2026-10-24 failure)."""
+
+    def start(self, runtime):
+        import tempfile
+        from pathlib import Path
+        folder = Path(tempfile.mkdtemp());(folder/'code').mkdir()
+        captured = {}
+        class Stop(Exception):pass
+        def run(command, env=None, **kwargs):
+            captured.update(command=command, env=env);raise Stop()
+        ready = {'ready': True, 'docker': 'docker', 'configured': {'opencode_image': 'sha256:' + 'a' * 64}}
+        configuration = {'model': 'fixture:4b', 'runtime': runtime}
+        with patch('opencode_sandbox.status', return_value=ready), \
+             patch('access_policy.using', return_value=__import__('contextlib').nullcontext()), \
+             patch('opencode_sandbox.snapshot', return_value=(folder, folder/'code')), \
+             patch('opencode_sandbox.record_owner'), patch('opencode_sandbox.run', side_effect=run), \
+             patch.object(ManagedClient, 'close'):
+            with self.assertRaises(Stop):ManagedClient(folder, None, configuration)
+        return captured
+
+    def test_server_lifetime_follows_task_timeout_not_turn_timeout(self):
+        captured = self.start({'context_tokens': 32768, 'max_output_tokens': 1024, 'timeout_seconds': 180,
+                               'opencode_timeout_seconds': 900, 'thinking': False})
+        self.assertEqual(captured['env']['SMELTER_TIMEOUT'], '180')
+        self.assertEqual(captured['env']['SMELTER_TASK_TIMEOUT'], '900')
+        self.assertIn('SMELTER_TASK_TIMEOUT', captured['command'])
+        boot = captured['command'][-1]
+        self.assertIn('Number(process.env.SMELTER_TASK_TIMEOUT)+30', boot)
+        self.assertNotIn('Number(process.env.SMELTER_TIMEOUT)+30', boot)
+
+    def test_older_runtime_without_task_timeout_keeps_turn_timeout(self):
+        captured = self.start({'context_tokens': 32768, 'max_output_tokens': 1024, 'timeout_seconds': 300, 'thinking': False})
+        self.assertEqual(captured['env']['SMELTER_TASK_TIMEOUT'], '300')
+
+
 class ModelRelayTests(unittest.TestCase):
     def client(self,approved=True):
         client=object.__new__(ManagedClient)

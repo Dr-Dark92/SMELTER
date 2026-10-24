@@ -36,7 +36,8 @@ proxy.listen(11434,'127.0.0.1',()=>{
  if(process.env.SMELTER_BRIDGE==='1') config.mcp={smelter:{type:'local',command:['node','/opt/smelter-bridge/proxy.mjs'],enabled:true,timeout:__SMELTER_MCP_RPC_TIMEOUT_MS__}};
  const child=cp.spawn('/usr/local/bin/opencode',['serve','--pure','--hostname','127.0.0.1','--port','4096'],{cwd:'/workspace',env:{...process.env,OPENCODE_CONFIG_CONTENT:JSON.stringify(config),OPENCODE_SERVER_PASSWORD:process.env.SMELTER_AGENT_PASSWORD},stdio:'inherit'});
  child.on('error',()=>process.exit(1));child.on('exit',code=>process.exit(code??1));
- setTimeout(()=>process.exit(124),(Number(process.env.SMELTER_TIMEOUT)+30)*1000).unref();
+ // Server lifetime follows the whole task; SMELTER_TIMEOUT bounds each relayed model turn.
+ setTimeout(()=>process.exit(124),(Number(process.env.SMELTER_TASK_TIMEOUT)+30)*1000).unref();
 });
 '''
 
@@ -69,7 +70,8 @@ class ManagedClient:
         self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference
         self.bridge=bridge
         self.password=secrets.token_urlsafe(32);self.stop_event=threading.Event();self.thread=None;self.model_socket=None;self.lock=threading.Lock();self.closed=False;self.error=None;self.model_calls=0;self.relay_calls=0;self.cleanup_confirmed=None
-        environment=dict(os.environ);environment.update(SMELTER_MODEL=self.model,SMELTER_TIMEOUT=str(self.settings['timeout_seconds']),SMELTER_AGENT_PASSWORD=self.password)
+        task_timeout=max(self.settings.get('opencode_timeout_seconds',self.settings['timeout_seconds']),self.settings['timeout_seconds'])
+        environment=dict(os.environ);environment.update(SMELTER_MODEL=self.model,SMELTER_TIMEOUT=str(self.settings['timeout_seconds']),SMELTER_TASK_TIMEOUT=str(task_timeout),SMELTER_AGENT_PASSWORD=self.password)
         flags=_flags(self.docker,self.name,self.code)
         if bridge and bridge.tools:
             assets=self.folder/'bridge';assets.mkdir(mode=0o755)
@@ -81,7 +83,7 @@ class ManagedClient:
             environment['SMELTER_BRIDGE']='1'
         else:environment['SMELTER_BRIDGE']='0'
         boot=BOOT.replace('__SMELTER_MCP_RPC_TIMEOUT_MS__', str(BRIDGE_RPC_TIMEOUT*1000))
-        command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',boot]
+        command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_TASK_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',boot]
         self.image=ready['configured']['opencode_image']
         record_owner(self.folder,self.name,self.image,'opencode')
         try:
