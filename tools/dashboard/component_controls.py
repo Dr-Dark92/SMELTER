@@ -113,7 +113,9 @@ class Components:
             from task_contract import configuration
             flags = settings(self.root)
             try: model = configuration(self.root)['model']
-            except (ValueError, OSError): model = 'qwen3.5:9b'
+            except (ValueError, OSError):
+                from model_preferences import FALLBACK_MODEL
+                model = FALLBACK_MODEL
             rows = []
             executable = self.finder('ollama')
             running, version, installed, loaded, api_error = False, None, [], [], ''

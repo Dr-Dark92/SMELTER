@@ -8,7 +8,6 @@ from chat_jobs import ChatCancelled
 from python_tools import ToolSession
 from ollama_turn import ENDPOINT,MAX_RESPONSE
 from task_contract import OUTPUT_LIMIT_ERROR,generation_limited
-MODEL='qwen3.5:9b'
 
 
 def _messages(root, chat, prompt, image, skills, auto_skills, session, selection=None):

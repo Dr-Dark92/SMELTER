@@ -10,10 +10,25 @@ LIMITS = {'context_tokens': (2048, 131072), 'max_output_tokens': (128, 8192), 't
           'opencode_timeout_seconds': (60, 3600)}
 # Added after the original four settings; older callers may omit it when saving.
 OPTIONAL = {'opencode_timeout_seconds'}
+# office/home/frontend remain for existing saved settings and scripts; the
+# dashboard offers low/medium/high plus Custom (the user's own values).
 PROFILES = {
     'office': {'context_tokens': 16384, 'max_output_tokens': 1024, 'timeout_seconds': 900,
                'opencode_timeout_seconds': 900, 'thinking': False},
     'home': dict(DEFAULTS),
+    # Hardware profiles chosen by deployment (system-requirements.json defaults).
+    # low: no NVIDIA GPU, CPU inference is slow, so smaller context and longer bounds.
+    'low': {'context_tokens': 16384, 'max_output_tokens': 1024, 'timeout_seconds': 600,
+            'opencode_timeout_seconds': 1800, 'thinking': False},
+    # medium: GPU up to 6 GB; verified on a 4 GB GTX 1050 Ti with qwen3.5:4b (2026-10-24).
+    'medium': {'context_tokens': 32768, 'max_output_tokens': 1024, 'timeout_seconds': 300,
+               'opencode_timeout_seconds': 900, 'thinking': False},
+    # high: GPU over 6 GB up to 16 GB running qwen3.5:9b.
+    'high': {'context_tokens': 32768, 'max_output_tokens': 2048, 'timeout_seconds': 180,
+             'opencode_timeout_seconds': 900, 'thinking': True},
+    # extreme: GPU over 16 GB and 32 GB+ RAM running qwen3.5:35b-a3b (not yet measured on a rig).
+    'extreme': {'context_tokens': 65536, 'max_output_tokens': 4096, 'timeout_seconds': 300,
+                'opencode_timeout_seconds': 1800, 'thinking': True},
     'frontend': {**DEFAULTS, 'max_output_tokens':4096,'timeout_seconds':900},
 }
 
@@ -30,17 +45,20 @@ def validate(value):
 
 
 def load_runtime(root):
+    # Precedence: saved in the dashboard > SMELTER_CONTEXT_LENGTH > deployment defaults > built in.
+    from config_store import config_source
     stored = load_config(root, 'runtime_settings.json')['settings']
+    source = config_source(root, 'runtime_settings.json') if stored else 'default'
     settings = dict(DEFAULTS)
     sources = {key: 'default' for key in settings}
-    if 'context_tokens' not in stored and os.environ.get('SMELTER_CONTEXT_LENGTH'):
+    settings.update(stored)
+    sources.update({key: source for key in stored})
+    if source != 'saved' and os.environ.get('SMELTER_CONTEXT_LENGTH'):
         try:
             settings['context_tokens'] = int(os.environ['SMELTER_CONTEXT_LENGTH'])
         except ValueError as exc:
             raise ValueError('SMELTER_CONTEXT_LENGTH must be an integer') from exc
         sources['context_tokens'] = 'environment'
-    settings.update(stored)
-    sources.update({key: 'saved' for key in stored})
     validate(settings)
     if settings['max_output_tokens'] >= settings['context_tokens']:
         raise ValueError('Response limit must be smaller than the context length')

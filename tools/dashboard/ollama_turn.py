@@ -40,7 +40,11 @@ class OllamaTurn:
                 with self.opener(request, timeout=max(1, remaining)) as response:
                     raw = response.read(MAX_RESPONSE + 1)
             self.checkpoint()
-        except (URLError, HTTPError, TimeoutError, OSError) as exc:
+        except HTTPError as exc:
+            if exc.code == 404:
+                raise ValueError('Model ' + self.model + ' is not installed in Ollama. Choose an installed model in Settings → Ollama models, or run tools/setup/install_missing.ps1 to pull it.') from exc
+            raise ValueError('Local Ollama unavailable: HTTPError') from exc
+        except (URLError, TimeoutError, OSError) as exc:
             raise ValueError('Local Ollama unavailable: ' + type(exc).__name__) from exc
         if len(raw) > MAX_RESPONSE:
             raise ValueError('Model response too large')

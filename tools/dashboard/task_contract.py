@@ -6,8 +6,11 @@ import json
 
 def configuration(root):
     from config_store import load_config
+    from model_preferences import FALLBACK_MODEL
     from runtime_settings import load_runtime
-    value={'model':load_config(root,'model_preferences.json')['models'].get('reasoning','qwen3.5:9b'),
+    # A saved or deployed reasoning model, else the lightweight one, else the fallback.
+    models=load_config(root,'model_preferences.json')['models']
+    value={'model':models.get('reasoning') or models.get('lightweight') or FALLBACK_MODEL,
             'runtime':copy.deepcopy(load_runtime(root)['settings'])}
     value['revision']=hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
     return value

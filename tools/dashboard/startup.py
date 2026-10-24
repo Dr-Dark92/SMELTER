@@ -7,7 +7,10 @@ def startup_report(root: Path, scan_tools, ollama_probe) -> dict:
     db = inspect_database(root)
     checks = [{"name": "database", "status": db["status"], "required": True}]
     if not db["ready"]:
-        return {**db, "checks": checks, "services": {"dashboard": "running", "ollama": "not_checked", "opencode": "not_checked"}}
+        from deployment_defaults import storage_directory
+        suggested = storage_directory(root) if db["status"] == "setup_required" else None
+        return {**db, "checks": checks, "suggested_directory": suggested,
+                "services": {"dashboard": "running", "ollama": "not_checked", "opencode": "not_checked"}}
     try:
         tools = scan_tools()
         statuses = {item["name"]: item["status"] for item in tools["tools"]}

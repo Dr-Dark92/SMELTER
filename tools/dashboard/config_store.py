@@ -20,6 +20,9 @@ def load_config(root: Path, name: str) -> dict:
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn:
         row = conn.execute("SELECT payload FROM config_snapshots WHERE name=?", (name,)).fetchone()
     if row is None:
+        deployed = _deployed(root, name)
+        if deployed is not None:
+            return deployed
         if name == 'component_controls.json':
             from component_controls import DEFAULT
             return dict(DEFAULT)
@@ -35,6 +38,27 @@ def load_config(root: Path, name: str) -> dict:
     result = json.loads(row[0])
     _validate(name, result)
     return result
+
+def _deployed(root: Path, name: str) -> dict | None:
+    """Deployment default for a never-saved configuration, if valid."""
+    from deployment_defaults import config
+    value = config(root, name)
+    if value is None:
+        return None
+    try:
+        _validate(name, value)
+    except ValueError:
+        return None
+    return value
+
+def config_source(root: Path, name: str) -> str:
+    """'saved' (in the database), 'deployment' (deployment defaults) or 'default' (built in)."""
+    if name not in ALLOWED:
+        raise ValueError("Unknown configuration")
+    with closing(sqlite3.connect(_db(root), timeout=5)) as conn:
+        if conn.execute("SELECT 1 FROM config_snapshots WHERE name=?", (name,)).fetchone():
+            return 'saved'
+    return 'deployment' if _deployed(root, name) is not None else 'default'
 
 def _validate(name: str, value: dict) -> None:
     if not isinstance(value, dict) or value.get("schema_version") != 1:

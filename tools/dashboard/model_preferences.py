@@ -7,6 +7,9 @@ from pathlib import Path
 
 ROLES = ("reasoning", "lightweight")
 DEFAULT = {"schema_version": 1, "models": {}}
+# Used only when neither the dashboard nor deployment defaults chose a model.
+# Admission checks it is installed and says how to choose one if it is not.
+FALLBACK_MODEL = "qwen3.5:9b"
 
 def load_preferences(path: Path) -> dict:
     if not path.exists():

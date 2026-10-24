@@ -118,6 +118,9 @@ class Control:
             connection.response_class = lambda sock, **kwargs: http.client.HTTPResponse(
                 _ResponseSocket(cancel_socket, self, deadline), **kwargs)
             response = connection.getresponse()
+            if response.status == 404:
+                # Ollama answers 404 when the requested model is not installed.
+                raise ValueError('Model ' + str(body.get('model')) + ' is not installed in Ollama. Choose an installed model in Settings → Ollama models, or run tools/setup/install_missing.ps1 to pull it.')
             if response.status != 200:
                 raise ValueError('Local Ollama HTTP error: ' + str(response.status))
             content, thinking, calls, size = [], [], [], 0
