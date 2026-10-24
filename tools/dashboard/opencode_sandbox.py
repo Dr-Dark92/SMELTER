@@ -56,7 +56,7 @@ class ManagedClient:
     expected_directory='/workspace'
     confined=True
 
-    def __init__(self,root,policy,configuration,control=None,allow_inference=False,bridge=None):
+    def __init__(self,root,policy,configuration,control=None,allow_inference=False,bridge=None,lifetime=None):
         import secrets
         import shutil
         ready=status(root,operation='opencode')
@@ -64,13 +64,15 @@ class ManagedClient:
         from access_policy import using
         # Readiness and every task use the current checkout as their immutable
         # source reference. Live destinations are read through approved tools.
-        self.host_directory=Path(root).resolve()
+        self.root=Path(root);self.host_directory=Path(root).resolve()
         with using(policy):self.folder,self.code=snapshot(root,self.host_directory)
         self.docker=ready['docker'];self.name='smelter-opencode-'+__import__('uuid').uuid4().hex
         self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference
         self.bridge=bridge
         self.password=secrets.token_urlsafe(32);self.stop_event=threading.Event();self.thread=None;self.model_socket=None;self.lock=threading.Lock();self.closed=False;self.error=None;self.model_calls=0;self.relay_calls=0;self.cleanup_confirmed=None
         task_timeout=max(self.settings.get('opencode_timeout_seconds',self.settings['timeout_seconds']),self.settings['timeout_seconds'])
+        # A persistent session (opencode_pool) outlives single tasks; each task keeps its own deadline.
+        if lifetime:task_timeout=max(task_timeout,int(lifetime))
         environment=dict(os.environ);environment.update(SMELTER_MODEL=self.model,SMELTER_TIMEOUT=str(self.settings['timeout_seconds']),SMELTER_TASK_TIMEOUT=str(task_timeout),SMELTER_AGENT_PASSWORD=self.password)
         flags=_flags(self.docker,self.name,self.code)
         if bridge and bridge.tools:
@@ -96,6 +98,32 @@ class ManagedClient:
                 except (ValueError,OSError):time.sleep(.2)
             else:raise ValueError('Confined OpenCode server did not become healthy')
         except Exception:self.close();raise
+
+    def attach(self,control,bridge):
+        """Bind one task's control and tool bridge to a persistent session."""
+        with self.lock:self.control=control;self.bridge=bridge;self.model_calls=0;self.relay_calls=0
+
+    def detach(self):
+        """Between tasks no control or bridge is bound, so MCP calls are refused."""
+        with self.lock:self.control=None;self.bridge=None
+
+    def refresh(self,policy):
+        """Replace the mounted code snapshot in place before the next task.
+
+        A fresh snapshot is built with the usual filters and budgets, then moved
+        into the folder the container already mounts read-only.
+        """
+        import shutil
+        from access_policy import using
+        with using(policy):folder,code=snapshot(self.root,self.host_directory)
+        try:
+            for entry in list(self.code.iterdir()):
+                if entry.name=='.smelter':continue
+                if entry.is_dir() and not entry.is_symlink():shutil.rmtree(entry)
+                else:entry.unlink()
+            for entry in list(code.iterdir()):
+                if entry.name!='.smelter':shutil.move(str(entry),str(self.code/entry.name))
+        finally:shutil.rmtree(folder,ignore_errors=True)
 
     def _exec(self,script,payload=None,maximum=8*1024*1024):
         args=[self.docker,'exec']+(['--interactive'] if payload is not None else [])+[self.name,'node','-e',script]

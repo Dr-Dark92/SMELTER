@@ -45,6 +45,32 @@ class ServerLifetimeTests(unittest.TestCase):
         self.assertEqual(captured['env']['SMELTER_TASK_TIMEOUT'], '300')
 
 
+class PersistentSessionTests(unittest.TestCase):
+    def test_refresh_replaces_mounted_code_in_place(self):
+        import tempfile
+        from pathlib import Path
+        base = Path(tempfile.mkdtemp())
+        code = base / 'mounted' / 'code';(code / '.smelter').mkdir(parents=True)
+        (code / 'skills').mkdir();(code / 'skills' / 'old.md').write_text('old')
+        fresh = base / 'fresh';(fresh / 'code' / 'skills').mkdir(parents=True);(fresh / 'code' / '.smelter').mkdir()
+        (fresh / 'code' / 'skills' / 'new.md').write_text('new');(fresh / 'code' / 'README.md').write_text('readme')
+        client = object.__new__(ManagedClient);client.root = base;client.host_directory = base;client.code = code
+        with patch('opencode_sandbox.snapshot', return_value=(fresh, fresh / 'code')), \
+             patch('access_policy.using', return_value=__import__('contextlib').nullcontext()):
+            client.refresh(None)
+        self.assertEqual(sorted(p.relative_to(code).as_posix() for p in code.rglob('*')),
+                         ['.smelter', 'README.md', 'skills', 'skills/new.md'])
+        self.assertFalse(fresh.exists())
+
+    def test_attach_and_detach_reset_task_budgets(self):
+        import threading
+        client = object.__new__(ManagedClient);client.lock = threading.Lock();client.model_calls = 20;client.relay_calls = 100
+        client.attach('control', 'bridge')
+        self.assertEqual((client.control, client.bridge, client.model_calls, client.relay_calls), ('control', 'bridge', 0, 0))
+        client.detach()
+        self.assertEqual((client.control, client.bridge), (None, None))
+
+
 class ModelRelayTests(unittest.TestCase):
     def client(self,approved=True):
         client=object.__new__(ManagedClient)

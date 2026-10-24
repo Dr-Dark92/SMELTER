@@ -300,15 +300,20 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         bridge.control=control
         if control:control.file_activity=bridge.session.file_activity
     if client is None:
-        from opencode_sandbox import ManagedClient
+        # Reuse the persistent session (opencode_pool) instead of a container per task.
+        import opencode_pool
         from task_contract import configuration
         effective=control.configuration if control and control.configuration else configuration(root)
-        managed=ManagedClient(root,policy,effective,control,allow_inference=True,bridge=bridge)
+        managed=opencode_pool.acquire(root,policy,effective,control,bridge)
+        released=[]
+        def release(healthy=True):
+            if not released:released.append(opencode_pool.release(managed,healthy))
+            return released[0]
         try:
             return ask(root,conversation_id,prompt,model_key=model_key,approval=approval,
-                       control=control,client=managed,_managed_cleanup=managed.close,
+                       control=control,client=managed,_managed_cleanup=release,
                        agent_mode=agent_mode,bridge=bridge)
-        finally:managed.close()
+        finally:release(healthy=False if not released else True)
     check = status(root, client, policy=policy)
     if not check['read_only_ready']:
         raise ValueError(check['reason'])
@@ -396,7 +401,8 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
             except (ValueError, OSError):
                 abort_error = 'Abort was not confirmed; check the OpenCode server before submitting another task'
         answer = ('OpenCode request stopped.' if cancelled else 'OpenCode task failed: ' + str(exc)) + ('\n' + answer if answer else '')
-    cleanup_confirmed=_managed_cleanup() if _managed_cleanup else None
+    # A persistent session is kept only when the task's session was cleanly aborted or finished.
+    cleanup_confirmed=_managed_cleanup(abort_error is None) if _managed_cleanup else None
     if bridge:
         bridge.close()
         bridge.session.file_activity.settle(cancelled)
