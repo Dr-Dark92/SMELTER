@@ -11,6 +11,13 @@
   Agreements are not auto-accepted. Run from an administrator PowerShell so
   WSL and Docker Desktop can install.
 
+  After running, every selected tool and step is checked again. Exit status:
+    0  the selected profile is complete, or -DryRun (the plan is informational)
+    1  an install or setup action failed, or the plan was cancelled
+    2  nothing failed, but the profile is incomplete: a selected tool is
+       missing or a step is blocked/skipped (for example Docker not running)
+  -SummaryPath writes the same result as JSON for automation.
+
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missing.ps1 -DryRun
 .EXAMPLE
@@ -23,7 +30,9 @@ param(
     [switch]$Yes,
     [string]$Python,
     # low | medium | high | extreme | custom; default: detected from the GPU and RAM.
-    [string]$HardwareProfile
+    [string]$HardwareProfile,
+    # Optional JSON summary: outcome, exit code, actions and the post-run recheck.
+    [string]$SummaryPath
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -92,9 +101,13 @@ if ($Only) {
 $selectedSetup = @($catalog.setup.PSObject.Properties.Name | Where-Object { $selectedSetup -contains $_ })
 
 # ---- Part 1: tools ---------------------------------------------------------
-$scan = (& $python (Join-Path $root 'tools\setup\check_requirements.py') --json | Out-String | ConvertFrom-Json)
-$status = @{}
-foreach ($t in $scan.tools) { $status[$t.name] = $t.status }
+function Read-ToolStatus {
+    $scan = (& $python (Join-Path $root 'tools\setup\check_requirements.py') --json | Out-String | ConvertFrom-Json)
+    $result = @{}
+    foreach ($t in $scan.tools) { $result[$t.name] = $t.status }
+    return $result
+}
+$status = Read-ToolStatus
 
 $toolPlan = [ordered]@{}
 $manual = @()
@@ -111,13 +124,17 @@ foreach ($name in $selectedTools | Select-Object -Unique) {
 }
 
 # ---- Part 2: setup steps ---------------------------------------------------
-$dockerExe = Find-Exe 'docker'
-$dockerUp = $false
-if ($dockerExe) { $dockerUp = (Test-Native $dockerExe @('info', '--format', '{{.ServerVersion}}')) -eq $true }
-$ollamaModels = $null
-try { $ollamaModels = @((Invoke-RestMethod http://127.0.0.1:11434/api/tags -TimeoutSec 3).models | ForEach-Object { $_.name }) } catch {}
-$nodeExe = Find-Exe 'node'
-$npmExe = Find-Exe 'npm'
+# Re-run after installing so the final result reflects the machine, not the plan.
+function Update-Probes {
+    $script:dockerExe = Find-Exe 'docker'
+    $script:dockerUp = $false
+    if ($script:dockerExe) { $script:dockerUp = (Test-Native $script:dockerExe @('info', '--format', '{{.ServerVersion}}')) -eq $true }
+    $script:ollamaModels = $null
+    try { $script:ollamaModels = @((Invoke-RestMethod http://127.0.0.1:11434/api/tags -TimeoutSec 3).models | ForEach-Object { $_.name }) } catch {}
+    $script:nodeExe = Find-Exe 'node'
+    $script:npmExe = Find-Exe 'npm'
+}
+Update-Probes
 
 function Get-NpmName($package) { return ($package -replace '(?<=.)@[^@]+$', '') }
 
@@ -198,14 +215,71 @@ function Get-SetupState($id, $step) {
     }
 }
 
-$setupPlan = [ordered]@{}
-$setupReport = @()
-foreach ($id in $selectedSetup) {
-    $step = $catalog.setup.$id
-    $s = Get-SetupState $id $step
-    $setupReport += [pscustomobject]@{Step=$id; State=$s.state; Detail=$(if ($s.why) { $s.why } elseif ($s.note) { $s.note } else { $step.purpose })}
-    if ($s.state -eq 'todo') { $setupPlan[$id] = $s.argv }
+function Get-SetupReport {
+    $report = @()
+    foreach ($id in $selectedSetup) {
+        $step = $catalog.setup.$id
+        $s = Get-SetupState $id $step
+        $report += [pscustomobject]@{Step=$id; State=$s.state; Detail=$(if ($s.why) { $s.why } elseif ($s.note) { $s.note } else { $step.purpose }); Argv=$s.argv}
+    }
+    return ,$report
 }
+
+function Get-ToolReport {
+    $report = @()
+    foreach ($name in $selectedTools | Select-Object -Unique) {
+        # npm shims are reported unverified rather than executed; the shim existing is enough.
+        $ready = $status[$name] -eq 'installed' -or ($status[$name] -eq 'detected_unverified' -and $catalog.tools.$name.npm)
+        $report += [pscustomobject]@{Tool=$name; Status=$(if ($status[$name]) { $status[$name] } else { 'unknown' }); Ready=[bool]$ready}
+    }
+    return ,$report
+}
+
+# Pure decision from the action results and the post-run recheck (unit tested).
+function Get-InstallOutcome($Results, $Tools, $Setup, [switch]$Planned) {
+    $failed = @($Results | Where-Object { $_.Result -like 'failed*' } | ForEach-Object { $_.Item })
+    $skipped = @($Results | Where-Object { $_.Result -like 'skipped*' } | ForEach-Object { $_.Item })
+    $missing = @($Tools | Where-Object { -not $_.Ready } | ForEach-Object { $_.Tool })
+    $blocked = @($Setup | Where-Object { $_.State -ne 'done' } | ForEach-Object { "$($_.Step) ($($_.State))" })
+    $incomplete = $missing.Count + $blocked.Count + $skipped.Count
+    if ($Planned) { $outcome = 'planned'; $code = 0 }
+    elseif ($failed.Count) { $outcome = 'failed'; $code = 1 }
+    elseif ($incomplete) { $outcome = 'incomplete'; $code = 2 }
+    else { $outcome = 'complete'; $code = 0 }
+    return [pscustomobject]@{Outcome=$outcome; ExitCode=$code; Failed=$failed; Skipped=$skipped; Missing=$missing; Blocked=$blocked}
+}
+
+# $Setup: reuse the plan's probes when nothing ran; otherwise probe again.
+function Complete-Install($Results, $Setup = $null, [switch]$Planned) {
+    $tools = Get-ToolReport
+    $setup = if ($null -ne $Setup) { $Setup } else { Get-SetupReport }
+    $outcome = Get-InstallOutcome $Results $tools $setup -Planned:$Planned
+    if (-not $Planned) {
+        Write-Host "`nRecheck" -ForegroundColor Cyan
+        switch ($outcome.Outcome) {
+            'complete'   { Write-Host '  Selected profile is complete.' -ForegroundColor Green }
+            'failed'     { Write-Host "  Failed: $($outcome.Failed -join ', ')" -ForegroundColor Red }
+            'incomplete' { Write-Host '  Selected profile is NOT complete.' -ForegroundColor Yellow }
+        }
+        if ($outcome.Missing.Count) { Write-Host "  Missing tools: $($outcome.Missing -join ', ')" -ForegroundColor Yellow }
+        if ($outcome.Blocked.Count) { Write-Host "  Steps not done: $($outcome.Blocked -join ', ')" -ForegroundColor Yellow }
+        if ($outcome.Skipped.Count) { Write-Host "  Skipped: $($outcome.Skipped -join ', ')" -ForegroundColor Yellow }
+    }
+    if ($SummaryPath) {
+        [ordered]@{
+            schema_version = 1; outcome = $outcome.Outcome; exit_code = $outcome.ExitCode; dry_run = [bool]$DryRun
+            profiles = @($ProfileName | Where-Object { $_ }); only = @($Only | Where-Object { $_ })
+            actions = @($Results | ForEach-Object { [ordered]@{item = $_.Item; result = $_.Result} })
+            tools = @($tools | ForEach-Object { [ordered]@{name = $_.Tool; status = $_.Status; ready = $_.Ready} })
+            setup = @($setup | ForEach-Object { [ordered]@{step = $_.Step; state = $_.State; detail = $_.Detail} })
+        } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $SummaryPath -Encoding UTF8
+    }
+    exit $outcome.ExitCode
+}
+
+$setupPlan = [ordered]@{}
+$setupReport = Get-SetupReport
+foreach ($r in $setupReport) { if ($r.State -eq 'todo') { $setupPlan[$r.Step] = $r.Argv } }
 
 # ---- Plan ------------------------------------------------------------------
 Write-Host 'SMELTER install plan (from system-requirements.json)' -ForegroundColor Cyan
@@ -237,7 +311,7 @@ function Write-DeploymentDefaults([switch]$Preview) {
 if ($DryRun -or ($toolPlan.Count -eq 0 -and $setupPlan.Count -eq 0)) {
     if ($setupReport | Where-Object State -eq 'blocked') { Write-Host 'Fix the blocked items above, then run this script again.' -ForegroundColor Yellow }
     Write-DeploymentDefaults -Preview:$DryRun
-    exit 0
+    Complete-Install @() $setupReport -Planned:$DryRun
 }
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -287,4 +361,7 @@ if ($toolPlan.Count) {
     Write-Host 'and run this script again to finish the setup steps that needed the new tools.'
 }
 Write-DeploymentDefaults
-if ($results | Where-Object { $_.Result -like 'failed*' }) { exit 1 }
+# Installed tools may not be on this window's PATH; a stale probe reports them missing (exit 2).
+$status = Read-ToolStatus
+Update-Probes
+Complete-Install $results

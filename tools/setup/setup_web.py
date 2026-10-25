@@ -14,6 +14,10 @@ from profiles import catalog, resolve
 from install_actions import build_actions
 
 ROOT = Path(__file__).resolve().parents[2]
+# Stdlib-only bounded runner shared with the dashboard: owned job/process group,
+# deadline, output budget and cancellation, including descendants holding pipes.
+sys.path.insert(0, str(ROOT / "tools/dashboard"))
+import process_runner
 REQ = ROOT / "requirements.txt"
 SCANNER = ROOT / "tools/setup/check_requirements.py"
 TESTS = ROOT / "tools/setup"
@@ -24,8 +28,8 @@ body{font:15px system-ui;background:#0b101a;color:#e8effb;margin:0}main{max-widt
 <section class="panel"><h2>1 · Check requirements</h2><button id="scan">Scan system</button><pre id="scanout">Not scanned</pre></section>
 <section class="panel"><h2>2 · Review installation plan</h2><label>☑ Vanilla core (required)</label><label>☐ Blender (deferred)</label><label>☐ FFmpeg (deferred)</label><label>☐ 7-Zip (deferred)</label><button id="plan">Review plan</button><pre id="planout">Not reviewed</pre></section>
 <section class="panel"><h2>3 · Optional profile dependency preview</h2><p class="muted">Preview only; no additional software will be installed.</p><div id="profiles"></div><button id="preview">Preview selected dependencies</button><pre id="previewout">Select profiles to inspect requirements</pre></section>
-<section class="panel"><h2>4 · Optional dependency installation</h2><p class="muted">Windows winget only. Review exact package IDs and approve separately. May request elevation or interactive terms.</p><div id="installchoices"></div><button id="queue">Review install queue</button><pre id="queueout">No install queue</pre><label><input id="installapprove" type="checkbox"> I approve these exact packages and their installation</label><button id="install" disabled>Install approved packages</button><pre id="installlog">No dependency installation run</pre></section>
-<section class="panel"><h2>5 · Approve Vanilla setup</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
+<section class="panel"><h2>4 · Optional dependency installation</h2><p class="muted">Windows winget only. Review exact package IDs and approve separately. May request elevation or interactive terms.</p><div id="installchoices"></div><button id="queue">Review install queue</button><pre id="queueout">No install queue</pre><label><input id="installapprove" type="checkbox"> I approve these exact packages and their installation</label><button id="install" disabled>Install approved packages</button> <button id="installcancel" type="button">Cancel installation</button><pre id="installlog">No dependency installation run</pre></section>
+<section class="panel"><h2>5 · Approve Vanilla setup</h2><label><input id="approve" type="checkbox"> I approve the displayed plan</label><button id="apply" disabled>Run setup</button> <button id="cancel" type="button">Cancel setup</button><p id="status" class="muted">Idle</p><pre id="log">No installation run</pre></section>
 <script>
 const token=new URLSearchParams(location.hash.slice(1)).get('token');const el=id=>document.getElementById(id);let planId=null,installId=null,preview=null;
 async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'X-Smelter-Token':token||'','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||r.status);return d}
@@ -39,6 +43,8 @@ async function installPoll(){try{const p=await api('/api/install-progress');el('
 el('scan').onclick=async()=>{try{el('scanout').textContent=JSON.stringify(await api('/api/scan'),null,2)}catch(e){error(e)}};
 el('plan').onclick=async()=>{try{const p=await api('/api/plan');planId=p.plan_id;el('planout').textContent=JSON.stringify(p,null,2);el('approve').checked=false;el('apply').disabled=true}catch(e){error(e)}};
 el('approve').onchange=()=>el('apply').disabled=!el('approve').checked||!planId;
+el('installcancel').onclick=async()=>{try{await api('/api/install-cancel','POST',{})}catch(e){error(e)}};
+el('cancel').onclick=async()=>{try{await api('/api/cancel','POST',{})}catch(e){error(e)}};
 el('apply').onclick=async()=>{try{el('apply').disabled=true;await api('/api/apply','POST',{plan_id:planId,approved:true});poll()}catch(e){error(e)}};
 async function poll(){try{const p=await api('/api/progress');el('status').textContent=p.status;el('log').textContent=p.lines.join('\n');if(p.status==='running')setTimeout(poll,750);else{planId=null;el('approve').checked=false}}catch(e){error(e)}}
 </script></main></html>'''
@@ -69,13 +75,99 @@ def winget_list_state(result, package_id):
         return "absent"
     raise RuntimeError("winget list failed (exit code " + str(result.returncode) + "); refusing potential upgrade")
 
-class DependencyInstaller:
+# Per-child deadlines (seconds) and the retained output budget for each child.
+WINGET_LIST_TIMEOUT = 30
+WINGET_INSTALL_TIMEOUT = 1800
+VENV_TIMEOUT = 300
+SCANNER_TIMEOUT = 120
+TESTS_TIMEOUT = 900
+CHILD_OUTPUT = 2 * 1024 * 1024
+
+
+class _Lines:
+    """Turns the runner's streamed byte chunks into bounded log lines."""
+    def __init__(self, log):
+        self.log, self.pending = log, b""
+
+    def write(self, chunk):
+        self.pending += chunk
+        *lines, self.pending = self.pending.split(b"\n")
+        for line in lines:
+            self.log(line.decode("utf-8", "replace").rstrip("\r"))
+        if len(self.pending) > 4096:  # A child that never writes a newline.
+            self.log(self.pending.decode("utf-8", "replace"))
+            self.pending = b""
+
+    def flush(self):
+        if self.pending:
+            self.log(self.pending.decode("utf-8", "replace").rstrip("\r"))
+            self.pending = b""
+
+
+class _Supervised:
+    """One worker at a time that owns its children and can be cancelled or shut down."""
+    def _init_supervision(self):
+        self.cancel_event = threading.Event()
+        self.worker = None
+
+    def _start(self, target, *args):
+        # Called with self.lock held and status already "running".
+        self.cancel_event = threading.Event()
+        self.worker = threading.Thread(target=self._supervise, args=(target,) + args, daemon=True)
+        self.worker.start()
+
+    def _supervise(self, target, *args):
+        try:
+            target(*args)
+            status = "completed"
+        except Exception as exc:
+            cancelled = self.cancel_event.is_set()
+            self.log("Cancelled; owned child processes were terminated." if cancelled else "ERROR: " + str(exc))
+            status = "cancelled" if cancelled else "failed"
+        with self.lock:
+            self.status = status
+
+    def child(self, argv, timeout, **options):
+        """Run a fixed argv as an owned child; stream its output unless captured."""
+        if self.cancel_event.is_set():
+            raise RuntimeError("Cancelled before starting " + Path(argv[0]).name)
+        if options.get("capture_output"):
+            return process_runner.run(argv, cwd=ROOT, timeout=timeout, max_output=CHILD_OUTPUT,
+                                      cancel=self.cancel_event, text=True, **options)
+        sink = _Lines(self.log)
+        try:
+            return process_runner.run(argv, cwd=ROOT, timeout=timeout, max_output=CHILD_OUTPUT,
+                                      cancel=self.cancel_event, stdout=sink, stderr=subprocess.STDOUT)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(Path(argv[0]).name + " exceeded its " + str(timeout) + " s deadline; owned processes were terminated")
+        finally:
+            sink.flush()
+
+    def cancel(self):
+        with self.lock:
+            if self.status != "running":
+                raise ValueError("Nothing is running")
+        self.cancel_event.set()
+        return {"status": "cancelling"}
+
+    def shutdown(self, timeout=15):
+        """Cancel and wait for the worker; the runner then reaps its owned children."""
+        self.cancel_event.set()
+        worker = self.worker
+        if worker is not None:
+            worker.join(timeout)
+            return not worker.is_alive()
+        return True
+
+
+class DependencyInstaller(_Supervised):
     def __init__(self):
         self.lock = threading.Lock()
         self.status = "idle"
         self.lines = []
         self.install_id = None
         self.actions = []
+        self._init_supervision()
 
     def plan(self, profiles, names):
         from check_requirements import scan
@@ -101,47 +193,35 @@ class DependencyInstaller:
             self.actions = []
             self.lines = []
             self.status = "running"
-        threading.Thread(target=self.run, args=(actions,), daemon=True).start()
+            self._start(self.run, actions)
 
     def run(self, actions):
-        try:
-            for action in actions:
-                command = action["command"]
-                self.log("Installing " + action["name"] + " (" + action["package_id"] + ")")
-                # Winget install can UPGRADE an existing package when its executable
-                # is absent from PATH. Check registered packages before invoking it.
-                listed = subprocess.run(
-                    ["winget", "list", "--id", action["package_id"], "--exact"],
-                    cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True,
-                    text=True, errors="replace", timeout=30, check=False,
-                )
-                state = winget_list_state(listed, action["package_id"])
-                if state == "installed":
-                    self.log("Already registered with winget: " + action["name"] + "; skipping install/upgrade.")
-                    from check_requirements import scan
-                    observed = {t["name"]: t for t in scan()["tools"]}
-                    if observed.get(action["name"], {}).get("status") != "installed":
-                        raise RuntimeError(action["name"] + " is registered but executable not verified; check installation location")
-                    self.log("Verified: " + action["name"])
-                    continue
-                proc = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.DEVNULL,
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                        text=True, errors="replace")
-                for line in proc.stdout:
-                    self.log(line.rstrip())
-                if proc.wait() != 0:
-                    raise RuntimeError("winget failed for " + action["name"])
+        for action in actions:
+            command = action["command"]
+            self.log("Installing " + action["name"] + " (" + action["package_id"] + ")")
+            # Winget install can UPGRADE an existing package when its executable
+            # is absent from PATH. Check registered packages before invoking it.
+            try:
+                listed = self.child(["winget", "list", "--id", action["package_id"], "--exact"],
+                                    WINGET_LIST_TIMEOUT, capture_output=True)
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("winget list exceeded its " + str(WINGET_LIST_TIMEOUT) + " s deadline")
+            state = winget_list_state(listed, action["package_id"])
+            if state == "installed":
+                self.log("Already registered with winget: " + action["name"] + "; skipping install/upgrade.")
                 from check_requirements import scan
                 observed = {t["name"]: t for t in scan()["tools"]}
                 if observed.get(action["name"], {}).get("status") != "installed":
-                    raise RuntimeError(action["name"] + " not verified; restart shell or check PATH")
+                    raise RuntimeError(action["name"] + " is registered but executable not verified; check installation location")
                 self.log("Verified: " + action["name"])
-            status = "completed"
-        except Exception as exc:
-            self.log("ERROR: " + str(exc))
-            status = "failed"
-        with self.lock:
-            self.status = status
+                continue
+            if self.child(command, WINGET_INSTALL_TIMEOUT).returncode != 0:
+                raise RuntimeError("winget failed for " + action["name"])
+            from check_requirements import scan
+            observed = {t["name"]: t for t in scan()["tools"]}
+            if observed.get(action["name"], {}).get("status") != "installed":
+                raise RuntimeError(action["name"] + " not verified; restart shell or check PATH")
+            self.log("Verified: " + action["name"])
 
     def log(self, message):
         with self.lock:
@@ -153,12 +233,13 @@ class DependencyInstaller:
             return {"status": self.status, "lines": list(self.lines)}
 
 
-class Engine:
+class Engine(_Supervised):
     def __init__(self):
         self.lock = threading.Lock()
         self.status = "idle"
         self.lines = []
         self.plan_id = None
+        self._init_supervision()
 
     def plan(self):
         details = validate_plan()
@@ -178,39 +259,29 @@ class Engine:
             self.plan_id = None
             self.status = "running"
             self.lines = []
-        threading.Thread(target=self.run, daemon=True).start()
+            self._start(self.run)
 
     def log(self, line):
         with self.lock:
             self.lines.append(line[:400])
             self.lines = self.lines[-400:]
 
-    def execute(self, argv):
+    def execute(self, argv, timeout):
         self.log("Running: " + Path(argv[0]).name + " " + " ".join(Path(a).name if a.startswith(str(ROOT)) else a for a in argv[1:]))
-        proc = subprocess.Popen(argv, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, text=True, errors="replace")
-        for line in proc.stdout:
-            self.log(line.rstrip())
-        if proc.wait():
-            raise RuntimeError("Step failed with exit code " + str(proc.returncode))
+        returncode = self.child(argv, timeout).returncode
+        if returncode:
+            raise RuntimeError("Step failed with exit code " + str(returncode))
 
     def run(self):
-        try:
-            venv = ROOT / ".venv"
-            python = venv / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
-            if not python.is_file():
-                self.execute([sys.executable, "-m", "venv", str(venv)])
-            if not python.is_file():
-                raise RuntimeError("Virtual environment Python missing")
-            self.execute([str(python), str(SCANNER)])
-            self.execute([str(python), "-m", "unittest", "discover", "-s", str(TESTS), "-p", "test_*.py", "-v"])
-            self.log("Vanilla setup verified; no optional tools installed.")
-            status = "completed"
-        except Exception as exc:
-            self.log("ERROR: " + str(exc))
-            status = "failed"
-        with self.lock:
-            self.status = status
+        venv = ROOT / ".venv"
+        python = venv / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+        if not python.is_file():
+            self.execute([sys.executable, "-m", "venv", str(venv)], VENV_TIMEOUT)
+        if not python.is_file():
+            raise RuntimeError("Virtual environment Python missing")
+        self.execute([str(python), str(SCANNER)], SCANNER_TIMEOUT)
+        self.execute([str(python), "-m", "unittest", "discover", "-s", str(TESTS), "-p", "test_*.py", "-v"], TESTS_TIMEOUT)
+        self.log("Vanilla setup verified; no optional tools installed.")
 
     def progress(self):
         with self.lock:
@@ -272,7 +343,7 @@ def handler_factory(engine, token, port, installer=None):
         def do_POST(self):
             if not self.auth():
                 return
-            if urlsplit(self.path).path not in ("/api/apply", "/api/preview", "/api/install-plan", "/api/install-apply"):
+            if urlsplit(self.path).path not in ("/api/apply", "/api/preview", "/api/install-plan", "/api/install-apply", "/api/cancel", "/api/install-cancel"):
                 self.reply(404, {"error": "Not found"})
                 return
             try:
@@ -282,7 +353,11 @@ def handler_factory(engine, token, port, installer=None):
                 body = json.loads(self.rfile.read(length))
                 if not isinstance(body, dict):
                     raise ValueError("Expected JSON object")
-                if urlsplit(self.path).path == "/api/install-plan":
+                if urlsplit(self.path).path == "/api/cancel":
+                    self.reply(202, engine.cancel())
+                elif urlsplit(self.path).path == "/api/install-cancel":
+                    self.reply(202, installer.cancel())
+                elif urlsplit(self.path).path == "/api/install-plan":
                     self.reply(200, installer.plan(body.get("profiles"), body.get("names")))
                 elif urlsplit(self.path).path == "/api/install-apply":
                     installer.apply(body.get("install_id"), body.get("approved") is True)
@@ -311,7 +386,8 @@ def main():
         parser.error("Invalid port")
     token = secrets.token_urlsafe(32)
     # The server is loopback-only; port zero is supported for test automation.
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_factory(Engine(), token, args.port))
+    engine, installer = Engine(), DependencyInstaller()
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_factory(engine, token, args.port, installer))
     port = server.server_address[1]
     print("SMELTER setup: http://127.0.0.1:" + str(port) + "/ (Ctrl+C to stop)", flush=True)
     if not args.no_browser:
@@ -322,6 +398,10 @@ def main():
         pass
     finally:
         server.server_close()
+        # Closing the wizard cancels running work; the runner reaps owned children.
+        for owner in (engine, installer):
+            if not owner.shutdown():
+                print("Warning: a setup worker did not stop within its shutdown deadline", file=sys.stderr, flush=True)
 
 if __name__ == "__main__":
     main()

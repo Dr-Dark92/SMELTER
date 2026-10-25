@@ -69,6 +69,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missin
 
 `-Profile opencode_agent` limits the run to one profile; `-Only docker,image_opencode` to named tools or steps. The script prints exact commands, marks steps **blocked** when a prerequisite is not ready (for example Docker Desktop not started), asks before changing anything, does not auto-accept agreements, and summarizes each result. Docker steps need Docker Desktop running. After installing WSL or Docker, restart Windows, start Docker Desktop once, open a new PowerShell and run the script again to finish the setup steps.
 
+After a real run the script checks every selected tool and step again and reports the result. Its exit status is truthful for automation: **0** means the selected profile is complete (a `-DryRun` also exits 0 because it only shows the plan); **1** means an action failed or the plan was cancelled; **2** means nothing failed but the profile is still incomplete, because a tool is missing or a step is blocked or skipped. A tool installed in this run may not be on the current window's PATH yet, so it can report 2 until you rerun it in a new window. `-SummaryPath summary.json` writes the outcome, exit code, actions and recheck as JSON.
+
 ## What each dashboard feature needs
 
 | Feature | Needs |
@@ -152,6 +154,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\start_setup.ps
 ```
 
 The CLI starts a loopback-only web app at `http://127.0.0.1:8767/` and opens a browser with a per-session authorization token. Leave the PowerShell window open while using the wizard. Review the plan and explicitly approve it before the backend runs a fixed sequence: create a local `.venv` if missing, run the requirements scanner, and run setup unit tests. Logs stream into the browser; no second terminal window is required.
+
+Every child the wizard starts (the setup steps above and approved winget queries/installs) runs as an owned process tree: a Windows job object, or a process group elsewhere. Each child has a deadline: winget query 30 s, winget install 30 min, `.venv` 5 min, scanner 2 min, unit tests 15 min. Output is capped at 2 MiB per child, and log lines at 400 characters. **Cancel setup** and **Cancel installation** stop the running child and any descendants, including ones that still hold its output pipe. Closing the wizard with Ctrl+C cancels running work and reaps those processes before exiting. A cancelled run reports `cancelled`, not `failed`. Cancelling an installer mid-way can leave that package partly installed; rerun the plan to check.
 
 This is an initial functional wizard, **not** a package-manager installer: it does not download dependencies or install Node.js, Java, Blender, FFmpeg, 7-Zip, or other optional tools. Do not expose the loopback service through a proxy or port-forward. The wizard and its browser integration require local Windows testing.
 
