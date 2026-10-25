@@ -36,7 +36,8 @@ async function call(name,argumentsValue){
   const id=randomUUID(),input=path.join(queue,id+'.request'),output=path.join(queue,id+'.response');
   const files=[input,output];active.add(files);
   try{
-    const raw=JSON.stringify({id,kind:'mcp',name,arguments:argumentsValue});
+    let generation=null;try{generation=JSON.parse(fs.readFileSync('/run/smelter-task.json','utf8')).generation}catch{}
+    const raw=JSON.stringify({id,generation,kind:'mcp',name,arguments:argumentsValue});
     if(Buffer.byteLength(raw)>maximum) throw Error('Tool arguments exceed budget');
     const pending=input+'.pending';
     fs.writeFileSync(pending,raw,{flag:'wx'});fs.renameSync(pending,input);

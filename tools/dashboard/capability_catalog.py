@@ -5,18 +5,25 @@ from skills_catalog import catalog_skills
 
 
 def catalog(root):
-    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
+    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'melty_read':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
     tools=[]
     from sandbox import status as sandbox_status
     confined=sandbox_status(root)
     from rea_connection import package_status
     rea=package_status(root)
+    from ghidra_connection import status as ghidra_status
+    ghidra=ghidra_status(root)
+    from melty_connection import status as melty_status
+    melty=melty_status(root)
     for entry in schemas(grants):
         function=entry['function'];name=function['name']
         tools.append({'id':name,'description':function['description'],'parameters':function['parameters'],
                       'source':'dashboard/tool_registry','adapter':'registered_builtin','transports':['python','smelter-mcp'],
                       'availability':'requires_per_message_grants','authority':'registered locations intersected with adapter contract',
                       'executable':True})
+        if name.startswith('melty_'):
+            tools[-1].update(dependency='Melty HTTPS MCP + host sign-in', reason=melty['reason'], read_only=True)
+            if melty['status']!='configured':tools[-1]['availability']='blocked'
         if name in ('validate_frontend_workspace','launch_frontend_preview'):
             tools[-1].update(availability='requires_per_message_grants' if confined['ready'] else 'blocked',dependency='confined Docker runner',reason=confined['reason'])
         if name=='launch_frontend_preview':tools[-1]['transports']=['python (dashboard owner)']
@@ -25,7 +32,10 @@ def catalog(root):
             tools[-1]['profiles']={profile:{'availability':'requires_per_message_grants' if report['ready'] else 'blocked',
                                            'reason':report['reason']} for profile,report in profiles.items()}
             tools[-1]['availability']='requires_per_message_grants' if any(r['ready'] for r in profiles.values()) else 'blocked'
-        if name.startswith('rea_') and rea['status']!='installed':tools[-1].update(availability='blocked',dependency='rea-agents',reason=rea['reason'])
+        if name.startswith('rea_ghidra_'):
+            tools[-1].update(dependency='Ghidra headless + Java', provider='ghidra', reason=ghidra['reason'])
+            if ghidra['status']!='installed':tools[-1]['availability']='blocked'
+        elif name.startswith('rea_') and rea['status']!='installed':tools[-1].update(availability='blocked',dependency='rea-agents',reason=rea['reason'])
     # These operations are discoverable library adapters, not implicitly executable
     # GUI tools. Their core callers must use explicit trusted registration.
     for module,names in {'smelter_asset_adapter':['inspect_glb','convert_glb_to_obj','validate_obj'],

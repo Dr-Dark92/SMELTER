@@ -402,7 +402,7 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
                 abort_error = 'Abort was not confirmed; check the OpenCode server before submitting another task'
         answer = ('OpenCode request stopped.' if cancelled else 'OpenCode task failed: ' + str(exc)) + ('\n' + answer if answer else '')
     # A persistent session is kept only when the task's session was cleanly aborted or finished.
-    cleanup_confirmed=_managed_cleanup(abort_error is None) if _managed_cleanup else None
+    cleanup_confirmed=_managed_cleanup(not (cancelled or failed or output_limited or abort_error)) if _managed_cleanup else None
     if bridge:
         bridge.close()
         bridge.session.file_activity.settle(cancelled)

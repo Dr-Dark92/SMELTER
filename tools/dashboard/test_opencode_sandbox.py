@@ -4,7 +4,7 @@ import json
 import threading
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from opencode_sandbox import ManagedClient
 from sandbox import _remove
 
@@ -65,10 +65,18 @@ class PersistentSessionTests(unittest.TestCase):
     def test_attach_and_detach_reset_task_budgets(self):
         import threading
         client = object.__new__(ManagedClient);client.lock = threading.Lock();client.model_calls = 20;client.relay_calls = 100
-        client.attach('control', 'bridge')
-        self.assertEqual((client.control, client.bridge, client.model_calls, client.relay_calls), ('control', 'bridge', 0, 0))
+        client.closed=False;client.active_responses=0;client.quiescent=threading.Condition(client.lock)
+        client._exec=Mock();client.settings={'timeout_seconds':30};client.error=None
+        bridge=Mock();bridge.cleanup_wait_timeout.return_value=1
+        client.attach('control', bridge)
+        self.assertEqual((client.control, client.bridge, client.model_calls, client.relay_calls), ('control', bridge, 0, 0))
+        generation=client.task_generation
+        self.assertRegex(generation,r'^[a-f0-9]{32}$');self.assertTrue(client.accepting)
         client.detach()
         self.assertEqual((client.control, client.bridge), (None, None))
+        self.assertIsNone(client.task_generation);self.assertFalse(client.accepting)
+        self.assertEqual(client._exec.call_args.args[1],{'generation':None})
+        bridge.close.assert_called_once()
 
 
 class ModelRelayTests(unittest.TestCase):
@@ -76,7 +84,10 @@ class ModelRelayTests(unittest.TestCase):
         client=object.__new__(ManagedClient)
         client.model='fixture:9b';client.settings={'context_tokens':32768,'max_output_tokens':128,'timeout_seconds':30,'thinking':False}
         client.allow_inference=approved;client.model_calls=0;client.relay_calls=0
-        client.control=SimpleNamespace(tool_call_limit=0,context_budget=None)
+        client.lock=threading.Lock();client.quiescent=threading.Condition(client.lock)
+        client.control=SimpleNamespace(tool_call_limit=0,context_budget=None,check=lambda:None)
+        client.bridge=None;client.closed=False;client.accepting=True;client.active_responses=0
+        client.task_generation='a'*32;client.stop_event=threading.Event()
         self.requests=[]
         def infer(body,timeout,maximum):
             self.requests.append((body,timeout,maximum))
@@ -86,12 +97,61 @@ class ModelRelayTests(unittest.TestCase):
 
     def packet(self,**overrides):
         body={'model':'fixture:9b','messages':[{'role':'user','content':'Inspect README'}],'max_tokens':999,'stream':False,**overrides}
-        return {'method':'POST','path':'/v1/chat/completions','body':base64.b64encode(json.dumps(body).encode()).decode()}
+        return {'generation':'a'*32,'method':'POST','path':'/v1/chat/completions','body':base64.b64encode(json.dumps(body).encode()).decode()}
 
     def test_inspection_session_cannot_prompt_model(self):
         client=self.client(False)
         with self.assertRaisesRegex(ValueError,'not approved'):client._response(self.packet())
         self.assertEqual(self.requests,[])
+
+    def test_detached_session_cannot_prompt_model(self):
+        client=self.client();client.control=None;client.accepting=False
+        with self.assertRaisesRegex(ValueError,'active admitted'):client._response(self.packet())
+        self.assertEqual(self.requests,[])
+
+    def test_completed_control_cannot_start_another_inference(self):
+        client=self.client();client.control.completed=True
+        with self.assertRaisesRegex(ValueError,'active admitted'):client._response(self.packet())
+        self.assertEqual(self.requests,[])
+
+    def test_previous_generation_cannot_use_new_task_control(self):
+        client=self.client();packet=self.packet();client.task_generation='b'*32
+        with self.assertRaisesRegex(ValueError,'Stale'):client._response(packet)
+        with self.assertRaisesRegex(ValueError,'Stale'):
+            client._response({'kind':'mcp','generation':'a'*32,'name':'rea_capabilities','arguments':{}})
+        self.assertEqual(self.requests,[])
+        self.assertEqual(client.active_responses,0)
+
+    def test_detach_waits_for_active_tool_before_clearing_bridge(self):
+        client=self.client();client._exec=Mock();entered=threading.Event();finish=threading.Event()
+        bridge=Mock();bridge.cleanup_wait_timeout.return_value=2;revoked=threading.Event()
+        bridge.close.side_effect=revoked.set
+        def call(*args):
+            entered.set();finish.wait(2);return {'content':[]}
+        bridge.call.side_effect=call;client.bridge=bridge
+        worker=threading.Thread(target=lambda:client._response({'kind':'mcp','generation':'a'*32,'name':'tool','arguments':{}}))
+        worker.start();self.assertTrue(entered.wait(1))
+        detached=[];waiter=threading.Thread(target=lambda:detached.append(client.detach()))
+        waiter.start()
+        try:
+            self.assertTrue(revoked.wait(1))
+            bridge.close.assert_called_once()
+            self.assertIs(client.bridge,bridge);self.assertIsNotNone(client.control)
+            self.assertFalse(client.accepting)
+            self.assertTrue(waiter.is_alive())
+        finally:finish.set();worker.join(2);waiter.join(2)
+        self.assertEqual(detached,[True]);self.assertIsNone(client.bridge);self.assertIsNone(client.control)
+
+    def test_close_preserves_bridge_for_registered_operation_cleanup_wait(self):
+        import tempfile
+        from pathlib import Path
+        client=self.client();client.folder=Path(tempfile.mkdtemp());client.name='fixture';client.image='fixture';client.docker='docker'
+        bridge=Mock();bridge.active.is_set.return_value=True;bridge.cleanup_wait_timeout.return_value=180
+        client.bridge=bridge;client.thread=Mock();client.thread.is_alive.return_value=False;client.model_socket=None
+        client.control.lock=threading.RLock();client.control.sock=None
+        with patch('opencode_sandbox.record_owner'),patch('opencode_sandbox._remove',return_value=True):
+            self.assertTrue(client.close())
+        bridge.close.assert_called_once();client.thread.join.assert_called_once_with(timeout=180)
 
     def test_model_and_route_allowlist_precedes_outgoing_inference(self):
         client=self.client()

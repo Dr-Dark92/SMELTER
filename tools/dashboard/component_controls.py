@@ -57,6 +57,25 @@ def check_admission(root, engine, mcp_required=False):
         require_enabled(root, 'mcp')
 
 
+def enable_agent_components(root):
+    """Selecting OpenCode enables its runtime and built-in transport together.
+
+    This changes component availability only, never task tool/path grants.
+    """
+    from chat_jobs import JOBS
+    from job_store import active
+    from config_store import save_config
+    with JOBS.lock:
+        if manager(root).changing:
+            raise ValueError('A system component operation is in progress; wait before starting OpenCode')
+        flags = settings(root)
+        if flags['opencode'] and flags['mcp']:
+            return
+        if any(j['state'] == 'running' for j in JOBS.jobs.values()) or active(root):
+            raise ValueError('Finish or stop the active chat task before enabling OpenCode')
+        save_config(root, NAME, {**flags, 'opencode': True, 'mcp': True})
+
+
 def ollama_request(path, body=None, timeout=2):
     if path not in ('/api/version', '/api/tags', '/api/ps', '/api/generate'):
         raise ValueError('Unsupported component endpoint')

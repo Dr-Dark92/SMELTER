@@ -2,6 +2,7 @@
 let activeChat=null;
 let selectedSkills=[];
 let autoSkills=false;
+let openCodeStartupReady=false;
 function initShell(){
  const main=document.querySelector('main'), sections=[...main.querySelectorAll(':scope > section.panel:not(#bootstrap)')];
  const shell=document.createElement('div');shell.id='shell';
@@ -23,10 +24,15 @@ function initShell(){
  const writeGrant=document.createElement('input');writeGrant.type='checkbox';writeGrant.id='approveDiagnostics';
  const writeLabel=document.createElement('label');writeLabel.append(writeGrant,document.createTextNode(' Allow new Markdown reports in diagnostics/ (no overwrite)'));
  const reaGrant=document.createElement('input');reaGrant.type='checkbox';reaGrant.id='approveRea';
- const reaLabel=document.createElement('label');reaLabel.append(reaGrant,document.createTextNode(' Allow REA CLI for this message (runs Node; static PE inspection in the folder above)'));
+ const reaLabel=document.createElement('label');reaLabel.append(reaGrant,document.createTextNode(' Allow REA and Ghidra for this message (static binary analysis in the folder above; target is not executed)'));
  const reaCheck=document.createElement('button');reaCheck.type='button';reaCheck.id='reaCheck';reaCheck.textContent='Check REA connection';
  const reaStatus=document.createElement('p');reaStatus.id='reaStatus';
  reaCheck.onclick=async()=>{try{const s=await api('/api/rea/status');reaStatus.textContent='REA: '+s.status+' | version: '+(s.installed_version||'not installed')+' | '+s.reason}catch(e){reaStatus.textContent=e.message}};
+ const meltyGrant=document.createElement('input');meltyGrant.type='checkbox';meltyGrant.id='approveMelty';
+ const meltyLabel=document.createElement('label');meltyLabel.append(meltyGrant,document.createTextNode(' Allow Melty read-only account/game lookup for this message'));
+ const meltyCheck=document.createElement('button');meltyCheck.type='button';meltyCheck.textContent='Check Melty connection';
+ const meltyStatus=document.createElement('p');meltyStatus.id='meltyStatus';
+ meltyCheck.onclick=async()=>{meltyCheck.disabled=true;try{const s=await api('/api/melty','POST',{action:'probe'});meltyStatus.textContent='Melty: '+s.status+' · '+s.tools.join(', ')+' · read only'}catch(e){meltyStatus.textContent=e.message}finally{meltyCheck.disabled=false}};
  const workspaceGrant=document.createElement('input');workspaceGrant.type='checkbox';workspaceGrant.id='approveFrontendWorkspace';
  const workspaceLabel=document.createElement('label');workspaceLabel.style.display='block';workspaceLabel.append(workspaceGrant,document.createTextNode(' Allow isolated frontend workspace: read source, edit destination CSS, run fixed tests and launch port 8770 (24 calls, up to 15 minutes)'));
  const codingGrant=document.createElement('input');codingGrant.type='checkbox';codingGrant.id='approveCodingWorkspace';
@@ -35,7 +41,7 @@ function initShell(){
  const selectedModelIds=()=>[...modelGrants.querySelectorAll('input:checked')].map(x=>x.dataset.assetId);
  window.setChatModelGrants=assets=>{modelGrants.replaceChildren();for(const asset of assets){const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.assetId=asset.id;const label=document.createElement('label');label.style.display='block';label.append(checkbox,document.createTextNode(' Allow read-only GLB inspection: '+asset.filename));modelGrants.append(label)}permissionsBox.dispatchEvent(new Event('change',{bubbles:true}))};
  const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. Built-in scopes do not sandbox external MCP servers. Tool results are logged locally.';
- permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,modelGrants,workspaceLabel,codingLabel,toolsNote);
+ permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,meltyLabel,meltyCheck,meltyStatus,modelGrants,workspaceLabel,codingLabel,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('textarea');input.rows=1;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  // One line by default; grow with the text up to the CSS max-height, then scroll.
@@ -66,10 +72,10 @@ function initShell(){
  send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
- const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
+ const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,melty_read:meltyGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
  // Grants apply to one Send unless the operator opted to keep them for following sends.
  const keepAccess=document.getElementById('keepTaskAccess')?.checked===true;
- if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();}
+ if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;meltyGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();}
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}
@@ -224,7 +230,7 @@ const el=id=>document.getElementById(id);
 SmelterAccess.mount(api);
 SmelterOpenCode.mount(api);
 {const chip=document.createElement('button');chip.type='button';chip.id='composerAgent';chip.className='composer-chip';chip.append(document.createElement('span'));el('composerChips').prepend(chip);
- window.smelterOpenCodeSession=SmelterOpenCode.session(api,{engine:el('chatEngine'),chip})}
+ window.smelterOpenCodeSession=SmelterOpenCode.session(api,{engine:el('chatEngine'),chip,approval:el('opencodeAgentApprove'),ready:()=>openCodeStartupReady})}
 SmelterOperations.mount(api);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(force=false){try{el('error').textContent='';const data=await api('/api/extensions'+(force?'?refresh=1':''));const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}
@@ -243,6 +249,7 @@ el('providerpreview').onclick=async()=>{try{const data=await api('/api/opencode/
 el('providerdeploy').onclick=async()=>{const out=el('deployout');if(!el('deployapprove').checked){out.textContent='Approval required';return}el('deployapprove').checked=false;try{const data=await api('/api/opencode/deploy','POST',{approval:'DEPLOY ISOLATED CONFIG'});out.textContent=JSON.stringify(data,null,2)}catch(e){out.textContent=e.message}};
 el('providervalidate').onclick=async()=>{try{const data=await api('/api/opencode/validate');el('validateout').textContent=JSON.stringify(data,null,2)}catch(e){el('validateout').textContent=e.message}};
 async function startup(){
+ openCodeStartupReady=false;
  const boot=el('bootstrap'),shell=el('shell'),footer=el('sysfooter');
  boot.hidden=false;shell.hidden=true;footer.hidden=true;el('databaseSetup').hidden=true;el('authRecovery').hidden=true;el('startupHeading').textContent='SMELTER startup';el('dbstatus').textContent='Checking session and database…';
  try{
@@ -250,7 +257,7 @@ async function startup(){
   el('databaseSetup').hidden=db.ready;el('dbstatus').textContent=JSON.stringify(db,null,2);
   // Pre-fill the deployment's suggested storage folder; the user still confirms it.
   if(!db.ready&&db.suggested_directory&&!el('dbdirectory').value)el('dbdirectory').value=db.suggested_directory;
-  if(db.ready){boot.hidden=true;shell.hidden=false;footer.hidden=false;window.smelterOpenCodeSession?.start();refresh();loadWorkflows();refreshChats();refreshSystem();window.reloadTaskContext?.();if(window.resumeChatJob)window.resumeChatJob()}
+  if(db.ready){openCodeStartupReady=true;boot.hidden=true;shell.hidden=false;footer.hidden=false;window.smelterOpenCodeSession?.start();refresh();loadWorkflows();refreshChats();refreshSystem();window.reloadTaskContext?.();if(window.resumeChatJob)window.resumeChatJob()}
  }catch(e){const unauthorized=e.status===401||e.status===403;el('authRecovery').hidden=!unauthorized;el('startupHeading').textContent=unauthorized?'Session authorization required':'SMELTER startup check failed';el('dbstatus').textContent=unauthorized?'The session token is missing, expired, or rejected. Existing database files have not been reinitialized.':e.message}
 }
 el('sessionReconnect').onclick=()=>{try{const previous=location.hash;SmelterAuth.apply(el('sessionToken').value);el('sessionToken').value='';if(previous===location.hash)startup()}catch(error){el('dbstatus').textContent=error.message}};

@@ -1,5 +1,19 @@
 # UI/UX overhaul and review repairs
 
+## Remembered OpenCode startup
+
+Choosing OpenCode in the engine selector also authorizes that engine and enables
+its OpenCode/MCP components. The browser remembers the engine; on the next GUI
+load, authenticated database startup warms the confined OpenCode session in the
+background. There is no additional Allow OpenCode checkbox or required connection
+check. The session chip shows starting/ready/failure and retries a failed start.
+
+This selects the engine only. File locations, selected skills and per-task host
+tool grants retain their existing controls. Missing Docker, images or model
+dependencies are reported rather than installed automatically. Switching to
+direct chat clears the engine authorization in that page; component Stop remains
+available in System status. Choosing OpenCode again enables its components.
+
 ## 2026-10-24: professional overhaul and persistent OpenCode
 
 Driven by operator feedback after the first laptop install (cluttered settings,

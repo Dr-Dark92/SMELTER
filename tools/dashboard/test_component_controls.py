@@ -67,6 +67,58 @@ class ComponentControlsTests(unittest.TestCase):
     def rows(self):
         return {x['id']: x for x in self.controls.snapshot(True)['components']}
 
+    def test_engine_selection_enables_opencode_and_mcp_without_expanding_access(self):
+        from access_policy import current
+        before_policy = current(self.root).report()
+        before_images = load_config(self.root, 'sandbox.json')
+        for opencode, mcp in ((False, False), (False, True), (True, False)):
+            with self.subTest(opencode=opencode, mcp=mcp):
+                save_config(self.root, cc.NAME, {'schema_version': 1, 'opencode': opencode, 'mcp': mcp})
+                with patch('component_controls.manager', return_value=self.controls):
+                    cc.enable_agent_components(self.root)
+                self.assertEqual(cc.settings(self.root), cc.DEFAULT)
+                self.assertEqual(current(self.root).report(), before_policy)
+                self.assertEqual(load_config(self.root, 'sandbox.json'), before_images)
+        # Enabling providers never launches a host tool, model, or discovery process.
+        self.assertEqual(self.calls, [])
+        self.assertIsNone(self.process)
+
+    def test_engine_selection_waits_for_component_change_before_enabling(self):
+        stopped = {'schema_version': 1, 'opencode': False, 'mcp': False}
+        save_config(self.root, cc.NAME, stopped)
+        self.controls.changing = True
+        with patch('component_controls.manager', return_value=self.controls):
+            with self.assertRaisesRegex(ValueError, 'in progress'):
+                cc.enable_agent_components(self.root)
+        self.assertEqual(cc.settings(self.root), stopped)
+
+    def test_engine_selection_does_not_change_stopped_flags_during_active_chat(self):
+        stopped = {'schema_version': 1, 'opencode': False, 'mcp': False}
+        save_config(self.root, cc.NAME, stopped)
+        self.fake_jobs.jobs['active'] = {'state': 'running'}
+        with patch('component_controls.manager', return_value=self.controls):
+            with self.assertRaisesRegex(ValueError, 'active chat'):
+                cc.enable_agent_components(self.root)
+        self.assertEqual(cc.settings(self.root), stopped)
+
+    def test_engine_selection_respects_durable_active_job(self):
+        stopped = {'schema_version': 1, 'opencode': False, 'mcp': True}
+        save_config(self.root, cc.NAME, stopped)
+        with patch('component_controls.manager', return_value=self.controls), \
+             patch('job_store.active', return_value={'id': 'durable-job'}):
+            with self.assertRaisesRegex(ValueError, 'active chat'):
+                cc.enable_agent_components(self.root)
+        self.assertEqual(cc.settings(self.root), stopped)
+
+    def test_already_enabled_engine_can_resume_status_during_active_chat(self):
+        save_config(self.root, cc.NAME, dict(cc.DEFAULT))
+        self.fake_jobs.jobs['active'] = {'state': 'running'}
+        with patch('component_controls.manager', return_value=self.controls), \
+             patch('config_store.save_config') as save:
+            cc.enable_agent_components(self.root)
+        save.assert_not_called()
+        self.assertEqual(cc.settings(self.root), cc.DEFAULT)
+
     def test_status_distinguishes_model_residency_provider_and_external_server(self):
         rows = self.rows()
         self.assertEqual(rows['ollama']['ownership'], 'external')

@@ -12,6 +12,7 @@ import os
 import re
 import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from process_runner import run
 from sandbox import _flags,_remove,snapshot,status,record_owner
@@ -20,11 +21,12 @@ from tool_contract import BRIDGE_RPC_TIMEOUT
 BOOT=r'''
 const fs=require('node:fs'),http=require('node:http'),crypto=require('node:crypto'),cp=require('node:child_process');
 const queue='/run/model-queue';fs.mkdirSync(queue,{recursive:true});
+function taskGeneration(){try{return JSON.parse(fs.readFileSync('/run/smelter-task.json','utf8')).generation}catch{return null}}
 const proxy=http.createServer((req,res)=>{
  if(![['POST','/v1/chat/completions'],['GET','/v1/models']].some(([method,path])=>method===req.method&&path===req.url)){res.writeHead(403);return res.end('Denied model route')}
- let bytes=0,parts=[];
+ const generation=taskGeneration();let bytes=0,parts=[];
  req.on('data',chunk=>{bytes+=chunk.length;if(bytes>2*1024*1024){res.writeHead(413);res.end('Request too large');req.destroy()}else parts.push(chunk)});
- req.on('end',()=>{if(bytes>2*1024*1024)return;const id=crypto.randomUUID(),input=queue+'/'+id+'.request',output=queue+'/'+id+'.response';fs.writeFileSync(input,JSON.stringify({id,path:req.url,method:req.method,body:Buffer.concat(parts).toString('base64')}),{flag:'wx'});
+ req.on('end',()=>{if(bytes>2*1024*1024)return;const id=crypto.randomUUID(),input=queue+'/'+id+'.request',output=queue+'/'+id+'.response';fs.writeFileSync(input,JSON.stringify({id,generation,path:req.url,method:req.method,body:Buffer.concat(parts).toString('base64')}),{flag:'wx'});
  const limit=Date.now()+Number(process.env.SMELTER_TIMEOUT)*1000;
  const timer=setInterval(()=>{if(fs.existsSync(output)){try{const r=JSON.parse(fs.readFileSync(output));fs.unlinkSync(output);clearInterval(timer);res.writeHead(r.status,{'content-type':r.content_type});res.end(Buffer.from(r.body,'base64'))}catch(error){clearInterval(timer);res.writeHead(502);res.end('Relay failure')}}else if(Date.now()>limit){clearInterval(timer);res.writeHead(504);res.end('Model relay timed out')}},100);
  res.on('close',()=>{clearInterval(timer);for(const file of [input,output])try{fs.unlinkSync(file)}catch{}});
@@ -50,6 +52,9 @@ const fs=require('node:fs'),dir='/run/model-queue';let result=null;if(fs.existsS
 RESPOND=r'''
 const fs=require('node:fs');let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const value=JSON.parse(input);if(!/^[a-f0-9-]{36}$/.test(value.id))process.exit(2);const output='/run/model-queue/'+value.id+'.response',pending=output+'.pending';fs.writeFileSync(pending,JSON.stringify(value.response),{flag:'wx'});fs.renameSync(pending,output)});
 '''
+BIND_TASK=r'''
+const fs=require('node:fs');let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const value=JSON.parse(input);if(value.generation!==null&&!/^[a-f0-9]{32}$/.test(value.generation))process.exit(2);const target='/run/smelter-task.json',pending=target+'.pending';fs.writeFileSync(pending,JSON.stringify(value),{flag:'w'});fs.renameSync(pending,target)});
+'''
 
 
 class ManagedClient:
@@ -67,9 +72,10 @@ class ManagedClient:
         self.root=Path(root);self.host_directory=Path(root).resolve()
         with using(policy):self.folder,self.code=snapshot(root,self.host_directory)
         self.docker=ready['docker'];self.name='smelter-opencode-'+__import__('uuid').uuid4().hex
-        self.model=configuration['model'];self.settings=configuration['runtime'];self.control=control;self.allow_inference=allow_inference
-        self.bridge=bridge
+        self.model=configuration['model'];self.settings=configuration['runtime'];self.control=None;self.allow_inference=allow_inference
+        self.bridge=None;self.task_generation=None;self.accepting=False;self.active_responses=0
         self.password=secrets.token_urlsafe(32);self.stop_event=threading.Event();self.thread=None;self.model_socket=None;self.lock=threading.Lock();self.closed=False;self.error=None;self.model_calls=0;self.relay_calls=0;self.cleanup_confirmed=None
+        self.quiescent=threading.Condition(self.lock)
         task_timeout=max(self.settings.get('opencode_timeout_seconds',self.settings['timeout_seconds']),self.settings['timeout_seconds'])
         # A persistent session (opencode_pool) outlives single tasks; each task keeps its own deadline.
         if lifetime:task_timeout=max(task_timeout,int(lifetime))
@@ -97,15 +103,57 @@ class ManagedClient:
                     if self.request('/global/health').get('healthy') is True:break
                 except (ValueError,OSError):time.sleep(.2)
             else:raise ValueError('Confined OpenCode server did not become healthy')
+            if control is not None:self.attach(control,bridge)
         except Exception:self.close();raise
 
     def attach(self,control,bridge):
         """Bind one task's control and tool bridge to a persistent session."""
-        with self.lock:self.control=control;self.bridge=bridge;self.model_calls=0;self.relay_calls=0
+        generation=__import__('uuid').uuid4().hex if control is not None else None
+        with self.lock:
+            if self.closed or self.active_responses:raise ValueError('Previous OpenCode relay has not finished')
+            self.accepting=False
+            self._exec(BIND_TASK,{'generation':generation},maximum=16384)
+            self.control=control;self.bridge=bridge;self.task_generation=generation
+            self.model_calls=0;self.relay_calls=0;self.accepting=control is not None
 
     def detach(self):
-        """Between tasks no control or bridge is bound, so MCP calls are refused."""
-        with self.lock:self.control=None;self.bridge=None
+        """Revoke new packets, then retain ownership until active actions settle."""
+        with self.lock:
+            self.accepting=False;self.task_generation=None
+            bridge=self.bridge
+        try:self._exec(BIND_TASK,{'generation':None},maximum=16384)
+        except (ValueError,OSError,__import__('subprocess').SubprocessError):
+            self.error='OpenCode task revocation was not confirmed'
+            return False
+        if bridge:bridge.close()
+        timeout=bridge.cleanup_wait_timeout() if bridge else self.settings['timeout_seconds']+15
+        deadline=time.monotonic()+timeout
+        with self.quiescent:
+            while self.active_responses:
+                remaining=deadline-time.monotonic()
+                if remaining<=0:
+                    self.error='Previous OpenCode relay did not settle; cleanup is required'
+                    return False
+                self.quiescent.wait(remaining)
+            self.control=None;self.bridge=None
+        return True
+
+    @contextmanager
+    def _task(self,item):
+        """A packet belongs to exactly one attached task, never its successor."""
+        with self.lock:
+            if (not self.allow_inference or not self.accepting or self.control is None or getattr(self.control,'completed',False) or
+                    self.closed or self.stop_event.is_set()):
+                raise ValueError('Model/tool actions require an active admitted OpenCode task')
+            if item.get('generation')!=self.task_generation:
+                raise ValueError('Stale OpenCode task packet was rejected')
+            control,bridge=self.control,self.bridge
+            control.check()
+            self.active_responses+=1
+        try:yield control,bridge
+        finally:
+            with self.quiescent:
+                self.active_responses-=1;self.quiescent.notify_all()
 
     def refresh(self,policy):
         """Replace the mounted code snapshot in place before the next task.
@@ -146,36 +194,34 @@ class ManagedClient:
 
     def _response(self,item):
         if item.get('kind') == 'mcp':
-            if not self.allow_inference or not getattr(self,'bridge',None):
-                raise ValueError('MCP tool actions were not approved for this session')
-            if self.stop_event.is_set():raise ValueError('Agent relay is closed')
-            try:
-                result=self.bridge.call(item.get('name'),item.get('arguments'))
-            except ValueError as exc:
-                result={'content':[{'type':'text','text':str(exc)[:1000]}],'isError':True}
-            return {'mcp_result':result}
+            with self._task(item) as (control,bridge):
+                if bridge is None:raise ValueError('MCP tool actions were not approved for this session')
+                try:result=bridge.call(item.get('name'),item.get('arguments'))
+                except ValueError as exc:
+                    result={'content':[{'type':'text','text':str(exc)[:1000]}],'isError':True}
+                return {'mcp_result':result}
         route=item.get('path');method=item.get('method')
         if (method,route) not in (('GET','/v1/models'),('POST','/v1/chat/completions')):raise ValueError('Denied model relay route')
         raw=base64.b64decode(item.get('body',''),validate=True)
         if len(raw)>2*1024*1024:raise ValueError('Model relay input exceeds budget')
         if method=='POST':
             if not self.allow_inference:raise ValueError('Model inference was not approved for this inspection session')
-            self.model_calls+=1
-            if self.model_calls>24:raise ValueError('Confined model request budget exhausted')
-            body=json.loads(raw)
-            if not isinstance(body,dict) or body.get('model')!=self.model:raise ValueError('Only the admitted local model may be requested')
-            requested=body.get('max_tokens',self.settings['max_output_tokens'])
-            if type(requested) is not int or requested<1:raise ValueError('Invalid model output limit')
-            body['max_tokens']=min(requested,self.settings['max_output_tokens'])
-            return self._native_response(body)
+            with self._task(item) as (control,bridge):
+                self.model_calls+=1
+                if self.model_calls>24:raise ValueError('Confined model request budget exhausted')
+                body=json.loads(raw)
+                if not isinstance(body,dict) or body.get('model')!=self.model:raise ValueError('Only the admitted local model may be requested')
+                requested=body.get('max_tokens',self.settings['max_output_tokens'])
+                if type(requested) is not int or requested<1:raise ValueError('Invalid model output limit')
+                body['max_tokens']=min(requested,self.settings['max_output_tokens'])
+                return self._native_response(body,control)
         connection=http.client.HTTPConnection('127.0.0.1',11434,timeout=3)
         cancel_socket=None
         try:
             connection.connect();connection.sock.settimeout(self.settings['timeout_seconds'])
             cancel_socket=connection.sock.dup()
             with self.lock:self.model_socket=cancel_socket
-            if self.control:
-                with self.control.lock:self.control.check();self.control.sock=cancel_socket
+            # Discovery has no task ownership and cannot borrow a successor's control.
             connection.request(method,route,body=raw if method=='POST' else None,headers={'Content-Type':'application/json'})
             response=connection.getresponse();output=response.read(2*1024*1024+1)
             if len(output)>2*1024*1024:raise ValueError('Local model response exceeded relay budget')
@@ -183,14 +229,11 @@ class ManagedClient:
             if content_type.split(';')[0] not in ('application/json','text/event-stream'):raise ValueError('Unexpected local model response type')
             return {'status':response.status,'content_type':content_type,'body':base64.b64encode(output).decode()}
         finally:
-            if self.control:
-                with self.control.lock:
-                    if self.control.sock is cancel_socket:self.control.sock=None
             with self.lock:self.model_socket=None
             if cancel_socket:cancel_socket.close()
             connection.close()
 
-    def _native_response(self,body):
+    def _native_response(self,body,control):
         """Translate SDK chat to native Ollama so saved context/output limits apply."""
         if not isinstance(body.get('messages'),list):raise ValueError('Invalid model messages')
         messages=[];tool_names={}
@@ -223,8 +266,7 @@ class ManagedClient:
         if tools is not None and not isinstance(tools,list):raise ValueError('Invalid model tool schemas')
         from context_budget import bounded
         messages,budget=bounded(messages,tools,self.settings['context_tokens'],body['max_tokens'])
-        from chat_jobs import Control
-        control=self.control or Control();control.tool_call_limit=24-self.model_calls+1;control.context_budget=budget
+        control.tool_call_limit=24-self.model_calls+1;control.context_budget=budget
         request={'model':self.model,'messages':messages,'think':False if tools else self.settings['thinking'],
                  'options':{'num_ctx':self.settings['context_tokens'],'num_predict':body['max_tokens']}}
         if tools:request['tools']=tools
@@ -264,8 +306,9 @@ class ManagedClient:
             if not self.stop_event.is_set():self.error='Confined model relay failed: '+str(exc)[:300]
 
     def close(self):
-        if self.closed:return self.cleanup_confirmed
+        if self.closed and self.cleanup_confirmed:return True
         self.closed=True;self.stop_event.set()
+        with self.lock:self.accepting=False;self.task_generation=None
         if getattr(self,'bridge',None):self.bridge.close()
         with self.lock:
             if self.model_socket:
@@ -286,5 +329,7 @@ class ManagedClient:
             self.thread.join(timeout=self.bridge.cleanup_wait_timeout() if active else 15)
             if self.thread.is_alive():self.cleanup_confirmed=False
         import shutil
-        if self.cleanup_confirmed:shutil.rmtree(self.folder,ignore_errors=True)
+        if self.cleanup_confirmed:
+            with self.lock:self.control=None;self.bridge=None
+            shutil.rmtree(self.folder,ignore_errors=True)
         return self.cleanup_confirmed

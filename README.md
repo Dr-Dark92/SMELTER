@@ -1,6 +1,16 @@
 # SMELTER
 
+Continuing this work in another chat/agent? Start with the
+[current handover](docs/CURRENT_HANDOVER.md), which records the uncommitted
+implementation, progress, recovery checkpoint and next steps.
+
 SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`. The primary agent route is **GUI -> SMELTER -> OpenCode -> Ollama/Qwen**, with selected skill instructions and approved built-in tools connected through MCP. Direct Ollama chat remains selectable. OpenCode's source snapshot stays read-only; approved host tools retain their existing narrow read/write/execute contracts.
+
+The [Qwen 35B / REA / Ghidra integration](docs/REA_GHIDRA_INTEGRATION.md) adds
+verified fixed headless binary-analysis tools, matching REA instructions and
+reproducible setup. The [Melty host connector](docs/MELTY_CONNECTOR.md) supports
+authenticated read-only game/account lookup with host-held credentials. Mod
+building, uploads, game launches and publication require separate workflows.
 
 The repository also contains older CLI experiments, game-specific research scripts, reusable Blender/asset adapters, and Studio scaffolding. Those components are not automatically connected to the dashboard. Installing a skill provides instructions; it does not install dependencies or grant tools.
 
@@ -46,7 +56,7 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 | Python/MCP tools | Fixed registered operations, per-message grants, audits and application path checks |
 | Frontend work | Create/reuse sibling V2; read approved files; **CSS replacement only**; confined fixed tests and temporary small-fixture preview on port 8770 |
 | GLB | Browser preview, animation selection, frame/turntable export and stored animation labels; no automatic semantic naming |
-| REA | Pinned adapter exposes capabilities and static PE resource inspection, not general native decompilation or game-container extraction |
+| REA / Ghidra | Pinned REA static inspection plus fixed Ghidra import, function/string search, xrefs and selected decompilation; no arbitrary scripts, target execution or game-container extraction |
 | OpenCode | Managed no-network container, pinned 1.19.3, selected skills and approved MCP tools; native code snapshot remains read-only; live rig inference still requires validation |
 | Coding workspace | Separate new V2/coding/UUID copies; hash-checked proposals/apply, fixed Python/Node container tests and current-tree review; no shell, deletion, source merge, coverage or Git commits |
 | Workflow planner | Dry-run dependency planning; not an autonomous execution workflow |

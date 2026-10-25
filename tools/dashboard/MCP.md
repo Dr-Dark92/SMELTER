@@ -2,6 +2,12 @@
 
 # SMELTER MCP layer (stdio, version 1)
 
+The current host bridge also exposes explicitly granted fixed Ghidra operations
+and read-only Melty lookup. See [REA/Ghidra](../../docs/REA_GHIDRA_INTEGRATION.md)
+and [Melty](../../docs/MELTY_CONNECTOR.md). Melty HTTPS calls occur on the host;
+the OpenCode container remains without network or credentials. Arbitrary
+external MCP servers are still blocked.
+
 SMELTER now acts as an MCP host/client and ships a local Python MCP server.
 The model remains Qwen through Ollama. No weight training is involved.
 

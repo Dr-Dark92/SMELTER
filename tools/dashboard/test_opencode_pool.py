@@ -4,6 +4,7 @@ import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 import opencode_pool
 
 RUNTIME = {'context_tokens': 32768, 'max_output_tokens': 1024, 'timeout_seconds': 300,
@@ -82,6 +83,33 @@ class PoolTests(unittest.TestCase):
         self.assertIsNot(third, second)
         self.assertTrue(second.closed)
 
+    def test_failed_replacement_cleanup_retains_owner_and_blocks_new_client(self):
+        first=self.acquire();opencode_pool.release(first)
+        first.close=lambda:False
+        with self.assertRaisesRegex(ValueError,'cleanup is pending'):
+            self.acquire(model='qwen3.5:9b')
+        self.assertIs(opencode_pool._state['client'],first)
+        self.assertEqual(len(FakeClient.created),1)
+        self.assertEqual(opencode_pool.status()['status'],'failed')
+        first.close=lambda:True
+        second=self.acquire(model='qwen3.5:9b')
+        self.assertIsNot(first,second)
+
+    def test_unhealthy_release_closes_with_bridge_still_attached(self):
+        client=self.acquire(control=object());bridge=object();client.bridge=bridge
+        observed=[]
+        def close():
+            observed.append(client.bridge);client.closed=True;return True
+        client.close=close
+        self.assertTrue(opencode_pool.release(client,healthy=False))
+        self.assertEqual(observed,[bridge])
+
+    def test_failed_quiescence_discards_instead_of_reusing_client(self):
+        client=self.acquire();client.detach=lambda:False
+        self.assertTrue(opencode_pool.release(client))
+        self.assertTrue(client.closed)
+        self.assertEqual(opencode_pool.status()['status'],'stopped')
+
     def test_failed_start_is_reported(self):
         def broken(*args, **kwargs):
             raise ValueError('Confined OpenCode unavailable: no image')
@@ -120,6 +148,28 @@ class PoolTests(unittest.TestCase):
         self.assertIsNone(FakeClient.created[0].control)
         self.assertEqual(opencode_pool.start(self.root, factory=FakeClient)['status'], 'ready')
         self.assertEqual(len(FakeClient.created), 1)
+
+    def test_background_start_respects_stopped_component(self):
+        from database import select_database
+        from config_store import save_config
+        select_database(self.root, str(self.root.parent / (self.root.name + '-data')))
+        save_config(self.root, 'component_controls.json', {'schema_version': 1, 'opencode': False, 'mcp': True})
+        with self.assertRaisesRegex(ValueError, 'opencode is stopped'):
+            opencode_pool.start(self.root, factory=FakeClient)
+        self.assertEqual(FakeClient.created, [])
+        self.assertEqual(opencode_pool.status()['status'], 'stopped')
+
+    def test_delayed_warmup_cannot_detach_a_task_that_acquired_first(self):
+        with patch('opencode_pool.threading.Thread') as thread:
+            report = opencode_pool.start(self.root, factory=FakeClient)
+            self.assertEqual(report['status'], 'starting')
+            warmup = thread.call_args.kwargs['target']
+            client = self.acquire(control='active-task')
+            warmup()
+        self.assertEqual(opencode_pool.status()['status'], 'busy')
+        self.assertEqual(client.control, 'active-task')
+        self.assertEqual(len(FakeClient.created), 1)
+        self.assertEqual(opencode_pool.status()['tasks'], 1)
 
     def test_concurrent_acquire_creates_one_container(self):
         results = []

@@ -32,10 +32,11 @@ def _key(root, configuration, policy, bridge):
 
 def _discard():
     client = _state['client']
-    _state.update(client=None, key=None)
     if client is not None:
-        client.detach()
-        return client.close()
+        if not client.close():
+            _state.update(status='failed', error='Previous OpenCode container cleanup is pending; inspect Confined runner before retrying')
+            return False
+        _state.update(client=None, key=None)
     return True
 
 
@@ -47,7 +48,8 @@ def acquire(root, policy, configuration, control, bridge, factory=None):
         key = _key(root, configuration, policy, bridge)
         client = _state['client']
         if client is not None and (_state['key'] != key or client.closed or client.error):
-            _discard()
+            if not _discard():
+                raise ValueError(_state['error'])
             client = None
         if client is None:
             _state.update(status='starting', error=None)
@@ -61,7 +63,11 @@ def acquire(root, policy, configuration, control, bridge, factory=None):
             _state.update(client=client, key=key, started=time.time())
         else:
             client.refresh(policy)
-        client.attach(control, bridge)
+        try:
+            client.attach(control, bridge)
+        except Exception:
+            _discard()
+            raise
         _state.update(status='busy', error=None)
         _state['tasks'] += 1
         return client
@@ -75,12 +81,13 @@ def release(client, healthy=True):
     """
     with _lock:
         if client is not _state['client']:
-            client.detach()
             return client.close()
-        client.detach()
         if healthy and not client.error and not client.closed:
-            _state['status'] = 'ready'
-            return True
+            # Keep task ownership until the relay and its active fixed tool finish.
+            detached = client.detach()
+            if detached is not False and not client.error:
+                _state['status'] = 'ready'
+                return True
         removed = _discard()
         _state.update(status='stopped' if removed else 'failed',
                       error=None if removed else 'Previous OpenCode container was not removed; inspect Confined runner')
@@ -89,12 +96,16 @@ def release(client, healthy=True):
 
 def start(root, factory=None):
     """Warm the session in the background so the first OpenCode task does not wait for it."""
+    from component_controls import require_enabled
+    require_enabled(root, 'opencode')
     def run():
         try:
             from access_policy import current
             from task_contract import configuration
             # Create and release under one lock hold so a task cannot attach in between.
             with _lock:
+                if _state['status'] != 'starting':
+                    return  # A task acquired the client before the warm-up worker.
                 _state['status'] = 'stopped' if _state['client'] is None else 'ready'
                 client = acquire(root, current(root), configuration(root), None, None, factory=factory)
                 release(client)
@@ -105,8 +116,9 @@ def start(root, factory=None):
         if _state['status'] in ('starting', 'busy') or (_state['client'] is not None and _state['status'] == 'ready'):
             return status()
         _state.update(status='starting', error=None)
+        starting = status()
     threading.Thread(target=run, daemon=True, name='opencode-pool-start').start()
-    return status()
+    return starting
 
 
 def stop(force=False):

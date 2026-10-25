@@ -51,7 +51,7 @@ def _source_files(root):
             from access_policy import require
             require(path, 'read')
             result[relative] = path
-    for name in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md'):
+    for name in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md', 'system-requirements.json'):
         path = _plain_path(root / name)
         if path.is_file():
             from access_policy import require

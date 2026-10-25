@@ -9,6 +9,8 @@ BRIDGE_RPC_TIMEOUT = 450
 def operation_timeout(name):
     # Two fixed 180-second test processes plus image/snapshot/cleanup overhead.
     # Callers cannot widen this through model arguments or skill instructions.
+    if name == 'rea_ghidra_analyze':
+        return 210  # Fixed 180-second native import plus staging/cleanup overhead.
     return FRONTEND_VALIDATION_TIMEOUT if name == 'validate_frontend_workspace' else DEFAULT_OPERATION_TIMEOUT
 
 

@@ -125,9 +125,12 @@ checks have a separate five-second timeout. The output limit is checked after
 capture, rather than serving as a process memory limit. REA may create its own
 local runtime/cache files. No providers are installed or configured by chat.
 
-This adapter does not expose native decompilers, arbitrary REA commands,
-`.oppc` extraction, or Blender. Those need separately verified adapters and
-dependencies. Installed skill instructions alone do not supply these tools.
+These two REA CLI operations do not decompile code. The separate fixed
+`rea_ghidra_*` adapter now provides import, function/string search, xrefs and
+selected Ghidra decompilation through the same grants/MCP bridge. It does not
+expose arbitrary commands/scripts, target execution, `.oppc` extraction or
+Blender. See [current integration](../../docs/REA_GHIDRA_INTEGRATION.md).
+Installed skill instructions alone do not supply executable tools.
 
 
 ### Chat layout and live footer

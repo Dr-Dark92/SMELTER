@@ -212,6 +212,10 @@ function Get-SetupState($id, $step) {
             $cli = '.smelter/tooling/browser/node_modules/playwright/cli.js'
             return @{state='todo'; argv=@($nodeExe, $cli, 'install', $step.browser)}
         }
+        'python_script' {
+            if (Test-Path (Join-Path $root $step.check_path)) { return @{state='done'} }
+            return @{state='todo'; argv=@($python, $step.script, '--root', $root)}
+        }
     }
 }
 

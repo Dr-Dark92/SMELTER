@@ -18,7 +18,7 @@ const SmelterAccess = (() => {
     const popover=doc.createElement('div');popover.id='accessPopover';popover.className='access-popover';popover.hidden=true;
     popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Tools for the next message');
     const popTitle=doc.createElement('h3');popTitle.textContent='Tools for the next message';
-    const agentSection=doc.createElement('div');agentSection.className='popover-section';agentSection.append(approval);
+    const agentSection=doc.createElement('div');agentSection.className='popover-section';agentSection.hidden=true;agentSection.append(approval);
     const keepSection=doc.createElement('div');keepSection.className='popover-section';keepSection.append(keep);
     permissions.open=true;
     // Connection checks are diagnostics, not grants: keep them in Task diagnostics.
@@ -35,11 +35,12 @@ const SmelterAccess = (() => {
     let policy=null;
     function updateSummary() {
       const engine=doc.getElementById('chatEngine').value;
-      const direct=engine==='ollama';permissions.hidden=false;agentAccess.hidden=direct;agentSection.hidden=direct;
+      const direct=engine==='ollama';permissions.hidden=false;agentAccess.hidden=direct;agentSection.hidden=true;
       const names=[];
       if(doc.getElementById('approveInventory').checked)names.push('folder inventory');
       if(doc.getElementById('approveDiagnostics').checked)names.push('new reports');
       if(doc.getElementById('approveRea').checked)names.push('REA');
+      if(doc.getElementById('approveMelty')?.checked)names.push('Melty lookup');
       if(doc.getElementById('approveFrontendWorkspace').checked)names.push('V2 CSS/tests/preview');
       if(doc.getElementById('approveCodingWorkspace').checked)names.push('isolated code proposals/tests');
       if(doc.querySelector('#modelInspectionGrants input:checked'))names.push('selected GLB metadata');

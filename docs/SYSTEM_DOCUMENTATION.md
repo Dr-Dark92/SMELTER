@@ -1,5 +1,11 @@
 # SMELTER system documentation
 
+Current additions are documented in [REA/Ghidra integration](REA_GHIDRA_INTEGRATION.md)
+and [Melty connector](MELTY_CONNECTOR.md). These include Qwen35B acceptance,
+fixed native-analysis tools, host-only authenticated Melty lookup, and persistent
+OpenCode task-generation/cleanup repairs. The pinned audit below describes its
+historical revision; use the linked integration records for these newer paths.
+
 This document describes the audited SMELTERV1 application `cee565b24726a9c217eab21c8a75bac88cad8c9c`. The graph manifest pins that source. The [current audit](reviews/2026-10-21/workflow-audit/REVIEW.md) and [machine evidence](reviews/2026-10-21/workflow-audit/evidence.json) distinguish source checks, native Windows/Linux contracts, real Chromium/containers and pending live-rig acceptance. Source review alone does not verify installed models, native tools or game assets.
 
 ## Start and operating model

@@ -16,10 +16,12 @@ class ApiRoutes:
     GET_ROUTES={'/': '_get_page', '/api/access-policy': '_get_api_access_policy', '/api/opencode/agent': '_get_api_opencode_agent', '/api/mcp/status': '_get_api_mcp_status', '/api/models/status': '_get_api_models_status', '/api/skills': '_get_api_skills', '/api/skills/status': '_get_api_skills_status', '/api/rea/status': '_get_api_rea_status', '/api/runtime': '_get_api_runtime', '/api/system/status': '_get_api_system_status', '/api/chats': '_get_api_chats', '/api/startup': '_get_api_startup', '/api/opencode/validate': '_get_api_opencode_validate', '/api/opencode/provider-preview': '_get_api_opencode_provider_preview', '/api/opencode/status': '_get_api_opencode_status', '/api/ollama/preferences': '_get_api_ollama_preferences', '/api/ollama/models': '_get_api_ollama_models', '/api/workflows/reports': '_get_api_workflows_reports', '/api/workflows': '_get_api_workflows', '/api/extensions': '_get_api_extensions'}
     GET_ROUTES['/api/system/components'] = '_get_api_system_components'
     GET_ROUTES['/api/opencode/session'] = '_get_api_opencode_session'
+    GET_ROUTES['/api/melty/status'] = '_get_api_melty_status'
     GET_PREFIXES=[('/api/models/', '_get_api_models_item'), ('/api/chat-jobs/', '_get_api_chat_jobs_item'), ('/api/skills/review/', '_get_api_skills_review_item'), ('/api/chats/', '_get_api_chats_item')]
     POST_ROUTES={'/api/access-policy': '_post_api_access_policy', '/api/mcp': '_post_api_mcp', '/api/models': '_post_api_models', '/api/skills/collection-preview': '_post_api_skills_collection_preview', '/api/skills/discover-repository': '_post_api_skills_discover_repository', '/api/skills/discover': '_post_api_skills_discover', '/api/skills/manage': '_post_api_skills_manage', '/api/aero/classify': '_post_api_aero_classify', '/api/chats': '_post_api_chats', '/api/database/select': '_post_api_database_select', '/api/opencode/deploy': '_post_api_opencode_deploy', '/api/ollama/preferences': '_post_api_ollama_preferences', '/api/blender/inspect': '_post_api_blender_inspect', '/api/media/inspect': '_post_api_media_inspect', '/api/archive/inspect': '_post_api_archive_inspect', '/api/workflows/plan': '_post_api_workflows_plan', '/api/extensions': '_post_api_extensions'}
     POST_ROUTES['/api/system/components'] = '_post_api_system_components'
     POST_ROUTES['/api/opencode/session'] = '_post_api_opencode_session'
+    POST_ROUTES['/api/melty'] = '_post_api_melty'
     ASSETS={
         '/assets/system-components.js':'system_components.js', '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
@@ -83,6 +85,8 @@ class ApiRoutes:
         action = (data or {}).get('action')
         try:
             if action == 'start':
+                from component_controls import enable_agent_components
+                enable_agent_components(self.app.ROOT)
                 return self.reply(200, opencode_pool.start(self.app.ROOT))
             if action == 'stop':
                 return self.reply(200, opencode_pool.stop())
@@ -137,7 +141,18 @@ class ApiRoutes:
             return self.reply(400, {'error': str(e)})
 
     def _get_api_rea_status(self, route, data=None):
-        return self.reply(200, self.app.rea_package_status(self.app.ROOT))
+        from ghidra_connection import status as ghidra_status
+        return self.reply(200, {**self.app.rea_package_status(self.app.ROOT), 'ghidra': ghidra_status(self.app.ROOT)})
+
+    def _get_api_melty_status(self, route, data=None):
+        from melty_connection import status
+        return self.reply(200, status(self.app.ROOT))
+
+    def _post_api_melty(self, route, data=None):
+        if data != {'action':'probe'}:
+            raise ValueError('Only a read-only Melty connection check is supported')
+        from melty_connection import probe
+        return self.reply(200, probe(self.app.ROOT))
 
     def _get_api_runtime(self, route, data=None):
         try:

@@ -1,5 +1,48 @@
 # SMELTER V1 — System Requirements
 
+## Qwen 35B and REA/Ghidra integration
+
+The `qwen35b_agent` profile explicitly installs `qwen3.5:35b-a3b`, MCP 1.30.0,
+the managed OpenCode image, `rea-agents@6.7.0`, its matching instruction bundle,
+and the existing Ghidra/JDK prerequisites. The REA npm installation omits optional
+packages and disables lifecycle scripts. `install_rea_skill.py` copies reviewed
+instruction text only; it never registers an unrestricted MCP server or changes
+native OpenCode/Codex settings. Imported instructions start disabled unless the
+operator requests `--enable`.
+
+The 35B model has roughly 22 GB of quantized weights. A 16 GB GPU uses partial
+CPU/RAM offload; begin at 16K context and measure latency. Installing it does not
+replace a saved model automatically. The application uses fixed host-side Ghidra
+operations through its approved MCP bridge, without granting arbitrary scripts
+or target execution. See [integration status](docs/REA_GHIDRA_INTEGRATION.md).
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/setup/install_missing.ps1 -Profile qwen35b_agent -DryRun
+python tools/setup/install_rea_skill.py --enable
+python tools/setup/configure_agent_stack.py           # preview only
+# After verification, with the dashboard stopped:
+python tools/setup/configure_agent_stack.py --apply
+```
+
+Melty's optional `melty` profile installs the isolated kit pinned to
+`2026.10.18-739f3496`, archive SHA-256
+`907ea7f3ed2d4c3443c9f3190f5070db0e77a9c910c50eeaaedf6cd1694f9935`.
+The installer verifies every declared file hash and runs no kit code. Its public
+download permits only the observed official storage redirect to that exact
+archive path. The host-side MCP gateway uses the existing pinned Python MCP SDK
+at the fixed `https://melty.gg/api/mcp` endpoint. Credentials remain on the host;
+`SMELTER_MELTY_TOKEN` or an explicitly selected existing Melty sign-in supplies
+them. Model tasks require a separate `melty_read` grant. Upload/publish/game
+launch operations are not exposed. See [Melty connector](docs/MELTY_CONNECTOR.md).
+
+Ghidra 12.1.4 with JDK 21 is the locally verified engine. Its project store is
+`%LOCALAPPDATA%/SMELTER/GhidraProjects/<checkout-hash>/<analysis-id>` because
+Ghidra forbids project paths containing a dot-prefixed directory. Evidence and
+source digests remain in `.smelter/rea-evidence/ghidra`. Preserve both locations
+for reusable analyses; current application backups do not include the external
+Ghidra projects. Windows launch validates Java and explicitly supplies executable
+extensions so the fixed batch launcher runs without an interactive console.
+
 This is the requirements baseline for the `SMELTERV1` branch. Requirements are divided into **vanilla**, **developer**, and **optional extension** categories. Do not install every optional tool by default.
 
 ## Vanilla source installation

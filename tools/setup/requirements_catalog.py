@@ -71,6 +71,7 @@ SETUP_FIELDS = {
     "npm_prefix": ("prefix", "package"),
     "playwright_browser": ("browser",),
     "powershell_script": ("script", "check_path"),
+    "python_script": ("script", "check_path"),
     "wsl_platform": (),
 }
 
