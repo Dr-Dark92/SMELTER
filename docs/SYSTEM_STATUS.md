@@ -10,7 +10,7 @@ bounded check. Footer telemetry updates do not replace or reset the table.
 | --- | --- | --- |
 | Ollama | Native executable and fixed loopback version/model APIs | Start a hidden dashboard-owned server; Stop/Restart that owned process; Reload refreshes observations |
 | Selected Qwen/model | Installed tags versus actually loaded models | Start loads installed model; Stop unloads; Reload/Restart unload then load with saved context settings |
-| OpenCode | Configured local immutable image versus optional host CLI; app version only after successful inspection | Start enables and checks a confined session; Stop disables new sessions; Reload/Restart verify and close the inspection container |
+| OpenCode | Configured local immutable image versus optional host CLI; app version only after successful inspection; live state of the one persistent session (on demand, starting, ready, busy, failed, disabled), its container, task count and uptime | Start enables, checks and warms the session; Stop disables new tasks and removes the idle session container; Reload rechecks the runtime and keeps a healthy session; Restart removes and re-warms it. Stop/Restart are refused while a task owns the session |
 | MCP | Exact Python SDK version, enabled state and explicit discovery check | Start enables/checks; Stop disables MCP calls; Reload/Restart rediscover and close the check process |
 | Docker | Local context, engine response/version and Linux/Windows mode | Status/Reload observations; shared engine lifecycle remains in Docker Desktop/OS service manager |
 | Python | Interpreter running the dashboard | Status/Reload; no separate service |
@@ -18,10 +18,16 @@ bounded check. Footer telemetry updates do not replace or reset the table.
 | SQLite | Selected database readiness/path | Status/Reload; embedded storage |
 | GLB viewer | Local installed browser library | Status/Reload; browser dependency |
 
-OpenCode and MCP remain on demand. Enabling them does not imply a persistent
-service, a live model test, broad coding competence or fresh per-task permissions.
-Their Stop controls persist locally in SQLite and are enforced at task admission
-and runtime entry points. The existing MCP Connections screen also shows when
+MCP remains on demand. OpenCode keeps one persistent confined session per
+dashboard process, started with the GUI when OpenCode is the saved engine. System
+status, engine selection and the session chip change its enable flag and container
+through one lifecycle owner, so a warm-up cannot race a Stop. A failed container
+removal shows as **failed** with the still-owned container; replacement stays
+blocked and Stop/Restart retry the cleanup. The table refreshes itself while the
+session is starting or busy. Enabling either component does not imply a live
+model test, broad coding competence or fresh per-task permissions, and never
+grants files or host tools. Their Stop controls persist locally in SQLite and are
+enforced at task admission and runtime entry points. The existing MCP Connections screen also shows when
 MCP has been stopped globally. Existing per-message tool approvals still apply.
 
 An Ollama instance started outside this dashboard is labelled external. It is

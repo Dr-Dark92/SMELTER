@@ -1,6 +1,7 @@
 """Operator-only component observations and fixed lifecycle operations.
 
-OpenCode/MCP are enabled on demand. Only this dashboard's Ollama child is
+MCP runs on demand. OpenCode keeps one persistent session (opencode_pool) whose
+enable flag and container this manager changes together. Only this dashboard's Ollama child is
 terminated; an existing tray/system service is observed, never adopted by PID.
 """
 import atexit
@@ -124,6 +125,10 @@ class Components:
     def snapshot(self, refresh=False):
         with self.lock:
             if self.cache is not None and not refresh and time.monotonic() - self.checked < 15:
+                # Pool state changes without probes; never serve a stale OpenCode row.
+                rows = self.cache['components']
+                index = next(i for i, x in enumerate(rows) if x['id'] == 'opencode')
+                rows[index] = self._opencode_row(settings(self.root))
                 return self.cache
             from database import inspect_database
             from mcp_connections import sdk_status
@@ -192,14 +197,9 @@ class Components:
                                  'Manage the shared engine in Docker Desktop or your OS service manager. Linux containers required; observed mode: ' + str(docker_mode or 'unavailable') + '. Status checks never start containers.', version=docker_version))
             for action in ('start', 'stop', 'restart'):
                 rows[-1]['actions'][action]['reason'] = 'Shared OS-managed engine; use Docker Desktop or your OS service manager'
-            row = self.row('opencode', 'OpenCode', 'Confined runtime · one container per task',
-                           'available_image' if image_present else 'cli_only' if self.finder('opencode') else 'missing',
-                           'disabled' if not flags['opencode'] else 'on_demand' if image_present and docker_running else 'blocked',
-                           'Start enables and checks an isolated session; Stop disables new OpenCode tasks. Reload/Restart recheck the runtime and close the inspection container. Requires a configured image containing OpenCode 1.19.3.', version=getattr(self, 'opencode_version', None))
-            for action in ('start', 'stop', 'reload', 'restart'):
-                row['actions'][action] = {'enabled': (not flags['opencode'] if action == 'start' else flags['opencode']) and (action == 'stop' or image_present and docker_running),
-                                          'reason': 'Requires the configured local OpenCode image and Docker; finish active tasks before changing runtime state'}
-            rows.append(row)
+            self._opencode_inputs = (image_present and docker_running,
+                                     'available_image' if image_present else 'cli_only' if self.finder('opencode') else 'missing')
+            rows.append(self._opencode_row(flags))
             sdk = sdk_status()
             row = self.row('mcp', 'MCP', 'Built-in stdio provider · one process per call',
                            sdk['status'], 'disabled' if not flags['mcp'] else 'on_demand' if sdk['status'] == 'installed' else 'blocked',
@@ -225,6 +225,89 @@ class Components:
                           'busy': self.changing, 'model': model}
             self.checked = time.monotonic()
             return self.cache
+
+    def _opencode_row(self, flags):
+        """OpenCode as the persistent pool actually is, not only its enable flag."""
+        import opencode_pool
+        runnable, installation = self._opencode_inputs
+        pool = opencode_pool.status()
+        held = pool['container'] is not None
+        if pool['status'] == 'failed':
+            state = 'failed'
+        elif not flags['opencode']:
+            state = 'disabled'
+        elif pool['status'] in ('starting', 'ready', 'busy'):
+            state = pool['status']
+        else:
+            state = 'on_demand' if runnable else 'blocked'
+        detail = {'failed': 'Cleanup or start failed: ' + str(pool['error'] or 'unknown error') + ('. Container ' + pool['container'] + ' is still owned; replacement is blocked until Stop or Restart removes it.' if held else '. Restart retries.'),
+                  'disabled': 'Stopped: new OpenCode tasks are refused and no session container is running. Start or choosing OpenCode enables it.',
+                  'starting': 'Starting the persistent confined session in the background.',
+                  'ready': 'Persistent confined session ' + str(pool['container']) + ' is idle and ready · ' + str(pool['tasks']) + ' task(s) · up ' + str(pool['uptime_seconds']) + ' s.',
+                  'busy': 'An OpenCode task owns session ' + str(pool['container']) + '; Stop and Restart wait for it to finish.',
+                  'on_demand': 'Enabled; no session container is running. It starts with the GUI when OpenCode is selected, or with the next task.',
+                  'blocked': 'Requires Docker and the configured local image containing OpenCode 1.19.3.'}[state]
+        row = self.row('opencode', 'OpenCode', 'Confined runtime · one persistent session', installation, state,
+                       detail + ' Stop disables tasks and removes the idle session; Reload rechecks the runtime; Restart replaces the session.',
+                       version=getattr(self, 'opencode_version', None), session=pool)
+        busy = pool['status'] in ('busy', 'starting')
+        allowed = {'start': not flags['opencode'] and runnable,
+                   # Stop may interrupt a warm-up; it waits for the container and removes it.
+                   'stop': (flags['opencode'] or held) and pool['status'] != 'busy',
+                   'reload': flags['opencode'] and runnable and not busy,
+                   'restart': flags['opencode'] and runnable and not busy}
+        for action, enabled in allowed.items():
+            row['actions'][action] = {'enabled': enabled, 'reason': '' if enabled else
+                                      'An OpenCode task owns the session; wait for it to finish' if pool['status'] == 'busy' and action != 'start' else
+                                      'The session is starting; wait for it, or Stop' if busy and action != 'start' else
+                                      'Requires the configured local OpenCode image and Docker; finish active tasks before changing runtime state'}
+        return row
+
+    def _opencode(self, action):
+        """Change availability and the persistent pool together, under this owner."""
+        import opencode_pool
+        from config_store import save_config
+        flags = settings(self.root)
+        previous = dict(flags)
+        if action in ('stop', 'restart'):
+            if opencode_pool.status()['status'] == 'busy':
+                raise ValueError('An OpenCode task owns the session; stop that task before changing OpenCode')
+            if action == 'stop':
+                save_config(self.root, NAME, {**flags, 'opencode': False})  # Refuse new tasks first.
+            try:
+                pool = opencode_pool.stop()
+            except ValueError:
+                save_config(self.root, NAME, previous)
+                raise
+            if pool['status'] == 'failed':
+                # Stays disabled (Stop) and keeps the owner, so no replacement can start.
+                raise ValueError('OpenCode container cleanup failed: ' + str(pool['error']) + '; replacement stays blocked until a retry removes it')
+            if action == 'stop':
+                return
+        save_config(self.root, NAME, {**flags, 'opencode': True})
+        try:
+            from opencode_runtime import status
+            checked = status(self.root)
+            if not checked.get('agent_ready'): raise ValueError(checked.get('reason', 'OpenCode is not ready'))
+            self.opencode_version = checked.get('version')
+        except Exception:
+            save_config(self.root, NAME, previous)
+            raise
+        opencode_pool.start(self.root)
+
+    def warm_opencode(self):
+        """Choosing OpenCode: enable it with MCP and warm the session under this owner.
+
+        Never grants task files or tools. Refused while a lifecycle action runs.
+        """
+        if self.changing or not self.lock.acquire(timeout=20):
+            raise ValueError('A system component operation is in progress; wait before starting OpenCode')
+        try:
+            enable_agent_components(self.root)
+            import opencode_pool
+            return opencode_pool.start(self.root)
+        finally:
+            self.lock.release()
 
     def _stop_owned(self):
         if self.process is None:
@@ -327,7 +410,9 @@ class Components:
                     if not isinstance(observed, list): raise ValueError('Ollama did not return a valid model residency list')
                     loaded = any(isinstance(x, dict) and x.get('name', x.get('model')) == model for x in observed)
                     if loaded != (action != 'stop'): raise ValueError('Ollama did not confirm the requested model residency')
-                elif component in ('opencode', 'mcp'):
+                elif component == 'opencode':
+                    self._opencode(action)
+                elif component == 'mcp':
                     from config_store import save_config
                     flags = settings(self.root)
                     previous = dict(flags)
@@ -335,20 +420,18 @@ class Components:
                     save_config(self.root, NAME, flags)
                     try:
                         if action != 'stop':
-                            if component == 'opencode':
-                                from opencode_runtime import status
-                                checked = status(self.root)
-                                if not checked.get('agent_ready'): raise ValueError(checked.get('reason', 'OpenCode is not ready'))
-                                self.opencode_version = checked.get('version')
-                            else:
-                                from mcp_connections import exchange
-                                checked = exchange(self.root, timeout=20)
-                                if checked.get('status') != 'connected': raise ValueError('MCP did not confirm discovery')
+                            from mcp_connections import exchange
+                            checked = exchange(self.root, timeout=20)
+                            if checked.get('status') != 'connected': raise ValueError('MCP did not confirm discovery')
                     except Exception:
                         save_config(self.root, NAME, previous)
                         raise
                 result = {'status': 'completed', 'component': component, 'action': action,
-                          'message': ('Provider disabled for new tasks. No standing service process.' if component in ('opencode', 'mcp') and action == 'stop' else 'On-demand provider checked; inspection process closed. New tasks use the current enable state.' if component in ('opencode', 'mcp') else 'Requested component state observed.')}
+                          'message': ('OpenCode disabled for new tasks; the idle session container was removed.' if component == 'opencode' and action == 'stop'
+                                      else 'OpenCode runtime checked; the persistent session is ' + ('restarting' if action == 'restart' else 'starting or kept') + '. Its state updates here.' if component == 'opencode'
+                                      else 'Provider disabled for new tasks. No standing service process.' if component == 'mcp' and action == 'stop'
+                                      else 'On-demand provider checked; inspection process closed. New tasks use the current enable state.' if component == 'mcp'
+                                      else 'Requested component state observed.')}
                 self.cache = None
                 result['snapshot'] = self.snapshot(True)
                 return result

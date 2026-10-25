@@ -341,7 +341,7 @@ dialog::backdrop{background:#020617b8;backdrop-filter:blur(3px)}
 .component-actions button{min-height:28px;padding:3px 9px;font-size:12px}
 .component-state{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--warning-soft);color:var(--warning);font-size:11px;text-transform:capitalize}
 .component-state-running,.component-state-loaded,.component-state-ready,.component-state-on_demand,.component-state-available{background:var(--accent-soft);color:var(--accent)}
-.component-state-missing,.component-state-unavailable,.component-state-blocked{background:var(--danger-soft);color:var(--danger)}
+.component-state-missing,.component-state-unavailable,.component-state-blocked,.component-state-failed{background:var(--danger-soft);color:var(--danger)}
 
 /* Dialogs */
 .import-dialog,.chat-dialog,.location-dialog,.folder-dialog{background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:var(--space-5);max-width:min(94vw,780px);max-height:90dvh;overflow:auto;box-shadow:0 24px 80px #000c}

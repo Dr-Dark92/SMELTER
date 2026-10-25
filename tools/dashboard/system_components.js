@@ -3,7 +3,7 @@ const SmelterSystem=(()=>{
  function mount(host,api,doc=document){
   const make=(tag,text)=>{const node=doc.createElement(tag);if(text)node.textContent=text;return node};
   const title=make('h3','System status');
-  const description=make('p','Check installation and runtime separately. Model Start/Stop loads or unloads memory. OpenCode and MCP run on demand; their Start/Stop controls enable or disable new work.');
+  const description=make('p','Check installation and runtime separately. Model Start/Stop loads or unloads memory. OpenCode keeps one persistent session: Stop disables new tasks and removes its idle container. MCP runs on demand; Start/Stop enable or disable new calls.');
   const toolbar=make('div');toolbar.className='component-toolbar';
   const refresh=make('button','Refresh all statuses');refresh.type='button';
   const updated=make('small','Not checked yet');toolbar.append(refresh,updated);
@@ -16,9 +16,15 @@ const SmelterSystem=(()=>{
   head.append(header);const body=make('tbody');table.append(caption,head,body);wrap.append(table);
   const resources=make('p');resources.id='systemResourceSummary';resources.className='muted';
   host.append(title,description,toolbar,notice,wrap,resources);
-  let pending=false,last=null;
+  let pending=false,last=null,follow=null;
+  // The OpenCode session warms in the background; observe it until it settles.
+  function track(snapshot){
+   clearTimeout(follow);
+   const row=snapshot.components.find(x=>x.id==='opencode');
+   if(row&&(row.state==='starting'||row.state==='busy'))follow=setTimeout(async()=>{if(pending)return track(last);try{render(await api('/api/system/components'))}catch{}},2500);
+  }
   function render(snapshot){
-   last=snapshot;body.replaceChildren();updated.textContent='Checked '+new Date(snapshot.checked_at).toLocaleTimeString();
+   last=snapshot;track(snapshot);body.replaceChildren();updated.textContent='Checked '+new Date(snapshot.checked_at).toLocaleTimeString();
    for(const row of snapshot.components){
     const tr=make('tr');tr.dataset.component=row.id;
     const name=make('th');name.scope='row';name.append(make('strong',row.name),make('small',row.kind));

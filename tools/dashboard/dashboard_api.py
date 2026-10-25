@@ -80,16 +80,17 @@ class ApiRoutes:
         return self.reply(200, opencode_pool.status())
 
     def _post_api_opencode_session(self, route, data=None):
-        # Persistent OpenCode session: start warms it with the dashboard, stop removes it.
+        # Persistent OpenCode session: start warms it with the dashboard, stop disables and
+        # removes it. Both go through the System status owner so they cannot race it.
         import opencode_pool
         action = (data or {}).get('action')
+        components = self.app.component_manager(self.app.ROOT)
         try:
             if action == 'start':
-                from component_controls import enable_agent_components
-                enable_agent_components(self.app.ROOT)
-                return self.reply(200, opencode_pool.start(self.app.ROOT))
+                return self.reply(200, components.warm_opencode())
             if action == 'stop':
-                return self.reply(200, opencode_pool.stop())
+                components.action('opencode', 'stop')
+                return self.reply(200, opencode_pool.status())
             return self.reply(400, {'error': 'Unknown OpenCode session action'})
         except ValueError as e:
             return self.reply(409, {'error': str(e)})

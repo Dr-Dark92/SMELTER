@@ -105,7 +105,12 @@ def start(root, factory=None):
             # Create and release under one lock hold so a task cannot attach in between.
             with _lock:
                 if _state['status'] != 'starting':
-                    return  # A task acquired the client before the warm-up worker.
+                    return  # A task acquired the client, or Stop ran, before the warm-up worker.
+                try:
+                    require_enabled(root, 'opencode')
+                except ValueError:
+                    _state['status'] = 'stopped' if _state['client'] is None else 'ready'
+                    return  # Stopped in System status after this warm-up was queued.
                 _state['status'] = 'stopped' if _state['client'] is None else 'ready'
                 client = acquire(root, current(root), configuration(root), None, None, factory=factory)
                 release(client)
@@ -132,6 +137,7 @@ def stop(force=False):
 
 
 def status():
+    """Pool observation; 'failed' with a container name means cleanup is still pending."""
     with _lock:
         client = _state['client']
         return {'status': _state['status'], 'error': _state['error'], 'tasks': _state['tasks'],

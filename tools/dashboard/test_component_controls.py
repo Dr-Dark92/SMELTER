@@ -219,6 +219,146 @@ class ComponentControlsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'in progress'):
                 cc.check_admission(self.root, 'ollama')
 
+    # Persistent OpenCode session: System status and the pool share one owner (R06).
+    def pool(self):
+        import opencode_pool
+        from test_opencode_pool import FakeClient
+        saved = dict(opencode_pool._state)
+        self.addCleanup(opencode_pool._state.update, saved)
+        opencode_pool._state.update(client=None, key=None, status='stopped', error=None, started=None, tasks=0)
+        FakeClient.created = []
+        factory = patch('opencode_sandbox.ManagedClient', FakeClient)
+        factory.start()
+        self.addCleanup(factory.stop)
+        ready = patch('opencode_runtime.status', return_value={'agent_ready': True, 'version': '1.19.3'})
+        ready.start()
+        self.addCleanup(ready.stop)
+        return opencode_pool, FakeClient
+
+    def settle(self, opencode_pool):
+        for _ in range(250):
+            if opencode_pool.status()['status'] != 'starting': break
+            threading.Event().wait(0.02)
+        return opencode_pool.status()
+
+    def test_opencode_start_then_stop_removes_owned_idle_session(self):
+        opencode_pool, FakeClient = self.pool()
+        save_config(self.root, cc.NAME, {'schema_version': 1, 'opencode': False, 'mcp': True})
+        self.controls.action('opencode', 'start')
+        self.assertTrue(cc.settings(self.root)['opencode'])
+        self.assertEqual(self.settle(opencode_pool)['status'], 'ready')
+        row = self.rows()['opencode']
+        self.assertEqual((row['state'], row['session']['container']), ('ready', FakeClient.created[0].name))
+        self.assertEqual(row['version'], '1.19.3')
+        result = self.controls.action('opencode', 'stop')
+        self.assertIn('removed', result['message'])
+        self.assertTrue(FakeClient.created[0].closed)
+        self.assertFalse(cc.settings(self.root)['opencode'])
+        row = next(x for x in result['snapshot']['components'] if x['id'] == 'opencode')
+        self.assertEqual(row['state'], 'disabled')
+        self.assertIsNone(row['session']['container'])  # No hidden container remains owned.
+        # A queued warm-up cannot bring it back while stopped.
+        with self.assertRaisesRegex(ValueError, 'opencode is stopped'):
+            opencode_pool.start(self.root)
+        self.assertEqual(len(FakeClient.created), 1)
+
+    def test_opencode_stop_refuses_while_a_task_owns_the_session(self):
+        opencode_pool, FakeClient = self.pool()
+        client = opencode_pool.acquire(self.root, None, {'model': 'qwen3.5:9b', 'runtime': {'timeout_seconds': 60}}, 'task', None, factory=FakeClient)
+        with self.assertRaisesRegex(ValueError, 'task owns the session'):
+            self.controls.action('opencode', 'stop')
+        self.assertFalse(self.rows()['opencode']['actions']['restart']['enabled'])
+        self.assertTrue(cc.settings(self.root)['opencode'])
+        self.assertFalse(client.closed)
+        self.assertEqual(client.control, 'task')
+        self.assertFalse(self.controls.changing)
+
+    def test_failed_cleanup_is_visible_keeps_stop_and_blocks_replacement(self):
+        opencode_pool, FakeClient = self.pool()
+        client = opencode_pool.acquire(self.root, None, {'model': 'qwen3.5:9b', 'runtime': {'timeout_seconds': 60}}, None, None, factory=FakeClient)
+        opencode_pool.release(client)
+        client.close = lambda: False
+        with self.assertRaisesRegex(ValueError, 'cleanup failed'):
+            self.controls.action('opencode', 'stop')
+        self.assertFalse(cc.settings(self.root)['opencode'])  # Still refuses new tasks.
+        row = self.rows()['opencode']
+        self.assertEqual(row['state'], 'failed')
+        self.assertIn(client.name, row['detail'])
+        self.assertTrue(row['actions']['stop']['enabled'])  # Cleanup can be retried.
+        with self.assertRaises(ValueError):
+            opencode_pool.acquire(self.root, None, {'model': 'other:9b', 'runtime': {'timeout_seconds': 60}}, None, None, factory=FakeClient)
+        self.assertEqual(len(FakeClient.created), 1)
+        client.close = lambda: True
+        self.controls.action('opencode', 'stop')
+        self.assertEqual(self.rows()['opencode']['state'], 'disabled')
+
+    def test_restart_replaces_the_session_and_reload_keeps_it(self):
+        opencode_pool, FakeClient = self.pool()
+        opencode_pool.start(self.root)  # Default GUI load with OpenCode enabled.
+        self.settle(opencode_pool)
+        first = FakeClient.created[0]
+        self.controls.action('opencode', 'reload')
+        self.assertEqual((self.settle(opencode_pool)['container'], first.closed), (first.name, False))
+        self.controls.action('opencode', 'restart')
+        self.assertTrue(first.closed)
+        self.assertEqual(self.settle(opencode_pool)['status'], 'ready')
+        self.assertEqual(opencode_pool.status()['container'], FakeClient.created[1].name)
+
+    def test_cached_snapshot_reports_current_pool_state(self):
+        opencode_pool, FakeClient = self.pool()
+        self.assertEqual(self.rows()['opencode']['state'], 'on_demand')
+        calls = len(self.calls)
+        opencode_pool._state.update(status='failed', error='cleanup pending')
+        row = next(x for x in self.controls.snapshot()['components'] if x['id'] == 'opencode')
+        self.assertEqual(row['state'], 'failed')
+        self.assertEqual(len(self.calls), calls)
+
+    def test_engine_warmup_shares_the_lifecycle_owner_without_granting_access(self):
+        from access_policy import current
+        opencode_pool, FakeClient = self.pool()
+        before = current(self.root).report()
+        save_config(self.root, cc.NAME, {'schema_version': 1, 'opencode': False, 'mcp': False})
+        self.controls.changing = True
+        with patch('component_controls.manager', return_value=self.controls):
+            with self.assertRaisesRegex(ValueError, 'in progress'):
+                self.controls.warm_opencode()
+            self.assertFalse(cc.settings(self.root)['opencode'])
+            self.controls.changing = False
+            self.controls.warm_opencode()
+        self.assertEqual(cc.settings(self.root), cc.DEFAULT)
+        self.assertEqual(self.settle(opencode_pool)['status'], 'ready')
+        self.assertEqual(current(self.root).report(), before)
+
+    def test_session_route_start_and_stop_use_the_component_owner(self):
+        import dashboard
+        from http.server import ThreadingHTTPServer
+        opencode_pool, FakeClient = self.pool()
+        save_config(self.root, cc.NAME, {'schema_version': 1, 'opencode': False, 'mcp': False})
+        with patch.object(dashboard, 'ROOT', self.root), patch.object(dashboard, 'component_manager', return_value=self.controls), \
+             patch('component_controls.manager', return_value=self.controls):
+            server = ThreadingHTTPServer(('127.0.0.1', 0), dashboard.handler('session-test-token'))
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                def post(action):
+                    client = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+                    try:
+                        client.request('POST', '/api/opencode/session', json.dumps({'action': action}), {'X-Smelter-Token': 'session-test-token'})
+                        response = client.getresponse()
+                        return response.status, json.loads(response.read())
+                    finally: client.close()
+                self.assertEqual(post('start')[0], 200)
+                self.assertEqual(self.settle(opencode_pool)['status'], 'ready')
+                self.assertEqual(cc.settings(self.root), cc.DEFAULT)
+                status, result = post('stop')
+                self.assertEqual((status, result['status'], result['container']), (200, 'stopped', None))
+                self.assertTrue(FakeClient.created[0].closed)
+                self.assertFalse(cc.settings(self.root)['opencode'])
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
+
     def test_fixed_schema_rejects_arbitrary_commands_and_invalid_flags(self):
         with self.assertRaises(ValueError): self.controls.action('ollama;cmd', 'start')
         with self.assertRaises(ValueError): self.controls.action('ollama', '--execute')
