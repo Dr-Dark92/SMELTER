@@ -38,10 +38,11 @@ def _files(folder, prefix=''):
             yield relative, path
 
 
-def _source_files(root):
+def _source_files(root, extra=()):
+    """tools/, skills/ and top-level documents; coding copies and their test snapshots add mods/."""
     result = {}
     total = 0
-    for name in ('tools', 'skills'):
+    for name in ('tools', 'skills', *extra):
         for relative, path in _files(root / name, name + '/'):
             if len(result) >= MAX_FILES:
                 raise ValueError('Workspace source exceeds file limit')

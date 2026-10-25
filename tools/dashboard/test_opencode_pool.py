@@ -72,6 +72,14 @@ class PoolTests(unittest.TestCase):
         third = self.acquire(model='qwen3.5:9b', policy=SimpleNamespace(revision='r2'))
         self.assertIsNot(third, second)
 
+    def test_warmed_container_is_reused_for_a_tool_enabled_task(self):
+        first = self.acquire(); opencode_pool.release(first)
+        bridge = SimpleNamespace(tools=[{'name':'melty_whoami'}], manifest=lambda timeout: {'tools':[{'name':'melty_whoami'}]})
+        second = opencode_pool.acquire(self.root, self.policy, self.config(), object(), bridge, factory=FakeClient)
+        self.assertIs(second, first)
+        self.assertIs(second.bridge, bridge)
+        self.assertFalse(first.closed)
+
     def test_unhealthy_release_or_relay_error_discards(self):
         first = self.acquire()
         self.assertTrue(opencode_pool.release(first, healthy=False))

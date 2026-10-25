@@ -1,0 +1,6 @@
+# Private Universal Modder runtime/test environment; Python 3.12+.
+# Upstream source is pinned separately in system-requirements.json.
+Pillow==13.0.0
+numpy==2.5.4
+PyYAML==6.0.3
+pytest==9.1.1

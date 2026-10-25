@@ -59,6 +59,8 @@ def find_executable(name: str) -> str | None:
         elif name == "blender":
             candidates.extend((base / "Blender Foundation").glob("Blender */blender.exe"))
             candidates.extend((base / "Programs" / "Blender Foundation").glob("Blender */blender.exe"))
+        elif name == "vswhere":
+            candidates.append(base / "Microsoft Visual Studio" / "Installer" / "vswhere.exe")
         elif name == "ffmpeg":
             candidates.extend(base.glob("ffmpeg*/bin/ffmpeg.exe"))
             candidates.extend((base / "Programs").glob("ffmpeg*/bin/ffmpeg.exe"))
@@ -93,7 +95,8 @@ def probe(name: str, argv: list[str], policy: str) -> dict:
         output = (run.stdout or run.stderr).strip()
         first = next((line.strip() for line in output.splitlines() if line.strip()), "")
         first = re.sub(r"[\x00-\x1f\x7f]", "", first)[:160]
-        return {"name": name, "status": "installed" if run.returncode == 0 else "detected_unverified",
+        # A query that succeeds but prints nothing (vswhere without the C++ tools) proves nothing.
+        return {"name": name, "status": "installed" if run.returncode == 0 and first else "detected_unverified",
                 "policy": policy, "version": first or None}
     except (OSError, subprocess.TimeoutExpired):
         return {"name": name, "status": "detected_unverified", "policy": policy, "version": None}

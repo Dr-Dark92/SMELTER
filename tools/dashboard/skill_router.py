@@ -9,6 +9,10 @@ import re
 from skills_catalog import catalog_skills
 
 KEYWORDS = {
+    "engine-archive": ("iostore", "utoc", "repak", "retoc", "serializedfile", "unity archive", "archive inspection", "assetbundle"),
+    "universal-modder": ("universal modder", "um scan", "field notes", "universal modding tool"),
+    "game-modding": ("modding", "game mod", "mashup", "unreal", "ue4", "ue5", "il2cpp", "unity assets", "godot pck"),
+    "mod-validation": ("test mod", "native mod", "camera link", "lua mod", "cross compile"),
     "documentation": ("documentation", "document", "readme", "handover", "report", "write docs", "technical writing"),
     "diagrams": ("diagram", "mermaid", "flowchart", "architecture chart", "sequence diagram", "data flow"),
 }

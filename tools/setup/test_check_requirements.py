@@ -75,6 +75,14 @@ class RequirementsTests(unittest.TestCase):
         self.assertEqual(result["version"], "git version 2.0")
         self.assertFalse(runner.call_args.kwargs.get("shell", False))
 
+    def test_success_without_output_is_unverified(self):
+        # vswhere exits 0 and prints nothing when the C++ x64 tools are missing.
+        completed = subprocess.CompletedProcess(["vswhere"], 0, "", "")
+        with patch.object(module.shutil, "which", return_value="/usr/bin/vswhere"):
+            with patch.object(module.subprocess, "run", return_value=completed):
+                result = module.probe("msvc", module.TOOLS["msvc"][0], "optional")
+        self.assertEqual(result["status"], "detected_unverified")
+
     def test_timeout(self):
         with patch.object(module.shutil, "which", return_value="/usr/bin/java"):
             with patch.object(module.subprocess, "run", side_effect=subprocess.TimeoutExpired("java", 5)):

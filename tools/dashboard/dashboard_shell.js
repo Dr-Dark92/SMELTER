@@ -29,19 +29,25 @@ function initShell(){
  const reaStatus=document.createElement('p');reaStatus.id='reaStatus';
  reaCheck.onclick=async()=>{try{const s=await api('/api/rea/status');reaStatus.textContent='REA: '+s.status+' | version: '+(s.installed_version||'not installed')+' | '+s.reason}catch(e){reaStatus.textContent=e.message}};
  const meltyGrant=document.createElement('input');meltyGrant.type='checkbox';meltyGrant.id='approveMelty';
- const meltyLabel=document.createElement('label');meltyLabel.append(meltyGrant,document.createTextNode(' Allow Melty read-only account/game lookup for this message'));
+ // Melty lookup is read-only, so it is a remembered preference (on unless unticked), not a per-send grant.
+ const meltyLabel=document.createElement('label');meltyLabel.append(meltyGrant,document.createTextNode(' Allow Melty read-only account/game lookup (remembered; untick to turn off)'));
+ try{meltyGrant.checked=localStorage.getItem('smelterMeltyLookup')!=='off'}catch(e){meltyGrant.checked=true}
+ meltyGrant.addEventListener('change',()=>{try{localStorage.setItem('smelterMeltyLookup',meltyGrant.checked?'on':'off')}catch(e){}});
  const meltyCheck=document.createElement('button');meltyCheck.type='button';meltyCheck.textContent='Check Melty connection';
  const meltyStatus=document.createElement('p');meltyStatus.id='meltyStatus';
- meltyCheck.onclick=async()=>{meltyCheck.disabled=true;try{const s=await api('/api/melty','POST',{action:'probe'});meltyStatus.textContent='Melty: '+s.status+' · '+s.tools.join(', ')+' · read only'}catch(e){meltyStatus.textContent=e.message}finally{meltyCheck.disabled=false}};
+ meltyCheck.onclick=async()=>{meltyCheck.disabled=true;meltyStatus.textContent='Melty: checking…';try{const s=await api('/api/melty','POST',{action:'probe'});meltyStatus.textContent='Melty: '+s.status+' · '+s.tools.join(', ')+' · read only'}catch(e){meltyStatus.textContent='Melty: not connected · '+e.message}finally{meltyCheck.disabled=false}};
+ setTimeout(()=>meltyCheck.click(),0);  // Verify the connection with the GUI, not only on request.
  const workspaceGrant=document.createElement('input');workspaceGrant.type='checkbox';workspaceGrant.id='approveFrontendWorkspace';
  const workspaceLabel=document.createElement('label');workspaceLabel.style.display='block';workspaceLabel.append(workspaceGrant,document.createTextNode(' Allow isolated frontend workspace: read source, edit destination CSS, run fixed tests and launch port 8770 (24 calls, up to 15 minutes)'));
  const codingGrant=document.createElement('input');codingGrant.type='checkbox';codingGrant.id='approveCodingWorkspace';
  const codingLabel=document.createElement('label');codingLabel.style.display='block';codingLabel.append(codingGrant,document.createTextNode(' Allow a new isolated coding copy: propose/apply up to 6 files per patch and run fixed confined tests (32 calls). Preserve original and existing V2.'));
+ const nativeGrant=document.createElement('input');nativeGrant.type='checkbox';nativeGrant.id='approveNativeBuild';
+ const nativeLabel=document.createElement('label');nativeLabel.style.display='block';nativeLabel.append(nativeGrant,document.createTextNode(' Allow Windows C++ builds of mods/<mod> in the isolated container (built files are never run). Needs the coding copy below.'));
  const modelGrants=document.createElement('div');modelGrants.id='modelInspectionGrants';
  const selectedModelIds=()=>[...modelGrants.querySelectorAll('input:checked')].map(x=>x.dataset.assetId);
  window.setChatModelGrants=assets=>{modelGrants.replaceChildren();for(const asset of assets){const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.assetId=asset.id;const label=document.createElement('label');label.style.display='block';label.append(checkbox,document.createTextNode(' Allow read-only GLB inspection: '+asset.filename));modelGrants.append(label)}permissionsBox.dispatchEvent(new Event('change',{bubbles:true}))};
- const toolsNote=document.createElement('p');toolsNote.textContent='Applies only to the next Send. Built-in scopes do not sandbox external MCP servers. Tool results are logged locally.';
- permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,meltyLabel,meltyCheck,meltyStatus,modelGrants,workspaceLabel,codingLabel,toolsNote);
+ const toolsNote=document.createElement('p');toolsNote.textContent='File and tool grants apply only to the next Send; the read-only Melty lookup choice is remembered. Built-in scopes do not sandbox external MCP servers. Tool results are logged locally.';
+ permissionsBox.append(permissionsTitle,readFolder,document.createElement('br'),readLabel,document.createElement('br'),writeLabel,document.createElement('br'),reaLabel,document.createElement('br'),reaCheck,reaStatus,meltyLabel,meltyCheck,meltyStatus,modelGrants,workspaceLabel,codingLabel,nativeLabel,toolsNote);
  const composer=document.createElement('div');composer.id='composer';
  const input=document.createElement('textarea');input.rows=1;input.maxLength=1800;input.setAttribute('aria-label','Message');input.id='chatinput';input.placeholder='Message local Qwen 3.5 9B';
  // One line by default; grow with the text up to the CSS max-height, then scroll.
@@ -72,10 +78,11 @@ function initShell(){
  send.disabled=true;newChat.disabled=true;input.disabled=true;imageInput.disabled=true;
  const executionEngine=engineChoice.value;engineChoice.disabled=true;
  const conversation=activeChat;const started=Date.now();const pending=renderPending(content);
- const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,melty_read:meltyGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
+ const toolPermissions={...mcpControls.collect(),frontend_workspace:workspaceGrant.checked,coding_workspace:codingGrant.checked,native_build:nativeGrant.checked&&codingGrant.checked,melty_read:meltyGrant.checked,model_ids:selectedModelIds(),inventory_root:readGrant.checked?readFolder.value.trim():null,write_diagnostics:writeGrant.checked,rea_analysis:reaGrant.checked,rea_root:reaGrant.checked&&readFolder.value.trim()?readFolder.value.trim():null};
  // Grants apply to one Send unless the operator opted to keep them for following sends.
  const keepAccess=document.getElementById('keepTaskAccess')?.checked===true;
- if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;meltyGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();}
+ // The remembered Melty lookup preference is not cleared; file/tool grants are.
+ if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false;codingGrant.checked=false;nativeGrant.checked=false;modelGrants.querySelectorAll('input').forEach(x=>x.checked=false);mcpControls.refreshApprovals();window.refreshAccessSummary?.();}
  requestStatus.textContent='Submitting request…';
  try{let attachment=null;const file=imageInput.files[0];
  if(file){if(file.size>2097152)throw Error('Image exceeds 2 MiB');const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Could not read image'));reader.readAsDataURL(file)});attachment={mime:file.type,base64:b64}}

@@ -16,23 +16,41 @@ from uuid import uuid4
 from process_runner import run
 
 NAME='sandbox.json'
-DEFAULT={'schema_version':1,'python_image':None,'node_image':None,'opencode_image':None}
+DEFAULT={'schema_version':1,'python_image':None,'node_image':None,'opencode_image':None,'cpp_image':None,'engine_image':None}
+IMAGES=('python_image','node_image','opencode_image','cpp_image','engine_image')
 
 
 def validate(value):
-    if not isinstance(value,dict) or set(value)!=set(DEFAULT) or type(value['schema_version']) is not int or value['schema_version']!=1:
+    # Later image keys remain optional for configurations written by older versions.
+    if not isinstance(value,dict) or not set(DEFAULT)-{'cpp_image','engine_image'}<=set(value)<=set(DEFAULT) or type(value['schema_version']) is not int or value['schema_version']!=1:
         raise ValueError('Sandbox configuration requires schema_version, python_image and node_image')
-    for key in ('python_image','node_image','opencode_image'):
-        if value[key] is not None and (not isinstance(value[key],str) or not re.fullmatch(r'sha256:[a-f0-9]{64}',value[key])):
+    for key in IMAGES:
+        if value.get(key) is not None and (not isinstance(value[key],str) or not re.fullmatch(r'sha256:[a-f0-9]{64}',value[key])):
             raise ValueError('Select a locally installed immutable sha256 image ID; image tags/commands are not accepted')
     return value
 
 
 def config(root):
     from database import chosen_database
-    if chosen_database(Path(root)) is None:return dict(DEFAULT)
-    from config_store import load_config
-    return load_config(root,NAME)
+    if chosen_database(Path(root)) is None:
+        saved={}
+    else:
+        from config_store import load_config
+        saved=load_config(root,NAME)
+    value={**DEFAULT,**saved}
+    # Setup selection lives separately until a new GUI saves its expanded schema.
+    # Older running backends must still be able to validate their existing row.
+    if 'engine_image' not in saved:
+        from python_tools import _plain_path
+        selected=_plain_path(Path(root)/'.smelter/tooling/engine-cli/selection.json')
+        if selected.is_file() and selected.stat().st_size<=4096:
+            try:
+                selection=json.loads(selected.read_text(encoding='utf-8'))
+                image=selection.get('image_id')
+                if isinstance(image,str) and re.fullmatch(r'sha256:[a-f0-9]{64}',image):
+                    value['engine_image']=image
+            except (OSError,ValueError):pass
+    return value
 
 
 def status(root,operation="frontend"):
@@ -54,7 +72,8 @@ def status(root,operation="frontend"):
         if not any('seccomp' in option for option in info.get('SecurityOptions',[])):
             raise ValueError('Docker default seccomp support is required')
         required={'opencode':('opencode_image',), 'coding_python':('python_image',),
-                  'coding_node':('node_image',)}.get(operation, ('python_image','node_image'))
+                  'coding_node':('node_image',), 'coding_cpp':('cpp_image',), 'coding_lua':('cpp_image',),
+                  'engine_archive':('engine_image',)}.get(operation, ('python_image','node_image'))
         for key in required:
             image=value[key]
             if not image:raise ValueError('Configure the required immutable image IDs in Settings')
@@ -67,7 +86,7 @@ def status(root,operation="frontend"):
     return result
 
 
-def _flags(docker,name,snapshot):
+def _flags(docker,name,snapshot,exec_scratch=False):
     # Values are fixed by trusted code, not skill text or model arguments.
     if any(c in str(snapshot) for c in (',','\n','\r','\x00')):raise ValueError('Unsupported sandbox mount path')
     return [docker,'run','--pull','never','--name',name,'--label','smelter.owner='+name,
@@ -81,14 +100,16 @@ def _flags(docker,name,snapshot):
             '--tmpfs','/home/app:rw,noexec,nosuid,nodev,size=32m,mode=0700,uid=65534,gid=65534',
             '--tmpfs','/workspace/.smelter:rw,noexec,nosuid,nodev,size=128m,mode=0700,uid=65534,gid=65534',
             '--env','HOME=/home/app','--env','PYTHONDONTWRITEBYTECODE=1',
-            '--env','SMELTER_SANDBOX=1','--workdir','/workspace']
+            '--env','SMELTER_SANDBOX=1','--workdir','/workspace']+(
+            # Only the C++ profile runs binaries it compiles; they get their own exec-able scratch.
+            ['--tmpfs','/build:rw,exec,nosuid,nodev,size=256m,mode=1777'] if exec_scratch else [])
 
 
 def snapshot(root,target):
     from python_tools import _plain_path
     from frontend_workspace import _source_files, MAX_COPY
     base=_plain_path(Path(root)/'.smelter/sandbox-runs')
-    files=_source_files(Path(target))
+    files=_source_files(Path(target),('mods',))
     from storage_budget import inventory
     staged=inventory(root,('sandbox-runs',))
     expected=sum(path.stat().st_size for path in files.values())
@@ -121,7 +142,7 @@ def snapshot(root,target):
 
 def _remove(docker,name):
     """Only remove a container carrying this invocation's ownership label."""
-    if not re.fullmatch(r'smelter-(?:tests|preview|opencode)-[a-f0-9]{32}',name):return False
+    if not re.fullmatch(r'smelter-(?:tests|preview|opencode|native|engine)-[a-f0-9]{32}',name):return False
     def absent():
         # An auto-removed container is already clean. Docker versions/locales
         # differ in error wording; only a successful exact-name listing proves
@@ -178,6 +199,79 @@ print('SMELTER_TEST_RESULT|'+json.dumps({'tests':result.testsRun,'failures':len(
 timer.cancel()
 sys.exit(0 if result.wasSuccessful() and result.testsRun>len(result.skipped) else 1)
 '''
+# Each mod's tests/ is its own import root; test modules are forgotten between mods so two
+# mods may both have test_link.py. Tests reach their mod's code via their own sys.path setup.
+CODING_MODS = r'''
+import json,os,subprocess,sys,threading
+from pathlib import Path
+timer=threading.Timer(60,lambda:os._exit(124));timer.daemon=True;timer.start()
+counts={'tests':0,'failures':0,'errors':0,'skipped':0}
+for tests in sorted(Path('mods').glob('*/tests')):
+ if not any(tests.glob('test_*.py')):continue
+ # A fresh interpreter isolates helpers as well as test_* modules between mods.
+ script="import json,unittest; r=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('.',pattern='test_*.py')); print('SMELTER_MOD_RESULT|'+json.dumps({'tests':r.testsRun,'failures':len(r.failures),'errors':len(r.errors),'skipped':len(r.skipped)}))"
+ one=subprocess.run([sys.executable,'-I','-c',script],cwd=tests,capture_output=True,text=True,timeout=55)
+ print(one.stdout+one.stderr,flush=True)
+ lines=[line for line in one.stdout.splitlines() if line.startswith('SMELTER_MOD_RESULT|')]
+ if len(lines)!=1:counts['errors']+=1;continue
+ found=json.loads(lines[0].split('|',1)[1])
+ for key in counts:counts[key]+=found[key]
+print('SMELTER_TEST_RESULT|'+json.dumps(counts),flush=True)
+timer.cancel()
+sys.exit(0 if counts['tests']>counts['skipped'] and not counts['failures'] and not counts['errors'] else 1)
+'''
+# Each mods/<mod>/tests/cpp/test_*.cpp is one test program: g++ -std=c++17 -Wall -Wextra -Werror with
+# the mod folder on the include path, then run. Exit 0 passes; a nonzero exit (assert, return 1) is a
+# failure (RED); a compile error or timeout is an error. Only portable code compiles here (no Win32).
+CODING_CPP = r'''
+import json,os,subprocess,sys,threading
+from pathlib import Path
+timer=threading.Timer(150,lambda:os._exit(124));timer.daemon=True;timer.start()
+tests=sorted(Path('mods').glob('*/tests/cpp/test_*.cpp'))
+counts={'tests':0,'failures':0,'errors':0,'skipped':0}
+if len(tests)>64:
+ print('ERROR: C++ suite exceeds the 64-program limit; nothing was silently omitted',flush=True)
+ counts['errors']=1;tests=[]
+for test in tests:
+ mod=test.parents[2];binary=Path('/build')/(mod.name+'__'+test.stem);counts['tests']+=1
+ try:
+  built=subprocess.run(['g++','-std=c++17','-O1','-Wall','-Wextra','-Werror','-I',str(mod),str(test),'-o',str(binary),'-lm'],capture_output=True,text=True,timeout=60)
+ except subprocess.TimeoutExpired:
+  counts['errors']+=1;print('ERROR (compile timeout)',test,flush=True);continue
+ if built.returncode:
+  counts['errors']+=1;print('ERROR (compile)',test,'\n'+built.stderr[-3000:],flush=True);continue
+ try:
+  ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=20)
+ except subprocess.TimeoutExpired:
+  counts['errors']+=1;print('ERROR (run timeout)',test,flush=True);continue
+ print(ran.stdout[-2000:]+ran.stderr[-2000:],flush=True)
+ if ran.returncode:counts['failures']+=1;print('FAIL',test,'exit',ran.returncode,flush=True)
+ else:print('PASS',test,flush=True)
+print('SMELTER_TEST_RESULT|'+json.dumps(counts),flush=True)
+timer.cancel()
+sys.exit(0 if counts['tests'] and not counts['failures'] and not counts['errors'] else 1)
+'''
+CODING_LUA = r'''
+import json,os,subprocess,sys,threading,time
+from pathlib import Path
+timer=threading.Timer(60,lambda:os._exit(124));timer.daemon=True;timer.start()
+tests=sorted(Path('mods').glob('*/tests/test_*.lua'))
+counts={'tests':0,'failures':0,'errors':0,'skipped':0}
+deadline=time.monotonic()+55
+if len(tests)>64:counts['errors']=1;tests=[];print('ERROR: Lua suite exceeds 64 programs',flush=True)
+for test in tests:
+ counts['tests']+=1
+ try:
+  remaining=deadline-time.monotonic()
+  if remaining<=0:raise subprocess.TimeoutExpired('lua5.4',55)
+  result=subprocess.run(['lua5.4',str(test.relative_to(test.parents[1]))],cwd=test.parents[1],capture_output=True,text=True,timeout=min(15,remaining))
+  print(result.stdout[-3000:]+result.stderr[-3000:],flush=True)
+  if result.returncode:counts['failures']+=1
+ except (OSError,subprocess.TimeoutExpired) as exc:counts['errors']+=1;print(type(exc).__name__,flush=True)
+print('SMELTER_TEST_RESULT|'+json.dumps(counts),flush=True)
+timer.cancel()
+sys.exit(0 if counts['tests'] and not counts['failures'] and not counts['errors'] else 1)
+'''
 CODING_NODE = r'''
 const fs=require('node:fs'),cp=require('node:child_process'),os=require('node:os'),path=require('node:path');
 const files=fs.readdirSync('tools/dashboard').filter(n=>/^test_[A-Za-z0-9_.-]+\.js$/.test(n)).sort();
@@ -223,24 +317,26 @@ def node_test_result(exit_code, output):
 
 def coding_test(root,target,profile):
     """One fixed test profile over a read-only snapshot; never a host command."""
-    if profile not in ('python','node'):raise ValueError('Unsupported coding test profile')
+    if profile not in ('python','node','mods','cpp','lua'):raise ValueError('Unsupported coding test profile')
     from access_policy import require
     require(target,'execute','tests')
-    ready=status(root,operation='coding_'+profile)
+    ready=status(root,operation='coding_'+('python' if profile=='mods' else profile))
+    image_key={'mods':'python','cpp':'cpp','lua':'cpp'}.get(profile,profile)+'_image'
     if not ready['ready']:raise ValueError('Confined coding tests unavailable: '+ready['reason'])
     folder,code=snapshot(root,target)
     name='smelter-tests-'+uuid4().hex
-    image=ready['configured'][profile+'_image']
-    command=['python','-I','-c',CODING_PYTHON] if profile=='python' else ['node','-e',CODING_NODE]
+    image=ready['configured'][image_key]
+    command={'python':['python','-I','-c',CODING_PYTHON],'mods':['python','-I','-c',CODING_MODS],
+             'cpp':['python','-I','-c',CODING_CPP], 'lua':['python','-I','-c',CODING_LUA]}.get(profile,['node','-e',CODING_NODE])
     confirmed=False
     try:
         record_owner(folder,name,image,'tests')
-        result=run(_flags(ready['docker'],name,code)+['--rm',image,*command],
-                   timeout=70,max_output=2*1024*1024)
+        result=run(_flags(ready['docker'],name,code,exec_scratch=profile=='cpp')+['--rm',image,*command],
+                   timeout=160 if profile=='cpp' else 70,max_output=2*1024*1024)
         raw=result.stdout+result.stderr
         output=raw.decode('utf-8',errors='replace')
         counts={}
-        if profile=='python':
+        if profile in ('python','mods','cpp','lua'):
             matches=re.findall(r'^SMELTER_TEST_RESULT\|(\{[^\n]+\})\s*$',output,re.M)
             if len(matches)==1:
                 try:counts=json.loads(matches[0])
@@ -316,7 +412,7 @@ def owned_runs(root):
         if not marker.is_file() or marker.stat().st_size>16384:continue
         try:
             row=json.loads(marker.read_text())
-            if re.fullmatch(r'smelter-(?:tests|preview|opencode)-[a-f0-9]{32}',row.get('container','')):result.append({**row,'folder':str(folder)})
+            if re.fullmatch(r'smelter-(?:tests|preview|opencode|native|engine)-[a-f0-9]{32}',row.get('container','')):result.append({**row,'folder':str(folder)})
         except (ValueError,OSError,TypeError):continue
     return result
 

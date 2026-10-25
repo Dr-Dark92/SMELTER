@@ -21,7 +21,11 @@ MAX_FILES = 20000
 MAX_COPY = 128 * 1024 * 1024
 MAX_PATCH = 512 * 1024
 MAX_CHANGES = 6
-EDITABLE = {'.py', '.js', '.mjs', '.cjs', '.css', '.html', '.json', '.md', '.toml', '.yaml', '.yml'}
+EDITABLE = {'.py', '.js', '.mjs', '.cjs', '.css', '.html', '.json', '.md', '.toml', '.yaml', '.yml',
+            '.c', '.cpp', '.h', '.hpp', '.lua', '.txt'}
+# Build outputs never enter a coding copy. Scripts (.bat/.ps1/.cmd) are copied but not editable,
+# so model edits cannot change anything SMELTER runs on the host.
+BUILD_OUTPUTS = {'.exe', '.obj', '.asi', '.dll', '.lib', '.pdb', '.exp', '.ilk', '.bin'}
 PRIVATE = {'.git', '.smelter', 'projects', 'node_modules', 'third-party', '__pycache__', '.venv', 'venv',
            '.npmrc', '.pypirc', 'credentials.json', 'secrets.json'}
 RESERVED = re.compile(r'(?i)^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$')
@@ -50,8 +54,13 @@ def relative_path(value, *, edit=False):
     if any(not re.fullmatch(r'[A-Za-z0-9_.-]+', p) or p in ('.', '..') or p.endswith(('.', ' ')) or
            p.lower() in PRIVATE or p.lower().startswith('.env') or RESERVED.fullmatch(p) for p in parts):
         raise ValueError('Protected or unsafe code path')
-    if parts[0] not in ('tools', 'skills') and value not in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md'):
-        raise ValueError('Code paths must be in tools/ or skills/, or an existing top-level project document')
+    if parts[0] == 'mods':
+        if len(parts) < 3:
+            raise ValueError('Mod files live in mods/<mod>/...')
+        if Path(value).suffix.lower() in BUILD_OUTPUTS:
+            raise ValueError('Build outputs are not coding workspace files')
+    elif parts[0] not in ('tools', 'skills') and value not in ('README.md', 'REQUIREMENTS.md', 'MASTER_HANDOVER.md'):
+        raise ValueError('Code paths must be in tools/, skills/ or mods/<mod>/, or an existing top-level project document')
     if Path(value).suffix.lower() in ('.pem', '.pfx', '.key'):
         raise ValueError('Credential material is excluded')
     if edit and Path(value).suffix.lower() not in EDITABLE:
@@ -124,7 +133,7 @@ def _file(target, relative, *, edit=False):
 
 def _scan(target):
     from frontend_workspace import _source_files
-    files = _source_files(target)
+    files = _source_files(target, ('mods',))
     result, size = {}, 0
     for relative, path in files.items():
         try:
@@ -155,7 +164,7 @@ def prepare(root, arguments):
         source = Path(root).resolve()
         files = {}
         size = 0
-        for relative, path in _source_files(source).items():
+        for relative, path in _source_files(source, ('mods',)).items():
             try:
                 relative_path(relative)
             except ValueError:
@@ -364,13 +373,16 @@ def apply(root, arguments):
 
 def test_profiles(target):
     folder = target / 'tools/dashboard'
-    return [name for name, pattern in [('python', 'test_*.py'), ('node', 'test_*.js')]
-            if any(folder.glob(pattern))]
+    profiles = [name for name, pattern in [('python', 'test_*.py'), ('node', 'test_*.js')]
+                if any(folder.glob(pattern))]
+    return (profiles + (['mods'] if any(target.glob('mods/*/tests/test_*.py')) else [])
+            + (['cpp'] if any(target.glob('mods/*/tests/cpp/test_*.cpp')) else [])
+            + (['lua'] if any(target.glob('mods/*/tests/test_*.lua')) else []))
 
 
 def test(root, arguments):
-    if set(arguments) != {'workspace_id', 'profile'} or arguments.get('profile') not in ('python', 'node'):
-        raise ValueError('Choose the fixed python or node test profile; no command arguments')
+    if set(arguments) != {'workspace_id', 'profile'} or arguments.get('profile') not in ('python', 'node', 'mods', 'cpp', 'lua'):
+        raise ValueError('Choose the fixed python, node, mods, cpp or lua test profile; no command arguments')
     sid, profile = arguments['workspace_id'], arguments['profile']
     with locked(root):
         _, target = load(root, sid)

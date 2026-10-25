@@ -111,6 +111,9 @@ $status = Read-ToolStatus
 
 $toolPlan = [ordered]@{}
 $manual = @()
+# Installer options for packages whose default install lacks the needed parts (VS Build Tools' C++ workload).
+$wingetOverride = @{}
+foreach ($t in $catalog.tools.PSObject.Properties) { if ($t.Value.winget -and $t.Value.winget_override) { $wingetOverride[$t.Value.winget] = $t.Value.winget_override } }
 foreach ($name in $selectedTools | Select-Object -Unique) {
     $tool = $catalog.tools.$name
     if ($status[$name] -eq 'installed') { continue }
@@ -291,7 +294,7 @@ Write-Host 'Tools:' -ForegroundColor Cyan
 if ($toolPlan.Count -eq 0) { Write-Host '  all selected tools are installed' }
 foreach ($key in $toolPlan.Keys) {
     $kind, $package = $key -split ':', 2
-    if ($kind -eq 'winget') { $cmd = "winget install --id $package --exact --source winget" }
+    if ($kind -eq 'winget') { $cmd = "winget install --id $package --exact --source winget" + $(if ($wingetOverride[$package]) { " --override `"$($wingetOverride[$package])`"" } else { '' }) }
     else { $cmd = "npm install --global --allow-scripts=$(Get-NpmName $package) $package" }
     Write-Host ("  {0,-16} {1}" -f ($toolPlan[$key] -join ','), $cmd)
 }
@@ -332,7 +335,8 @@ foreach ($key in $toolPlan.Keys) {
     $names = $toolPlan[$key] -join ','
     Write-Host "`n==> $names ($package)" -ForegroundColor Cyan
     if ($kind -eq 'winget') {
-        & winget install --id $package --exact --source winget
+        $extra = if ($wingetOverride[$package]) { @('--override', $wingetOverride[$package]) } else { @() }
+        & winget install --id $package --exact --source winget @extra
     } else {
         if (-not $npmExe) { $results += [pscustomobject]@{Item=$names; Result='skipped: npm not found (install Node.js first)'}; continue }
         & $npmExe install --global "--allow-scripts=$(Get-NpmName $package)" $package

@@ -12,12 +12,12 @@ class Node {
  setAttribute(key,value){this.attributes[key]=value}
 }
 const flatten=node=>[node,...node.children.flatMap(flatten)];
-function fixture(){
+function fixture(sandboxConfigured={python_image:null,node_image:null,opencode_image:null,cpp_image:null}){
  const panels=[];const calls=[];const timers=[];let confirmation=true;let failure=null;let serial=0;
  const settings={activate(){},addPanel(id,label,section){section.id=id;panels.push(section);return new Node('button')}};
  const context={module:{exports:{}},SmelterSettings:{current:settings},setTimeout:callback=>timers.push(callback),confirm:()=>confirmation,Date};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'operations_ui.js'),'utf8')+';module.exports=SmelterOperations;',context);
- const api=async(route,method,body)=>{calls.push({route,method,body});if(failure)throw Error(failure);return body?.action==='plan'?{plan_id:'plan-'+(++serial),files:1,expires_in_seconds:600}:{removed:1}};
+ const api=async(route,method,body)=>{calls.push({route,method,body});if(failure)throw Error(failure);if(route==='/api/sandbox'&&!method)return {configured:sandboxConfigured,reason:'fixture',boundary:'fixture'};return body?.action==='plan'?{plan_id:'plan-'+(++serial),files:1,expires_in_seconds:600}:{removed:1}};
  context.module.exports.mount(api,{createElement:tag=>new Node(tag)});
  const all=panels.flatMap(flatten);const button=label=>all.find(n=>n.tag==='button'&&n.textContent===label);
  const age=all.find(n=>n.attributes['aria-label']==='Retention age in days');age.valueAsNumber=30;
@@ -54,4 +54,16 @@ test('expiry disables its own plan and cannot invalidate a newer plan',async()=>
 test('invalid retention age is rejected before a request',async()=>{
  const f=fixture();for(const value of [NaN,0,1.5,3651]){f.age.valueAsNumber=value;await f.button('Preview retention plan').onclick()}
  assert.equal(f.calls.length,0);assert.equal(f.button('Apply reviewed retention plan').disabled,true);
+});
+
+test('new image field is omitted for older backends and saved for updated ones',async()=>{
+ for(const supported of [false,true]){
+  const config={python_image:null,node_image:null,opencode_image:null,cpp_image:null};
+  if(supported)config.engine_image='sha256:'+'a'.repeat(64);
+  const f=fixture(config);await f.button('Check confined runner').onclick();
+  await f.button('Save confined runner configuration').onclick();
+  const saved=f.calls.find(x=>x.body?.action==='save').body.configuration;
+  assert.equal('engine_image' in saved,supported);
+  if(supported)assert.equal(saved.engine_image,config.engine_image);
+ }
 });

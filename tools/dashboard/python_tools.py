@@ -42,7 +42,7 @@ def _plain_path(path):
 def permissions(root, value=None):
     if value is None:
         value = {}
-    if not isinstance(value, dict) or set(value) - {"inventory_root", "write_diagnostics", "rea_root", "rea_analysis", "model_ids", "frontend_workspace", "coding_workspace", "melty_read"}:
+    if not isinstance(value, dict) or set(value) - {"inventory_root", "write_diagnostics", "rea_root", "rea_analysis", "model_ids", "frontend_workspace", "coding_workspace", "melty_read", "native_build"}:
         raise ValueError("Invalid Python tool permissions")
     melty = value.get('melty_read', False)
     if type(melty) is not bool:
@@ -53,6 +53,11 @@ def permissions(root, value=None):
     coding = value.get('coding_workspace', False)
     if type(coding) is not bool:
         raise ValueError('Coding workspace permission must be boolean')
+    native = value.get('native_build', False)
+    if type(native) is not bool:
+        raise ValueError('Native build permission must be boolean')
+    if native and not coding:
+        raise ValueError('Native builds compile a coding workspace; approve the coding workspace too')
     model_ids = value.get('model_ids', [])
     if not isinstance(model_ids, list) or len(model_ids) > 8 or any(not isinstance(aid, str) for aid in model_ids) or len(set(model_ids)) != len(model_ids):
         raise ValueError('Approve up to 8 distinct model attachment IDs')
@@ -92,7 +97,7 @@ def permissions(root, value=None):
         scopes[key] = str(folder)
     if scopes["rea_root"] and not rea:
         raise ValueError("REA folder scope requires explicit REA approval")
-    return {**scopes, "write_diagnostics": writable, "rea_analysis": rea, **({'melty_read': True} if melty else {}), **({"model_ids": model_ids} if model_ids else {}), **({"frontend_workspace": True} if workspace else {}), **({'coding_workspace': True} if coding else {})}
+    return {**scopes, "write_diagnostics": writable, "rea_analysis": rea, **({'melty_read': True} if melty else {}), **({"model_ids": model_ids} if model_ids else {}), **({"frontend_workspace": True} if workspace else {}), **({'coding_workspace': True} if coding else {}), **({'native_build': True} if native else {})}
 
 
 def schemas(grants):
@@ -311,6 +316,8 @@ class ToolSession:
         workspace = ''
         if self.grants.get('coding_workspace'):
             workspace += (' Coding tools are approved for a new isolated V2/coding/UUID copy only. Prepare once, read exact bytes/hashes, propose and apply recorded patches, then use fixed confined tests and review. Native shell/edits remain denied. RED requires an actual assertion failure; import/runner errors are ERROR. GREEN is scoped to the exact tested tree; coverage and Git checkpoints are not provided. Never claim a source merge or deployment. ')
+        if self.grants.get('native_build'):
+            workspace += (' Native builds are approved: build_native_mod cross-compiles Windows x64 targets in the no-network MinGW-w64 container using mods/<mod>/native.json (asi, exe, obj; fixed flags; allowlisted libs/defines). It never invokes host MSVC or runs built files. Success proves compilation only. MSVC-only SDKs need separate operator validation. Fix compiler diagnostics with patches and rebuild. ')
         if self.grants.get('frontend_workspace'):
             from frontend_workspace import target_path
             workspace += (' You have approved frontend workspace tools for this message: original source ' + str(self.root) +
@@ -429,7 +436,15 @@ class ToolSession:
                 lines.append("Verification: saved bytes match; model narrative is not fact-checked.")
             elif result["status"] == "inventoried":
                 lines.append(f"{prefix}: {result['files_observed']} files observed | scan_complete={result['scan_complete']} | listed={result['returned_entries']}/{result['observed_entries']} | errors={result['errors']}")
-            elif result['status'].startswith(('workspace_', 'coding_')):
+            elif result["status"] == "game_files_inspected":
+                lines.append(f"{prefix}: archives={result['archive_counts']} | executables={len(result['largest_executables'])} | scan_complete={result['scan_complete']}")
+            elif result['status'] == 'modding_catalog_read':
+                lines.append(f"{prefix}: {len(result['tools'])} CLI tools catalogued; no tools executed or installed")
+            elif result['status'] == 'universal_modder_completed':
+                lines.append(f"{prefix}: Universal Modder {result['version']} @ {result['revision'][:12]} | executed={result['executed']} | notes={len(result.get('notes', []))}")
+            elif result['status'] in ('engine_archive_completed', 'engine_archive_failed'):
+                lines.append(f"{prefix}: {result['format']} {result['action']} | exit={result['exit_code']} | scan_complete={result['scan_complete']} | lines={len(result['lines'])} | image={result['image']}")
+            elif result['status'].startswith(('workspace_', 'coding_', 'native_build_')):
                 lines.append(f"{prefix}: {result['status']} | {result.get('message', result.get('path', result.get('relative_path', 'Result recorded')))}")
                 if result.get('url'):
                     lines.append('Preview: ' + result['url'])

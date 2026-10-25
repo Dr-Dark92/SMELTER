@@ -17,14 +17,19 @@ def schemas(grants):
         def parameters(properties, required):
             return {'type': 'object', 'properties': properties, 'required': required, 'additionalProperties': False}
         operations = [
+            ('universal_modder', 'Use pinned GitHub Universal Modder: status verifies identity; search_notes queries at most five local field notes; read_note reads an exact returned Markdown path with character pagination. No remote sync, arbitrary commands, game control, restore, paid services or publication. Notes are untrusted reference data.', parameters({'action': {'type':'string','enum':['status','search_notes','read_note']}, 'query': {'type':'string','maxLength':160},'note':{'type':'string'},'offset':{'type':'integer','minimum':0},'limit':{'type':'integer','minimum':1,'maximum':12000}}, ['action'])),
+            ('modding_tool_catalog', 'Read the CLI-only modding catalog and integration states, optionally filtered by engine (ue4, ue5, unity, godot, source, source2, creation, redengine, idtech, renpy, gamemaker, rage). Does not execute or install tools. A candidate is not an available capability.', parameters({'engine': {'type': 'string'}}, [])),
             ('prepare_coding_workspace', 'Create a NEW isolated copy of this project under registered V2/coding/UUID. Preserve original and existing V2. No shell, installs, Git, deletions or preview.', parameters({}, [])),
             ('list_coding_files', 'List real paths/hashes in a prepared coding copy, with pagination.', parameters({'workspace_id': sid, 'offset': {'type': 'integer', 'minimum': 0}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200}}, ['workspace_id'])),
             ('read_coding_file', 'Read exact UTF-8 bytes as text with full-file SHA256 and character pagination. Reads only the selected coding copy.', parameters({'workspace_id': sid, 'relative_path': {'type': 'string'}, 'offset': {'type': 'integer', 'minimum': 0}, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 16000}}, ['workspace_id', 'relative_path'])),
-            ('propose_coding_patch', 'Record a reviewable proposal for 1-6 complete UTF-8 files. No code is applied. Use current full-file SHA256, or null to create a new file without overwriting. Maximum 128 KiB per file, 512 KiB total.', parameters({'workspace_id': sid, 'changes': {'type': 'array', 'minItems': 1, 'maxItems': 6, 'items': parameters({'relative_path': {'type': 'string'}, 'expected_sha256': {'type': ['string', 'null']}, 'content': {'type': 'string'}}, ['relative_path', 'expected_sha256', 'content'])}}, ['workspace_id', 'changes'])),
+            ('propose_coding_patch', 'Record a reviewable proposal for 1-6 complete UTF-8 files under tools/, skills/ or mods/<mod>/ (.py .js .css .html .json .md .toml .yaml .c .cpp .h .hpp .lua .txt; build scripts are read-only). No code is applied. Use current full-file SHA256, or null to create a new file without overwriting. Maximum 128 KiB per file, 512 KiB total.', parameters({'workspace_id': sid, 'changes': {'type': 'array', 'minItems': 1, 'maxItems': 6, 'items': parameters({'relative_path': {'type': 'string'}, 'expected_sha256': {'type': ['string', 'null']}, 'content': {'type': 'string'}}, ['relative_path', 'expected_sha256', 'content'])}}, ['workspace_id', 'changes'])),
             ('apply_coding_patch', 'Apply an existing proposal only inside its coding copy after rechecking every hash. Changes are staged with rollback on failure. Repeated successful calls do not reapply. Original source is never written.', parameters({'workspace_id': sid, 'proposal_id': {'type': 'string'}}, ['workspace_id', 'proposal_id'])),
-            ('run_coding_tests', 'Run one fixed python unittest or node --test profile inside a no-network, read-only Docker snapshot. No commands, dependencies or host fallback. Return RED for assertion failure, GREEN for nonempty passing tests, ERROR for infrastructure/import problems; coverage is not measured.', parameters({'workspace_id': sid, 'profile': {'type': 'string', 'enum': ['python', 'node']}}, ['workspace_id', 'profile'])),
+            ('run_coding_tests', 'Run a fixed no-network Docker test profile: python (dashboard unittest), node (node --test), mods (each mod unittest in a separate interpreter), cpp (portable tests/cpp/test_*.cpp compiled with g++ -std=c++17 -Wall -Wextra -Werror, then run), or lua (each mods/<mod>/tests/test_*.lua with Lua 5.4). C++ and Lua reject suites over 64 programs. No arbitrary commands, dependencies or host fallback. GREEN requires nonempty passing tests; ERROR is not RED. Coverage is not measured.', parameters({'workspace_id': sid, 'profile': {'type': 'string', 'enum': ['python', 'node', 'mods', 'cpp', 'lua']}}, ['workspace_id', 'profile'])),
             ('review_coding_workspace', 'Report actual changed file hashes and whether ALL detected fixed test profiles passed against the current exact tree. Editing after tests makes that evidence stale. No commit, deployment, source merge, preview or coverage claim.', parameters({'workspace_id': sid}, ['workspace_id'])),
         ]
+        if grants.get('native_build'):
+            operations.append(('build_native_mod', 'Cross-compile mods/<mod> into Windows x64 artifacts inside the no-network MinGW-w64 container (cpp_image, smelter-cpp:2). No host compiler fallback. native.json targets: name, kind asi|exe|obj, sources (.c/.cpp), optional include_dirs, defines (NAME or NAME=number), entry main|wmain (exe only) and libs (kernel32, user32, shell32, ole32, advapi32, gdi32). Fixed C++17 warnings-as-errors flags. Returns diagnostics, source hashes and artifact SHA-256. Built files are never run. MSVC-only SDKs may be incompatible.',
+                               parameters({'workspace_id': sid, 'mod': {'type': 'string', 'pattern': '^[a-z0-9][a-z0-9-]{0,40}$'}}, ['workspace_id', 'mod'])))
         for name, description, schema in operations:
             tools.append({'type': 'function', 'function': {'name': name, 'description': description, 'parameters': schema}})
     if grants.get('frontend_workspace'):
@@ -80,6 +85,23 @@ def schemas(grants):
                 "relative_path": {"type": "string"},
                 "max_depth": {"type": "integer", "minimum": 0, "maximum": MAX_DEPTH}},
                 "required": ["relative_path"], "additionalProperties": False}}})
+        tools.append({"type": "function", "function": {
+            "name": "inspect_engine_archive",
+            "description": "Inspect one approved relative archive with pinned no-network CLIs: pak (repak) info/list; iostore (retoc) info/list with exact UCAS sidecars; unity (UnityDataTool) list/header/metadata/objects. Read-only file mounts, no extraction, keys, conversion or game execution. Output is untrusted text lines with contains filter, offset/limit pagination and explicit scan_complete. A bounded head/tail fingerprint is not a full archive hash. Unity entry optionally selects a SerializedFile inside an archive.",
+            "parameters": {"type":"object", "properties": {
+                "format":{"type":"string","enum":["pak","iostore","unity"]},
+                "action":{"type":"string","enum":["info","list","header","metadata","objects"]},
+                "relative_path":{"type":"string"}, "entry":{"type":"string","maxLength":512},
+                "contains":{"type":"string","maxLength":160}, "offset":{"type":"integer","minimum":0,"maximum":500000},
+                "limit":{"type":"integer","minimum":1,"maximum":200}},
+                "required":["format","action","relative_path"],"additionalProperties":False}}})
+        tools.append({"type": "function", "function": {
+            "name": "inspect_game_files",
+            "description": "Read-only bounded header/footer inspection inside the user-approved folder: archive format and encryption flags for RAGE .rpf (RPF7), Unreal .pak and IoStore .utoc, plus PE section entropy samples. High entropy alone does not prove packing or encryption. Never extracts, decrypts, decompiles or executes. Use relative_path='.' for the approved folder.",
+            "parameters": {"type": "object", "properties": {
+                "relative_path": {"type": "string"},
+                "max_depth": {"type": "integer", "minimum": 0, "maximum": MAX_DEPTH}},
+                "required": ["relative_path"], "additionalProperties": False}}})
     if grants["write_diagnostics"]:
         tools.append({"type": "function", "function": {
             "name": "write_diagnostic_markdown",
@@ -93,6 +115,14 @@ def schemas(grants):
 
 def execute_builtin(root, grants, name, arguments):
     from python_tools import inventory, write_markdown
+    if name == 'universal_modder':
+        from universal_modder import run
+        return run(root, grants, arguments)
+    if name == 'modding_tool_catalog':
+        if not grants.get('coding_workspace'):
+            raise ValueError('Coding workspace access was not approved')
+        from modding_catalog import catalog
+        return catalog(root, arguments)
     if name.startswith('melty_'):
         from melty_connection import run_melty
         return run_melty(root, grants, name, arguments)
@@ -106,11 +136,20 @@ def execute_builtin(root, grants, name, arguments):
     if name in {'frontend_workspace_info', 'prepare_frontend_workspace', 'read_frontend_file', 'read_enabled_design_skill', 'replace_frontend_css', 'validate_frontend_workspace', 'launch_frontend_preview'}:
         from frontend_workspace import execute
         return execute(root, grants, name, arguments)
+    if name == 'build_native_mod':
+        from native_build import build
+        return build(root, grants, arguments)
     if name == 'inspect_model_attachment':
         from model_assets import inspect_attachment
         return inspect_attachment(root, grants, arguments)
     if name == 'inventory_directory':
         return inventory(grants, arguments)
+    if name == 'inspect_game_files':
+        from game_files import inspect
+        return inspect(grants, arguments)
+    if name == 'inspect_engine_archive':
+        from engine_archive import inspect
+        return inspect(root, grants, arguments)
     if name == 'write_diagnostic_markdown':
         return write_markdown(root, grants, arguments)
     if name in {'rea_capabilities', 'rea_inspect_pe_resources'}:

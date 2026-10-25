@@ -230,6 +230,18 @@ class PythonToolTests(unittest.TestCase):
         self.assertNotIn("agentApproval.checked=false", shell)
         self.assertIn("Allow OpenCode for this dashboard session", HTML)
 
+    def test_melty_lookup_is_a_remembered_default_and_checked_at_startup(self):
+        shell = Path(__file__).with_name("dashboard_shell.js").read_text(encoding="utf-8")
+        # On unless the operator turned it off; the choice survives sends and reloads.
+        self.assertIn("meltyGrant.checked=localStorage.getItem('smelterMeltyLookup')!=='off'", shell)
+        self.assertIn("localStorage.setItem('smelterMeltyLookup',meltyGrant.checked?'on':'off')", shell)
+        self.assertNotIn("meltyGrant.checked=false", shell)
+        self.assertIn("melty_read:meltyGrant.checked", shell)
+        # The live read-only connection check runs with the GUI.
+        self.assertIn("setTimeout(()=>meltyCheck.click(),0)", shell)
+        # File and tool grants still clear after each send.
+        self.assertIn("if(!keepAccess){readGrant.checked=false;writeGrant.checked=false;reaGrant.checked=false;workspaceGrant.checked=false", shell)
+
     def test_http_chat_route_forwards_explicit_grants(self):
         from dashboard import handler
         from http.server import ThreadingHTTPServer

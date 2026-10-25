@@ -39,6 +39,15 @@ class InstallActionTests(unittest.TestCase):
         self.assertEqual(plan["actions"][0]["command"],
                          ["winget", "install", "--id", "BlenderFoundation.Blender", "--exact", "--source", "winget"])
 
+    def test_catalog_override_is_one_argument(self):
+        preview = {"profiles": ["vanilla", "native_game_mods"], "dependencies": [{"name": "msvc", "status": "missing"}]}
+        with patch("install_actions.sys.platform", "win32"), patch("install_actions.shutil.which", return_value="winget.exe"):
+            command = build_actions(preview, ["msvc"])["actions"][0]["command"]
+        self.assertEqual(command[:7], ["winget", "install", "--id", "Microsoft.VisualStudio.2022.BuildTools", "--exact", "--source", "winget"])
+        self.assertEqual(command[7], "--override")
+        self.assertEqual(len(command), 9)
+        self.assertIn("Microsoft.VisualStudio.Workload.VCTools", command[8])
+
     def test_unselected_dependency_rejected(self):
         with self.assertRaisesRegex(ValueError, "not part"):
             build_actions(PREVIEW, ["git"])

@@ -18,7 +18,8 @@ configuration. Restart the dashboard after adding instruction manifests.
 
 After installation and live verification, stop the dashboard and preview
 `python tools/setup/configure_agent_stack.py`. Its `--apply` mode selects the
-35B reasoning model and a conservative 16K runtime, enables OpenCode/MCP, and
+35B reasoning model and a conservative 16K runtime on first selection, preserves
+an existing saved Qwen runtime on repeat setup, enables OpenCode/MCP, and
 adds execution-only locations for the two installed analysis runtimes. Existing
 location rows, including denials, are preserved. It grants no target folder or
 per-task tools, and preserves the lightweight-model choice.
@@ -92,3 +93,5 @@ revoke dispatch before detaching, preserve the active bridge until operations
 settle, discard aborted/failed workers, and block replacement after failed
 cleanup. These repair review findings R03–R05. Source snapshots now include the
 mandatory requirements catalog, and CI includes pushes/PRs on `main`.
+
+This machine now explicitly retains 131,072 context / 8,192 output in both managed and native routes; see [current review fixes](REVIEW_FIXES_20261025.md).

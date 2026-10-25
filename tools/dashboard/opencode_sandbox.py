@@ -81,15 +81,15 @@ class ManagedClient:
         if lifetime:task_timeout=max(task_timeout,int(lifetime))
         environment=dict(os.environ);environment.update(SMELTER_MODEL=self.model,SMELTER_TIMEOUT=str(self.settings['timeout_seconds']),SMELTER_TASK_TIMEOUT=str(task_timeout),SMELTER_AGENT_PASSWORD=self.password)
         flags=_flags(self.docker,self.name,self.code)
-        if bridge and bridge.tools:
-            assets=self.folder/'bridge';assets.mkdir(mode=0o755)
-            proxy=Path(__file__).with_name('opencode_mcp_proxy.mjs').read_bytes()
-            (assets/'proxy.mjs').write_bytes(proxy)
-            (assets/'tools.json').write_text(json.dumps(bridge.manifest(self.settings['timeout_seconds'])),encoding='utf-8')
-            for item in assets.iterdir():item.chmod(0o644)
-            flags+=['--mount','type=bind,source='+str(assets)+',target=/opt/smelter-bridge,readonly']
-            environment['SMELTER_BRIDGE']='1'
-        else:environment['SMELTER_BRIDGE']='0'
+        # Always warm the transport. Its empty manifest grants no actions.
+        assets=self.folder/'bridge';assets.mkdir(mode=0o755);self.assets=assets
+        proxy=Path(__file__).with_name('opencode_mcp_proxy.mjs').read_bytes()
+        (assets/'proxy.mjs').write_bytes(proxy)
+        self.bridge_manifest=bridge.manifest(self.settings['timeout_seconds']) if bridge and bridge.tools else {'tools':[]}
+        (assets/'tools.json').write_text(json.dumps(self.bridge_manifest),encoding='utf-8')
+        for item in assets.iterdir():item.chmod(0o644)
+        flags+=['--mount','type=bind,source='+str(assets)+',target=/opt/smelter-bridge,readonly']
+        environment['SMELTER_BRIDGE']='1'
         boot=BOOT.replace('__SMELTER_MCP_RPC_TIMEOUT_MS__', str(BRIDGE_RPC_TIMEOUT*1000))
         command=flags+['--detach','--env','SMELTER_MODEL','--env','SMELTER_TIMEOUT','--env','SMELTER_TASK_TIMEOUT','--env','SMELTER_AGENT_PASSWORD','--env','SMELTER_BRIDGE',ready['configured']['opencode_image'],'node','-e',boot]
         self.image=ready['configured']['opencode_image']
@@ -112,6 +112,19 @@ class ManagedClient:
         with self.lock:
             if self.closed or self.active_responses:raise ValueError('Previous OpenCode relay has not finished')
             self.accepting=False
+            manifest=bridge.manifest(self.settings['timeout_seconds']) if bridge and bridge.tools else {'tools':[]}
+            if getattr(self,'assets',None) is not None and manifest!=self.bridge_manifest:
+                pending=self.assets/'tools.pending'
+                pending.write_text(json.dumps(manifest),encoding='utf-8');pending.chmod(0o644)
+                pending.replace(self.assets/'tools.json')
+                # Re-add the fixed local MCP server so OpenCode rediscovers this task's schemas.
+                # The old task is detached and no new task packets are admitted yet.
+                configured=self.request('/mcp','POST',{'name':'smelter','config':{
+                    'type':'local','command':['node','/opt/smelter-bridge/proxy.mjs'],
+                    'enabled':True,'timeout':BRIDGE_RPC_TIMEOUT*1000}})
+                if not isinstance(configured,dict) or configured.get('smelter',{}).get('status')!='connected':
+                    raise ValueError('Task MCP schema refresh was not confirmed')
+                self.bridge_manifest=manifest
             self._exec(BIND_TASK,{'generation':generation},maximum=16384)
             self.control=control;self.bridge=bridge;self.task_generation=generation
             self.model_calls=0;self.relay_calls=0;self.accepting=control is not None

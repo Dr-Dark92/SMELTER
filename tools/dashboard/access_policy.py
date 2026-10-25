@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-OPERATIONS = ('tests', 'preview', 'rea', 'archive', 'media', 'blender')
+OPERATIONS = ('tests', 'preview', 'rea', 'archive', 'media', 'blender', 'native_build', 'modding')
 NAME = 'access_policy.json'
 
 
@@ -129,6 +129,7 @@ def check_grants(root,grants,policy):
         target = source.with_name(source.name+'V2')/'coding'
         policy.authorize(source/'tools','read')
         policy.authorize(source/'skills','read')
+        if (source/'mods').is_dir():policy.authorize(source/'mods','read')
         policy.authorize(target,'read')
         policy.authorize(target,'write')
         policy.authorize(target,'execute','tests')

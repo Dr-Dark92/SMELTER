@@ -46,3 +46,5 @@ outputs/
 builds/
 artifacts/
 .cache/
+# Generated requirements scan for this machine; requirements are declared in system-requirements.json.
+diagnostics/requirements-local.json

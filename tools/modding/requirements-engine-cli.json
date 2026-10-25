@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "platform": "linux/amd64",
+  "image": "smelter-engine-cli:1",
+  "base": "python:3.12-slim-bookworm@sha256:57d96f71de145a98e7ceca18ee4ade77bba4103a33a72dfaea026b23625c6bf0",
+  "tools": {
+    "repak": {
+      "version": "0.2.3",
+      "url": "https://github.com/trumank/repak/releases/download/v0.2.3/repak_cli-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "933bdb8e26f34e8fd70ea50201efca39df041de58aa83b1cd6eb83da124a2046",
+      "prefix": "repak_cli-x86_64-unknown-linux-gnu/",
+      "executable": "repak"
+    },
+    "retoc": {
+      "version": "0.1.5",
+      "url": "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-x86_64-unknown-linux-gnu.tar.xz",
+      "sha256": "3c309a4aea0c6d0a5c6ee31b1d1b32768eb86ac67e3a1890d677eabe6ce26b36",
+      "prefix": "retoc_cli-x86_64-unknown-linux-gnu/",
+      "executable": "retoc"
+    },
+    "unity": {
+      "version": "2.4.0",
+      "url": "https://github.com/Unity-Technologies/UnityDataTools/releases/download/v2.4.0/UnityDataTool-linux-x64.zip",
+      "sha256": "0534036123353a2b69a93e7da9658f319e4056d9cb6ec45926d5449ab65bf22f",
+      "prefix": "",
+      "executable": "UnityDataTool"
+    }
+  }
+}

@@ -1,5 +1,28 @@
 # SMELTER V1 — System Requirements
 
+## Engine archive CLI profile
+
+`engine_cli` installs optional repak 0.2.3, retoc 0.1.5 and UnityDataTool 2.4.0
+from checksum-pinned portable Linux/amd64 releases. Exact download URLs, SHA-256
+and the immutable Python/Debian base are in
+`tools/modding/requirements-engine-cli.json`. This profile requires local Docker
+Linux containers (Engine 28+), with no host .NET SDK, Rust compiler or global PATH
+change. The bundled Unity native library determines Unity compatibility.
+
+```powershell
+python tools/setup/install_engine_cli.py --select
+```
+
+This builds the private `smelter-engine-cli:1` image, verifies actual CLI versions
+and selects its immutable `engine_image` after an idle check. The setup page can
+build it through the profile; select its reported ID in Settings afterwards.
+Versions, lock hash and build log are retained under
+`.smelter/tooling/engine-cli/`. Old sandbox configurations remain valid.
+The MCP adapter accepts fixed read-only metadata operations on an approved
+inventory scope. ARK's PAK version 12 is unsupported by pinned repak; retoc's
+global/optional IoStore inspection passed. See [limits and evidence](docs/ENGINE_ARCHIVE_CLI.md).
+Both Qwen routes retain the user-selected 131,072 context / 8,192 output profile.
+
 ## Qwen 35B and REA/Ghidra integration
 
 The `qwen35b_agent` profile explicitly installs `qwen3.5:35b-a3b`, MCP 1.30.0,
@@ -77,10 +100,12 @@ The requirements scanner, the setup wizard's profile preview, the approved winge
 | `image_opencode` | `docker build -f tools/dashboard/Dockerfile.opencode -t smelter-opencode:1.19.3 .` | Managed OpenCode; select its `sha256` ID in Settings |
 | `glb_viewer` | `npm install --prefix .smelter/tooling/model-viewer @google/model-viewer@4.1.0` | GLB preview and PNG capture |
 | `rea` | `npm install --prefix .smelter/tooling/rea rea-agents@6.7.0` | REA analysis |
-| `ghidra` | `tools/bootstraps/Setup-Smelter-Ghidra.ps1`: latest official release, SHA-256 checked, into `C:\Tools\Ghidra`; sets user `JAVA_HOME`, `GHIDRA_INSTALL_DIR`, `REA_ANALYSIS_PROVIDER=ghidra`. Needs JDK 21 (Temurin or Microsoft) | Ghidra binary-analysis scripts in `tools/bootstraps`; not used by the dashboard |
+| `ghidra` | `tools/bootstraps/Setup-Smelter-Ghidra.ps1`: latest official release, SHA-256 checked, into `C:\Tools\Ghidra`; sets user `JAVA_HOME`, `GHIDRA_INSTALL_DIR`, `REA_ANALYSIS_PROVIDER=ghidra`. Needs JDK 21 (Temurin or Microsoft) | Fixed dashboard headless `rea_ghidra_*` adapter and bootstrap scripts; see `docs/REA_GHIDRA_INTEGRATION.md` |
 | `playwright`, `chromium` | Playwright 1.56.1 in `.smelter/tooling/browser` plus its Chromium | Full smoke test only |
 
-Profiles: `local_ai`, `opencode_agent`, `media`, `reverse_engineering`, `smoke_test`, `developer`, `game_modding`.
+Profiles: `local_ai`, `opencode_agent`, `media`, `reverse_engineering`, `smoke_test`, `developer`, `game_modding`, `native_game_mods` (Git + Docker and the confined CLI toolchain; host MSVC is optional).
+
+A tool may declare `winget_override`: installer options passed as winget's `--override`, for packages whose default install lacks the needed parts. Visual Studio Build Tools needs it, because without the C++ workload it installs no compiler. The installer stays visible (`--passive`) and agreements are not auto-accepted.
 
 ### Hardware profiles and dashboard defaults
 
@@ -112,6 +137,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup\install_missin
 
 `-Profile opencode_agent` limits the run to one profile; `-Only docker,image_opencode` to named tools or steps. The script prints exact commands, marks steps **blocked** when a prerequisite is not ready (for example Docker Desktop not started), asks before changing anything, does not auto-accept agreements, and summarizes each result. Docker steps need Docker Desktop running. After installing WSL or Docker, restart Windows, start Docker Desktop once, open a new PowerShell and run the script again to finish the setup steps.
 
+Optional host integration: to use Melty's desktop app as the front end, the host OpenCode config can point at local Ollama and SMELTER's MCP server. This needs a derived Ollama tag `qwen3.5:35b-a3b-128k` (128K context, measured on an RTX 5080; no download). See [docs/MELTY_CONNECTOR.md](docs/MELTY_CONNECTOR.md) for the exact entries, backup and limits.
+
 After a real run the script checks every selected tool and step again and reports the result. Its exit status is truthful for automation: **0** means the selected profile is complete (a `-DryRun` also exits 0 because it only shows the plan); **1** means an action failed or the plan was cancelled; **2** means nothing failed but the profile is still incomplete, because a tool is missing or a step is blocked or skipped. A tool installed in this run may not be on the current window's PATH yet, so it can report 2 until you rerun it in a new window. `-SummaryPath summary.json` writes the outcome, exit code, actions and recheck as JSON.
 
 ## What each dashboard feature needs
@@ -134,9 +161,10 @@ After a real run the script checks every selected tool and step again and report
 | GitHub CLI (`gh`) | Authenticated GitHub workflows | Optional |
 | PowerShell 7 | Windows automation | Optional; Windows PowerShell may suffice for basic commands |
 | Node.js LTS + npm | JavaScript/TypeScript builds and tooling | Optional until a selected frontend/tool requires it |
-| C/C++ compiler and build tools | Native extension compilation | Optional, extension-dependent |
+| C/C++ compiler and build tools | Native game mod builds | Model-facing `build_native_mod` uses confined MinGW-w64 in `smelter-cpp:2`. Optional catalog tool `msvc` remains for operator-run `gta/build.bat`; it is not a model fallback. See [game-mod tools](docs/GAME_MOD_TOOLS.md). |
 | WSL 2 | Linux backend for Docker Desktop on Windows | Required for Docker features on Windows; `wsl --install` as administrator, then restart |
 | Docker Desktop / Docker Engine | No-network containers for managed OpenCode, frontend tests/preview and coding workspace tests | Required for those features; not needed for the dashboard or direct chat |
+| `smelter-cpp:2` image (setup `image_cpp`) | Portable C++ tests, Lua 5.4 tests and Windows x64 cross-compilation | Pinned base digest, g++ 15.2.0-r5, Lua 5.4.8-r0, mingw-w64-gcc 15.2.0-r0 in `Dockerfile.cpp`. Build with `docker build -f tools/dashboard/Dockerfile.cpp -t smelter-cpp:2 .`, then select its immutable ID. No network or host compiler fallback during a task. |
 
 ## Extension-dependent runtimes and applications
 
@@ -222,3 +250,45 @@ The scanner uses Python's standard library, checks executable presence and versi
 5. Save an environment report, without credentials or private system information.
 
 **Security:** No automatic downloads or execution of third-party installers without user approval. Do not add dependencies solely because a skill mentions them. Pin versions and verify provenance when a dependency is introduced.
+
+## CLI modding candidates and Qwen instructions
+
+The `modding_cli` section of `system-requirements.json` catalogs 31 CLI tools with
+engine routes, primary sources, command templates and integration states. Candidate
+entries are research recommendations, not installed executables, automatic
+installer actions, or execution grants. See [the toolkit](docs/MODDING_CLI_TOOLKIT.md).
+`python tools/dashboard/modding_catalog.py --engine unity` lists a filtered view;
+the read-only `modding_tool_catalog` MCP tool exposes it with a coding grant.
+
+New bundled instructions `game-modding` and `mod-validation` complement the
+existing package-matched REA skill. They install no executable dependencies and
+are discovered after a dashboard restart. Installing a future CLI requires a
+pinned source/release, checksum, setup/check action and matching documentation.
+
+Optional native Melty profile helper: `python tools/setup/configure_melty_cli.py`
+previews changes; `--apply` backs up the existing configuration, installs the two
+bundled skills into the native OpenCode skill directory and enables the fixed
+SMELTER coding/build grant set. It preserves 131,072 context tokens and sets the
+separate output ceiling to 8,192. This helper and the derived-tag Modelfile are
+tracked in `modding_cli.native_opencode_profile`. It downloads no tools/models.
+
+For this machine's measured 128K choice, `--align-dashboard --apply` explicitly
+aligns the saved dashboard context/output too, with a backup and thinking/timeouts
+preserved. Both routes were read back as 131,072 / 8,192. Repeat agent-stack setup
+preserves an existing saved Qwen runtime rather than resetting it to 16K.
+
+## Universal Modder (GitHub CLI toolkit)
+
+Profile/setup `universal_modder` installs upstream 0.2.0 at commit
+`c1dff21663665dd17af289744a301b66e369605e`, with the source ZIP SHA-256 declared in
+`system-requirements.json`. `tools/modding/requirements-universal-modder.txt` pins
+Pillow 13.0.0, numpy 2.5.4, PyYAML 6.0.3 and pytest 9.1.1 in a private Python 3.12+
+venv. Resolved transitive versions and pip artifact metadata are retained with the
+installation. No global Python package, PATH, paid API or game activation occurs.
+
+`python tools/setup/install_universal_modder.py --enable` additionally registers
+execution of the fixed local knowledge adapter (`modding` policy operation),
+preserving existing rows/denials. `python tools/modding/um.py --help` invokes the
+standalone CLI; `universal_modder` MCP status/search/read actions use the existing
+coding grant. The `universal-modder` skill complements the pinned REA instructions.
+See [integration, standalone examples and verification](docs/UNIVERSAL_MODDER.md).

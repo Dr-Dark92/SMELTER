@@ -32,7 +32,8 @@ def build_actions(preview: dict, requested: list[str]) -> dict:
     if requested and (sys.platform != "win32" or shutil.which("winget") is None):
         raise ValueError("Automatic installation requires Windows and winget")
     actions = [{"name": name, "package_id": WINGET_IDS[name],
-                "command": ["winget", "install", "--id", WINGET_IDS[name], "--exact", "--source", "winget"]}
+                "command": ["winget", "install", "--id", WINGET_IDS[name], "--exact", "--source", "winget"]
+                           + (["--override", CATALOG["tools"][name]["winget_override"]] if "winget_override" in CATALOG["tools"][name] else [])}
                for name in requested]
     fingerprint = hashlib.sha256(json.dumps(actions, sort_keys=True).encode()).hexdigest()
     return {"actions": actions, "fingerprint": fingerprint,

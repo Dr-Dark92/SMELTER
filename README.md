@@ -9,8 +9,26 @@ SMELTER is a local-first development and asset-inspection workbench. Its active 
 The [Qwen 35B / REA / Ghidra integration](docs/REA_GHIDRA_INTEGRATION.md) adds
 verified fixed headless binary-analysis tools, matching REA instructions and
 reproducible setup. The [Melty host connector](docs/MELTY_CONNECTOR.md) supports
-authenticated read-only game/account lookup with host-held credentials. Mod
-building, uploads, game launches and publication require separate workflows.
+authenticated read-only game/account lookup with host-held credentials. The
+[game-mod tools](docs/GAME_MOD_TOOLS.md) let the agent inspect game file headers,
+edit `mods/<mod>/` in an isolated coding copy, run confined Python and C++ tests, and
+cross-compile Windows mods with confined MinGW-w64 (built files are never run). The first mod,
+`mods/gta-ark/` (GTA V Enhanced × ARK: Survival Ascended), is at the offline stage.
+Game installs, launches, uploads and publication require separate approved workflows.
+
+The [CLI modding toolkit](docs/MODDING_CLI_TOOLKIT.md) catalogs 31 tools across
+Unreal, Unity, Godot and other engines, with integration states in
+`system-requirements.json`. The `game-modding` and `mod-validation` skills help
+Qwen choose compatible tools and interpret actual test/build evidence.
+
+[Universal Modder](docs/UNIVERSAL_MODDER.md) is now installed from a pinned GitHub
+revision, with a private standalone CLI, local field-note MCP tools and a Qwen
+skill. It complements the existing Melty kit, REA/Ghidra and engine adapters.
+
+The [engine archive adapter](docs/ENGINE_ARCHIVE_CLI.md) installs pinned repak,
+retoc and UnityDataTool CLIs in a no-network container. Qwen can inspect approved
+archives through MCP, with bounded listings and read-only file mounts. ARK's
+IoStore route is verified; its version-12 PAKs exceed repak's current support.
 
 The repository also contains older CLI experiments, game-specific research scripts, reusable Blender/asset adapters, and Studio scaffolding. Those components are not automatically connected to the dashboard. Installing a skill provides instructions; it does not install dependencies or grant tools.
 

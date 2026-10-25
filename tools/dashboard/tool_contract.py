@@ -11,6 +11,8 @@ def operation_timeout(name):
     # Callers cannot widen this through model arguments or skill instructions.
     if name == 'rea_ghidra_analyze':
         return 210  # Fixed 180-second native import plus staging/cleanup overhead.
+    if name in ('run_coding_tests', 'build_native_mod'):
+        return 240  # Confined C++/Lua tests or a 180-second total native build, plus staging/cleanup.
     return FRONTEND_VALIDATION_TIMEOUT if name == 'validate_frontend_workspace' else DEFAULT_OPERATION_TIMEOUT
 
 
@@ -19,5 +21,5 @@ def result_failed(result):
     if not isinstance(result, dict):
         return True
     status = result.get('status')
-    return status in {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed'} or (
+    return status in {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed', 'native_build_failed', 'engine_archive_failed'} or (
         status == 'coding_tests_failed' and result.get('stage') != 'RED')

@@ -2,8 +2,9 @@
 
 Starting a container for every task made OpenCode slow and tedious. The pool
 keeps one managed container running and reuses it while its key (image, model,
-runtime, access policy and bridge tool set) is unchanged; any change, relay
-error or failed abort replaces it. Before each task the read-only code snapshot
+runtime and access policy) is unchanged; a change, relay error or failed abort
+replaces it. Each task refreshes its MCP manifest without replacing the warmed
+container. Before each task the read-only code snapshot
 is refreshed in place and that task's control and tool bridge are attached;
 after the task they are detached, so nothing can call host tools between tasks.
 Confinement is unchanged: no network, read-only code, session permission rules
@@ -23,10 +24,8 @@ _state = {'client': None, 'key': None, 'status': 'stopped', 'error': None, 'star
 def _key(root, configuration, policy, bridge):
     """Anything baked into the container at start; a change requires a new container."""
     from sandbox import config
-    tools = json.dumps(bridge.manifest(configuration['runtime']['timeout_seconds']), sort_keys=True) if bridge and bridge.tools else ''
     raw = json.dumps({'image': config(root).get('opencode_image'), 'model': configuration['model'],
-                      'runtime': configuration['runtime'], 'policy': getattr(policy, 'revision', None),
-                      'tools': hashlib.sha256(tools.encode()).hexdigest()}, sort_keys=True)
+                      'runtime': configuration['runtime'], 'policy': getattr(policy, 'revision', None)}, sort_keys=True)
     return hashlib.sha256(raw.encode()).hexdigest()
 
 

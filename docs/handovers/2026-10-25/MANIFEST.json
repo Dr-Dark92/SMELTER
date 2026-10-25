@@ -1,0 +1,644 @@
+{
+  "prepared_at": "2026-10-25T14:26:25.952075+04:00",
+  "workspace": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER",
+  "branch": "fix/r07-r08-setup-lifecycle",
+  "base_revision": "982950baa9543519b86dfa2ffb19f1fa075417fa",
+  "uncommitted": true,
+  "archive": {
+    "path": ".smelter/handovers/2026-10-25/source-checkpoint.zip",
+    "bytes": 331855,
+    "sha256": "5114b57d414ad3829cc159a0ae382fc2508b18d0ee8f10eaec85bacda910f061"
+  },
+  "file_count": 103,
+  "files": [
+    {
+      "path": ".github/workflows/offline-verification.yml",
+      "bytes": 7841,
+      "sha256": "03f04406e467589e73c1b90c3e1e4559168149f56c337411755593795d3b6f9b",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "README.md",
+      "bytes": 15346,
+      "sha256": "c1c93305e12dd97676e21fae343001b5a9d56c38810fb32ae08b62ed81473b56",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "REQUIREMENTS.md",
+      "bytes": 20428,
+      "sha256": "771e7a80f6638828009c4933dc5c7dff1568bacb5dac3d55e361dcaad4d27f80",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "automation/handovers/README.md",
+      "bytes": 372,
+      "sha256": "f581211e62f91f0d4d3b8661c3bd8f4d5aa2fd040bc4c8c2ce8a5a77e5ce2ac6",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "diagnostics/REVIEW_20261024.md",
+      "bytes": 18032,
+      "sha256": "c1d17dd350f6adb6cb6a2c9d6020a2715e1db24e12641fa6bcc739ebabbcb5d7",
+      "state": "untracked_required"
+    },
+    {
+      "path": "diagnostics/requirements-local.json",
+      "bytes": 2853,
+      "sha256": "7431c62e9f7ac0e0b065b762c607c78671a3bffe86203666733f5fe066bdc125",
+      "state": "untracked_required"
+    },
+    {
+      "path": "diagnostics/review_20261024_probes.py",
+      "bytes": 5214,
+      "sha256": "e8d70a2484bb23467fdd11e51440e8a3277bec9826a768e8b724931cff140b79",
+      "state": "untracked_required"
+    },
+    {
+      "path": "diagnostics/review_20261024_static.py",
+      "bytes": 1725,
+      "sha256": "1cbe26e3807ebf1e0688f103818874255e235a4b7d22a32d23b411313f8733a9",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/CURRENT_HANDOVER.md",
+      "bytes": 1218,
+      "sha256": "f38abccf6c9e4191aea54b2805ab0ebe5e44da511e1c397041a9c6e7132a28a4",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/GAME_MOD_TOOLS.md",
+      "bytes": 7875,
+      "sha256": "60cff5441fdcb7b0ce64e1efa8d02bcd89bc07d52f2addb82a4aa5a0058543a8",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/INTEGRATION_STATUS_20261025.md",
+      "bytes": 5994,
+      "sha256": "5ace7110fd48ab88e0cb493d7bc43c24b11ee28f2995b60f54616bf8369295eb",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/MELTY_CONNECTOR.md",
+      "bytes": 10365,
+      "sha256": "3ab51dc435f5c7470598122f4fc6561c011a8fe8bf57f87d5b3e437ffe96df06",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/REA_GHIDRA_INTEGRATION.md",
+      "bytes": 5352,
+      "sha256": "20366fef68d7b901b6eed7389a8f552d8f13e3375138a9f6f7d9faeae24dee62",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/SYSTEM_DOCUMENTATION.md",
+      "bytes": 23528,
+      "sha256": "ef2e7850094bdf46edd9aca97ef83f63ce7bb5cd545ed3fff87b50928febaf19",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "docs/SYSTEM_STATUS.md",
+      "bytes": 6530,
+      "sha256": "d7b982660b27f59749b4a65aaeca5b3ab18a43fb65f1f0a6ac7536ffea92f3ca",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "docs/UI_UX_OVERHAUL.md",
+      "bytes": 11643,
+      "sha256": "acf27b1b6f619bdb69f5925ac46647f5c2bf21a5545c052817f1c64500562a8d",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "docs/discovery/GTA_ARK_DISCOVERY_20261025.md",
+      "bytes": 6787,
+      "sha256": "17dfdc262921b24d075586a81f331215f64d2d179bb9f4a0af6a673aaa8ad48e",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/discovery/GTA_ARK_M1_DESIGN.md",
+      "bytes": 9127,
+      "sha256": "12b788d54597b6ddde0fd8123b79d5a855bda50227439704c24d4a94a4ee0ca3",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/handovers/2026-10-25/EVIDENCE_SUMMARY.json",
+      "bytes": 3131,
+      "sha256": "f24c62033a1dbcdd5ea99aea23888cbc24ab8eb81e30e7519f5386448306039b",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/handovers/2026-10-25/HANDOVER.md",
+      "bytes": 15334,
+      "sha256": "c9e9a9559540db90cae412f9e979e7ca0ddfaf69289abcf3342ba425c6759371",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/handovers/2026-10-25/NEXT_STEPS.md",
+      "bytes": 4178,
+      "sha256": "0ccd61fd05ab9f0cad44b5c94216da82a7c5c1f244b49ebdd3b0b7e3b9b3535c",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/handovers/2026-10-25/PROGRESS.md",
+      "bytes": 5615,
+      "sha256": "ad4491b90d5f6045cf4fed923aa2268c2311d95792efffc007a9da7d06beda58",
+      "state": "untracked_required"
+    },
+    {
+      "path": "docs/handovers/2026-10-25/SECOND_AGENT_PROMPT.md",
+      "bytes": 2318,
+      "sha256": "854c2717357afd6de6db22d23d778c258a0e37e75bf7d3a6163a036d79e0a28a",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/.gitignore",
+      "bytes": 24,
+      "sha256": "9fdaf1d362b697029ec4268ea826f979dbe48953e8ac72caf860305efd871b2c",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/MODLOG.md",
+      "bytes": 2497,
+      "sha256": "1c1a2020da50d70c8a2b0203679019be7a2a4282d745ed99ee2b0f8ab2658d87",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/README.md",
+      "bytes": 1954,
+      "sha256": "e84ee9d3f748602be2990fcb3782b41f149fc2d1c8befa0eff09bad4007c99c7",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/ark/Mods/GtaArkLink/Scripts/gal_link.lua",
+      "bytes": 2628,
+      "sha256": "c3bdf267d229fff140b8c4a189e8963f69775e41f0d3cf11213a070f536115b8",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/ark/Mods/GtaArkLink/Scripts/main.lua",
+      "bytes": 2842,
+      "sha256": "5063885a8e61a5057b532a7c73a8eeb567a8e56f66a8754b9b2225e518eff494",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/ark/Mods/GtaArkLink/enabled.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/build.bat",
+      "bytes": 1881,
+      "sha256": "847fa1d1f638020a367223ac4b0ca50545fdad1b0f7a05d85df4896950c8da50",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/src/GtaArkLink.cpp",
+      "bytes": 2173,
+      "sha256": "051100f7e6cfe1e841f8eb02dbfffdb924018a6bea0a40e8f39d2b1f99d52823",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/src/camera_source.h",
+      "bytes": 789,
+      "sha256": "d6be6600414212a385b248cd341829a461ae6f962d9a3d5b04ea0849a730aca0",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/src/link_record.h",
+      "bytes": 3706,
+      "sha256": "457ebf26bc5e57ec48af13f1ef3eac969344dd955747622b7335ff68b51fbe73",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/src/natives.h",
+      "bytes": 1255,
+      "sha256": "645cb111c455acd5a9e25a948baefbfb68df27d79c6e5f1384af7da4ee3b7081",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/src/shv_source.cpp",
+      "bytes": 2078,
+      "sha256": "af0da47ee9b2f4f3e8fed3a4f0d927711306dd1bacd5692a7a9edd3fda9e6c82",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/tests/gal_record_test.cpp",
+      "bytes": 2078,
+      "sha256": "64de5b8027e46bbb006fdeff6702b0573b815b68e3cacfe087b2a9601520ce20",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/gta/tests/shv_stub/main.h",
+      "bytes": 475,
+      "sha256": "98d158fd89aa4584621148d01ef4be7269f77a89e50e58ad04f52336ef30b522",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/link-format.md",
+      "bytes": 1986,
+      "sha256": "6992af50ea076c5ab621f43a9b1637283b83c2a353fda7e64543f87158e66c46",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/native.json",
+      "bytes": 472,
+      "sha256": "464ae64a3e8092bfec51cbad3bae393c422e6ac4651805b25fea6532d5983776",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tests/test_gal_link.lua",
+      "bytes": 1926,
+      "sha256": "3bf8927d74d1527cc04d61c7f9514fcfd63cdbe91e8456414b596d223bb876b8",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tests/test_link.py",
+      "bytes": 5148,
+      "sha256": "ac724c9c8eb76168aa3d1c2ec8bcee0e0fa395d3fa5c247b7ffd1400e6b5dcda",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tests/vectors.json",
+      "bytes": 1735,
+      "sha256": "d2ab1017f0f65101de47ba16e9d2f5f71649df7b861472391b88e11f8edd8b1d",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tools/fake_gta_writer.py",
+      "bytes": 1187,
+      "sha256": "99b29a57028a7da33a89c5ce3664f9a71f3abef19335f1d35715ec0576697368",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tools/gal_link.py",
+      "bytes": 3486,
+      "sha256": "c738108080a23e684d807d9159243c2d0f3be86eff8975e3071a8015e6a01f04",
+      "state": "untracked_required"
+    },
+    {
+      "path": "mods/gta-ark/tools/read_link.py",
+      "bytes": 1277,
+      "sha256": "f643af16cef7e42ac124abd807687fb4b89f85f07b771c5f769c46a4379a392c",
+      "state": "untracked_required"
+    },
+    {
+      "path": "system-requirements.json",
+      "bytes": 12736,
+      "sha256": "13cea5730948884c4073c2f3f859cf355f49053b7686a1be48d9d9b0b9c9c386",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/analysis/smoke_ghidra.py",
+      "bytes": 6373,
+      "sha256": "8e7959f47ce60e293ce04b191bec9949a0e3d31926e2c85c06c8922d5b3b314d",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/analysis/smoke_qwen_ghidra.py",
+      "bytes": 4390,
+      "sha256": "af3103e4c120f8535b8be528073bb3a188cd2bc8a0e8e06df5518589aa92b0bc",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/Dockerfile.cpp",
+      "bytes": 447,
+      "sha256": "03b9e23a9fc1d35f08b46e19cbda02e897d5d39ae23b42afa4bbe606b277e5dd",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/MCP.md",
+      "bytes": 11830,
+      "sha256": "d3f08f9bbeee4a752786513edbb1eb4a965631bd9913600fd03b7c74b0200179",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/README.md",
+      "bytes": 23134,
+      "sha256": "71bd200cf430bdb6c38218d6c30de8786b70287fa434001d1eeedd0390cc9dfa",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/access_policy.py",
+      "bytes": 8546,
+      "sha256": "5411d0358efa132979af8fcf397b4ac86e3711073699ea955acb49b515c0326a",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/access_ui.js",
+      "bytes": 7887,
+      "sha256": "57f5817f7e22b362cc8bdaeb2aab204469b4666d41a71c183262f318db4f9976",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/capability_catalog.py",
+      "bytes": 4350,
+      "sha256": "8e9cbec248b574468b75f5583a9a365903e0cf1903583cb195255e2633c6f04e",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/coding_workspace.py",
+      "bytes": 23014,
+      "sha256": "b3fb239c24ccd63d2808560b4c29e5a003a9855026685e9575fa0a45157b30ac",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/component_controls.py",
+      "bytes": 28208,
+      "sha256": "b03a6995751a64875ac4fef4811e05233fbfc8d59c3bb9ac51d9094130345f69",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/dashboard.py",
+      "bytes": 51923,
+      "sha256": "1baf8bee5e91a1aa6b0033b6b35fa21ed94f18e236d0a8817f484fc5374cb525",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/dashboard_api.py",
+      "bytes": 30369,
+      "sha256": "65b10c39a6555138863c8b7ad55b01102d6d0871b38c83ccb07e0635560c08f8",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/dashboard_shell.js",
+      "bytes": 51409,
+      "sha256": "8c25f06e7b84eecec9036347f473735cd569bdcc62df2a8e64e86e4f438e3f47",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/deployment_defaults.py",
+      "bytes": 2111,
+      "sha256": "9855326d12fbaff232089470d9ddd2c5ffe3431fcd50e1a1de42a80308d51f7c",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/frontend_workspace.py",
+      "bytes": 18507,
+      "sha256": "0f8cda71228c3573c8d46ae27ac61dcab6decf905e85fcfc39702d61815af6f3",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/game_files.py",
+      "bytes": 7848,
+      "sha256": "c7fba242fcf2a3089b139c3ee1950e50a947a34802156285ff0b2092206d665d",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/ghidra_connection.py",
+      "bytes": 16518,
+      "sha256": "a35c615e281970c09d8f69e8aa22f955c5c2307b08a2368a0d13ea59738c16b9",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/ghidra_scripts/SmelterAnalysis.java",
+      "bytes": 6732,
+      "sha256": "2df0a16718203243bfe6fd857f8694df8c3cac482a235341d48ebc35f311387a",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/melty_connection.py",
+      "bytes": 15102,
+      "sha256": "272a1d43f7a80eae1fcda8aa4733f32db33e3af23a6b22e676227da6683faafa",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/native_build.py",
+      "bytes": 12698,
+      "sha256": "62623ac4057eeec8929903471536c7ade8610597364753dc79969b4ce50217ac",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/opencode_agent_ui.js",
+      "bytes": 3295,
+      "sha256": "6b71f96fe69854153d95a0cb3daaedc756bc6d88b4926836e6a90b329b547135",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/opencode_mcp_proxy.mjs",
+      "bytes": 4866,
+      "sha256": "23615d1454e056ebe587e18da8512a25826aa7c50c2e1ae5adb0e42582d1328e",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/opencode_pool.py",
+      "bytes": 6957,
+      "sha256": "8c9cd5acd1945b7e4c956773ed35437e3141d555c0e4f0e90e20d9ca87382c2d",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/opencode_runtime.py",
+      "bytes": 25523,
+      "sha256": "6f9fed6f677825b3e6f8359beb24822b4bb224b5ab2b4ba3733ae311a3d194fb",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/opencode_sandbox.py",
+      "bytes": 24550,
+      "sha256": "9cbfb6f6d8af851d90744282014b1a23b7972bf1689382404dab492209286549",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/operations_ui.js",
+      "bytes": 8206,
+      "sha256": "2ec9b0d1863c4dd6b4e1b6b3718c01d8447c1c69b74940144ff87e41ea423846",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/python_tools.py",
+      "bytes": 28855,
+      "sha256": "a60ed1e19c6a03abcf2d5600ac63d98aca0495851f4d5223d0c81b35934a9ff2",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/sandbox.py",
+      "bytes": 23887,
+      "sha256": "2770d5c158fee734ab5acca17747406ac16c618521f27f877206eee107984e9b",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/system_components.js",
+      "bytes": 5128,
+      "sha256": "2aa706dccfabf25562c82c5acf0ea527bc3cf6e39af75e7afac6d5f7dc14a8de",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/test_component_controls.py",
+      "bytes": 22377,
+      "sha256": "0fd5d2c8bf25fe6e899a68f961be48d85a0e10c9836415e64e7890e624c054af",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/test_cpp_profile.py",
+      "bytes": 5966,
+      "sha256": "3aec9c273b1f9909a0a70ca3704b610072d56a354f6b26c74d264042764a2990",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_game_files.py",
+      "bytes": 4785,
+      "sha256": "168925d911359ff0aca60ad85854a760de558a8bdf6022756ad4649fb62488ab",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_ghidra_connection.py",
+      "bytes": 11497,
+      "sha256": "ba4dbe50402dda925ea3f69e8d41f1d3845dc196419ba53e9db722c5d133ce22",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_mcp_connections.py",
+      "bytes": 16302,
+      "sha256": "b30e825b129d8fcdc6804237c401df1415bb444bc1eb97e82c9ecea8137b4110",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/test_melty_connection.py",
+      "bytes": 5708,
+      "sha256": "f8d41bbe8e6629d5e9f7611b8c2f316585ef9191dea9bec22b13a26387dbd212",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_melty_gateway.py",
+      "bytes": 3291,
+      "sha256": "cb1ea8083d210438ac2ca8c24d110ff942f8d40bad29333f79d3abe3b0150acf",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_mod_workspace.py",
+      "bytes": 3860,
+      "sha256": "41ba97d71671c4778e67cecd5b4a2b41532f821b10565ec7fe5cf9c511e9068d",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_native_build.py",
+      "bytes": 6934,
+      "sha256": "4c752d5191502d6767dc2d40106a2001fb024636fdf719e8a68358cda26bc1e3",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_opencode_agent_ui.js",
+      "bytes": 4710,
+      "sha256": "6e23682b6cc334b15351d44460f53616b128fdd441fd9f03386b36b22d62520e",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/dashboard/test_opencode_pool.py",
+      "bytes": 8756,
+      "sha256": "b8f1d8ae763413ef319b34c8a22a3ab29b996debb0136ff9368ae51dc31a0851",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/test_opencode_sandbox.py",
+      "bytes": 15932,
+      "sha256": "4070190e8dbc68156ee49e1e5333afbcc308f0e2efc12cf6e95185a7682b0059",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/test_python_tools.py",
+      "bytes": 15827,
+      "sha256": "84a81993208d8e1a74c7d4e8515c352bcf441d4c1ddb52cee803b76b5e241ef6",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/tool_contract.py",
+      "bytes": 1025,
+      "sha256": "86cd775fab4f786c2d000fbefaf45602a994a0f50fd9b5866c60d9e8e1b80a29",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/dashboard/tool_registry.py",
+      "bytes": 16015,
+      "sha256": "83acf392603e407340d170e6191d087ac5debcde8fe8fa70ed43920f5c24a429",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/check_requirements.py",
+      "bytes": 7669,
+      "sha256": "7c4e7d993d24f70d49590a0edd4ad73425bee278735eea6affcbbb68a0aa9f95",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/configure_agent_stack.py",
+      "bytes": 3065,
+      "sha256": "fa24ca8505b0e2b54be61d92d59881af56e131354711240b08489cf538fbc022",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/configure_native_build.py",
+      "bytes": 2810,
+      "sha256": "ecf3be2453090e7b98ac9596b0782e0af4733431beba95e34c262bd69ba3a8c2",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/install_actions.py",
+      "bytes": 2279,
+      "sha256": "ad9f55b8d90e6536ae5e87ce55ebefa9c04b608100240e4c8f97ca0b90319a5d",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/install_melty_kit.py",
+      "bytes": 12274,
+      "sha256": "d7fa351f053d1d438172ccc5806b0406f46620f9c3355ce2f0e8141dfc80a928",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/install_missing.ps1",
+      "bytes": 22131,
+      "sha256": "ddacad6e5eff4e5498468887927109f1bdb95c6d028133da2b48dd838821b5dc",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/install_rea_skill.py",
+      "bytes": 5484,
+      "sha256": "b7fa0a2a912ef5b7b2cdbe1ba6cd6ea59d43e5be25fc9c1459d6686865773526",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/requirements_catalog.py",
+      "bytes": 4636,
+      "sha256": "46460c3b57c68ae34697db228c8b2b079ef4fd0762ff115ae495b5ea926e33e7",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/test_check_requirements.py",
+      "bytes": 6448,
+      "sha256": "2f1c25e348b4321e69ec4bb7b4f34fe4ae32d6e8afe736ed452585c138183f17",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/test_install_actions.py",
+      "bytes": 4353,
+      "sha256": "eb1393c5c65c0cc361c0083b1144c3f0bd37ee26f4594ce56ba49bb69ddf8b43",
+      "state": "tracked_modified"
+    },
+    {
+      "path": "tools/setup/test_install_melty_kit.py",
+      "bytes": 8061,
+      "sha256": "cc893162f03e6d4bbb29239fab3ddeee850c8f9ae6aa28d9574151fbcb04d358",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/test_install_rea_skill.py",
+      "bytes": 2547,
+      "sha256": "b415124d5739b1019893d7d5108ba1e70e1bf687ed3cfa8d33f3e5f59d4c1951",
+      "state": "untracked_required"
+    },
+    {
+      "path": "tools/setup/test_requirements_catalog.py",
+      "bytes": 6890,
+      "sha256": "6b409f2f5164a8bb6b055714b68dee76d64df3a74634daeba7482ce73366d34c",
+      "state": "tracked_modified"
+    }
+  ],
+  "excluded": [
+    ".git",
+    ".smelter runtime/private data except this archive itself",
+    "databases",
+    "credentials",
+    "weights",
+    "game assets",
+    "mod build outputs (gitignored)",
+    "dw3_decomp-main/"
+  ],
+  "note": "Changed/new source overlay for exact base; not a full repository or remote backup. Manifest itself is outside archive."
+}

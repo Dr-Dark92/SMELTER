@@ -41,14 +41,20 @@ def configure(root=ROOT, *, apply=False):
         policy['locations'].append({'id':identity,'name':label,'path':str(path),'read':False,'write':False,
                                     'execute':True,'operations':['rea'],'exclusions':[],'enabled':True})
     models=load_config(root,'model_preferences.json')
+    # Re-running engine setup must not silently reduce an existing Qwen profile.
+    # The conservative 16K preset is only for a first switch to this model.
+    from config_store import config_source
+    from runtime_settings import load_runtime
+    runtime = (load_runtime(root)['settings'] if models['models'].get('reasoning') == MODEL
+               and config_source(root, 'runtime_settings.json') == 'saved' else dict(RUNTIME))
     models={'schema_version':1,'models':{**models['models'],'reasoning':MODEL}}
-    report={'mode':'apply' if apply else 'preview','model_preferences':models,'runtime':RUNTIME,
+    report={'mode':'apply' if apply else 'preview','model_preferences':models,'runtime':runtime,
             'engine_execution_locations':[str(path) for _,_,path in paths],
             'target_folder_permissions_changed':False,'notes':notes}
     if apply:
         save(root,policy,original.revision)
         save_config(root,'model_preferences.json',models)
-        save_config(root,'runtime_settings.json',{'schema_version':1,'settings':RUNTIME})
+        save_config(root,'runtime_settings.json',{'schema_version':1,'settings':runtime})
         save_config(root,'component_controls.json',{'schema_version':1,'opencode':True,'mcp':True})
     return report
 

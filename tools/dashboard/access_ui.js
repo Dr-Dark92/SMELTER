@@ -43,6 +43,7 @@ const SmelterAccess = (() => {
       if(doc.getElementById('approveMelty')?.checked)names.push('Melty lookup');
       if(doc.getElementById('approveFrontendWorkspace').checked)names.push('V2 CSS/tests/preview');
       if(doc.getElementById('approveCodingWorkspace').checked)names.push('isolated code proposals/tests');
+      if(doc.getElementById('approveNativeBuild')?.checked&&doc.getElementById('approveCodingWorkspace').checked)names.push('native C++ builds');
       if(doc.querySelector('#modelInspectionGrants input:checked'))names.push('selected GLB metadata');
       const detailedSummary=(direct?'Ollama':'OpenCode → Ollama')+' · '+(policy?.model||'loading model…')+' · ctx '+(policy?.configuration?.runtime.context_tokens||'?')+' / output '+(policy?.configuration?.runtime.max_output_tokens||'?')+' / '+(policy?.configuration?.runtime.timeout_seconds||'?')+'s · '+(names.join(', ')||'no host file tools selected');
       summary.textContent=(direct?'Direct chat':'OpenCode')+' · '+(names.join(', ')||'No host tools approved');summary.title=detailedSummary;effectiveContext.textContent=detailedSummary;

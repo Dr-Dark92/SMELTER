@@ -36,7 +36,7 @@ def config(root, name: str) -> dict | None:
         profile = PROFILES.get(value.get('runtime_profile'))
         return {'schema_version': 1, 'settings': dict(profile)} if profile else None
     if name == 'sandbox.json' and isinstance(value.get('images'), dict):
-        return {'schema_version': 1, **{key: value['images'].get(key) for key in ('python_image', 'node_image', 'opencode_image')}}
+        return {'schema_version': 1, **{key: value['images'].get(key) for key in ('python_image', 'node_image', 'opencode_image', 'cpp_image', 'engine_image') if key not in ('cpp_image', 'engine_image') or key in value['images']}}
     return None
 
 

@@ -1,0 +1,95 @@
+{
+  "prepared_at": "2026-10-25T14:26:25.952075+04:00",
+  "scope": "Portable summaries and hashes only; full local evidence excluded from source checkpoint",
+  "evidence": [
+    {
+      "path": ".smelter/ghidra-smoke-36911240d5184812b548be1ce5ff1e4b/evidence.json",
+      "sha256": "cf8b2dbd78b31f134e40f7dcd56e25d465d521c4fc02ea8b52e64ea7ec001ca0",
+      "bytes": 9125,
+      "status": "PASS",
+      "target_executed": false,
+      "fixture_sha256": "0c9db57228f57a37e093ef74d006b291b10a71536e4104228c8746f81091851d",
+      "operations": [
+        "rea_ghidra_analyze",
+        "rea_ghidra_decompile",
+        "rea_ghidra_functions",
+        "rea_ghidra_strings",
+        "rea_ghidra_xrefs"
+      ]
+    },
+    {
+      "path": ".smelter/ghidra-smoke-36911240d5184812b548be1ce5ff1e4b/live-qwen-evidence.json",
+      "sha256": "ac09522890635d22dd2b75f3e60d9b31e780ccf3dee260b520f6a3b989b70c00",
+      "bytes": 2274,
+      "status": "PASS",
+      "model": "qwen3.5:35b-a3b",
+      "elapsed_seconds": 47.1,
+      "configuration": {
+        "model": "qwen3.5:35b-a3b",
+        "runtime": {
+          "context_tokens": 16384,
+          "max_output_tokens": 1024,
+          "timeout_seconds": 300,
+          "opencode_timeout_seconds": 900,
+          "thinking": false
+        },
+        "revision": "938293500ba250228f39ccea76c3b2f47ccd3622499e4777f891b61bd1ed29f0"
+      },
+      "controller_tools": [
+        "rea_ghidra_decompile",
+        "rea_ghidra_functions"
+      ]
+    },
+    {
+      "path": ".smelter/integration-frontend-smoke.log",
+      "sha256": "f1ffac56a450dc4d25eddf1b6be557af269c9c5a055322f77a817b0472deb6a3",
+      "bytes": 7725,
+      "status": "PASS",
+      "preview_css_verified": true,
+      "authenticated_empty_preview_db": true,
+      "source_unchanged": true,
+      "cleanup_confirmed": true
+    },
+    {
+      "path": ".smelter/melty-live-evidence.json",
+      "sha256": "adff8df56f2428ba06daa51bf88bd47c99968d163935b2d98c3ebfb93db5d0db",
+      "bytes": 5856,
+      "status": "mcp_completed",
+      "server": "melty",
+      "tool": "search_games",
+      "read_only": true
+    },
+    {
+      "path": ".smelter/integration-dashboard-final.log",
+      "sha256": "14e747748f197a8c1155a53a850d5d35ead302db7aafb35c724fae04be2a4ccb",
+      "bytes": 2685,
+      "tests": 505,
+      "skipped": 9,
+      "passed": true
+    },
+    {
+      "path": ".smelter/integration-setup-final.log",
+      "sha256": "3b0ac80f3702da9d56ac6a782a9c49c9864a734de25a23a56419b1bf69e582c7",
+      "bytes": 181,
+      "tests": 77,
+      "skipped": 0,
+      "passed": true
+    },
+    {
+      "path": ".smelter/integration-analysis-final.log",
+      "sha256": "e79a083a79b7742b7a58027c5bfed22eba2b57904d17d981835b9c8762dafcac",
+      "bytes": 896,
+      "tests": 30,
+      "skipped": 0,
+      "passed": true
+    },
+    {
+      "path": ".smelter/integration-js-tests.log",
+      "sha256": "c4bc0ae18d1a4309782c5f49eb96677d31a09b52f0fed0eff75ca606701cf6c8",
+      "bytes": 2069,
+      "tests": 24,
+      "skipped": 0,
+      "passed": true
+    }
+  ]
+}

@@ -5,7 +5,7 @@ from skills_catalog import catalog_skills
 
 
 def catalog(root):
-    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'melty_read':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
+    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'melty_read':True,'native_build':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
     tools=[]
     from sandbox import status as sandbox_status
     confined=sandbox_status(root)
@@ -24,14 +24,31 @@ def catalog(root):
         if name.startswith('melty_'):
             tools[-1].update(dependency='Melty HTTPS MCP + host sign-in', reason=melty['reason'], read_only=True)
             if melty['status']!='configured':tools[-1]['availability']='blocked'
+        if name == 'universal_modder':
+            try:
+                from universal_modder import verified_installation
+                identity=verified_installation(root)
+                tools[-1].update(dependency='Pinned Universal Modder private CLI',revision=identity['revision'],read_only=True)
+            except (ValueError,OSError,KeyError):
+                tools[-1].update(availability='blocked',dependency='universal_modder setup profile',reason='Install and verify the pinned CLI first')
         if name in ('validate_frontend_workspace','launch_frontend_preview'):
             tools[-1].update(availability='requires_per_message_grants' if confined['ready'] else 'blocked',dependency='confined Docker runner',reason=confined['reason'])
         if name=='launch_frontend_preview':tools[-1]['transports']=['python (dashboard owner)']
         if name=='run_coding_tests':
-            profiles={profile:sandbox_status(root,operation='coding_'+profile) for profile in ('python','node')}
+            profiles={profile:sandbox_status(root,operation='coding_'+profile) for profile in ('python','node','cpp')}
+            profiles.update(mods=profiles['python'], lua=profiles['cpp'])
             tools[-1]['profiles']={profile:{'availability':'requires_per_message_grants' if report['ready'] else 'blocked',
                                            'reason':report['reason']} for profile,report in profiles.items()}
             tools[-1]['availability']='requires_per_message_grants' if any(r['ready'] for r in profiles.values()) else 'blocked'
+        if name == 'build_native_mod':
+            report=sandbox_status(root,operation='coding_cpp')
+            tools[-1].update(availability='requires_per_message_grants' if report['ready'] else 'blocked',
+                             dependency='confined MinGW-w64 CLI toolchain image (smelter-cpp:2)',reason=report['reason'],host_fallback=False)
+        if name == 'inspect_engine_archive':
+            report=sandbox_status(root,operation='engine_archive')
+            tools[-1].update(availability='requires_per_message_grants' if report['ready'] else 'blocked',
+                             dependency='pinned repak, retoc and UnityDataTool image (smelter-engine-cli:1)',
+                             reason=report['reason'],read_only=True,host_fallback=False)
         if name.startswith('rea_ghidra_'):
             tools[-1].update(dependency='Ghidra headless + Java', provider='ghidra', reason=ghidra['reason'])
             if ghidra['status']!='installed':tools[-1]['availability']='blocked'

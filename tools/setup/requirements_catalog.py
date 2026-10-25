@@ -26,6 +26,9 @@ def load(path: Path = CATALOG_PATH) -> dict:
             raise ValueError(f"Tool {name} has an unknown policy")
         if "winget" in tool and not isinstance(tool["winget"], str):
             raise ValueError(f"Tool {name} has an invalid winget ID")
+        # Installer options for packages whose default install lacks the needed parts (VS Build Tools).
+        if "winget_override" in tool and not ("winget" in tool and isinstance(tool["winget_override"], str) and tool["winget_override"].strip()):
+            raise ValueError(f"Tool {name} has a winget_override without a winget ID")
         if "npm" in tool and not (isinstance(tool["npm"], str) and "@" in tool["npm"].lstrip("@")):
             raise ValueError(f"Tool {name} needs a version-pinned npm package")
     setup = data.setdefault("setup", {})
@@ -43,6 +46,16 @@ def load(path: Path = CATALOG_PATH) -> dict:
         if unknown:
             raise ValueError(f"Setup step {name} references unknown entries: {', '.join(unknown)}")
     defaults = data.setdefault("defaults", {})
+    modding = data.get('modding_cli', {})
+    if not isinstance(modding, dict) or not isinstance(modding.get('tools', {}), dict):
+        raise ValueError('Invalid CLI modding catalog')
+    for name, tool in modding.get('tools', {}).items():
+        if not isinstance(tool, dict) or not all(isinstance(tool.get(k), str) and tool[k] for k in ('executable', 'source', 'usage', 'purpose')):
+            raise ValueError('CLI modding tool needs executable, source, usage and purpose: ' + name)
+        if tool.get('status') not in ('candidate', 'existing_adapter', 'existing_requirement', 'provided_by_image_cpp'):
+            raise ValueError('Invalid CLI tool integration state: ' + name)
+        if not isinstance(tool.get('engines'), list) or not tool['engines'] or any(not isinstance(e, str) for e in tool['engines']):
+            raise ValueError('CLI modding tool needs engine routes: ' + name)
     hardware = defaults.get("hardware_profiles", [])
     if not isinstance(hardware, list) or any(not isinstance(p, dict) or not isinstance(p.get("model"), str)
                                              or not isinstance(p.get("runtime_profile"), str) for p in hardware):
