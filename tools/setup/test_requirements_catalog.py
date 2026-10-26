@@ -20,6 +20,14 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual(install_actions.WINGET_IDS,
                          {n: t["winget"] for n, t in CATALOG["tools"].items() if "winget" in t})
 
+    def test_native_progress_uses_existing_runtime_and_a_read_only_source(self):
+        value = CATALOG['native_progress']
+        self.assertEqual(value['dependencies'], [])
+        self.assertEqual(value['transport'], 'SSE')
+        self.assertEqual(value['endpoint'], 'http://127.0.0.1:4096')
+        self.assertTrue(value['read_only'])
+        self.assertTrue((CATALOG_PATH.parent / value['module']).is_file())
+
     def test_opencode_agent_profile_needs_wsl_and_docker(self):
         self.assertEqual(set(profiles.PROFILES["opencode_agent"]["requires"]), {"ollama", "node", "wsl", "docker"})
         self.assertEqual(install_actions.WINGET_IDS["docker"], "Docker.DockerDesktop")
@@ -64,6 +72,18 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual((step["kind"], step["dockerfile"]), ("docker_build", "tools/dashboard/Dockerfile.cpp"))
         self.assertTrue((CATALOG_PATH.parent / step["dockerfile"]).is_file())
         self.assertEqual(CATALOG["defaults"]["images"]["cpp_image"], "image_cpp")
+
+    def test_ecc_bridge_is_declared_and_uses_the_verified_bundle(self):
+        from install_ecc_bridge import verified_bundle
+        step = CATALOG['setup']['ecc_bridge']
+        lock, _, files, _ = verified_bundle(CATALOG_PATH.parent)
+        self.assertEqual(step['revision'], lock['revision'])
+        self.assertEqual(step['kind'], 'python_script')
+        self.assertTrue((CATALOG_PATH.parent / step['script']).is_file())
+        self.assertIn('ecc_bridge', CATALOG['profiles']['qwen35b_agent']['setup'])
+        self.assertEqual(CATALOG['profiles']['ecc_coding']['setup'], ['ecc_bridge'])
+        self.assertEqual(len(lock['skills']), 13)
+        self.assertTrue(all(path.name == 'LICENSE' or path.suffix == '.md' for path in files))
 
     def test_winget_override_needs_a_winget_id(self):
         data = {"schema_version": 1, "profiles": {"vanilla": {"requires": []}},

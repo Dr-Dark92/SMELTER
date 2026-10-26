@@ -1,5 +1,13 @@
 # ECC inside SMELTERV1
 
+Update, 26 October 2026: [the ECC coding bridge](ECC_BRIDGE.md) vendors a newer
+reviewed revision, 11 adapted instruction profiles and two SMELTER-specific
+skills, with offline integrity-checked activation for direct/managed/native
+Qwen. The older revision and disabled-import procedure below describe the
+original importer. They are retained for historical compatibility; use the new
+bridge guide for the enabled installation. Full executable-plugin support
+remains separate.
+
 Reviewed upstream: [affaan-m/ECC](https://github.com/affaan-m/ECC), commit
 [`90606c8315ee09cafc303515c5f33024db6b9882`](https://github.com/affaan-m/ECC/tree/90606c8315ee09cafc303515c5f33024db6b9882),
 package version **2.2.3**. Inspection is of that revision, not a promise about a

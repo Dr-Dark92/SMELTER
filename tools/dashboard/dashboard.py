@@ -490,7 +490,7 @@ dialog::backdrop{background:#020617b8;backdrop-filter:blur(3px)}
 <p>Selecting OpenCode enables its runtime and built-in MCP transport. The saved engine starts automatically with the GUI after session and database checks. The connection check is optional diagnostics. Configure the OpenCode image once in Confined execution. Selected skills and approved built-in MCP tools are forwarded; images and external MCP servers are unsupported.</p>
 <pre id="deployout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="providerout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><pre id="opencodeout" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 <section id="bootstrap" class="panel" hidden><h2 id="startupHeading">SMELTER startup</h2><div id="databaseSetup"><p>Choose an absolute directory for persistent SQLite storage. Existing JSON configuration files remain untouched.</p><input id="dbdirectory" placeholder="D:\SMELTER-Data"><button id="dbselect">Initialize database</button></div><div id="authRecovery" hidden><p>This page is not authorized for the running dashboard. Use the current launch URL printed in its terminal. Restarting the server changes the token; database initialization will not fix authorization.</p><label>Current launch URL or token<input id="sessionToken" type="password" autocomplete="off" spellcheck="false" aria-label="Current launch URL or token"></label><button id="sessionReconnect">Reconnect session</button></div><button id="dbretry">Retry checks</button><pre id="dbstatus" style="white-space:pre-wrap"></pre></section>
-<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script src="/assets/skills-ui.js"></script><script src="/assets/attachments-ui.js"></script><script src="/assets/workbench-ui.js"></script><script src="/assets/settings-ui.js"></script><script src="/assets/location-browser.js"></script><script src="/assets/locations-ui.js"></script><script src="/assets/access-ui.js"></script><script src="/assets/operations-ui.js"></script><script src="/assets/system-components.js"></script><script src="/assets/directory-access.js"></script><script src="/assets/knowledge.js"></script><script src="/assets/dashboard-shell.js"></script></main></html>"""
+<script src="/assets/session-auth.js"></script><script src="/assets/mcp-ui.js"></script><script src="/assets/turntable.js"></script><script src="/assets/model-animations.js"></script><script src="/assets/model-preview.js"></script><script src="/assets/chat-renderer.js"></script><script src="/assets/file-activity.js"></script><script src="/assets/opencode-agent-ui.js"></script><script src="/assets/skills-ui.js"></script><script src="/assets/attachments-ui.js"></script><script src="/assets/workbench-ui.js"></script><script src="/assets/settings-ui.js"></script><script src="/assets/location-browser.js"></script><script src="/assets/locations-ui.js"></script><script src="/assets/access-ui.js"></script><script src="/assets/operations-ui.js"></script><script src="/assets/system-components.js"></script><script src="/assets/directory-access.js"></script><script src="/assets/knowledge.js"></script><script src="/assets/workspace-tracking.js"></script><script src="/assets/native-progress.js"></script><script src="/assets/dashboard-shell.js"></script></main></html>"""
 
 def handler(token: str):
     from dashboard_api import ApiRoutes,Context
@@ -533,11 +533,17 @@ def main():
     print("SMELTER dashboard:", url)
     if not args.no_browser:
         webbrowser.open(url)
+    import native_progress
+    try:
+        native_progress.manager(ROOT).resume()
+    except (ValueError, OSError):
+        print('Native progress monitor could not resume; inspect its saved binding in Settings.')
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        native_progress.close_all()
         close_components()
         # Remove the persistent OpenCode container with the dashboard.
         import opencode_pool

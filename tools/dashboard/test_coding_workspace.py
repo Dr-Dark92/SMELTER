@@ -73,6 +73,104 @@ class CodingWorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'overwrite'):
             coding.propose(self.root, {'workspace_id': sid, 'changes': changes})
 
+    def test_text_hex_fixture_can_be_restored_without_bypassing_hash_checks(self):
+        sid, target = self.prepare()
+        relative = 'mods/example/tests/record.hex'
+        text = '47414c31 00000000\n'
+        arguments = self.change(sid, target, relative, text)
+        proposal = coding.propose(self.root, arguments)
+        coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposal['proposal_id']})
+        result = coding.read(self.root, {'workspace_id': sid, 'relative_path': relative})
+        self.assertEqual(result['text'], text)
+        self.assertEqual(result['sha256'], coding.digest(text.encode('utf-8')))
+        self.assertFalse((self.root / relative).exists())
+        with self.assertRaisesRegex(ValueError, 'overwrite'):
+            coding.propose(self.root, arguments)
+
+    def test_restore_proposal_preserves_original_bytes_and_captures_destination_hashes(self):
+        fixture = self.root / 'mods/example/tests/record.hex'
+        fixture.parent.mkdir(parents=True)
+        original = b'47414c31\r\n00000000\r\n'
+        fixture.write_bytes(original)
+        sid, target = self.prepare()
+        relative = 'tools/dashboard/example.py'
+        changed = target / relative
+        changed.write_bytes(b'VALUE=42\n')
+        (target / 'mods/example/tests/record.hex').unlink()
+        proposal = coding.propose_restore(self.root, {'workspace_id': sid,
+            'relative_paths': [relative, 'mods/example/tests/record.hex']})
+        self.assertEqual(changed.read_bytes(), b'VALUE=42\n')
+        self.assertFalse((target / 'mods/example/tests/record.hex').exists())
+        self.assertEqual(proposal['files'][0]['expected_sha256'], coding.digest(b'VALUE=42\n'))
+        self.assertIsNone(proposal['files'][1]['expected_sha256'])
+        self.assertEqual(proposal['restoration_source'][1]['sha256'], coding.digest(original))
+        coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposal['proposal_id']})
+        self.assertEqual(changed.read_bytes(), (self.root / relative).read_bytes())
+        self.assertEqual((target / 'mods/example/tests/record.hex').read_bytes(), original)
+        self.assertEqual(fixture.read_bytes(), original)
+
+    def test_restore_rejects_changed_source_before_apply(self):
+        sid, target = self.prepare()
+        relative = 'tools/dashboard/example.py'
+        before = (target / relative).read_bytes()
+        proposed = coding.propose_restore(self.root, {'workspace_id': sid, 'relative_paths': [relative]})
+        (self.root / relative).write_bytes(b'VALUE=99\n')
+        with self.assertRaisesRegex(ValueError, 'Original source changed'):
+            coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposed['proposal_id']})
+        self.assertEqual((target / relative).read_bytes(), before)
+
+    def test_restore_rejects_changed_destination_before_apply(self):
+        sid, target = self.prepare()
+        relative = 'tools/dashboard/example.py'
+        proposed = coding.propose_restore(self.root, {'workspace_id': sid, 'relative_paths': [relative]})
+        (target / relative).write_bytes(b'VALUE=77\n')
+        with self.assertRaisesRegex(ValueError, 'File changed'):
+            coding.apply(self.root, {'workspace_id': sid, 'proposal_id': proposed['proposal_id']})
+        self.assertEqual((target / relative).read_bytes(), b'VALUE=77\n')
+
+    def test_restore_validates_whole_batch_and_path_scope_before_proposing(self):
+        sid, target = self.prepare()
+        invalid = [[], ['tools/dashboard/example.py'] * 2, ['../escape.py'],
+                   ['C:/outside.py'], ['tools/dashboard/missing.py'], ['tools/private.key']]
+        for paths in invalid:
+            with self.subTest(paths=paths), self.assertRaises((ValueError, OSError)):
+                coding.propose_restore(self.root, {'workspace_id': sid, 'relative_paths': paths})
+        with self.assertRaises(ValueError):
+            coding.propose_restore(self.root, {'workspace_id': sid,
+                'relative_paths': ['tools/dashboard/example.py'], 'force': True})
+        self.assertEqual(list((coding.base_path(self.root) / sid / 'proposals').glob('*.json')), [])
+
+    def test_restore_requires_coding_grant_and_original_read_permission(self):
+        sid, target = self.prepare()
+        arguments = {'workspace_id': sid, 'relative_paths': ['tools/dashboard/example.py']}
+        with self.assertRaisesRegex(ValueError, 'not approved'):
+            coding.execute(self.root, {}, 'propose_coding_restore', arguments)
+        value = json.loads(json.dumps(self.policy.value))
+        source = next(row for row in value['locations'] if row['id'] == 'source')
+        source['exclusions'].append('tools/dashboard/example.py')
+        with using(Policy(value)), self.assertRaises(ValueError):
+            coding.propose_restore(self.root, arguments)
+
+    @unittest.skipUnless(sdk_status()['status'] == 'installed', 'Pinned MCP SDK required')
+    def test_real_mcp_restore_has_proposal_file_cards_and_verified_apply(self):
+        session = ToolSession(self.root, {'coding_workspace': True, 'transport': 'mcp'})
+        call = lambda name, args: session.execute({'function': {'name': name, 'arguments': args}})
+        ready = call('prepare_coding_workspace', {})
+        sid, target = ready['workspace_id'], Path(ready['path'])
+        relative = 'tools/dashboard/example.py'
+        (target / relative).write_bytes(b'VALUE=42\n')
+        proposed = call('propose_coding_restore', {'workspace_id': sid, 'relative_paths': [relative]})
+        self.assertEqual(proposed['status'], 'coding_patch_proposed')
+        card = session.file_activity.snapshot()[0]
+        self.assertEqual(card['status'], 'proposed')
+        self.assertEqual(card['before'], 'VALUE=42\n')
+        self.assertIn('return a - b', card['draft'])
+        applied = call('apply_coding_patch', {'workspace_id': sid, 'proposal_id': proposed['proposal_id']})
+        self.assertEqual(applied['status'], 'coding_patch_applied')
+        self.assertEqual(session.file_activity.snapshot()[0]['status'], 'saved')
+        self.assertEqual((target / relative).read_bytes(), (self.root / relative).read_bytes())
+        self.assertTrue(Path(proposed['mcp_audit_path']).is_file())
+
     def test_large_unicode_proposal_remains_readable_and_applicable(self):
         sid, target = self.prepare()
         text = 'VALUE = """' + 'é' * 60000 + '"""\n'

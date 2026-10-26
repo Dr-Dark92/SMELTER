@@ -24,7 +24,8 @@ class AgentBridge:
         supplied['transport'] = 'mcp'
         self.session = ToolSession(root, supplied, conversation_id, policy=policy)
         self.skills = selected_context(root, prompt, skills, auto_skills,
-                                       self.session.grants.get('rea_analysis', False))
+                                       self.session.grants.get('rea_analysis', False),
+                                       coding=self.session.grants.get('coding_workspace', False))
         self.control = control
         self.session.control=control
         from project_memory import recall
@@ -76,7 +77,8 @@ class AgentBridge:
         if self.session.grants.get('coding_workspace'):
             text += ('\nCoding task contract: the native snapshot is an admission-time source reference. '
                      'Read the live coding copy through smelter_read_coding_file. ECC examples do not grant shell, '
-                     'package installs, coverage tools, Git checkpoints or delegation. Use prepare/list/read/propose/apply/'
+                     'package installs, coverage tools, Git checkpoints or delegation. Use propose_coding_restore to restore '
+                     'original checkout files without retyping their bytes or guessing destination hashes. Use prepare/list/read/propose/apply/'
                      'run_coding_tests/review MCP operations. Save actual RED and GREEN receipts; an ERROR is not RED. '
                      'A proposal alone is not an applied edit. The original source and existing V2 are preserved.\n')
         return text

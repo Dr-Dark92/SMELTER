@@ -1,5 +1,64 @@
 # SMELTER V1 — System Requirements
 
+## Native Melty / OpenCode progress
+
+The built-in `tools/dashboard/native_progress.py` consumes the existing native
+OpenCode server's SSE stream at `http://127.0.0.1:4096`. It uses Python's standard
+library, the existing dashboard authentication and browser DOM/SVG; no pip/npm
+package, WebSocket service, model or external tool is installed. The machine
+catalog declares its runtime, endpoint, read-only scope and state location under
+`native_progress`. The native server must already be running.
+
+Bind the exact session ID, native directory and owned coding workspace in
+**Settings → Debugging → Native task progress**. A saved enabled binding resumes
+with the GUI; monitoring never submits prompts or controls the native task.
+If native server Basic authentication is configured, its existing process
+environment variables `OPENCODE_SERVER_USERNAME` / `OPENCODE_SERVER_PASSWORD`
+can authorize these GET requests; credentials are not saved in the progress
+ledger. See [operation, privacy and reconnect limits](docs/NATIVE_PROGRESS.md).
+
+## Workspace index, diagrams and native continuity
+
+Setup/profile `workspace_tracking` runs
+`python tools/setup/install_workspace_tracking.py` (use `--preview` to inspect).
+It enables the bundled `diagrams` skill and bridges it plus compact path/index
+instructions to an existing native OpenCode configuration. It downloads nothing,
+backs up configuration changes, preserves model/MCP/permission settings and
+refuses conflicting native instructions.
+
+Persistent filename/SHA-256 tracking, bounded relationship graphs and the
+dashboard SVG viewer use Python's standard library and browser APIs. There is
+no new pip/npm dependency, external renderer or WebSocket service. This setup
+is included in the Qwen 35B agent profile; its 128K/8K limits remain unchanged.
+See [workspace operation and limits](docs/WORKSPACE_TRACKING.md) and
+[future SSE/media bridge](docs/NATIVE_PROGRESS_AND_MEDIA_ROADMAP.md).
+
+## ECC coding instruction bridge
+
+The reviewed ECC source is `https://github.com/affaan-m/ECC` at commit
+`25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b` (MIT). The repository includes
+11 concise adapted profiles and two SMELTER-authored skills for Windows/Lua
+debugging and gameplay logic testing. Original reference text, licenses and
+SHA-256 hashes are retained through `tools/setup/ecc-bridge-lock.json`.
+`.gitattributes` preserves LF bytes for checksum-verified instructions on Windows,
+including when Git's `core.autocrlf` is enabled.
+Setup step `ecc_bridge`, the `ecc_coding` profile and `qwen35b_agent` declare it
+in `system-requirements.json`.
+
+Preview with `python tools/setup/install_ecc_bridge.py --preview`; install/enable
+with `python tools/setup/install_ecc_bridge.py --apply`. The setup queue runs the
+same installer. It uses Python's standard library and the vendored sources,
+without network downloads. `--no-native` enables only dashboard routes;
+`--no-auto-coding` leaves dashboard task selection explicit. Native Qwen's
+existing 131072-token context / 8192-token output settings are preserved.
+
+This bridges instruction text to existing SMELTER editing/testing/build tools
+and OpenCode's native skill discovery. It does not install ECC's executable
+plugin, hooks, model-specific agents, package managers, coverage tools, GoogleTest
+or an additional memory layer. Existing pinned Lua/C++/Python/Node runners are
+reused. See [the ECC bridge guide](docs/ECC_BRIDGE.md) for profiles, provenance,
+activation, validation and limitations.
+
 ## Lua module validation for SMELTER-authored mods
 
 The existing pinned `image_cpp` toolchain supplies Lua 5.4.8-r0 for offline
@@ -14,6 +73,20 @@ implementation and use failing assertions: syntax success does not prove behavio
 or in-game compatibility. See the [Raptor progress review](diagnostics/RAPTOR_PROGRESS_REVIEW_20261026.md).
 No new package/image was installed for this validation repair. Additional selected tools still require
 version/source/checksum records and documentation before installation.
+
+The existing coding editor also accepts UTF-8 `.hex` fixture text through its
+normal propose/apply hash checks. This permits restoring `tests/gal1_fixture.hex`
+alongside the original regression tests; it does not execute hex files or permit
+binary build outputs. Original fixture/test bytes must be restored from the
+checkout rather than replaced with import-only tests bearing the same names.
+
+The built-in `propose_coding_restore` MCP operation restores original source
+text through a normal proposal: it reads 1–6 original checkout paths, captures
+their bytes/source hashes and the current coding-copy destination hashes, and
+returns a proposal ID. `apply_coding_patch` rechecks both original and destination
+state before applying. This uses the existing Python standard library and
+MCP 1.30.0 dependency; there is no new package, server or executable installer.
+Original files, permission scopes, size limits and binary exclusions are preserved.
 
 ## Native Qwen tool mode
 

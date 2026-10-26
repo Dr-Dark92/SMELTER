@@ -235,7 +235,8 @@ class Jobs:
             from skill_context import selected_context
             tool_session=ToolSession(root,supplied,data['id'],policy=policy)
             skill_selection=selected_context(root,prompt,data.get('skills'),data.get('auto_skills',False),
-                                             tool_session.grants.get('rea_analysis',False))
+                                             tool_session.grants.get('rea_analysis',False),
+                                             coding=tool_session.grants.get('coding_workspace',False))
             if data.get('image') is not None:
                 from vision import validate_image
                 validate_image(data['image'])

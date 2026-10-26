@@ -39,7 +39,7 @@ def status(root):
     return {'runtime_snapshots':owned_runs(root),'artifact_bytes':sum(r['bytes'] for r in rows),'artifact_files':len(rows),
             'max_bytes':MAX_BYTES,'max_files':MAX_FILES,'jobs':list_jobs(root),
             'cleanup':'Operator-approved dry-run plan only; no automatic deletion',
-            'backup_scope':'SQLite snapshot, skill state and managed manifests, GLBs, reports, audits and REA evidence.',
+            'backup_scope':'SQLite snapshot, skill state and managed manifests, GLBs, reports, audits, REA evidence and native progress bindings/charts.',
             'backup_exclusions':['Source code and external V2/coding copies', 'Coding workspace metadata/proposals/test logs',
                                  'MCP connection JSON, tool installations and model weights'],
             'restore_note':'Review restored absolute access locations and image IDs before admitting tasks on a new checkout.'}
@@ -53,7 +53,7 @@ def _referenced(root):
 
 def plan(root,days=30):
     if type(days) is not int or not 1<=days<=3650:raise ValueError('Choose retention age 1–3650 days')
-    _idle(root);rows=inventory(root,tuple(area for area in AREAS if area!='project-memory'));known=_referenced(root);cutoff=time.time()-days*86400
+    _idle(root);rows=inventory(root,tuple(area for area in AREAS if area not in ('project-memory','native-progress')));known=_referenced(root);cutoff=time.time()-days*86400
     reports=sorted((r for r in rows if r['area']=='reports'),key=lambda r:r['mtime_ns'],reverse=True)
     excess={r['relative'] for r in reports[100:]};selected=[]
     for row in rows:

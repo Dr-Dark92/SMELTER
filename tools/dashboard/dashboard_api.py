@@ -25,9 +25,15 @@ class ApiRoutes:
     POST_ROUTES['/api/access-requests'] = '_post_access_request'
     GET_ROUTES['/api/web-access']='_get_web_access'
     GET_ROUTES['/api/project-memory']='_get_project_memory'
+    GET_ROUTES['/api/workspace-tracking']='_get_workspace_tracking'
+    GET_ROUTES['/api/native-progress']='_get_native_progress'
+    POST_ROUTES['/api/native-progress']='_post_native_progress'
+    POST_ROUTES['/api/workspace-tracking']='_post_workspace_tracking'
     POST_ROUTES['/api/web-access']='_post_web_access'
     POST_ROUTES['/api/project-memory']='_post_project_memory'
     ASSETS={
+        '/assets/native-progress.js':'native_progress_ui.js',
+        '/assets/workspace-tracking.js':'workspace_tracking_ui.js',
         '/assets/knowledge.js':'knowledge_ui.js',
         '/assets/directory-access.js':'directory_access_ui.js',
         '/assets/system-components.js':'system_components.js', '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
@@ -75,6 +81,55 @@ class ApiRoutes:
 
     def _get_page(self, route, data=None):
         return self.reply(200, self.app.HTML, 'text/html')
+
+    def _get_native_progress(self, route, data=None):
+        from native_progress import manager
+        if urlsplit(self.path).query:
+            raise ValueError('Native progress status accepts no query parameters')
+        return self.reply(200, manager(self.app.ROOT).view())
+
+    def _post_native_progress(self, route, data):
+        from native_progress import manager
+        bridge = manager(self.app.ROOT)
+        action = data.get('action')
+        if action == 'sessions' and set(data) == {'action', 'directory'}:
+            return self.reply(200, bridge.discover(data['directory']))
+        if action == 'bind' and set(data) == {'action', 'session_id', 'directory', 'workspace_id', 'expected_revision'}:
+            return self.reply(200, bridge.bind(data))
+        if action in ('start', 'stop') and set(data) == {'action', 'expected_revision'}:
+            return self.reply(200, bridge.control(action, data['expected_revision']))
+        raise ValueError('Use exact native session discovery, binding or read-only start/stop controls')
+
+    def _get_workspace_tracking(self, route, data=None):
+        from urllib.parse import parse_qs
+        from access_policy import using, current
+        import coding_workspace as coding
+        import workspace_tracking as tracking
+        args = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        if set(args) - {'workspace_id', 'query', 'offset', 'limit'} or any(len(v) != 1 for v in args.values()):
+            raise ValueError('Use one workspace_id, query, offset and limit')
+        args = {k: v[0] for k, v in args.items()}
+        query, offset, limit = args.get('query', ''), int(args.get('offset', 0)), int(args.get('limit', 50))
+        if len(query) > 200 or offset < 0 or not 1 <= limit <= 100:
+            raise ValueError('Use a bounded query and pagination (limit 1-100)')
+        with using(current(self.app.ROOT)):
+            if not args:
+                return self.reply(200, tracking.registry(self.app.ROOT))
+            if not args.get('workspace_id'):
+                raise ValueError('Select a workspace_id')
+            coding.load(self.app.ROOT, args['workspace_id'])
+            value = tracking.cached(self.app.ROOT, args['workspace_id'])
+            if value is None:
+                return self.reply(200, {'workspace_id': args['workspace_id'], 'indexed': False})
+            return self.reply(200, {'indexed': True, **tracking.view(value, query, offset, limit)})
+
+    def _post_workspace_tracking(self, route, data):
+        from access_policy import using, current
+        from coding_workspace import context
+        if set(data) != {'action', 'workspace_id'} or data['action'] != 'refresh':
+            raise ValueError('Refresh the selected workspace index')
+        with using(current(self.app.ROOT)):
+            return self.reply(200, context(self.app.ROOT, {'workspace_id': data['workspace_id']}))
 
     def _get_api_access_policy(self, route, data=None):
         from access_policy import current

@@ -4,6 +4,26 @@ Status: proposed design, 26 October 2026. No gameplay code, assets or loaders
 were installed or run. The creator suggested using the cougar attack as the
 aggro trigger. GTA Story Mode remains the intended host.
 
+## Current target policy
+
+The creator's latest requirement is to make human NPCs, cops and the player
+eligible targets, while excluding vehicle entities. Classification must be
+explicit at the adapter boundary: a vehicle with a valid position method is
+still ineligible. Include each human category and a vehicle in offline fixtures;
+selection and direct chase initiation must reject a vehicle. This requirement
+does not add a separate rule about human occupants of vehicles.
+
+The immediate behavior task remains offline in workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`. Its new test currently fails in setup:
+`init_simulation()` sets adapter mode and returns nothing. The actual API is
+`engine_adapter.simulate_targets(position)`, which returns an array of records
+with `.pawn`. Calls use dot syntax. Access controller state through its existing
+`raptor_states[id]` map. There is no existing set_clock, get_state or init_raptor
+API. Keep assertions on actual fields (`chase_start_time`, `last_attack_time`)
+and do not add invented interfaces just to make the mistaken test run. Once
+setup is corrected, the previously reproduced double-GetActorLocation defect
+is a real behavioral RED; engine callbacks are not required to reproduce it.
+
 ## Work ownership and next SMELTER brief
 
 The creator wants SMELTER (Qwen through Melty/OpenCode) to implement the mod,

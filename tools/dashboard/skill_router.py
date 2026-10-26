@@ -29,6 +29,10 @@ def route_skills(root, prompt):
     active = active_ids(root)
     if active is not None:
         available &= active
+    from coding_profiles import coding_candidates
+    coding = [sid for sid in coding_candidates(prompt) if sid in available]
+    if coding:
+        return coding[:MAX_AUTO_SKILLS]
     scores = []
     for skill, keywords in KEYWORDS.items():
         if skill not in available:

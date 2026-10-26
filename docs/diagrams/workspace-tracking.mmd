@@ -1,0 +1,13 @@
+flowchart LR
+  Native["Melty / native OpenCode"] -->|"observed: SMELTER MCP calls"| Tools["Coding workspace tools"]
+  Tools -->|"observed: owned UUID + approved paths"| Copy["Canonical host coding copy"]
+  Tools -->|"observed: refresh after applies/tests"| Index["Filename + SHA-256 ledger"]
+  Copy -->|"observed: read-only snapshot"| Tests["Docker test runner"]
+  Tests -->|"observed: receipt + tree hash"| Index
+  Index -->|"observed: bounded graph + Mermaid"| Panel["Workspace files & relations panel"]
+  Index -->|"observed: final snapshot"| Chat["Managed/direct task transcript"]
+  Native -->|"observed: session-bound SSE lifecycle"| Relay["Read-only native progress monitor"]
+  Relay -->|"observed: cached public metadata"| Progress["Native progress card / settings"]
+  Relay -->|"observed: idle/error/cancel snapshot"| Index
+  Index -->|"observed: saved final chart"| Progress
+  Copy -.->|"proposed: registered asset + hash"| Preview["Dashboard image / GLB preview"]

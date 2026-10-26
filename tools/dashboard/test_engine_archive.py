@@ -80,9 +80,14 @@ class EngineArchiveTests(unittest.TestCase):
     def test_full_manifest_still_fits_bridge_limit(self):
         grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['fixture'],'rea_analysis':True,
                 'melty_read':True,'native_build':True,'inventory_root':'fixture','write_diagnostics':True}
-        self.assertEqual(len(schemas(grants)), 33)
-        self.assertEqual(len(schemas({**grants,'access_requests':True})),34)
-        self.assertEqual(len(schemas({**grants,'access_requests':True,'web_read':True,'project_memory':True})),36)
+        for selected in (grants, {**grants,'access_requests':True},
+                         {**grants,'access_requests':True,'web_read':True,'project_memory':True}):
+            tools = [{'name': item['function']['name'], 'description': item['function']['description'],
+                      'inputSchema': item['function']['parameters']} for item in schemas(selected)]
+            self.assertIn('propose_coding_restore', {tool['name'] for tool in tools})
+            # The actual stdio proxy admits at most 48 tools and a 128 KiB manifest.
+            self.assertLessEqual(len(tools), 48)
+            self.assertLessEqual(len(json.dumps({'tools': tools}).encode()), 128 * 1024)
 
     def test_separate_selection_keeps_old_config_readable_and_explicit_values_win(self):
         from sandbox import config

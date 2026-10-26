@@ -1,0 +1,8 @@
+# Integrity-checked instruction files must retain their recorded bytes on Windows.
+skills/ecc-*/** text eol=lf
+skills/gameplay-testing/** text eol=lf
+skills/smelter-debugging/** text eol=lf
+skills/diagrams/SKILL.md text eol=lf
+tools/dashboard/ecc_native_instructions.md text eol=lf
+tools/dashboard/workspace_native_instructions.md text eol=lf
+tools/setup/ecc-bridge-lock.json text eol=lf

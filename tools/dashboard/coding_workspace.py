@@ -22,7 +22,7 @@ MAX_COPY = 128 * 1024 * 1024
 MAX_PATCH = 512 * 1024
 MAX_CHANGES = 6
 EDITABLE = {'.py', '.js', '.mjs', '.cjs', '.css', '.html', '.json', '.md', '.toml', '.yaml', '.yml',
-            '.c', '.cpp', '.h', '.hpp', '.lua', '.txt'}
+            '.c', '.cpp', '.h', '.hpp', '.lua', '.txt', '.hex'}
 # Build outputs never enter a coding copy. Scripts (.bat/.ps1/.cmd) are copied but not editable,
 # so model edits cannot change anything SMELTER runs on the host.
 BUILD_OUTPUTS = {'.exe', '.obj', '.asi', '.dll', '.lib', '.pdb', '.exp', '.ilk', '.bin'}
@@ -199,44 +199,91 @@ def prepare(root, arguments):
             shutil.rmtree(target)
             shutil.rmtree(metadata)
             raise
-        return {'status': 'coding_workspace_ready', 'workspace_id': sid, 'path': str(target),
+        from workspace_tracking import observe
+        tracking = observe(root, value, target, hashes, 'prepared')
+        return {'status': 'coding_workspace_ready', 'workspace_id': sid, 'path': str(target), 'tracking': tracking,
                 'copied_files': len(hashes), 'bytes': size, 'baseline_sha256': tree_digest(hashes),
                 'source_written': False, 'existing_v2_preserved': True,
                 'limitations': 'UTF-8 file create/replace only; no deletion, dependencies, shell, Git commits or preview'}
 
 
 def read(root, arguments):
-    if set(arguments) - {'workspace_id', 'relative_path', 'offset', 'limit'}:
+    if set(arguments) - {'workspace_id', 'relative_path', 'offset', 'limit', 'start_line', 'line_count'}:
         raise ValueError('Unknown coding read argument')
     with locked(root):
         _, target = load(root, arguments.get('workspace_id'))
         relative = arguments.get('relative_path')
         path = _file(target, relative)
-        if not path.is_file() or path.stat().st_size > MAX_FILE:
-            raise ValueError('Choose an existing UTF-8 code file of at most 128 KiB')
+        if not path.is_file():
+            raise ValueError('File not found in HOST coding directory: ' + str(path)
+                             + '. Use list_coding_files with a filename query; the Melty folder is a separate location.')
+        if path.stat().st_size > MAX_FILE:
+            raise ValueError('Choose a UTF-8 code file of at most 128 KiB')
         raw = path.read_bytes()
         text = raw.decode('utf-8')
+        location = {'workspace_root': str(target), 'source_root': str(Path(root).resolve()),
+                    'physical_path': str(path), 'storage': 'host_directory',
+                    'test_working_directory': '/'.join(Path(relative).parts[:2]) if relative.startswith('mods/') else '.',
+                    'tests_use': 'read-only Docker snapshots, not the live edit directory'}
+        if 'start_line' in arguments or 'line_count' in arguments:
+            if 'offset' in arguments or 'limit' in arguments:
+                raise ValueError('Choose line pagination OR character offset/limit, not both')
+            start, count = arguments.get('start_line', 1), arguments.get('line_count', 80)
+            if type(start) is not int or start < 1 or type(count) is not int or not 1 <= count <= 300:
+                raise ValueError('Use start_line >= 1 and line_count 1-300')
+            lines = text.splitlines(keepends=True)
+            chunk = ''.join(lines[start - 1:start - 1 + count])
+            if len(chunk) > 16000:
+                raise ValueError('Selected lines exceed 16000 characters; reduce line_count or use character pagination')
+            returned = len(lines[start - 1:start - 1 + count])
+            return {'status': 'coding_file_read', 'workspace_id': arguments['workspace_id'], 'relative_path': relative,
+                    'sha256': digest(raw), 'bytes': len(raw), 'text': chunk, 'pagination_unit': 'lines',
+                    'start_line': start, 'lines_returned': returned, 'total_lines': len(lines),
+                    'has_more': start - 1 + returned < len(lines), **location}
         offset, limit = arguments.get('offset', 0), arguments.get('limit', 16000)
         if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 16000:
             raise ValueError('Invalid code pagination')
         return {'status': 'coding_file_read', 'workspace_id': arguments['workspace_id'], 'relative_path': relative,
                 'sha256': digest(raw), 'bytes': len(raw), 'text': text[offset:offset + limit],
-                'offset': offset, 'total_characters': len(text), 'has_more': offset + limit < len(text)}
+                'offset': offset, 'pagination_unit': 'characters', 'next_offset': min(len(text), offset + limit),
+                'total_characters': len(text), 'has_more': offset + limit < len(text), **location}
 
 
 def list_files(root, arguments):
-    if set(arguments) - {'workspace_id', 'offset', 'limit'}:
+    if set(arguments) - {'workspace_id', 'offset', 'limit', 'query'}:
         raise ValueError('Unknown coding list argument')
     with locked(root):
-        _, target = load(root, arguments.get('workspace_id'))
+        metadata, target = load(root, arguments.get('workspace_id'))
         files = _scan(target)
         offset, limit = arguments.get('offset', 0), arguments.get('limit', 100)
         if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 200:
             raise ValueError('Invalid coding list pagination')
-        names = sorted(files)
+        query = arguments.get('query', '')
+        if not isinstance(query, str) or len(query) > 200:
+            raise ValueError('Use a filename/path substring query of at most 200 characters')
+        names = sorted(name for name in files if query.casefold() in name.casefold())
+        from workspace_tracking import observe
+        tracking = observe(root, metadata, target, files, 'listed')
         return {'status': 'coding_files_listed', 'workspace_id': arguments['workspace_id'], 'total': len(names),
-                'files': [{'relative_path': p, 'sha256': files[p]} for p in names[offset:offset + limit]],
-                'has_more': offset + limit < len(names), 'tree_sha256': tree_digest(files)}
+                'files': [{'relative_path': p, 'sha256': files[p], 'physical_path': str(target / p)} for p in names[offset:offset + limit]],
+                'has_more': offset + limit < len(names), 'tree_sha256': tree_digest(files),
+                'workspace_root': str(target), 'source_root': str(Path(root).resolve()), 'storage': 'host_directory',
+                'query': query, 'tracking': tracking}
+
+
+def context(root, arguments):
+    if set(arguments) - {'workspace_id', 'query', 'offset', 'limit'}:
+        raise ValueError('Workspace context accepts workspace_id, query and pagination only')
+    from workspace_tracking import registry, capture, view
+    with locked(root):
+        if 'workspace_id' not in arguments:
+            if arguments:
+                raise ValueError('Select a workspace_id before searching its files')
+            return {'status': 'coding_workspace_registry', **registry(root)}
+        metadata, target = load(root, arguments['workspace_id'])
+        value = capture(root, metadata, target, _scan(target), 'context refreshed')
+        return {'status': 'coding_workspace_context', **view(value, arguments.get('query', ''),
+                arguments.get('offset', 0), arguments.get('limit', 50))}
 
 
 def _changes(target, changes):
@@ -257,8 +304,12 @@ def _changes(target, changes):
         if path.is_file() and path.stat().st_size > MAX_FILE:
             raise ValueError('Existing code file exceeds 128 KiB')
         before = path.read_bytes() if path.is_file() else None
-        if (digest(before) if before is not None else None) != expected:
-            raise ValueError('File changed or create would overwrite: ' + relative)
+        current_hash = digest(before) if before is not None else None
+        if current_hash != expected:
+            raise ValueError('File changed or create would overwrite: ' + relative
+                             + '. Current DESTINATION sha256: ' + str(current_hash)
+                             + '. expected_sha256 must match the destination before editing; null is only for a missing file.'
+                             + ' To restore original checkout bytes, use propose_coding_restore.')
         text = change['content']
         if not isinstance(text, str) or '\x00' in text:
             raise ValueError('Code content must be UTF-8 text without NUL')
@@ -274,21 +325,58 @@ def _changes(target, changes):
     return result
 
 
+def _record_proposal(root, workspace_id, changes, restoration_source=None):
+    """Record validated changes while the caller holds the workspace lock."""
+    pid = str(uuid4())
+    value = {'proposal_id': pid, 'workspace_id': workspace_id, 'state': 'proposed', 'changes': changes}
+    if restoration_source is not None:
+        value['restoration_source'] = restoration_source
+    reserve_metadata(root, len(json.dumps(value).encode()))
+    folder = base_path(root) / workspace_id / 'proposals'
+    folder.mkdir(exist_ok=True)
+    _save(folder / (pid + '.json'), value)
+    result = {'status': 'coding_patch_proposed', 'workspace_id': workspace_id, 'proposal_id': pid,
+              'files': [{k: c[k] for k in ('relative_path', 'expected_sha256', 'after_sha256', 'bytes', 'diff', 'diff_truncated')}
+                        for c in changes], 'applied': False}
+    if restoration_source is not None:
+        result['restoration_source'] = restoration_source
+    return result
+
+
 def propose(root, arguments):
     if set(arguments) != {'workspace_id', 'changes'}:
         raise ValueError('Coding proposals require workspace_id and changes only')
     with locked(root):
         _, target = load(root, arguments['workspace_id'])
-        changes = _changes(target, arguments['changes'])
-        pid = str(uuid4())
-        value = {'proposal_id': pid, 'workspace_id': arguments['workspace_id'], 'state': 'proposed', 'changes': changes}
-        reserve_metadata(root, len(json.dumps(value).encode()))
-        folder = base_path(root) / arguments['workspace_id'] / 'proposals'
-        folder.mkdir(exist_ok=True)
-        _save(folder / (pid + '.json'), value)
-        return {'status': 'coding_patch_proposed', 'workspace_id': arguments['workspace_id'], 'proposal_id': pid,
-                'files': [{k: c[k] for k in ('relative_path', 'expected_sha256', 'after_sha256', 'bytes', 'diff', 'diff_truncated')}
-                          for c in changes], 'applied': False}
+        return _record_proposal(root, arguments['workspace_id'], _changes(target, arguments['changes']))
+
+
+def propose_restore(root, arguments):
+    """Snapshot original text and destination hashes, without applying edits."""
+    if set(arguments) != {'workspace_id', 'relative_paths'}:
+        raise ValueError('Restoration accepts workspace_id and original relative_paths only')
+    paths = arguments['relative_paths']
+    if (not isinstance(paths, list) or not 1 <= len(paths) <= MAX_CHANGES
+            or any(not isinstance(p, str) for p in paths)
+            or len({p.lower() for p in paths}) != len(paths)):
+        raise ValueError('Restore one to six distinct original source paths')
+    with locked(root):
+        _, target = load(root, arguments['workspace_id'])
+        changes, sources = [], []
+        for supplied in paths:
+            relative = relative_path(supplied, edit=True)
+            source = _file(Path(root).resolve(), relative)
+            if not source.is_file() or source.stat().st_size > MAX_FILE:
+                raise ValueError('Original UTF-8 source is missing or oversized: ' + relative)
+            raw = source.read_bytes()
+            destination = _file(target, relative, edit=True)
+            if destination.is_file() and destination.stat().st_size > MAX_FILE:
+                raise ValueError('Existing code file exceeds 128 KiB')
+            before = destination.read_bytes() if destination.is_file() else None
+            changes.append({'relative_path': relative, 'content': raw.decode('utf-8'),
+                            'expected_sha256': digest(before) if before is not None else None})
+            sources.append({'relative_path': relative, 'sha256': digest(raw)})
+        return _record_proposal(root, arguments['workspace_id'], _changes(target, changes), sources)
 
 
 def proposal(root, workspace_id, proposal_id):
@@ -316,6 +404,11 @@ def apply(root, arguments):
                     'proposal_id': arguments['proposal_id'], 'reused': True, 'files': plan['files']}
         if plan['state'] != 'proposed':
             raise ValueError('Proposal is not replayable: ' + plan['state'])
+        for original in plan.get('restoration_source', []):
+            source = _file(Path(root).resolve(), original['relative_path'])
+            if (not source.is_file() or source.stat().st_size > MAX_FILE
+                    or digest(source.read_bytes()) != original['sha256']):
+                raise ValueError('Original source changed since restoration proposal: ' + original['relative_path'])
         changes = _changes(target, [{k: c[k] for k in ('relative_path', 'expected_sha256', 'content')} for c in plan['changes']])
         backups, staged, installed = {}, [], []
         plan['state'] = 'applying'
@@ -366,9 +459,11 @@ def apply(root, arguments):
         finally:
             for temporary, _, _ in staged:
                 temporary.unlink(missing_ok=True)
+        from workspace_tracking import observe
+        tracking = observe(root, metadata, target, None, 'patch applied')
         return {'status': 'coding_patch_applied', 'workspace_id': arguments['workspace_id'],
                 'proposal_id': plan['proposal_id'], 'files': plan['files'], 'reused': False,
-                'source_written': False}
+                'source_written': False, 'tracking': tracking}
 
 
 def test_profiles(target):
@@ -385,12 +480,14 @@ def test(root, arguments):
         raise ValueError('Choose the fixed python, node, mods, cpp or lua test profile; no command arguments')
     sid, profile = arguments['workspace_id'], arguments['profile']
     with locked(root):
-        _, target = load(root, sid)
+        metadata, target = load(root, sid)
         require(target, 'execute', 'tests')
         if profile not in test_profiles(target):
             raise ValueError('No tests exist for this profile')
         files = _scan(target)
         before = tree_digest(files)
+        from workspace_tracking import observe
+        observe(root, metadata, target, files, 'testing ' + profile)
         from sandbox import coding_test
         reserve_metadata(root, 3 * 1024 * 1024, 2)
         # The runner takes its own immutable snapshot before releasing this
@@ -415,8 +512,9 @@ def test(root, arguments):
         if profile=='lua':
             current['tests'][profile]['runner_sha256']=result.get('runner_sha256')
         _save(base_path(root) / sid / 'workspace.json', current)
+        tracking = observe(root, current, target, None, 'tested ' + profile + ': ' + result['stage'])
         return {**result, 'evidence_path': str(log),
-                'status': 'coding_tests_passed' if result['stage'] == 'GREEN' else 'coding_tests_failed'}
+                'status': 'coding_tests_passed' if result['stage'] == 'GREEN' else 'coding_tests_failed', 'tracking': tracking}
 
 
 def review(root, arguments):
@@ -439,19 +537,22 @@ def review(root, arguments):
                     check['runner_current']=check.get('runner_sha256')==lua_runner_sha256()
                     check['current']=check['current'] and check['runner_current']
         passed = bool(checks) and all(c.get('stage') == 'GREEN' and c['current'] for c in checks)
+        from workspace_tracking import observe
+        tracking = observe(root, metadata, target, files, 'reviewed')
         return {'status': 'coding_workspace_reviewed', 'workspace_id': arguments['workspace_id'],
                 'path': str(target), 'tree_sha256': tree, 'changed_files': changed[:200],
                 'changed_files_total': len(changed), 'changes_truncated': len(changed) > 200,
                 'required_profiles': profiles, 'checks': checks, 'all_current_tests_passed': passed,
                 'coverage': 'not measured', 'visual_inspection': 'not performed',
-                'source_written': False, 'message': 'Review the diff and actual tests; model narrative is not verification.'}
+                'source_written': False, 'tracking': tracking, 'message': 'Review the diff and actual tests; model narrative is not verification.'}
 
 
 def execute(root, grants, name, arguments):
     if not grants.get('coding_workspace'):
         raise ValueError('Coding workspace was not approved for this message')
-    handlers = {'prepare_coding_workspace': prepare, 'list_coding_files': list_files, 'read_coding_file': read,
-                'propose_coding_patch': propose, 'apply_coding_patch': apply, 'run_coding_tests': test,
+    handlers = {'prepare_coding_workspace': prepare, 'coding_workspace_context': context, 'list_coding_files': list_files, 'read_coding_file': read,
+                'propose_coding_patch': propose, 'propose_coding_restore': propose_restore,
+                'apply_coding_patch': apply, 'run_coding_tests': test,
                 'review_coding_workspace': review}
     if name not in handlers or not isinstance(arguments, dict):
         raise ValueError('Unknown coding operation or invalid arguments')

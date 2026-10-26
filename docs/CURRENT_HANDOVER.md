@@ -1,5 +1,283 @@
 # Continue SMELTER work
 
+## Latest checkpoint: live native progress — 27 October 2026
+
+Implemented a read-only native SSE monitor (`tools/dashboard/native_progress.py`)
+and dashboard card/settings panel. It binds the exact native directory/session
+to an owned coding workspace, normalizes public tool/status metadata, coalesces
+legacy/v2 tool events, reconnects with a gap indication and status reconciliation,
+and saves a final index/chart after observed work becomes idle/failed/cancelled.
+Initial idle is not fabricated task completion. No prompts, message text,
+reasoning, tool arguments/results, raw error bodies or provider metadata are
+mirrored. Monitor pause/resume never controls the AI task.
+
+The actual binding was verified against OpenCode's running API:
+
+- Session: `ses_e873d493effeIa6L0ZxcaFq5nd`.
+- Native directory: `C:\Users\Dr.Dark92\Melty\grand-theft-auto-v-enhanced-ark-survival-ascende-2`.
+- Coding workspace: `897b9243-fd7e-42f4-a46a-d1b814a33a81`.
+- Actual connection: connected; session idle; no model prompt submitted.
+
+Saved state is `.smelter/native-progress/state.json`, enabled for normal GUI
+startup. At most five bounded completion charts and 300 recent transitions are
+kept; rebinding archives prior state (ten archives before review), with no deletion.
+Maintenance accounts for/backups these records and excludes them from ordinary
+retention. Current policy is rechecked when returning historical graph nodes.
+Requirements declare this built-in runtime; no new third-party package was installed.
+
+The idle GUI was reloaded gracefully on port 8769: old PID 26232 → PID 27244 at
+this checkpoint. Current launch log is `.smelter/dashboard-knowledge.stdout.log`
+(contains the private local launch token). Native OpenCode/model sessions were
+not restarted. The current IAB tab was reauthenticated and verified visually:
+compact progress card plus Settings → Debugging → Native task progress. Screenshot
+`.smelter/native-progress-main.jpg`; deployed cached API observation
+`.smelter/native-progress-deployed.json`; read-only live SSE probe
+`.smelter/native-progress-live-probe.json`. Recheck PID and idle jobs before any
+future reload. Never force-kill a dashboard or native task.
+
+Validation: full dashboard suite 676 OK / 9 skipped; final targeted native suite
+17 OK (includes a later-added fresh-task gap regression); setup suite 134 OK;
+final JavaScript suite 43 OK. Logs `.smelter/native-progress-{dashboard,setup,node}-tests.log`
+and `.smelter/native-progress-focused-final.log`. Local HTTP fixtures verify
+busy/tool/idle and disconnect/reconnect with GET-only requests. Browser state
+confirmed the exact saved binding and live idle connection. Mermaid source is
+maintained; renderer compilation remains unchecked on this machine.
+
+Next acceptance: let the user submit the next Melty Raptor task, watch real busy →
+tool → idle transitions and confirm its final chart without operator model calls.
+Do not send their prompt for them. Gameplay authorship stays with SMELTER/Qwen;
+target policy remains human NPCs/cops/player allowed, vehicles excluded. No gameplay
+files were edited by this infrastructure work. Next implementation is registered
+texture/GLB/animation ingestion and previews; lifecycle monitoring does not mirror
+native generated attachments or message text yet. See [native operation](NATIVE_PROGRESS.md),
+[media plan](NATIVE_PROGRESS_AND_MEDIA_ROADMAP.md) and
+[updated architecture chart](diagrams/workspace-tracking.mmd).
+
+The user requested committing and pushing this SMELTER checkpoint to GitHub on
+`feature/agent-stack-game-mods`, including ECC, baseline restore, workspace tracking
+and native progress. Leave unrelated `dw3_decomp-main/` alone. Runtime state,
+credentials, launch tokens and local test logs remain excluded by `.gitignore`.
+
+## Previous checkpoint: workspace identity, index and relation charts
+
+The user requested persistent file locations/hashes after native Qwen repeatedly
+confused the Melty staging folder, checkout and coding copy. This infrastructure
+request supersedes further operator gameplay repairs. Gameplay authorship remains
+with SMELTER/Qwen; do not send native prompts or restart their chat automatically.
+
+Delivered `coding_workspace_context` through the built-in MCP, filename/path
+search, canonical host paths on reads/lists, explicit line pagination, a persistent
+SHA-256 ledger and observed/static/inferred relation graphs. Managed/direct
+dashboard tasks preserve final chart snapshots. Preparation, list/context, apply,
+test and review update the index. External writes require a refresh/next scan.
+The dashboard adds Settings → Debugging → Workspace files & relations, with a
+two-second cached view while open. No full native task stream mirror is implemented.
+
+The existing `diagrams` skill is now a valid native manifest and bridged, together
+with compact continuity instructions. Installer `tools/setup/install_workspace_tracking.py`
+and profile/setup `workspace_tracking` are declared in both requirements files.
+No new package was installed. Native `opencode debug skill` discovers diagrams;
+the idle SMELTER MCP connection was refreshed and is connected. Global native
+instruction files may load at the next normal client startup; current MCP
+initialize instructions also explain recovery/chart steps. Do not force a restart.
+
+Real MCP context verification is saved in
+`.smelter/workspace-tracking-verification.json`. The task remains workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`, whose host copy is in the sibling
+`SMELTERV2/coding/` directory. Two engine_adapter.lua paths have different hashes;
+the index returns both instead of choosing one. Current observed tree is
+`1622823e2fb30ea914b0bc44e66b1690861b36d29078c9fd1d41d81a12dea364`.
+Its latest Lua receipt is RED/current; the older mods GREEN receipt is stale.
+This turn did not edit gameplay modules or run a new gameplay/model task.
+
+Verification: dashboard suite 659 tests, OK/9 skipped; setup 133 OK; Node 39 OK;
+focused finalization/index suite 9 OK, including the later-added persisted chart
+test. Logs: `.smelter/workspace-tracking-{dashboard,setup,node}-tests.log` and
+`.smelter/workspace-tracking-focused-final.log`. Native skill validation passed.
+The dashboard was started hidden on 8769, PID 26232 at this checkpoint, launch
+log `.smelter/dashboard-tracking.stdout.log` (contains private local launch token).
+Authenticated API and JS asset verified. A tab opening was queued in Codex; a
+manual browser visual check was not available in this chat's active IAB surface.
+Revalidate PID/job status before any future graceful reload; never force-kill.
+
+Next: bind a specific native session + directory + workspace for a read-only SSE
+progress relay. Official OpenCode `/event` transport was verified locally; no
+public Melty progress-WebSocket contract was verified. Generated texture/GLB/
+animation ingestion remains future work; reuse existing viewers with attachment
+IDs and checked hashes. See [workspace guide](WORKSPACE_TRACKING.md),
+[progress/media plan](NATIVE_PROGRESS_AND_MEDIA_ROADMAP.md) and
+[editable chart](diagrams/workspace-tracking.mmd). Preserve all uncommitted ECC/
+baseline-restore work and leave unrelated `dw3_decomp-main/` alone.
+
+## Prior gameplay checkpoint
+
+Latest user steering: Raptor targets must include human NPCs, cops and the
+player, excluding vehicle entities. Recorded in the Cougar/Raptor design guide.
+The next behavior test is currently invalid setup: it assigns the nil return of
+engine_adapter.init_simulation() to sim and calls sim:set_clock(0), then invents
+get_state/init_raptor and timer fields not present in the controller. Actual
+calls are init_simulation() for mode only, simulate_targets(position) for the
+array, target = targets[1].pawn, start_chase(id,target,position), and state lookup
+via raptor_states[id]. simulate_targets does return valid fixture targets; live
+engine callbacks are not needed for the known line-95 production reproducer.
+
+Current Lua receipt `9c35fc7b-47d9-4677-85d5-16fff757f01d.json` reports RED:
+five programs, one setup failure at test_raptor_behavior.lua:28, 14 syntax-clean
+sources. This is not a valid behavioral RED because execution never reaches
+start_chase. Mods receipt `a1220db1-6fec-40ba-9895-0abb6bb10091.json` is GREEN:
+14 run/13 pass/1 skip. Both record tree
+`3e88839a7d15a3b80da8b9ea61d816004552a2477c78aa1d534e7fc56bca644e`.
+All six restored baseline files still match original bytes; controller and
+adapter implementation hashes are unchanged. Next author remains SMELTER:
+correct the harness, retain a genuine production reproducer, then implement the
+explicit target filter and minimal chase/state repair. Use plain failing asserts
+and real APIs; do not remove the adapter or invent a session object.
+
+RECOVERY ACCEPTED: proposal `62d07950-f252-42dc-b773-aed20cdd20ec` is applied.
+All six baseline files match original bytes/SHA-256. Fresh Lua receipt
+`189a3c25-6fa9-4fa8-b926-3043e96b2c2f.json` is GREEN: four programs, 13 parsed
+sources, zero errors/skips; original runtime test reports 16 checks. Fresh mods
+receipt `5b853cc6-e84c-4add-9252-0b641407033f.json` is GREEN: 14 run, 13 passed,
+one skipped (optional unbuilt C++ writer sample). Both log hashes verified and
+both receipts match CURRENT tree
+`583234281bb79f3fa96a810755be80a0f51579f123ccb47b11aa3eaa52419a35`.
+Do not restore/rewrite these baseline files again. Proceed to real behavior.
+
+The first independent offline behavior probe reproduces a concrete failure:
+use engine_adapter.simulate_targets({X=0,Y=0,Z=0})[1].pawn as the target for
+raptor_aggro.start_chase. It throws at controller line 95 because GetActorLocation
+already returns a position vector, which the controller then treats as an actor
+and calls GetActorLocation again. Evidence:
+`.smelter/progress-reviews/a921e94b-a111-4b97-99b1-804e8f6bf9ad/report.json`.
+Active source hashes stayed unchanged. Next SMELTER task: executed behavioral
+reproducer for fresh and existing-IDLE Raptor states, then minimal target-location
+and timer/state initialization repair. Keep tests/fixtures and the GTA host;
+stay offline for this step. Codex submitted no model prompt or gameplay patch.
+
+Latest restoration attempt made no file changes: the model repeatedly supplied
+null, proposed-content hashes or original-checkout hashes where the tool required
+the current coding-copy destination hash. The guard correctly rejected those
+attempts. A new built-in `propose_coding_restore` operation removes this manual
+step: give 1–6 original project-relative paths and a workspace ID; it snapshots
+source bytes and current destination hashes into an ordinary proposal. Apply
+checks both source and destination again. Permissions, size/type bounds,
+transactional apply and file-card review remain in place. Requirements document
+the operation; no package/tool runtime was installed.
+
+Concrete six-file proposal is ready but NOT applied:
+`62d07950-f252-42dc-b773-aed20cdd20ec` for workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`. Its after hashes match all six original
+files; the two existing smoke tests are replacements and four missing files are
+creates. The Raptor/module-breakage tests and active source are unchanged.
+Evidence: `.smelter/raptor-baseline-restore-proposal.json`. SMELTER should call
+apply_coding_patch with that proposal, then run lua and mods and report receipts.
+Do not reconstruct the files or guess hashes again. The new tool is available
+after refreshing the idle native smelter registration; all three MCPs are
+connected. Activation: `.smelter/baseline-restore-activation.json`. No model prompt
+was submitted by Codex. Targeted validation: 26 coding tests, 11 catalog tests
+and 131 setup tests OK. Final dashboard regression: **649 tests, OK (nine
+skipped)**, recorded in `.smelter/baseline-restore-dashboard-tests.log`.
+
+Latest verification accepts the Raptor module-loading milestone: receipt
+`dd3a73e4-d6ee-4f0b-9311-d4279c4962d4.json` is GREEN for four Lua programs,
+13 syntax-checked sources, tree
+`3a4ec412403dc4f036d159126352d1bcee1cbfcbc1e97295f7e2c0785bcadbc3`.
+The real nine-controller/four-adapter export checks and entry import now run.
+Independent frozen-copy mutation confirms the actual module test exits 1 when
+the controller exports nothing. However the two original Lua tests were replaced
+by new 43-line smoke checks, not restored. Their original validation plus
+test_link.py, test_runtime_workflow.py, vectors.json and gal1_fixture.hex remain
+missing from the coding baseline. Restore the six original tracked test/fixture
+files from the checkout, preserving the new Raptor tests; do not copy __pycache__.
+Original Lua tests plus the hex fixture pass in an independent frozen copy,
+including all 16 original synthetic-runtime checks. Evidence:
+`.smelter/progress-reviews/245a826a-51af-4a82-b0e8-35fa1685a23d/report.json`.
+Codex changed no active mod files. Infrastructure now supports UTF-8 .hex fixture
+patching with unchanged hash checks, to allow SMELTER to restore the fixture.
+20 coding-workspace tests and 17 requirements tests passed; requirements updated.
+The idle native smelter registration was refreshed; all three MCPs are connected.
+Evidence: `.smelter/hex-fixture-activation.json` and corresponding test logs.
+
+Newest milestone: all 10 current Lua files pass syntax checks. Receipt
+`d745c0fb-788f-442d-9b7d-b4d8be46a77c.json` is GREEN on tree
+`72465451fba2af0bd0f985414b2d59602fdd81cefbd665fc786ff01a01a0e68d`, but its
+single test program loads only two modules. The entry-point check was removed
+after its require failed. Export checks are also bypassed: test calls use
+qualified module names, while conditional assertion branches compare bare
+names. An independent frozen-copy probe with a correct mod-root-relative
+package.path loads all three real modules and passes 18 import/export
+assertions; main reports the expected missing UE4SS timer and does not run game
+behavior. A counterexample replacing only the frozen controller with return {}
+still passes SMELTER's current test, proving its export assertions are ineffective.
+Evidence: `.smelter/progress-reviews/2361b461-1011-4e25-9cd1-e9570f93a82b/report.json`.
+Active gameplay files were unchanged by this review. Two original Lua regression
+scripts are also absent from the working copy (test_gal_link.lua and
+test_ark_runtime.lua); their deletion predates or is not attributable to this
+latest check. Next SMELTER task: repair test quality, restore entry-point and
+baseline regression coverage, then proceed to actual controller behavior.
+
+Latest repair follow-up: SMELTER applied edits to the full controller and import
+test, preserving all nine controller exports. Current hashes are
+`7e278165033cff55abccda3003f3c3004a6df469475e1678578eadd7a96c4c03`
+(controller) and `c76d146910a06535939a2d8efb4717ca9c0700ea0805051fb95dde2588e81d30`
+(test). Receipt `27df8e8e-9a62-4135-85e1-92251004d949.json` is ERROR at Lua
+line 42, zero behavioral tests. The actual defect is line 41's method reference
+`actual_actor:GetActorLocation` (use dot when obtaining the function value).
+File bytes are LF-only, with no CR or BOM. Its repeated truncation diagnosis
+misinterpreted read_coding_file's character offset/limit as lines. Read with
+offset 0 / limit 16000 for this 6875-byte file. Test base still wrongly repeats
+`mods/gta-ark/`; it needs `Mods/GtaArkLink/Scripts/` relative to the mod cwd and
+matching package.path for nested requires. Config key `disengagement_range_cm`
+also differs from `DISENGAGEMENT_RANGE_CM` used by the controller.
+Codex supplied diagnosis only, leaving gameplay edits to SMELTER. The native
+coding connection exhausted its 32-call budget; the idle `smelter` registration
+was refreshed for the `-ascende-2` Melty project. All three MCP connections are
+connected, Docker is running, chat/workspace preserved and no model prompt sent.
+Evidence: `.smelter/raptor-repair-tool-refresh.json`. Continue the same workspace
+with a targeted correction, not deletion or recreation.
+
+Latest creator test after ECC activation: native Qwen session
+`ses_e873d493effeIa6L0ZxcaFq5nd` in the fresh Melty project ending `-ascende-2`
+actually loaded all three requested ECC/debugging skills. It applied no patch.
+Docker was stopped; Codex restored the existing service and reran the fixed Lua
+profile via MCP. New receipt `ef614d60-f919-4460-bcec-eb484c723e5a.json` is ERROR:
+10 sources checked, one syntax failure at `Mods/.../raptor_aggro.lua:34`, zero
+behavioral tests. Source tree is unchanged. Details and evidence are in the
+latest [Raptor progress review](../diagnostics/RAPTOR_PROGRESS_REVIEW_20261026.md).
+Do not delete the 231-line/nine-function controller in favor of the 41-line/
+one-function copy. The importing test still has the wrong mod-root-relative
+path and never executes its loaded chunk. Keep SMELTER as the repair author;
+no new model prompt or gameplay edit was made by Codex. Docker/Lua were already
+declared requirements; no tool was installed in this follow-up.
+
+26 October ECC follow-up: the creator authorized pulling and bridging the
+reviewed coding components and recording them in requirements. Start with
+[ECC_BRIDGE.md](ECC_BRIDGE.md). Source is pinned to
+`25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b`; 11 adapted ECC profiles and two
+SMELTER-authored debugging/gameplay skills are bundled, with original Markdown,
+MIT licenses and SHA-256 lock data. The offline installer enables bounded
+direct/managed coding defaults and native OpenCode on-demand skills/routing,
+preserving 128K/8K, credentials, MCP registrations and permissions. Requirements
+declare the installer/profile. No executable ECC plugin, model change, game
+installation or gameplay repair is included. The creator stopped the looping
+Raptor attempt; latest observed receipt was
+`04a11a9f-b1ff-49bd-b948-f52072f50ad6.json`: ERROR, one unsupported-continue Lua
+syntax failure, zero behavioral tests. Keep SMELTER as mod implementation owner.
+
+ECC activation is verified: all 13 skills enabled; native OpenCode discovers all
+13 bodies from the Melty project; 37 copied files match the lock; real MCP
+initialize/list-tools advertises the bridge. Native model, permissions, MCP and
+credentials are unchanged. Tests: **642 dashboard, OK (24 skipped)** and
+**131 setup, OK**. Docker is stopped, accounting for unavailable container
+checks alongside platform/opt-in skips. All 13 manifests passed skill validation.
+Evidence: `.smelter/ecc-bridge-installation.json`,
+`.smelter/ecc-native-bridge-verification.json`,
+`.smelter/ecc-bridge-mcp-smoke.json` and `.smelter/ecc-bridge-*-tests.log`.
+Both GUI and native server were not listening when inspected; no existing chat
+was restarted and no inference prompt submitted. Start the next creator-driven
+Melty/OpenCode coding task fresh to pick up native configuration; existing
+coding workspace `897b9243-fd7e-42f4-a46a-d1b814a33a81` remains available.
+
 Current handover: **26 October 2026**, updated for native prompt overflow,
 resumable directory access,
 controlled internet, hybrid project memory and GTA–ARK runtime preparation. Start with

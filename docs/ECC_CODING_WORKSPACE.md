@@ -1,5 +1,10 @@
 # ECC coding workspace
 
+For the enabled 26 October instruction bridge and native OpenCode setup, start
+with [ECC_BRIDGE.md](ECC_BRIDGE.md). It reuses this coding-copy tool contract and
+the current Lua/C++ runners; importing selected historical manifests disabled
+is no longer the only available installation route.
+
 Current verified application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`.
 Both Python and Node container profiles now have actual RED/GREEN/mixed-ERROR
 smoke evidence. See [full prerequisites and acceptance](FULL_SMOKE_TEST.md) and
@@ -49,6 +54,7 @@ OpenCode no longer requires an already prepared frontend V2.
 | `list_coding_files` | Paginated actual paths/hashes and a snapshot fingerprint |
 | `read_coding_file` | Paginated UTF-8 text and the hash of exact full-file bytes |
 | `propose_coding_patch` | Record a reviewable 1–6-file proposal; no code application yet |
+| `propose_coding_restore` | Read 1–6 original source files and current destination hashes; propose exact restoration without retyping bytes |
 | `apply_coding_patch` | Recheck every original hash, stage files and apply only the recorded proposal |
 | `run_coding_tests` | Fixed Python unittest or Node test profile in a no-network Docker snapshot |
 | `review_coding_workspace` | Changed hashes and whether all detected test profiles passed on the current tree |
@@ -62,6 +68,21 @@ file invalidates the batch before application. Replaying an applied proposal is
 idempotent; it cannot overwrite subsequent changes. Failed partial application
 attempts restore previously installed files where their bytes still match this
 operation. Interrupted or unconfirmed proposals cannot be blindly replayed.
+
+The same checked editor accepts UTF-8 `.hex` test fixtures (including the GAL1
+golden record). These are text edits, not binary-output writes or execution.
+Restoring a baseline requires its actual source bytes and associated fixtures;
+new import-only scripts with the original test filenames do not restore coverage.
+
+For restoration, supply `workspace_id` and `relative_paths` to
+`propose_coding_restore`. Paths are relative to the original checkout and keep
+the same relative location in the coding copy. The controller reads exact UTF-8
+bytes (including CRLF), captures current destination hashes or missing state,
+and returns a normal reviewable proposal. Original reads must be allowed by the
+task's source policy; normal editable types, private-path exclusions and batch
+limits apply. No target file is written until `apply_coding_patch` is called.
+Both source and destination changes invalidate an unapplied restoration.
+The tool never deletes files, resets a workspace or bypasses hash checks.
 
 Paths reject traversal, absolute paths, drive/UNC/ADS syntax, reparse points,
 Windows reserved names, private runtime directories and credential files.

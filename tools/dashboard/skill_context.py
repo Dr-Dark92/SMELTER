@@ -48,14 +48,16 @@ def build_skill_context(root, selected):
     return context
 
 
-def selected_context(root, prompt, selected=None, automatic=False, rea=False):
+def selected_context(root, prompt, selected=None, automatic=False, rea=False, *, coding=False):
     """Resolve once for either engine; record the exact loaded instruction bytes."""
     if type(automatic) is not bool:
         raise ValueError('Invalid automatic skill setting')
     if selected is not None and not isinstance(selected, list):
         raise ValueError('Skills must be a list')
     from skill_router import route_skills
-    active = route_skills(root, prompt) if automatic and not selected else list(selected or [])
+    from coding_profiles import automatic_coding_enabled
+    coding_default = bool(coding) and automatic_coding_enabled(root)
+    active = route_skills(root, prompt) if (automatic or coding_default) and not selected else list(selected or [])
     if rea:
         from python_tools import REA_SKILL_ID
         if REA_SKILL_ID not in active:

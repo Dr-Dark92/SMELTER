@@ -222,6 +222,7 @@ function executionCards(execution){
  const hash=result.sha256||result.evidence_sha256;if(hash){const checksum=document.createElement('p');checksum.className='execution-path';checksum.textContent='SHA-256: '+hash;card.append(checksum)}
  if(result.evidence_path){const path=document.createElement('p');path.className='execution-path';path.textContent='Evidence: '+result.evidence_path;card.append(path)}
  const disclosure=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Recorded result';const raw=document.createElement('pre');raw.textContent=JSON.stringify(event,null,2);disclosure.append(summary,raw);card.append(disclosure);section.append(card)}
+ if(execution.workspace_tracking)SmelterWorkspace.renderGraph(execution.workspace_tracking,section);
  if(execution.audit_path){const audit=document.createElement('p');audit.className='execution-path';audit.textContent='Audit: '+execution.audit_path;section.append(audit)}
  const scope=document.createElement('small');scope.textContent='Controller records establish tool results and saved bytes. AI explanations are not fact-checked.';section.append(scope);return section;
 }
@@ -240,6 +241,8 @@ SmelterOpenCode.mount(api);
 {const chip=document.createElement('button');chip.type='button';chip.id='composerAgent';chip.className='composer-chip';chip.append(document.createElement('span'));el('composerChips').prepend(chip);
  window.smelterOpenCodeSession=SmelterOpenCode.session(api,{engine:el('chatEngine'),chip,approval:el('opencodeAgentApprove'),ready:()=>openCodeStartupReady})}
 SmelterOperations.mount(api);
+SmelterWorkspace.mount(api);
+SmelterNativeProgress.mount(api,document,()=>openCodeStartupReady);
 window.SmelterKnowledge?.mount(api);
 async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'X-Smelter-Token':SmelterAuth.token(),'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,cache:'no-store'});const v=await r.json();if(!r.ok){const error=Error(v.error||r.status);error.status=r.status;throw error}return v}
 async function refresh(force=false){try{el('error').textContent='';const data=await api('/api/extensions'+(force?'?refresh=1':''));const list=el('items');list.replaceChildren();for(const x of data.extensions){const row=document.createElement('div');row.className='ext';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=x.label;const meta=document.createElement('p');meta.textContent=x.description+' · '+x.status+' · Permissions: '+x.permissions.join(', ');title.textContent=x.label+' · '+x.health;meta.textContent=x.description+' · Tool: '+x.status+' · Declared permissions: '+x.permissions.join(', ')+' · Granted: no';info.append(title,meta);const b=document.createElement('button');b.textContent=x.enabled?'Disable':'Enable';b.disabled=!x.enabled&&x.status!=='installed'&&!(x.id==='opencode'&&x.status==='detected_unverified');b.onclick=async()=>{try{await api('/api/extensions','POST',{id:x.id,enabled:!x.enabled});await refresh()}catch(e){el('error').textContent=e.message}};row.append(info,b);list.append(row)}}catch(e){el('error').textContent=e.message}}

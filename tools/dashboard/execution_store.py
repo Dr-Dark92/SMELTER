@@ -17,6 +17,10 @@ def finalize(root,conversation_id,prompt,answer,execution,*,control=None,error=N
         terminal=outcome(cancelled,error,partial)
         execution={**execution,'outcome':terminal['status'],'error':terminal['error'],'cancelled':cancelled,
                    'model_text':answer[:-len(receipt)] if receipt else answer}
+        from workspace_tracking import task_snapshot
+        tracking = task_snapshot(root, execution)
+        if tracking:
+            execution['workspace_tracking'] = tracking
         jid=getattr(control,'job_id',None)
         if jid:execution['job_id']=jid
         phase=None

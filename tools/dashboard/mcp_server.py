@@ -12,13 +12,39 @@ def workspace_instructions(root, grants):
             'An empty Melty project folder does not establish that SMELTER has no source files. ')
     if grants.get('coding_workspace'):
         text += ('The SMELTER source checkout is ' + json.dumps(str(Path(root).resolve())) + '. '
-                 'For repository inspection, call prepare_coding_workspace once for the task, '
+                 'For repository inspection, recover an existing task workspace first; if none exists, call prepare_coding_workspace once, '
                  'retain its returned workspace_id, and use list_coding_files/read_coding_file '
                  'with that ID and the original project-relative paths. '
                  'Existing mod source is under mods/ in that coding copy. '
                  'These adapters cover tools/, skills/, mods/ and their permitted top-level documents; '
                  'docs/ and .smelter/ are outside the coding-file adapter. '
+                 'Use propose_coding_restore for missing or altered baseline files: supply the workspace ID '
+                 'and original relative paths; the controller captures original bytes and current destination hashes. '
+                 'Review and apply its proposal with apply_coding_patch; no manual hash calculation is needed. '
                  'Proposals, edits and tests use the same isolated copy; a proposal is not a source merge. ')
+        text += ('Recover forgotten locations with coding_workspace_context: omit its workspace_id to list '
+                 'managed copies, or pass the existing ID and filename query to refresh the file index. '
+                 'read_coding_file supports start_line/line_count, or character offset/limit; do not mix them. ')
+        text += ('Load the diagrams skill for task relationships. Refresh the exact workspace context after changes '
+                 'and tests and at task completion; its SHA-256 ledger and relations.mmd preserve the handoff. '
+                 'Static/inferred imports and snapshot test receipts do not establish in-game behavior. ')
+        try:
+            from access_policy import current, using
+            from workspace_tracking import registry
+            with using(current(root)):
+                copies = registry(root)['workspaces']
+            if copies:
+                text += 'Known HOST coding directories: ' + json.dumps([
+                    {'workspace_id': row['workspace_id'], 'host_directory': row['workspace_root']} for row in copies]) + '. '
+        except (ValueError, OSError):
+            pass
+        from coding_profiles import automatic_coding_enabled
+        if automatic_coding_enabled(root):
+            text += ('The ECC instruction bridge is enabled. In native OpenCode, load the task-relevant '
+                     'skill profiles before coding: ecc-tdd-workflow/ecc-verification-loop for implementation, '
+                     'smelter-debugging for syntax/path failures, gameplay-testing for controller behavior, '
+                     'or ecc-cpp-standards/ecc-cpp-testing for native code. Load only two or three profiles. '
+                     'These instructions do not install ECC hooks or grant tools. ')
     if grants.get('inventory_root'):
         text += ('The read-only game inventory scope is ' + json.dumps(grants['inventory_root']) + '. '
                  'inventory_directory inspects that approved scope, not the SMELTER repository. ')
