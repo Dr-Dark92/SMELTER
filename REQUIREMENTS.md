@@ -1,5 +1,108 @@
 # SMELTER V1 — System Requirements
 
+## Lua module validation for SMELTER-authored mods
+
+The existing pinned `image_cpp` toolchain supplies Lua 5.4.8-r0 for offline
+module syntax checks and `run_coding_tests profile=lua`; no host Lua installation
+is needed. The Lua profile now compiles every Lua file in each tested mod before
+executing test programs, including modules no test imports. It permits up to
+512 source files and 64 test programs, within the existing no-network limits.
+Syntax errors stop the run with ERROR and zero behavioral tests executed.
+Receipts include `source_syntax`, a host runner SHA-256 and explicit validation
+scope; older Lua receipts require retesting. Tests still must import the actual
+implementation and use failing assertions: syntax success does not prove behavior
+or in-game compatibility. See the [Raptor progress review](diagnostics/RAPTOR_PROGRESS_REVIEW_20261026.md).
+No new package/image was installed for this validation repair. Additional selected tools still require
+version/source/checksum records and documentation before installation.
+
+## Native Qwen tool mode
+
+`python tools/setup/configure_melty_cli.py --native-tool-mode --apply` (preview
+first) selects direct answers for native tool work and keeps an explicit
+`smelter-thinking` variant. It uses the existing OpenCode/Ollama installations
+and Python standard library; no dependency is added. Context/output remain
+131,072/8,192. Refresh and verify the running native global configuration cache;
+a JSON file change alone does not activate it. See the
+[mode, activation and tests](docs/NATIVE_QWEN_TOOL_MODE.md).
+
+## Native REA context gateway
+
+The native Melty/OpenCode profile can wrap its existing REA command with
+`python tools/setup/configure_melty_cli.py --compact-rea --apply` (preview first).
+`tools/dashboard/rea_mcp_gateway.py` uses the existing pinned MCP 1.30.0 SDK and
+its dependencies; no new package is installed. It exposes three discovery/schema/
+call tools instead of injecting all 207 REA schemas into each Qwen prompt. The
+original backend/Ghidra environment stays in use, with 128K/8K unchanged. See
+[configuration, measurements and tests](docs/REA_CONTEXT_GATEWAY.md).
+
+## Shared database paths on Windows
+
+Native Melty/OpenCode and a packaged Codex app must reference the same physical
+SQLite file. Database setup now stores its canonical path to avoid Windows
+LocalAppData redirection splitting the two environments. Older readable markers
+can be repaired with `python tools/setup/canonicalize_database.py --apply` after
+preview; the standard-library helper requires idle tasks and backs up the marker
+and database before changing the pointer. It installs no dependency and moves no
+data. See the [verified Melty repair](docs/MELTY_CONNECTOR.md).
+The existing MCP 1.30.0 SDK also carries the source/inventory scope instructions
+at initialization; no additional dependency is needed for native workspace
+context. The client working directory does not change the approved tool scopes.
+
+## GTA–ARK prototype runtime workflow
+
+The [cougar-based Raptor proposal](mods/gta-ark/COUGAR_RAPTOR_PROTOTYPE.md) records
+RageOpenV as an **uninstalled candidate** in `mods/gta-ark/runtime_requirements.json`,
+source commit `f742117a5e8ccc359bf3b4644c6bce7dad77cc7a`. Its documented source build
+needs CMake 3.17+ and Visual Studio C++; no dependency was installed in this pass.
+It is an asset loader, not a native scripting API. Exact 1.0.1158.16 compatibility,
+a binary/release checksum and a headless Enhanced asset pipeline remain unverified.
+The camera-link preflight continues to use its existing SHV/UE4SS requirements.
+
+The source-only `prototype_workflows.gta_ark` entry points to
+`mods/gta-ark/runtime_requirements.json` and its Python CLI. Inspection and source
+staging need only the standard library. Confined acceptance reuses the existing
+`smelter-cpp:2` Python/Lua image; no new dependency was installed. Script Hook V
+and UE4SS remain uninstalled runtime candidates. The dated review finds an exact
+GTA Enhanced loader mismatch and unverified ARK APIs; staging is explicitly not
+installable. See [commands, sources and evidence](docs/GTA_ARK_RUNTIME_WORKFLOW.md).
+
+## Interactive directory access
+
+The GUI/controller uses Python's standard library and existing JavaScript/Node
+MCP bridge for pending folder decisions. No new installed dependency is required.
+`request_directory_access` and bounded `read_inventory_file` are built-in tools;
+approval grants read-only scope for the task or remembers it for this project.
+The bridge supports at most 48 descriptors and a 900-second RPC ceiling; actual
+operations keep their fixed execution limits plus a five-minute human-decision
+allowance. See [behavior and tests](docs/ACCESS_REQUESTS_AND_MEMORY_ROADMAP.md).
+Qwen stays at 131,072 context / 8,192 output tokens.
+
+## Internet and hybrid memory profile
+
+`web_search` adds official SearXNG **2026.10.25-54ca1d9cf**, source revision
+`54ca1d9cfb08674f66261d7f351b063558dfcc62`, Linux/amd64 image
+`docker.io/searxng/searxng@sha256:a886f6511fd3faf2c9ed921b33a8f0df1c7646e47475b6b309e79cd2887abd9d`.
+The lock is `tools/modding/requirements-web.json`; installation is recorded in
+`system-requirements.json`. It needs local Docker Linux containers and outbound
+internet for public search engines. The private service binds `127.0.0.1:8842`,
+has a 512 MiB/two-CPU limit and mounts only its own configuration. No API key,
+global executable or Python package is installed.
+
+```powershell
+python tools/setup/install_web_search.py --start --enable-docs
+python tools/setup/configure_melty_cli.py --enable-knowledge --apply
+```
+
+New projects default to internet Off; this checkout uses Documentation domains.
+Search queries go to public engines. Fetch uses standard-library HTTPS, with
+bounded public-address validation and no ambient authentication. Memory uses
+standard-library SQLite **with FTS5** (verified locally with SQLite 3.50.4), JSON
+files and an optional 0/16/32/64 MiB estimated RAM cache per process. No embedding
+model/service is installed. The existing MCP dependency suffices for native
+tools. The bundled `project-knowledge` instruction pack is copied with the
+native profile; instructions do not grant permissions. See
+[configuration, limits and evidence](docs/INTERNET_AND_PROJECT_MEMORY.md).
+
 ## Engine archive CLI profile
 
 `engine_cli` installs optional repak 0.2.3, retoc 0.1.5 and UnityDataTool 2.4.0
@@ -34,7 +137,8 @@ native OpenCode/Codex settings. Imported instructions start disabled unless the
 operator requests `--enable`.
 
 The 35B model has roughly 22 GB of quantized weights. A 16 GB GPU uses partial
-CPU/RAM offload; begin at 16K context and measure latency. Installing it does not
+CPU/RAM offload. This rig's measured, user-selected configuration is 128K
+context; preserve it. Installing the model does not
 replace a saved model automatically. The application uses fixed host-side Ghidra
 operations through its approved MCP bridge, without granting arbitrary scripts
 or target execution. See [integration status](docs/REA_GHIDRA_INTEGRATION.md).

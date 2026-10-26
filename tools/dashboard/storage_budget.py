@@ -4,7 +4,7 @@ import threading
 import time
 from pathlib import Path
 
-AREAS=('model-assets','tool-runs','rea-evidence','reports')
+AREAS=('model-assets','tool-runs','rea-evidence','reports','access-requests','web-cache','project-memory')
 MAX_BYTES=1024*1024*1024
 MAX_FILES=10000
 _lock=threading.Lock()

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "search_provider": "SearXNG",
+  "source": "https://github.com/searxng/searxng",
+  "documentation": "https://docs.searxng.org/admin/installation-docker.html",
+  "image": "docker.io/searxng/searxng@sha256:a886f6511fd3faf2c9ed921b33a8f0df1c7646e47475b6b309e79cd2887abd9d",
+  "platform": "linux/amd64",
+  "bind": "127.0.0.1:8842",
+  "container_port": 8080,
+  "reviewed_on": "2026-10-26",
+  "purpose": "Private read-only JSON search provider for the host web broker; no workspace, credentials, model ports or Docker socket mounted",
+  "version": "2026.10.25-54ca1d9cf",
+  "revision": "54ca1d9cfb08674f66261d7f351b063558dfcc62"
+}

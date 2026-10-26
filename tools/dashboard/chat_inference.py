@@ -12,6 +12,9 @@ from task_contract import OUTPUT_LIMIT_ERROR,generation_limited
 
 def _messages(root, chat, prompt, image, skills, auto_skills, session, selection=None):
     messages = [{'role': 'system', 'content': "You are SMELTER's local assistant. " + session.context() + ' 3D attachment markers in history are filenames only. GLB bytes and rendered images are not sent to you. Only an actual approved inspect_model_attachment tool result establishes GLB metadata; do not claim visual inspection.'}]
+    from project_memory import recall
+    memory=recall(root,prompt);session.memory_status={k:v for k,v in memory.items() if k!='text'}
+    if memory['text']:messages.append({'role':'user','content':memory['text']})
     if selection is None:
         selection=selected_context(root,prompt,skills,auto_skills,session.grants.get('rea_analysis',False))
     active_skills,skill_text=selection['selected'],selection['text']

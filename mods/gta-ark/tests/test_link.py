@@ -51,6 +51,17 @@ class RecordTests(unittest.TestCase):
         self.assertEqual(second.sequence, seq + 2)
         self.assertEqual(self.path.stat().st_size, gal_link.SIZE)
 
+    def test_invalid_floats_and_fov_never_reach_engine_consumers(self):
+        raw = bytearray(bytes.fromhex((ROOT / 'tests/gal1_fixture.hex').read_text()))
+        for offset in range(8, 52, 4):
+            for value in (float('nan'), float('inf'), -float('inf')):
+                with self.subTest(offset=offset, value=value):
+                    changed = raw.copy(); struct.pack_into('<f', changed, offset, value)
+                    self.assertIsNone(gal_link.unpack(changed))
+        for value in (0, -1, 180, 1000):
+            changed = raw.copy(); struct.pack_into('<f', changed, 32, value)
+            self.assertIsNone(gal_link.unpack(changed))
+
     def test_reader_never_accepts_a_torn_record_under_concurrent_writes(self):
         writer = gal_link.Writer(self.path)
         self.addCleanup(writer.close)
@@ -61,7 +72,7 @@ class RecordTests(unittest.TestCase):
             while not stop.is_set():
                 n += 1
                 v = float(n)
-                writer.write((v, v, v), (v, v, v), v, (v, v, v), v, 2, n)
+                writer.write((v, v, v), (v, v, v), 50.0, (v, v, v), v, 2, n)
         thread = threading.Thread(target=hammer)
         thread.start()
         reader, accepted = gal_link.Reader(self.path), 0
@@ -71,8 +82,9 @@ class RecordTests(unittest.TestCase):
                 if r is None:
                     continue
                 accepted += 1
-                values = {*r.cam_pos, *r.cam_rot, r.fov, *r.player_pos, r.heading, float(r.frame)}
+                values = {*r.cam_pos, *r.cam_rot, *r.player_pos, r.heading, float(r.frame)}
                 self.assertEqual(len(values), 1, 'fields from two different writes were mixed')
+                self.assertEqual(r.fov, 50.0)
         finally:
             stop.set(); thread.join()
         self.assertGreater(accepted, 0)

@@ -73,14 +73,16 @@ def select_database(root: Path, directory: str) -> dict:
             connection.executemany("INSERT INTO config_snapshots(name,payload) VALUES(?,?)", imported)
         with marker.open("x", encoding="utf-8") as stream:
             created_marker = True
-            json.dump({"schema_version": 1, "path": str(db)}, stream)
+            # Packaged Windows apps can redirect LocalAppData. Persist the
+            # actual created file so native Melty/OpenCode sees the same DB.
+            json.dump({"schema_version": 1, "path": str(db.resolve(strict=True))}, stream)
     except Exception:
         if created_marker:
             marker.unlink(missing_ok=True)
         if created_db:
             db.unlink(missing_ok=True)
         raise
-    return {"status": "configured", "path": str(db), "legacy_files_preserved": True}
+    return {"status": "configured", "path": str(db.resolve(strict=True)), "legacy_files_preserved": True}
 
 def inspect_database(root: Path, *, integrity=False) -> dict:
     db = chosen_database(root)

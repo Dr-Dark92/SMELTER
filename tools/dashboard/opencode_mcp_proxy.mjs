@@ -13,7 +13,7 @@ const manifestPath=args[1]||path.join(path.dirname(fileURLToPath(import.meta.url
 const queue=args[3]||'/run/model-queue';
 if(fs.statSync(manifestPath).size>128*1024) process.exit(2);
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-if(!Array.isArray(manifest.tools)||manifest.tools.length>32) process.exit(2);
+if(!Array.isArray(manifest.tools)||manifest.tools.length>48) process.exit(2);
 const tools=manifest.tools;
 const timeout=Math.min(900,Math.max(1,Number(manifest.timeout_seconds)||300))*1000;
 const maximum=2*1024*1024;
@@ -42,7 +42,7 @@ async function call(name,argumentsValue){
     const pending=input+'.pending';
     fs.writeFileSync(pending,raw,{flag:'wx'});fs.renameSync(pending,input);
     const fixed=manifest.tool_timeouts?.[name];
-    const operationTimeout=Number.isInteger(fixed)&&fixed>0&&fixed<=440?fixed*1000:timeout;
+    const operationTimeout=Number.isInteger(fixed)&&fixed>0&&fixed<=880?fixed*1000:timeout;
     const end=Date.now()+operationTimeout;
     while(Date.now()<end){
       if(fs.existsSync(output)){

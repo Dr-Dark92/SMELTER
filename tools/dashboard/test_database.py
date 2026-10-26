@@ -27,6 +27,16 @@ class DatabaseBootstrapTests(unittest.TestCase):
         select_database(self.root, str(self.destination))
         with self.assertRaisesRegex(ValueError, "already selected"):
             select_database(self.root, str(self.base / "another"))
+    def test_persists_the_canonical_created_file_for_other_processes(self):
+        alias = self.base / 'alias'; alias.mkdir()
+        selection = alias / '..' / 'data'
+        result = select_database(self.root, str(selection))
+        canonical = (self.destination / 'smelter.sqlite3').resolve(strict=True)
+        self.assertEqual(chosen_database(self.root), canonical)
+        self.assertEqual(result['path'], str(canonical))
+        # The selected spelling may cease to resolve; the canonical DB remains.
+        alias.rmdir()
+        self.assertTrue(inspect_database(self.root)['ready'])
     def test_refuse_checkout(self):
         with self.assertRaisesRegex(ValueError, "outside"):
             select_database(self.root, str(self.root / "projects"))

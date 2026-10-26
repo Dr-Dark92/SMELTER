@@ -1,7 +1,13 @@
 # SMELTER
 
+The [access-recovery feature](docs/ACCESS_REQUESTS_AND_MEMORY_ROADMAP.md) adds
+inline read-only folder approvals that resume the same task.
+[Controlled internet and hybrid memory](docs/INTERNET_AND_PROJECT_MEMORY.md)
+add source-linked search/page reading and durable project notes with SQLite
+retrieval and a bounded RAM cache. Configure them in **Settings → Internet & memory**.
+
 Continuing this work in another chat/agent? Start with the
-[current handover](docs/CURRENT_HANDOVER.md), which records the uncommitted
+[current handover](docs/CURRENT_HANDOVER.md), which records the latest
 implementation, progress, recovery checkpoint and next steps.
 
 SMELTER is a local-first development and asset-inspection workbench. Its active interface is the Python dashboard in `tools/dashboard`. The primary agent route is **GUI -> SMELTER -> OpenCode -> Ollama/Qwen**, with selected skill instructions and approved built-in tools connected through MCP. Direct Ollama chat remains selectable. OpenCode's source snapshot stays read-only; approved host tools retain their existing narrow read/write/execute contracts.
@@ -29,6 +35,11 @@ The [engine archive adapter](docs/ENGINE_ARCHIVE_CLI.md) installs pinned repak,
 retoc and UnityDataTool CLIs in a no-network container. Qwen can inspect approved
 archives through MCP, with bounded listings and read-only file mounts. ARK's
 IoStore route is verified; its version-12 PAKs exceed repak's current support.
+
+The [GTA–ARK runtime workflow](docs/GTA_ARK_RUNTIME_WORKFLOW.md) adds a read-only
+CLI preflight and hash-listed source package. Tested prototype fixes cover local
+standalone players, respawn origins and malformed records. The current GTA
+loader mismatch and unverified ARK runtime prevent an in-game acceptance claim.
 
 The repository also contains older CLI experiments, game-specific research scripts, reusable Blender/asset adapters, and Studio scaffolding. Those components are not automatically connected to the dashboard. Installing a skill provides instructions; it does not install dependencies or grant tools.
 
@@ -72,6 +83,8 @@ This installs the pinned MCP SDK, not REA, Blender, model weights, or arbitrary 
 | Direct local chat | Selected reasoning model, bounded context estimate, streaming job progress, cancellation and saved receipts |
 | Skills | Shared bounded instruction selection for direct chat/OpenCode; exact OpenCode task hashes; changed/new manifests require dashboard restart |
 | Python/MCP tools | Fixed registered operations, per-message grants, audits and application path checks |
+| Internet | Optional pinned local SearXNG search and bounded public HTTPS text reads; Off/documentation domains/public modes, source cards and cache labels |
+| Project memory | Durable JSON notes, rebuildable SQLite FTS5, bounded per-process RAM and GUI reference context; model notes remain unverified |
 | Frontend work | Create/reuse sibling V2; read approved files; **CSS replacement only**; confined fixed tests and temporary small-fixture preview on port 8770 |
 | GLB | Browser preview, animation selection, frame/turntable export and stored animation labels; no automatic semantic naming |
 | REA / Ghidra | Pinned REA static inspection plus fixed Ghidra import, function/string search, xrefs and selected decompilation; no arbitrary scripts, target execution or game-container extraction |

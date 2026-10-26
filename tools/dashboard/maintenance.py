@@ -53,7 +53,7 @@ def _referenced(root):
 
 def plan(root,days=30):
     if type(days) is not int or not 1<=days<=3650:raise ValueError('Choose retention age 1–3650 days')
-    _idle(root);rows=inventory(root);known=_referenced(root);cutoff=time.time()-days*86400
+    _idle(root);rows=inventory(root,tuple(area for area in AREAS if area!='project-memory'));known=_referenced(root);cutoff=time.time()-days*86400
     reports=sorted((r for r in rows if r['area']=='reports'),key=lambda r:r['mtime_ns'],reverse=True)
     excess={r['relative'] for r in reports[100:]};selected=[]
     for row in rows:

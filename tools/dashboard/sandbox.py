@@ -257,8 +257,41 @@ from pathlib import Path
 timer=threading.Timer(60,lambda:os._exit(124));timer.daemon=True;timer.start()
 tests=sorted(Path('mods').glob('*/tests/test_*.lua'))
 counts={'tests':0,'failures':0,'errors':0,'skipped':0}
+syntax={'files_total':0,'files_checked':0,'errors':0,'failed_files':[]}
 deadline=time.monotonic()+55
 if len(tests)>64:counts['errors']=1;tests=[];print('ERROR: Lua suite exceeds 64 programs',flush=True)
+# Compile every Lua source in each tested mod, including modules no test imports.
+# loadfile only compiles: the chunk is never called and its environment is empty.
+# The path is input data, not a Lua argument (which would execute it after -e).
+check='local p=io.read("*a");local f,e=loadfile(p,"t",{});if not f then io.stderr:write(tostring(e),"\\n");os.exit(1) end'
+sources=[]
+for mod in sorted({test.parents[1] for test in tests}):
+ for source in sorted(mod.rglob('*')):
+  if source.is_file() and source.suffix.lower()=='.lua':sources.append(source)
+syntax['files_total']=len(sources)
+if len(sources)>512:
+ counts['errors']+=1;syntax['errors']+=1
+ print('ERROR: Lua source syntax suite exceeds 512 files; nothing was silently omitted',flush=True)
+else:
+ for source in sources:
+  try:
+   remaining=deadline-time.monotonic()
+   if remaining<=0:raise subprocess.TimeoutExpired('Lua syntax preflight',55)
+   result=subprocess.run(['lua5.4','-e',check],input=source.as_posix(),capture_output=True,text=True,timeout=min(5,remaining))
+   syntax['files_checked']+=1
+   if result.returncode:
+    counts['errors']+=1;syntax['errors']+=1
+    detail={'path':source.as_posix(),'error':(result.stdout+result.stderr)[-1200:]}
+    if len(syntax['failed_files'])<32:syntax['failed_files'].append(detail)
+    print('LUA_SYNTAX_ERROR '+source.as_posix()+': '+detail['error'],flush=True)
+  except (OSError,subprocess.TimeoutExpired) as exc:
+   counts['errors']+=1;syntax['errors']+=1
+   print('ERROR: Lua syntax preflight '+type(exc).__name__,flush=True)
+   break
+if counts['errors']:
+ print('ERROR: Source syntax preflight failed; behavioral tests were not run',flush=True)
+ tests=[]
+print('SMELTER_LUA_SYNTAX_RESULT|'+json.dumps(syntax),flush=True)
 for test in tests:
  counts['tests']+=1
  try:
@@ -272,6 +305,14 @@ print('SMELTER_TEST_RESULT|'+json.dumps(counts),flush=True)
 timer.cancel()
 sys.exit(0 if counts['tests'] and not counts['failures'] and not counts['errors'] else 1)
 '''
+
+
+def lua_runner_sha256():
+    """Invalidate earlier Lua receipts when the host-controlled runner changes."""
+    import hashlib
+    return hashlib.sha256(CODING_LUA.encode('utf-8')).hexdigest()
+
+
 CODING_NODE = r'''
 const fs=require('node:fs'),cp=require('node:child_process'),os=require('node:os'),path=require('node:path');
 const files=fs.readdirSync('tools/dashboard').filter(n=>/^test_[A-Za-z0-9_.-]+\.js$/.test(n)).sort();
@@ -349,6 +390,20 @@ def coding_test(root,target,profile):
         evidence={'exit_code':result.returncode,'stage':stage,'counts':counts,'image':image,
                   'sandbox':'docker-no-network','profile':profile,'coverage':'not measured',
                   'log_tail':output[-6000:],'_raw_output':raw}
+        if profile=='lua':
+            markers=re.findall(r'^SMELTER_LUA_SYNTAX_RESULT\|(\{[^\n]+\})\s*$',output,re.M)
+            syntax=None
+            if len(markers)==1:
+                try:syntax=json.loads(markers[0])
+                except ValueError:pass
+            valid=(isinstance(syntax,dict) and
+                   all(type(syntax.get(k)) is int and syntax[k]>=0 for k in ('files_total','files_checked','errors')) and
+                   isinstance(syntax.get('failed_files'),list) and
+                   syntax['files_checked']<=syntax['files_total'])
+            if not valid or syntax['errors'] or syntax['files_checked']!=syntax['files_total']:
+                evidence['stage']='ERROR'
+            evidence.update(source_syntax=syntax if valid else None, runner_sha256=lua_runner_sha256(),
+                validation_scope='Lua 5.4 source syntax in tested mods, then test-program exit codes. Tests must import actual implementations and assert failures; behavioral coverage and game compatibility are not measured.')
     finally:
         confirmed=_remove(ready['docker'],name)
         record_owner(folder,name,image,'tests',finished=confirmed)

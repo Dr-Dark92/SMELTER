@@ -11,6 +11,7 @@ class OllamaTurn:
     def __init__(self,model,messages,session,settings,opener,control):
         self.model,self.messages,self.session,self.settings,self.opener,self.control=model,messages,session,settings,opener,control
         self.deadline=time.monotonic()+settings['timeout_seconds']
+        self.wait_before=control.permission_wait_time() if control and hasattr(control,'permission_wait_time') else 0
     def checkpoint(self,phase=None):
         if self.control:self.control.update(phase) if phase else self.control.check()
 
@@ -30,7 +31,8 @@ class OllamaTurn:
         payload = json.dumps(body).encode()
         request = Request(ENDPOINT, data=payload, method='POST', headers={'Content-Type': 'application/json'})
         try:
-            remaining = self.deadline - time.monotonic()
+            waited=self.control.permission_wait_time()-self.wait_before if self.control and hasattr(self.control,'permission_wait_time') else 0
+            remaining = self.deadline - time.monotonic() + max(0,waited)
             if remaining <= 0:
                 raise ValueError('Chat turn time limit reached')
             if self.control:

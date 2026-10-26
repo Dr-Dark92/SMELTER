@@ -4,6 +4,179 @@ The intended route is OpenCode → SMELTER MCP gateway → host-owned Melty conn
 The OpenCode container keeps its no-network boundary. Authentication belongs to
 the host connector, and only selected tools/results should enter model context.
 
+## Lua validation hardening
+
+The host Lua profile now compiles all Lua sources in tested mods before running
+their test programs. Deleting a failing import test can no longer hide malformed
+unimported modules. Source syntax failures return ERROR; receipts include syntax
+diagnostics and a runner SHA-256. Workspace review marks earlier Lua receipts
+stale. Behavioral coverage remains unmeasured and real module tests are still
+required. The actual current Raptor workspace returns four syntax errors across
+12 files, with zero behavioral tests run; its preceding basic-only GREEN did not
+establish controller readiness. See
+[review, receipts and regression results](../diagnostics/RAPTOR_PROGRESS_REVIEW_20261026.md).
+
+The idle native `smelter` registration was refreshed, all MCP servers remain
+connected, and the idle dashboard was gracefully reloaded. No gameplay source
+was changed, model prompt submitted or package/image installed. Context/output
+remain 131,072/8,192.
+
+## Validation workflow acceptance
+
+The creator's next task passed the full native Melty/Qwen/SMELTER validation
+cycle: real `mods` and `lua` test calls, a real `gta-ark` native build and a
+visible final summary. The mods receipt reports 14 run, one skip and zero
+failures/errors; both Lua scripts pass. All three native targets compile, with
+four artifact sizes/SHA-256 values independently checked. Final prompt including
+cache: 95,573 tokens, below 131,072; visible output: 1,020 tokens. All MCP servers
+remain connected. Evidence: `.smelter/native-qwen-validation-acceptance.json`.
+The C++ executable was compiled, not run; its writer/sample check remains skipped.
+This does not establish source-editing capability or in-game compatibility.
+Codex submitted no model prompt and preserved the existing chat.
+
+## Native Qwen final-response workaround
+
+The creator's follow-up subsequently passed basic visible-answer acceptance:
+331 output tokens, no reasoning part, 91,990 input tokens and no truncation.
+All three connectors remain connected. This was a summary of prior reads, not
+a new test/build or proof of autonomous mod implementation. Receipt:
+`.smelter/native-qwen-visible-answer-acceptance.json`. The summary has two source
+inaccuracies: GAL1 is a 64-byte file record, and the no-SHV skeleton can load
+inertly through an ASI loader. Neither game runtime is verified. The requested
+dinosaur gameplay is still separate from this camera-link prototype.
+
+A subsequent creator turn successfully used Melty search/game lookup and read
+the existing SMELTER workspace, runtime requirements and ARK Lua source. It then
+ended in a reasoning-only completion with no visible final answer. The 91,997
+token prompt remained within 128K. Native tool work now selects direct answers
+through `reasoningEffort=none`, with an explicit thinking variant retained.
+All three MCP connections are restored, the chat is preserved and 128K/8K are
+unchanged. The full 123-test setup suite and a zero-inference render-only check
+pass. Basic visible-answer acceptance later passed as recorded above; broader
+task completion remains unverified, and this does not prove a parser fix.
+See [configuration, cache activation and evidence](NATIVE_QWEN_TOOL_MODE.md).
+
+## First retry after the catalog repair
+
+The creator's actual Melty retry processed about 75K tokens without overflow,
+confirming the catalog repair while retaining 128K/8K. It then stopped after a
+PowerShell syntax error (`&&` is unsupported by Windows PowerShell 5.1) and a
+successful folder existence check. OpenCode recorded a reasoning-only completed
+step with no visible answer, not an unreported successful build. The app resent
+its full 28,509-character setup template in the same chat. Evidence:
+`.smelter/melty-retry-20261026T093007.json`.
+
+The SMELTER initialization instructions now reinforce exact task continuation,
+workspace reuse, visible results/blockers and conditional PowerShell 5.1 shell
+guidance. Three initialization/scope/real-stdio regressions pass; the idle
+`smelter` registration was refreshed, with all MCP servers connected. No model
+prompt, model option change or chat restart was sent. Guidance effectiveness
+still needs a creator-run turn; no automatic empty-answer recovery is claimed.
+
+## Native REA prompt overflow repair (26 October 2026)
+
+See [REA context gateway](REA_CONTEXT_GATEWAY.md). Actual Ollama logs showed
+225K–227K-token prompts exceeding the selected 128K ceiling and being truncated.
+REA's 207 upfront input schemas/descriptions occupied 835,332 characters. The
+new gateway exposes three small tools (1,084 measured characters) and retrieves
+the original REA schemas only on demand. It retains the original command and
+Ghidra environment. The native profile helper supports `--compact-rea` with
+preview, backup and idempotent apply. The idle native `rea` connection was
+refreshed and all three MCP servers report connected. No new model prompt was
+sent by the repair. 128K context and 8K output remain unchanged. The next creator
+turn must establish model-level acceptance; connection success is not a completed mod.
+
+## Native Melty repair: Windows database path (26 October)
+
+The creator's real Melty task selected the local 128K Qwen model, but its
+`smelter` MCP server failed at startup with `MCP error -32000: Connection closed`.
+Qwen then produced generic replies without SMELTER's tools. Repeated prompts did
+not repair that connection. A direct Python stdio probe from Codex had succeeded,
+so that probe alone did not establish the Melty app's connection.
+
+The child-process diagnostic exposed `Database is not ready: database_missing`.
+Windows had redirected Codex's `%LOCALAPPDATA%/SMELTER/data/smelter.sqlite3` to its
+package's `LocalCache/Local/SMELTER/data` directory. The saved database marker
+used the original alias. Codex could read it; the native Melty child could not.
+`Path.resolve(strict=True)` in the creating environment identified the physical
+existing file. Updating the pointer to that same file restored native startup.
+
+`select_database` now stores the canonical created file path. For an older
+marker, use the maintenance helper from an environment that can see the database:
+
+```powershell
+python tools/setup/canonicalize_database.py
+python tools/setup/canonicalize_database.py --apply
+```
+
+Preview writes nothing. Apply requires idle GUI tasks, verifies the same existing
+file and SQLite integrity, and saves both the original marker and an online
+SQLite backup before an atomic pointer update. The helper never creates a
+replacement for a missing database, moves data or changes native permissions.
+It refuses stale marker changes and is idempotent once canonicalized. The fix
+uses the standard library; no new dependency was installed.
+
+Local backup: `.smelter/database-pointer-backups/20261026T080329-e2e19ac2`.
+Repair receipt: `.smelter/melty-database-pointer-fix.json`. Temporary diagnostics
+remain private under `.smelter`; the native registration was restored to the
+original `mcp_server.py` command. The global OpenCode profile was not replaced.
+
+The existing Melty/OpenCode instance now reports `smelter: connected` after
+re-registering only that server through the local API. No app restart, model
+prompt, game launch, chat deletion or credential change was needed. A fresh
+exact-profile stdio check lists **19 tools** and successfully calls project
+memory search and a fresh upstream HTTPS fetch. The GUI reads the same database
+and three durable notes. Native Qwen remains **131,072 context / 8,192 output**.
+Evidence: `.smelter/melty-mcp-fixed-verification.json` and
+`.smelter/melty-mcp-reconnect.json`.
+
+Regression: **617 dashboard tests, OK (nine skipped)** and **119 setup tests,
+OK**. These include canonical new selections, read-only preview, an intact
+SQLite/marker backup, retained chat contents, refusal of missing databases,
+idle-task enforcement and repeated repair without further changes. Logs:
+`.smelter/melty-mcp-dashboard-tests.log` / `melty-mcp-setup-tests.log`.
+
+This initial check verified connection recovery and direct tool operations.
+The creator's subsequent model-driven calls are recorded below; no fresh Qwen
+inference was submitted by the repair. Native tasks remain outside the
+dashboard's chat history and confinement, as described below.
+
+### Real Melty acceptance and workspace context
+
+The creator's subsequent Qwen turn **did call SMELTER through Melty**:
+`smelter_project_memory` returned the GTA–ARK note and checkpoint, and
+`smelter_inventory_directory` inspected the approved ARK installation. Both
+completed with the native Ollama model `qwen3.5:35b-a3b-128k`. Evidence:
+`.smelter/melty-e2e-verified.json`, with exact native message-part IDs.
+This supersedes the pending-tool-call statement above; building/running the mod
+remains unverified.
+
+That turn then searched Melty's separate project folder for `mods/gta-ark` and
+incorrectly treated absent relative paths there as evidence about SMELTER's
+existing prototype. It also used the game inventory scope to investigate a
+source-directory question. These are separate scopes, not another disconnect.
+
+The MCP initialization response now supplies bounded, grant-aware instructions:
+the calling client's working directory is independent of the SMELTER checkout;
+memory source paths refer to SMELTER; game inventory is the approved game tree;
+and source inspection uses `prepare_coding_workspace` once followed by
+`list_coding_files`/`read_coding_file` with the returned ID. No permissions or
+tool names were added. Coding-file restrictions, including `docs/` and private
+`.smelter/` exclusions, remain explicit. OpenCode receives these as MCP server
+instructions on connection.
+
+The native server was reconnected while idle, keeping the creator's chat and
+model settings. A real stdio regression starts in an empty Melty-like directory,
+receives the instructions, prepares an isolated copy of an existing fixture mod
+and reads its README without creating files in the client directory or editing
+the original source. No additional model prompt was sent by Codex. The creator
+can continue in the same Melty chat.
+
+The final dashboard regression is **620 tests, OK (nine skipped)** in
+`.smelter/mcp-workspace-context-tests.log`. The three new workspace-context tests
+include actual MCP initialization and source reading. The latest setup suite
+remains 119 OK from the database-pointer repair; no setup code changed here.
+
 ## Current implementation
 
 `tools/dashboard/melty_connection.py` connects to the fixed HTTPS MCP endpoint

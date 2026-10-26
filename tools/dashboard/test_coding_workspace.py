@@ -197,6 +197,21 @@ class CodingWorkspaceTests(unittest.TestCase):
         self.assertFalse(review['all_current_tests_passed'])
         self.assertEqual(review['coverage'], 'not measured')
 
+    def test_legacy_lua_green_receipt_requires_retest_with_current_runner(self):
+        from sandbox import lua_runner_sha256
+        sid,target=self.prepare()
+        path=target/'mods/demo/tests/test_one.lua';path.parent.mkdir(parents=True);path.write_text('assert(true)\n')
+        evidence={'stage':'GREEN','exit_code':0,'cleanup_confirmed':True,'_raw_output':b'fixture','log_tail':''}
+        with patch('sandbox.coding_test',return_value=evidence):
+            coding.test(self.root,{'workspace_id':sid,'profile':'python'})
+            coding.test(self.root,{'workspace_id':sid,'profile':'lua'})
+        review=coding.review(self.root,{'workspace_id':sid})
+        lua=next(x for x in review['checks'] if x['profile']=='lua')
+        self.assertFalse(lua['runner_current']);self.assertFalse(review['all_current_tests_passed'])
+        with patch('sandbox.coding_test',return_value={**evidence,'runner_sha256':lua_runner_sha256()}):
+            coding.test(self.root,{'workspace_id':sid,'profile':'lua'})
+        self.assertTrue(coding.review(self.root,{'workspace_id':sid})['all_current_tests_passed'])
+
     def test_command_arguments_are_rejected_before_a_runner_starts(self):
         sid, _ = self.prepare()
         with patch('sandbox.coding_test') as runner, self.assertRaises(ValueError):

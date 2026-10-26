@@ -29,8 +29,10 @@ File: `%LOCALAPPDATA%\SMELTER\gta-ark-link\camera.bin`, 64 bytes, rewritten in p
 
 Read all 64 bytes twice. Accept only if the magic matches, the sequence is even, and
 both reads are identical. Otherwise skip this tick. A record whose sequence hasn't
-changed for the stale limit (1 s) means GTA stopped writing: ARK gets its own camera
-back.
+changed for the stale limit (about 1 s at 33 ms ticks) means GTA stopped writing:
+ARK stops further view mutations and clears the link origin. It does not restore
+the previous physical pawn pose. All floating-point fields must be finite, with
+FOV strictly between 0 and 180 degrees. The engine adapter requires both flags.
 
 ## GTA → Unreal mapping (relative to the link-start origin)
 
@@ -38,7 +40,7 @@ back.
   counter-clockwise.
 - Unreal: left-handed, Z up, centimetres; X forward, Y right. Yaw increases clockwise.
 - Position delta: `ue = (100·dy, 100·dx, 100·dz)`, where `d = gta − gta_at_link_start`;
-  added to ARK's camera location at link start.
+  added to ARK's pawn location at link start, retaining its existing camera offset.
 - Rotation: `ue_pitch = gta_pitch`, `ue_yaw = ue_yaw_at_start − (gta_yaw − gta_yaw_at_start)`,
   `ue_roll = −gta_roll`.
 

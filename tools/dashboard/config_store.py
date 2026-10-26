@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from database import chosen_database, inspect_database
 
-ALLOWED = {"extensions.json", "model_preferences.json", "runtime_settings.json", "access_policy.json", "sandbox.json", "component_controls.json"}
+ALLOWED = {"extensions.json", "model_preferences.json", "runtime_settings.json", "access_policy.json", "sandbox.json", "component_controls.json", "web_access.json", "project_memory.json"}
 
 def _db(root: Path) -> Path:
     status = inspect_database(root)
@@ -20,6 +20,11 @@ def load_config(root: Path, name: str) -> dict:
     with closing(sqlite3.connect(_db(root), timeout=5)) as conn:
         row = conn.execute("SELECT payload FROM config_snapshots WHERE name=?", (name,)).fetchone()
     if row is None:
+        if name in ('web_access.json','project_memory.json'):
+            import copy
+            if name=='web_access.json':from web_access import DEFAULT
+            else:from project_memory import DEFAULT
+            return copy.deepcopy(DEFAULT)
         deployed = _deployed(root, name)
         if deployed is not None:
             return deployed
@@ -63,6 +68,14 @@ def config_source(root: Path, name: str) -> str:
 def _validate(name: str, value: dict) -> None:
     if not isinstance(value, dict) or value.get("schema_version") != 1:
         raise ValueError("Invalid configuration schema")
+    if name=='web_access.json':
+        from web_access import validate
+        validate(value)
+        return
+    if name=='project_memory.json':
+        from project_memory import validate
+        validate(value)
+        return
     if name == 'component_controls.json':
         from component_controls import validate
         validate(value)

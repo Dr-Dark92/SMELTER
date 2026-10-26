@@ -6,10 +6,23 @@ links GTA's camera to ARK's view, with no rendering yet. Design:
 [GTA_ARK_M1_DESIGN.md](../../docs/discovery/GTA_ARK_M1_DESIGN.md). Record format:
 [link-format.md](link-format.md). Journal: [MODLOG.md](MODLOG.md).
 
+The creator's dinosaur gameplay proposal now has a separate
+[cougar-based Raptor design](COUGAR_RAPTOR_PROTOTYPE.md): reuse GTA animal behavior
+for the first aggression prototype, with a possible asset-replacement route.
+It is a design candidate; no creature behavior, Raptor asset pipeline or new
+runtime loader is implemented or verified. The existing camera-link code below
+does not provide the requested dinosaur attacks, tranqs, taming or saddles.
+
 **Status:** offline parts only. Nothing here has been installed into or run with
 either game. Script Hook V does not yet support the installed Enhanced build
 (1.0.1158.16; latest Script Hook V supports 1.0.1158.13), so the ASI builds as a
 skeleton with no native access. **Do not install the skeleton build.**
+
+26 October: [runtime preparation](../../docs/GTA_ARK_RUNTIME_WORKFLOW.md) adds
+read-only CLI version/loader checks, source-only package manifests and tests for
+local/standalone controller selection, respawn origins, movement errors and
+invalid record values. The upstream loader mismatch was rechecked; in-game
+compatibility remains unverified.
 
 | Path | What it is |
 | --- | --- |
@@ -24,6 +37,9 @@ skeleton with no native access. **Do not install the skeleton build.**
 | `tools/fake_gta_writer.py`, `tools/read_link.py` | Stand-ins for each game, for offline tests |
 | `tests/test_link.py`, `tests/vectors.json` | Python tests and shared transform vectors |
 | `tests/test_gal_link.lua` | Lua 5.4 tests (confined `lua` profile; shared 64-byte fixture) |
+| `tests/test_ark_runtime.lua` | Actual engine entry script exercised with synthetic UE4SS objects |
+| `runtime_requirements.json` | Dated upstream runtime requirements; loaders are not installed |
+| `tools/runtime_workflow.py` | Read-only preflight and source-only package plan/staging CLI |
 
 ```bat
 gta\build.bat

@@ -60,7 +60,7 @@ const SmelterAccess = (() => {
       doc.getElementById('chatinput').placeholder=direct?'Message the selected local model':'Describe a task using selected skills and approved tools';
     }
     function applyContext(report){
-      policy=report;window.smelterTaskConfiguration=policy.configuration;window.smelterTaskPolicyRevision=policy.revision;SmelterWorkbench.context(policy.configuration,doc);
+      policy=report;window.smelterInteractiveAccess=policy.interactive_access===true;window.smelterTaskConfiguration=policy.configuration;window.smelterTaskPolicyRevision=policy.revision;SmelterWorkbench.context(policy.configuration,doc);
       const folder=doc.getElementById('inventoryRoot'),previous=folder.value;folder.replaceChildren();
       const empty=doc.createElement('option');empty.value='';empty.textContent='Choose an applied read location';folder.append(empty);
       for(const row of policy.locations.filter(x=>x.enabled&&x.read)){const option=doc.createElement('option');option.value=row.path;option.textContent=row.name+' · '+row.path;folder.append(option)}

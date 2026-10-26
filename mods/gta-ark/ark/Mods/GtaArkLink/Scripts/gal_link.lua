@@ -18,6 +18,10 @@ function M.unpack(raw)
   if type(raw) ~= "string" or #raw ~= M.SIZE then return nil end
   local magic, seq, cx, cy, cz, pitch, roll, yaw, fov, px, py, pz, heading, flags, frame = string.unpack(FIELDS, raw)
   if magic ~= "GAL1" or seq % 2 == 1 then return nil end
+  for _, value in ipairs({cx, cy, cz, pitch, roll, yaw, fov, px, py, pz, heading}) do
+    if value ~= value or value == math.huge or value == -math.huge then return nil end
+  end
+  if fov <= 0 or fov >= 180 then return nil end
   return {sequence = seq, cam_pos = {cx, cy, cz}, cam_rot = {pitch, roll, yaw}, fov = fov,
           player_pos = {px, py, pz}, heading = heading, flags = flags, frame = frame}
 end

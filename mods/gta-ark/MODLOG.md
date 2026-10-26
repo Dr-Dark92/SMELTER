@@ -3,6 +3,30 @@
 Journal for this mod (Melty kit convention). Facts observed, not plans. Design:
 `docs/discovery/GTA_ARK_M1_DESIGN.md`.
 
+## 2026-10-26
+
+- Rechecked installed GTA Enhanced 1.0.1158.16 against the author's currently
+  published Script Hook V support through 1.0.1158.13. The exact mismatch remains.
+  No ScriptHookV.dll or checked UE4SS.dll loader was present. ARK's executable
+  had no readable version resource; no engine minor version was inferred.
+- Added `runtime_requirements.json`, read-only `runtime_workflow.py inspect` and
+  source-only package plan/staging. The staged manifest lists exactly three ARK
+  source files with SHA-256 and remains `installable:false`. No loaders, GTA ASI,
+  game binaries or extracted assets were packaged. No game was launched/modified.
+- Fixed ARK adapter logic: explicitly local player, standalone world, both GAL1
+  flags, valid pawn/camera, pawn-origin anchoring and origin reset on respawn.
+  Failed movement no longer announces following. Missing timer APIs are reported;
+  duplicate errors are suppressed and a failing tick does not end the timer.
+- Python/Lua readers now reject non-finite floating-point fields and invalid FOV.
+- Frozen-source confined acceptance passed 14 Python tests (one optional Windows
+  C++ sample skipped), the Lua protocol suite and 16 synthetic engine-binding
+  checks. Host Windows suite also passed 14 tests with one unavailable-directory-
+  symlink skip; that rejection test ran on Linux. Full setup regression: 116 OK.
+- Evidence and next runtime gate: [runtime workflow](../../docs/GTA_ARK_RUNTIME_WORKFLOW.md).
+  The physical-pawn method, FOV handling and actual UE reflection/loader support
+  remain unverified in ARK. Stale data stops mutations; it does not restore an
+  earlier pawn pose. Earlier statements below are historical.
+
 ## 2026-10-25
 
 - Host GTA V Enhanced, executable version 1.0.1158.16; companion ARK: Survival Ascended

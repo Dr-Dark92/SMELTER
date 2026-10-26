@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-26",
+  "script_hook_v": {
+    "source": "https://www.dev-c.com/gtav/scripthookv/",
+    "version": "v3889.0 / 1158.13",
+    "released": "2026-07-15",
+    "supported_enhanced": ["1.0.1158.13"],
+    "installed_by_smelter": false
+  },
+  "cougar_raptor_candidate": {
+    "status": "design_only",
+    "host": "GTA V Enhanced Story Mode",
+    "baseline_model": "a_c_mtlion",
+    "design": "COUGAR_RAPTOR_PROTOTYPE.md",
+    "asset_loader": {
+      "name": "RageOpenV",
+      "repository": "https://github.com/Chiheb-Bacha/RageOpenV",
+      "reviewed_source_commit": "f742117a5e8ccc359bf3b4644c6bce7dad77cc7a",
+      "installed_by_smelter": false,
+      "selected_for_camera_link": false,
+      "build_prerequisites": ["CMake 3.17 or later", "Visual Studio C++ toolchain"],
+      "compatibility": "Unverified for Enhanced 1.0.1158.16; README claims Enhanced support, not an exact-build acceptance result",
+      "capability": "Asset archive loading/redirection through an ASI loader, not a GTA native scripting API",
+      "artifact_pin": "No binary selected; release identity and SHA-256 required before any installation"
+    },
+    "asset_pipeline": "No headless Enhanced Raptor import/conversion adapter verified",
+    "game_runtime_verified": false
+  },
+  "ue4ss": {
+    "source": "https://github.com/UE4SS-RE/RE-UE4SS",
+    "reviewed_source_commit": "cdbc0b66cb2bb5b4a3d2f69b6e61a8460961e54c",
+    "latest_stable_observed": "v3.0.1",
+    "required_api": "LoopInGameThreadWithDelay",
+    "api_documentation": "https://docs.ue4ss.com/dev/lua-api/global-functions/delayedactions.html",
+    "compatibility": "Unknown for this ARK client; current development documentation is not proof of stable-release or game compatibility",
+    "installed_by_smelter": false
+  }
+}

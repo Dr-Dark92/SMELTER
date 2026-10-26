@@ -363,7 +363,8 @@ def ask(root, conversation_id, prompt, *, model_key=None, approval=False, contro
         runtime=control.configuration['runtime'] if control and control.configuration else {}
         task_timeout=runtime.get('opencode_timeout_seconds',runtime.get('timeout_seconds',300))
         deadline = time.monotonic() + task_timeout
-        while time.monotonic() < deadline:
+        wait_before=control.permission_wait_time() if control and hasattr(control,'permission_wait_time') else 0
+        while time.monotonic() - (control.permission_wait_time()-wait_before if control and hasattr(control,'permission_wait_time') else 0) < deadline:
             update('OpenCode: running task · approved tools only' if bridge else 'OpenCode: inspecting source · read only')
             messages = client.request('/session/' + session_id + '/message?limit=50')
             answer, updates, finished, failure = _progress(messages)

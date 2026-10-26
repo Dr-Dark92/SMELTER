@@ -121,7 +121,7 @@ class McpIntegrationTests(McpFixture, unittest.TestCase):
         grants = {'inventory_root': str(self.folder), 'write_diagnostics': True}
         found = exchange(self.root, grants=grants, timeout=15)
         self.assertEqual(found['status'], 'connected')
-        self.assertEqual({x['name'] for x in found['tools']}, {'inventory_directory', 'inspect_game_files', 'inspect_engine_archive', 'write_diagnostic_markdown'})
+        self.assertEqual({x['name'] for x in found['tools']}, {'inventory_directory', 'inspect_game_files', 'inspect_engine_archive', 'read_inventory_file', 'write_diagnostic_markdown'})
         session = ToolSession(self.root, {**grants, 'transport': 'mcp'})
         inventory = session.execute({'function': {'name': 'inventory_directory', 'arguments': {'relative_path': '.'}}})
         self.assertEqual(inventory['status'], 'inventoried')

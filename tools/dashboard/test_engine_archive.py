@@ -80,7 +80,9 @@ class EngineArchiveTests(unittest.TestCase):
     def test_full_manifest_still_fits_bridge_limit(self):
         grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['fixture'],'rea_analysis':True,
                 'melty_read':True,'native_build':True,'inventory_root':'fixture','write_diagnostics':True}
-        self.assertEqual(len(schemas(grants)), 32)
+        self.assertEqual(len(schemas(grants)), 33)
+        self.assertEqual(len(schemas({**grants,'access_requests':True})),34)
+        self.assertEqual(len(schemas({**grants,'access_requests':True,'web_read':True,'project_memory':True})),36)
 
     def test_separate_selection_keeps_old_config_readable_and_explicit_values_win(self):
         from sandbox import config

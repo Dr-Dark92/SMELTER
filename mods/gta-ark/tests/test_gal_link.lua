@@ -19,6 +19,16 @@ if r then
   check(r.heading == 90 and r.flags == 3 and r.frame == 7, "player, flags, frame")
 end
 check(link.unpack(("x"):rep(63)) == nil, "short record rejected")
+for offset = 8, 48, 4 do
+  for _, value in ipairs({0/0, math.huge, -math.huge}) do
+    local changed = raw:sub(1, offset) .. string.pack("<f", value) .. raw:sub(offset + 5)
+    check(link.unpack(changed) == nil, "invalid float rejected at " .. offset)
+  end
+end
+for _, value in ipairs({0, -1, 180, 1000}) do
+  local changed = raw:sub(1, 32) .. string.pack("<f", value) .. raw:sub(37)
+  check(link.unpack(changed) == nil, "invalid FOV rejected")
+end
 
 -- Same cases as tests/vectors.json.
 local go, gy, uo, uy = {100, 200, 30}, 0, {5000, -3000, 1200}, 90

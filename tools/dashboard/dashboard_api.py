@@ -22,7 +22,14 @@ class ApiRoutes:
     POST_ROUTES['/api/system/components'] = '_post_api_system_components'
     POST_ROUTES['/api/opencode/session'] = '_post_api_opencode_session'
     POST_ROUTES['/api/melty'] = '_post_api_melty'
+    POST_ROUTES['/api/access-requests'] = '_post_access_request'
+    GET_ROUTES['/api/web-access']='_get_web_access'
+    GET_ROUTES['/api/project-memory']='_get_project_memory'
+    POST_ROUTES['/api/web-access']='_post_web_access'
+    POST_ROUTES['/api/project-memory']='_post_project_memory'
     ASSETS={
+        '/assets/knowledge.js':'knowledge_ui.js',
+        '/assets/directory-access.js':'directory_access_ui.js',
         '/assets/system-components.js':'system_components.js', '/assets/session-auth.js':'session_auth.js','/assets/file-activity.js':'file_activity.js',
         '/assets/chat-renderer.js':'chat_renderer.js','/assets/mcp-ui.js':'mcp_ui.js',
         '/assets/turntable.js':'turntable.js','/assets/model-animations.js':'model_animations.js',
@@ -73,7 +80,57 @@ class ApiRoutes:
         from access_policy import current
         from task_contract import configuration
         effective = configuration(self.app.ROOT)
-        return self.reply(200, {**current(self.app.ROOT).report(), 'model': effective['model'], 'configuration': effective})
+        return self.reply(200, {**current(self.app.ROOT).report(), 'model': effective['model'], 'configuration': effective, 'interactive_access':True})
+
+    def _post_access_request(self,route,data):
+        if set(data)!={'job_id','request_id','decision','expected_revision'}:
+            raise ValueError('Resolve the exact pending directory request')
+        return self.reply(200,self.app.JOBS.resolve_access(self.app.ROOT,data['job_id'],data['request_id'],data['decision'],data['expected_revision']))
+
+    @staticmethod
+    def _knowledge_revision(value):
+        import hashlib
+        return hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
+
+    def _get_web_access(self,route,data=None):
+        from web_access import settings,provider_status
+        value=settings(self.app.ROOT)
+        return self.reply(200,{'settings':value,'revision':self._knowledge_revision(value),'provider':provider_status(self.app.ROOT)})
+
+    def _post_web_access(self,route,data):
+        from web_access import settings
+        if set(data)!={'action','settings','expected_revision'} or data['action']!='save':raise ValueError('Save exact project web settings')
+        with self.app.STATE_LOCK:
+            if self._knowledge_revision(settings(self.app.ROOT))!=data['expected_revision']:raise ValueError('Web settings changed; reload before saving')
+            from config_store import save_config
+            save_config(self.app.ROOT,'web_access.json',data['settings'])
+        return self._get_web_access(route)
+
+    def _get_project_memory(self,route,data=None):
+        from project_memory import stats,settings,search
+        value=settings(self.app.ROOT)
+        return self.reply(200,{**stats(self.app.ROOT),'revision':self._knowledge_revision(value),'recent':search(self.app.ROOT,'',8,human=True)['notes']})
+
+    def _post_project_memory(self,route,data):
+        import project_memory as memory
+        root=self.app.ROOT;action=data.get('action')
+        if action=='save_settings' and set(data)=={'action','settings','expected_revision'}:
+            with self.app.STATE_LOCK:
+                if self._knowledge_revision(memory.settings(root))!=data['expected_revision']:raise ValueError('Memory settings changed; reload before saving')
+                from config_store import save_config
+                save_config(root,'project_memory.json',data['settings']);memory.clear_ram(root)
+            return self._get_project_memory(route)
+        if action=='search' and set(data)=={'action','query'}:return self.reply(200,memory.search(root,data['query'],8,human=True))
+        if action=='read' and set(data)=={'action','id'}:return self.reply(200,memory.read(root,data['id']))
+        if action=='forget' and set(data)=={'action','id','expected_sha256'}:return self.reply(200,memory.forget(root,data['id'],data['expected_sha256']))
+        if action=='remember' and {'action','title','text'}<=set(data)<={'action','title','text','id','expected_sha256','kind','tags','sources'}:
+            args={k:v for k,v in data.items() if k not in ('action','id')}
+            if 'id' in data:args['identity']=data['id']
+            return self.reply(200,memory.remember(root,**args,origin='user'))
+        if action=='clear_ram' and set(data)=={'action'}:
+            memory.clear_ram(root);return self.reply(200,memory.stats(root))
+        if action=='reindex' and set(data)=={'action'}:return self.reply(200,memory.reindex(root))
+        raise ValueError('Use fixed project memory settings, search, read, edit, forget or cache controls')
 
     def _get_api_opencode_session(self, route, data=None):
         import opencode_pool

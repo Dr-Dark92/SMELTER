@@ -1,5 +1,11 @@
 # Agent-stack integration status — 25 October 2026
 
+26 October update: resumable folder access,
+[controlled internet and hybrid project memory](INTERNET_AND_PROJECT_MEMORY.md)
+are implemented locally. The refreshed GUI loads these tools; the earlier
+restart-pending statements below are historical. Current tests, service state
+and continuation instructions are in [CURRENT_HANDOVER.md](CURRENT_HANDOVER.md).
+
 Latest extension: [engine archive CLIs](ENGINE_ARCHIVE_CLI.md) adds pinned repak,
 retoc and UnityDataTool with one bounded read-only MCP adapter and Qwen skill.
 ARK global/optional IoStore inspection passed; its PAK v12 is unsupported by

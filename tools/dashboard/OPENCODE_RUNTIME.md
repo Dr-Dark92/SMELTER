@@ -1,5 +1,22 @@
 # OpenCode agent: selected skills and approved MCP tools
 
+Lua validation now syntax-compiles all Lua sources in each tested mod (up to 512
+files) before executing its test programs (up to 64). Unimported broken modules
+stop the run with ERROR. The syntax check uses Lua 5.4 `loadfile` without executing
+the module. Receipts expose `source_syntax`, the host runner SHA-256 and the
+validation scope. Coding-workspace review requires that identity to match the
+current Lua runner, so older GREEN receipts must be retested. Behavioral coverage
+remains unmeasured; tests must import real implementations and fail assertions.
+No extra package or image was installed. See the
+[Raptor review and regression evidence](../../diagnostics/RAPTOR_PROGRESS_REVIEW_20261026.md).
+
+26 October extension: [resumable directory access](../../docs/ACCESS_REQUESTS_AND_MEMORY_ROADMAP.md)
+and [controlled internet/project memory](../../docs/INTERNET_AND_PROJECT_MEMORY.md)
+use the existing controller/MCP route. The bridge now permits 48 descriptors
+and a 900-second RPC ceiling; operations retain their own smaller budgets,
+including bounded human waits. The full interactive manifest has 36 tools.
+The earlier audit checkpoint and 450-second envelope below are historical.
+
 Verified application: `cee565b24726a9c217eab21c8a75bac88cad8c9c`. See the
 [full smoke runbook](../../docs/FULL_SMOKE_TEST.md) and
 [current audit](../../docs/reviews/2026-10-21/workflow-audit/REVIEW.md).

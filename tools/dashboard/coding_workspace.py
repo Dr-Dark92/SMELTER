@@ -412,6 +412,8 @@ def test(root, arguments):
         _save(log, result)
         current['tests'][profile] = {'path': str(log), 'tree_sha256': before,
                                     'stage': result['stage'], 'exit_code': result['exit_code']}
+        if profile=='lua':
+            current['tests'][profile]['runner_sha256']=result.get('runner_sha256')
         _save(base_path(root) / sid / 'workspace.json', current)
         return {**result, 'evidence_path': str(log),
                 'status': 'coding_tests_passed' if result['stage'] == 'GREEN' else 'coding_tests_failed'}
@@ -430,6 +432,12 @@ def review(root, arguments):
         profiles = test_profiles(target)
         checks = [{'profile': profile, **metadata['tests'].get(profile, {}),
                    'current': metadata['tests'].get(profile, {}).get('tree_sha256') == tree} for profile in profiles]
+        if 'lua' in profiles:
+            from sandbox import lua_runner_sha256
+            for check in checks:
+                if check['profile']=='lua':
+                    check['runner_current']=check.get('runner_sha256')==lua_runner_sha256()
+                    check['current']=check['current'] and check['runner_current']
         passed = bool(checks) and all(c.get('stage') == 'GREEN' and c['current'] for c in checks)
         return {'status': 'coding_workspace_reviewed', 'workspace_id': arguments['workspace_id'],
                 'path': str(target), 'tree_sha256': tree, 'changed_files': changed[:200],

@@ -1,66 +1,85 @@
--- ARK side of the GTA -> ARK camera link (M1), a UE4SS Lua mod. Every ~33 ms on the game
--- thread it reads the GAL1 record and moves the local view to follow GTA's camera.
---
--- UNVERIFIED IN THE GAME: UE4SS on ARK's UE 5.5 build, the PlayerController/camera calls and
--- the view-moving method below have not run yet. The first in-game session chooses method (a)
--- or (b) from docs/discovery/GTA_ARK_M1_DESIGN.md and records the result in MODLOG.md.
+-- Prototype engine bindings; real ARK/UE4SS compatibility is still unverified.
+-- Only a local standalone player with a valid camera and pawn can follow GAL1.
 local link = require("gal_link")
+local PATH, TICK_MS = link.default_path(), 33
+local tracker = link.new_tracker(30)
+local origin, identity, state = nil, nil, nil
 
-local PATH = link.default_path()
-local TICK_MS = 33
-local tracker = link.new_tracker(30)  -- about 1 s of unchanged sequence
-local origin = nil                     -- captured at link start: GTA and ARK poses
-local state = "waiting"
+local function valid(object)
+  return object and object:IsValid()
+end
 
-local function say(controller, text)
+local function say(text, pc)
   if state == text then return end
   state = text
   print("[GtaArkLink] " .. text .. "\n")
-  pcall(function() controller:ClientMessage("GTA link: " .. text) end)
+  if pc then pcall(function() pc:ClientMessage("GTA link: " .. text) end) end
+end
+
+local function reset()
+  origin, identity = nil, nil
 end
 
 local function controller()
-  local pc = FindFirstOf("PlayerController")  -- nil on the main menu
-  if pc and pc:IsValid() then return pc end
-  return nil
-end
-
-local function capture_origin(pc, record)
-  local cam = pc.PlayerCameraManager
-  local loc, rot = cam:GetCameraLocation(), cam:GetCameraRotation()
-  origin = {gta = record.cam_pos, gta_yaw = record.cam_rot[3],
-            ue = {loc.X, loc.Y, loc.Z}, ue_yaw = rot.Yaw}
-end
-
--- Method (a): turn the controller and move the pawn (single-player ghost/fly expected).
--- Method (b), a spawned camera actor as view target, replaces this if (a) misbehaves.
-local function apply(pc, location, rotation)
-  pc:SetControlRotation({Pitch = rotation[1], Yaw = rotation[2], Roll = rotation[3]})
-  local pawn = pc.Pawn
-  if pawn and pawn:IsValid() then
-    pawn:K2_SetActorLocation({X = location[1], Y = location[2], Z = location[3]}, false, {}, true)
+  for _, pc in ipairs(FindAllOf("PlayerController") or {}) do
+    if valid(pc) and pc:IsLocalPlayerController() then return pc end
   end
 end
 
 local function tick()
   local pc = controller()
-  if not pc then origin = nil; return end
+  if not pc then reset(); say("waiting for local player"); return end
+  local system = StaticFindObject("/Script/Engine.Default__KismetSystemLibrary")
+  if not valid(system) then reset(); say("waiting for standalone check"); return end
+  -- A failed/unknown reflected standalone check stops this tick.
+  if not system:IsStandalone(pc) then reset(); say("standalone session required"); return end
+  local pawn, camera = pc.Pawn, pc.PlayerCameraManager
+  if not valid(pawn) or not valid(camera) then
+    reset(); say("waiting for pawn and camera"); return
+  end
+  local current = tostring(pc:GetAddress()) .. ":" .. tostring(pawn:GetAddress())
+  if identity ~= current then
+    local changed = identity ~= nil
+    reset(); identity = current; tracker = link.new_tracker(30)
+    if changed then state = nil end
+  end
   local record = link.read(PATH)
   local stale = link.observe(tracker, record)
-  if stale or not record or record.flags & link.FLAG_ENABLED == 0 then
-    origin = nil  -- give ARK its own camera back; recapture when the link resumes
-    say(pc, record and not stale and "paused in GTA (F7)" or (tracker.last and "stale" or "waiting"))
+  local required = link.FLAG_STORY | link.FLAG_ENABLED
+  if stale or not record or record.flags & required ~= required then
+    origin = nil
+    say(record and not stale and "waiting for GTA Story Mode link" or
+        (tracker.last and "stale" or "waiting"), pc)
     return
   end
-  if not origin then capture_origin(pc, record) end
-  local location, rotation = link.to_unreal(record.cam_pos, record.cam_rot, origin.gta,
-                                            origin.gta_yaw, origin.ue, origin.ue_yaw)
-  apply(pc, location, rotation)
-  say(pc, "following")
+  if not origin then
+    -- Anchor the pawn to its own location, not its offset camera/eye position.
+    local position, rotation = pawn:K2_GetActorLocation(), camera:GetCameraRotation()
+    origin = {gta = record.cam_pos, gta_yaw = record.cam_rot[3],
+              ue = {position.X, position.Y, position.Z}, ue_yaw = rotation.Yaw}
+  end
+  local location, rotation = link.to_unreal(record.cam_pos, record.cam_rot,
+    origin.gta, origin.gta_yaw, origin.ue, origin.ue_yaw)
+  local moved = pawn:K2_SetActorLocation(
+    {X = location[1], Y = location[2], Z = location[3]}, false, {}, true)
+  if moved ~= true then origin = nil; say("pawn movement unavailable", pc); return end
+  pc:SetControlRotation({Pitch = rotation[1], Yaw = rotation[2], Roll = rotation[3]})
+  say("following", pc)
 end
 
-LoopInGameThreadWithDelay(TICK_MS, function()
-  local ok, err = pcall(tick)  -- an error inside a loop callback would silently end the loop
-  if not ok then print("[GtaArkLink] tick error: " .. tostring(err) .. "\n") end
+if type(LoopInGameThreadWithDelay) ~= "function" then
+  say("blocked: UE4SS game-thread timer API is unavailable")
+  return
+end
+local started, err = pcall(LoopInGameThreadWithDelay, TICK_MS, function()
+  local ok, why = pcall(tick)
+  if not ok then
+    reset()
+    say("tick error: " .. tostring(why):sub(1, 240))
+  end
 end)
+if not started then
+  say("blocked: UE4SS timer registration failed: " .. tostring(err):sub(1, 240))
+  return
+end
 print("[GtaArkLink] loaded; reading " .. PATH .. "\n")

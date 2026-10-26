@@ -3,6 +3,7 @@
 Used by the offline tools and tests; the C++ writer and the Lua reader must agree with it.
 """
 import os
+import math
 import struct
 import time
 from dataclasses import dataclass
@@ -44,6 +45,8 @@ def unpack(raw):
     if sequence % 2:
         return None
     v = FIELDS.unpack_from(raw, 8)
+    if not all(math.isfinite(n) for n in v[:11]) or not 0 < v[6] < 180:
+        return None
     return Record(sequence, v[0:3], v[3:6], v[6], v[7:10], v[10], v[11], v[12])
 
 

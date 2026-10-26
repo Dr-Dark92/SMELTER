@@ -70,6 +70,14 @@ class Control:
         self.job_id = None
         self.admitted_at = None
         self.journal_committed = False
+        self.access_requests = None
+        self.access_wait_started = None
+        self.access_wait_seconds = 0
+        self.active_tool_phase = None
+
+    def permission_wait_time(self):
+        with self.lock:
+            return self.access_wait_seconds + (time.monotonic()-self.access_wait_started if self.access_wait_started is not None else 0)
 
     def check(self):
         if self.cancelled.is_set():
@@ -78,7 +86,8 @@ class Control:
     def update(self, phase):
         with self.lock:
             self.check()
-            self.phase = phase
+            if self.access_wait_started is None:
+                self.phase = self.active_tool_phase or phase
 
     def cancel(self):
         with self.lock:
@@ -201,6 +210,17 @@ class Jobs:
         policy = current(root)
         supplied = data.get('tool_permissions') or {}
         if not isinstance(supplied, dict):raise ValueError('Invalid tool permissions')
+        supplied = dict(supplied)
+        deferred_access = None
+        desired = supplied.get('inventory_root') or supplied.get('rea_root')
+        if supplied.get('access_requests') is True and desired and data.get('engine','ollama') in ('ollama','opencode'):
+            try:policy.authorize(desired,'read')
+            except ValueError:
+                from access_requests import candidate
+                deferred_access, _ = candidate(root,policy,desired)
+                supplied['inventory_root'] = None
+                supplied['rea_root'] = None
+        data = {**data,'tool_permissions':supplied}
         check_grants(root, supplied, policy)
         if supplied.get('mcp_tools'):
             raise ValueError('External MCP execution requires a confined runner; no process was started')
@@ -258,6 +278,16 @@ class Jobs:
             if bridge:
                 bridge.control=job['control']
                 job['control'].file_activity=bridge.session.file_activity
+            session=bridge.session if bridge else tool_session
+            if session:
+                session.control=job['control']
+                job['control'].tool_session=session
+            if session and supplied.get('access_requests'):
+                from access_requests import AccessRequests
+                broker=AccessRequests(root,job['id'],data['id'],job['control'],session)
+                job['control'].access_requests=broker
+                session.access_requests=broker
+            job['initial_access']=str(deferred_access) if deferred_access else None
             from job_store import admit
             admit(root,{'id':job['id'],'conversation_id':job['conversation_id'],'engine':engine,'state':'running','error':None,'phase':'Admitted','policy_revision':policy.revision,'configuration':effective,'elapsed_seconds':0,'prompt':data['content']})
             self.jobs[job['id']] = job
@@ -271,6 +301,10 @@ class Jobs:
         from chat_inference import ask
         control = job['control']
         try:
+            if job.get('initial_access'):
+                control.access_requests.request({'directory':job['initial_access'],
+                                                 'reason':'Read the folder selected for this task'})
+                control.check()
             result = (worker or ask)(root, data['id'], data['content'], image=data.get('image'),
                 skills=data.get('skills'), auto_skills=data.get('auto_skills', False),
                 tool_permissions=data.get('tool_permissions'), control=control)
@@ -287,6 +321,12 @@ class Jobs:
             state, error = ('cancelled', None) if control.cancelled.is_set() else ('error', str(exc)[:1000])
         if control.file_activity is not None:
             control.file_activity.settle(state == 'cancelled')
+        try:
+            from project_memory import capture
+            session=control.tool_session
+            job['memory_checkpoint']=capture(root,job['id'],session.events if session else control.tool_activity,state)
+        except Exception as exc:
+            job['memory_checkpoint']={'error':str(exc)[:300]}
         self._finish(root,job,state,error)
 
     def _finish(self,root,job,state,error):
@@ -323,6 +363,9 @@ class Jobs:
             'policy_revision':job['control'].access_policy.revision if job['control'].access_policy else None,
             'context_budget':job['control'].context_budget,'configuration':job['control'].configuration,
             'phase':job['control'].phase,'output_text':job['control'].output_text,
+            'pending_access':job['control'].access_requests.snapshot() if job['control'].access_requests else None,
+            'memory_checkpoint':job.get('memory_checkpoint'),
+            'access_wait_seconds':round(job['control'].permission_wait_time(),1),
             'tool_activity':job['control'].tool_activity,
             'files':job['control'].file_activity.snapshot() if job['control'].file_activity is not None else [],
             'persistence_pending':job.get('persistence_pending',False),'persistence_error':job.get('persistence_error'),
@@ -338,6 +381,16 @@ class Jobs:
             job=self.jobs[jid]
             if job.get('persistence_pending'):self._persist(job['root'],job)
             return self._snapshot(job)
+
+    def resolve_access(self, root, jid, request_id, decision, expected_revision):
+        from pathlib import Path
+        with self.lock:
+            job=self.jobs.get(jid)
+            if not job or job['state']!='running' or Path(job['root']).resolve()!=Path(root).resolve():
+                raise ValueError('The live task is no longer waiting for access')
+            broker=job['control'].access_requests
+            if broker is None:raise ValueError('Interactive access is unavailable for this task')
+        return broker.resolve(request_id,decision,expected_revision)
 
     def cancel(self, jid):
         with self.lock:

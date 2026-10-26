@@ -3,7 +3,7 @@
 DEFAULT_OPERATION_TIMEOUT = 120
 FRONTEND_VALIDATION_TIMEOUT = 420
 BRIDGE_RELAY_HEADROOM = 15
-BRIDGE_RPC_TIMEOUT = 450
+BRIDGE_RPC_TIMEOUT = 900
 
 
 def operation_timeout(name):
@@ -21,5 +21,5 @@ def result_failed(result):
     if not isinstance(result, dict):
         return True
     status = result.get('status')
-    return status in {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed', 'native_build_failed', 'engine_archive_failed'} or (
+    return status in {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed', 'native_build_failed', 'engine_archive_failed', 'access_denied'} or (
         status == 'coding_tests_failed' and result.get('stage') != 'RED')

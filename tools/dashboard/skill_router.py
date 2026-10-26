@@ -9,6 +9,7 @@ import re
 from skills_catalog import catalog_skills
 
 KEYWORDS = {
+    "project-knowledge": ("web search", "internet", "remember", "project memory", "recall", "current documentation", "research"),
     "engine-archive": ("iostore", "utoc", "repak", "retoc", "serializedfile", "unity archive", "archive inspection", "assetbundle"),
     "universal-modder": ("universal modder", "um scan", "field notes", "universal modding tool"),
     "game-modding": ("modding", "game mod", "mashup", "unreal", "ue4", "ue5", "il2cpp", "unity assets", "godot pck"),

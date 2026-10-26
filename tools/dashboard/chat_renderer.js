@@ -1,7 +1,7 @@
 /* Small text-only Markdown renderer. Never interprets raw HTML or URLs. */
 const SmelterChat = (() => {
   function toolState(result = {}) {
-    if (['error','rea_failed','mcp_failed','workspace_validation_failed'].includes(result.status) ||
+    if (['error','rea_failed','mcp_failed','workspace_validation_failed','native_build_failed','engine_archive_failed','access_denied'].includes(result.status) ||
         result.status === 'coding_tests_failed' && result.stage !== 'RED') return 'error';
     if (result.status === 'coding_tests_failed' && result.stage === 'RED' ||
         result.status === 'coding_workspace_reviewed' && !result.all_current_tests_passed) return 'warning';

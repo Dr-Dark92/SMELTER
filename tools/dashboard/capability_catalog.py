@@ -5,7 +5,7 @@ from skills_catalog import catalog_skills
 
 
 def catalog(root):
-    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'melty_read':True,'native_build':True,'inventory_root':'registered-folder-required','write_diagnostics':True}
+    grants={'frontend_workspace':True,'coding_workspace':True,'model_ids':['explicit-attachment-selection-required'],'rea_analysis':True,'melty_read':True,'native_build':True,'inventory_root':'registered-folder-required','write_diagnostics':True,'access_requests':True,'web_read':True,'project_memory':True}
     tools=[]
     from sandbox import status as sandbox_status
     confined=sandbox_status(root)
@@ -21,9 +21,21 @@ def catalog(root):
                       'source':'dashboard/tool_registry','adapter':'registered_builtin','transports':['python','smelter-mcp'],
                       'availability':'requires_per_message_grants','authority':'registered locations intersected with adapter contract',
                       'executable':True})
+        if name=='web_access':
+            from web_access import settings as web_settings,provider_status
+            web=web_settings(root);provider=provider_status(root)
+            tools[-1].update(availability='blocked' if web['mode']=='off' else 'requires_per_message_grants',read_only=True,mode=web['mode'],search_provider=provider,fetch='public HTTPS text only')
+        if name=='project_memory':
+            from project_memory import settings as memory_settings
+            memory=memory_settings(root)
+            tools[-1].update(availability='requires_per_message_grants' if memory['enabled'] else 'blocked',dependency='Project files + builtin SQLite FTS5 + bounded RAM',model_writes='unverified notes only')
         if name.startswith('melty_'):
             tools[-1].update(dependency='Melty HTTPS MCP + host sign-in', reason=melty['reason'], read_only=True)
             if melty['status']!='configured':tools[-1]['availability']='blocked'
+        if name=='request_directory_access':
+            tools[-1].update(availability='requires_live_gui_task',read_only=True,
+                             transports=['Python GUI controller','managed OpenCode MCP bridge'],
+                             authority='Human decision for the exact directory; no writes or execution')
         if name == 'universal_modder':
             try:
                 from universal_modder import verified_installation
