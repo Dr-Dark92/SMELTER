@@ -49,9 +49,13 @@ The ledger does not move source files or resolve duplicate roots by guessing.
 1. Call `smelter_coding_workspace_context` with no arguments to recover the owned
    workspace IDs and canonical host roots. Reuse the ID belonging to this task;
    do not choose the newest workspace automatically.
-2. Pass that exact `workspace_id` and a filename/path substring `query`. Results
-   include relative paths, full host paths, current and baseline SHA-256, file
-   status, recent observations, tree revision and a bounded relation graph.
+2. Pass that exact `workspace_id`. By default (`detail: "summary"`) the result
+   has the changed files (path, SHA-256, status), test receipts, recent
+   checkpoints and acceptance contracts, about 8K characters. Add a path `query`
+   for compact matching rows. Use `detail: "full"` only when you need absolute
+   host paths, baseline hashes, history or the relation graph and Mermaid. That
+   output is about 47K characters, around 27K tokens for Qwen, because hex hashes
+   tokenize poorly. On 2026-10-28 it forced compaction mid-task.
 3. Read the indexed path with `smelter_read_coding_file`. Use `start_line` and
    `line_count` for line pagination. The older `offset` / `limit` pair counts
    characters; mixing both modes is rejected.

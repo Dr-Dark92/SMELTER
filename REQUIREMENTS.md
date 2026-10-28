@@ -31,11 +31,19 @@ installation was needed. See [coding recovery](docs/RECOVERY_GUARDRAILS.md).
 `tools/dashboard/acceptance_contracts.py` registers reviewed module behavior in
 controller metadata outside the model-editable copy. The initial
 `entity-policy-v1` verifier uses the existing pinned Lua sandbox and checks 30
-engine-neutral entity-policy cases. No new packages are required.
+engine-neutral entity-policy cases. `predator-controller-v1` (48 checks) verifies
+a generic controller against two injected fake adapters: target selection
+through the evaluator, movement/attack commands, cooldown and target loss.
+No new packages are required.
 
 Register a subject explicitly with
 `python tools/setup/register_acceptance.py --workspace-id <UUID> --contract entity-policy-v1 --subject <relative-module.lua>`.
-The model has no registration tool. Lua validation then requires both its
+The model has no registration or migration tool. After a reviewed verifier
+change, re-pin it with `--migrate "<review reason>"` in place of `--subject`. The
+change is appended to `acceptance-migrations.jsonl` beside the registry. Failing
+checks report what the subject actually returned or raised, and test results
+put frozen failures (with the contract text and interface checklist) ahead of
+editable-suite errors. Lua validation then requires both its
 editable tests and the frozen verifier to pass. Evidence pins subject/verifier
 hashes and the executing controller revision. Missing or inconsistent evidence
 fails closed. The machine-readable entry is `frozen_acceptance` in
@@ -75,6 +83,29 @@ workspace context and apply receipts expose available hashes. This uses Python's
 standard library only; no package installation is needed. The machine-readable
 entry is `coding_edit_safety` in system-requirements.json. See
 [workspace editing and recovery](docs/WORKSPACE_TRACKING.md#safe-targeted-edits-and-checkpoint-recovery).
+
+Proposals that touch `.lua` files are parsed (`luac5.4 -p`, never executed) in the
+existing pinned no-network Lua image before they are recorded. A proposal that
+would break a file that parses, or create a broken file, is refused with the
+line and an excerpt. An already-broken file may still be fixed in steps, and the
+proposal then reports the remaining error. If Docker is unavailable, proposals
+are not blocked: they carry `lua_syntax.checked=false`, and the test preflight
+still applies. No new package is needed (`coding_edit_safety.lua_syntax_gate`).
+
+`coding_workspace_context` returns a compact summary by default: changed files,
+receipts, contracts and recent checkpoints. `detail="full"` restores the graph,
+history and absolute paths. This is a context-budget change for the 131072-token
+profile; no dependency is involved.
+
+`scaffold_contract_subject` (`tools/dashboard/contract_scaffold.py`) proposes a
+parseable skeleton for a registered contract subject. It is generated from the
+contract's operator-reviewed structured interface. Constructor validation and
+method shapes are correct, and behaviour helpers are TODO stubs. The skeleton
+is a normal proposal and is never applied automatically. Checkpoint restores
+now report how many newer saved versions they would discard. `read_coding_file`
+accepts line pagination even when a character offset/limit is also sent; it
+reports the ignored arguments instead of rejecting the call. Python standard
+library only.
 
 ## Universal gameplay implementation slice
 

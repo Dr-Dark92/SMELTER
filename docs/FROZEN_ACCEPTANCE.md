@@ -36,6 +36,91 @@ compaction notes and incidental reason-code assertions cannot override the
 operator's frozen behavior. Correcting a contradictory editable assertion must
 preserve the frozen allow/reject expectations and remain a reviewable patch.
 
+### `predator-controller-v1` (added 2026-10-28)
+
+Verifier: `tools/dashboard/acceptance/predator_controller_v1.lua`, 48 checks (42 until the 2026-10-28 tightening below).
+The subject is a pure Lua module exposing `new(deps)`. Everything game-specific
+is injected: `adapter` (`position`, `describe`, `candidates`, `move_to`,
+`attack`, `stop`), `evaluate(entity, policy)` (for example the registered
+entity policy), `policy`, `clock` and a `profile` holding `detect_radius`,
+`attack_radius`, `lose_radius` and `attack_cooldown`. `controller:update(actor_id)`
+returns `{action, target_id, reason}`. The contract text in
+`acceptance_contracts.DEFINITIONS` is the authoritative summary.
+
+The verifier runs 4 construction checks, then the same 19 scenarios against
+two fake adapters at different unit scales (×1 and ×100). They cover evaluator
+integration, a nearer vehicle being rejected, the actor never targeting itself,
+ignoring adapter-returned candidates beyond range, a single move request per
+target, attack in range by the actor at the target, cooldown driven only by
+the injected clock, disengaging (with `stop`) on death, disappearance or the
+lose radius, refused/throwing adapter calls reported as errors without
+starting cooldown, and independent state per actor.
+
+Before registration it was checked against a disposable reference (42/42)
+and six single-line mutants (self-targeting, move re-issued every update,
+no cooldown, evaluator ignored, no stop on loss, cooldown never recorded).
+Each mutant failed 2–8 checks. The promoted `raptor_aggro.lua` fails all
+42 checks because it has no `new(deps)`. The verifier then reports a counted RED,
+not a count ERROR. Fake-adapter success is offline evidence only: it does not
+show that any game exposes these capabilities, or that an actor moves or attacks.
+
+Failing checks print `| observed: …` with the last few subject results, adapter
+commands or the raised error. A subject that fails to load reports its load error.
+The acceptance item keeps `failed_checks` (up to 8) and `failed_total`.
+Definitions may carry an `interface` checklist, which context, recovery and
+failing results repeat verbatim.
+
+### Tightening after review (42 → 48)
+
+Qwen's first GREEN controller passed all 42 checks. Code review still found
+three contract violations the checks did not exercise:
+
+- `candidates` and `describe` were called without `pcall`, so a throwing
+  adapter crashed `update`.
+- Losing a target set the attack time, so cooldown started on loss.
+- A refused `stop` on disengage was ignored.
+
+Three scenarios were added at both adapter scales (+6 checks): a throwing
+`candidates`/`describe` is contained, losing a target does not start the
+cooldown, and a refused `stop` is reported as `error`. The disposable
+reference passes 48/48, and every earlier mutant still fails. That controller
+fails exactly the 6 new checks. The scaffold step comments were corrected at the
+same time; their earlier wording led to returning `idle` when `candidates` threw.
+A GREEN contract run is evidence for the scenarios it contains, not a code review.
+
+### Contract scaffolds
+
+A definition may include a structured `scaffold` spec: dependencies with
+types, required adapter functions, numeric profile fields with ordering
+rules, plumbing helpers with bodies, behaviour helpers as TODO stubs, and
+methods with step comments. The model tool `scaffold_contract_subject` renders
+it as a whole-file proposal for the registered subject. That proposal goes
+through the Lua syntax gate and is never applied automatically.
+
+For `predator-controller-v1`, the scaffold alone passes 8/48 checks: the four
+constructor checks and four error paths. Filling its TODOs with the reference
+behaviour in a scratch copy reached 48/48, so the scaffold shape is completable.
+Only generic plumbing is pre-written (a pcall wrapper and 3D distance).
+Selection, loss, movement, attack and cooldown are left to the implementer.
+
+### Operator migration
+
+A changed verifier fails closed (`Frozen verifier changed`). After review:
+
+```powershell
+python tools/setup/register_acceptance.py --workspace-id <UUID> --contract <id> --migrate "<review reason>"
+```
+
+The subject path is kept and the new verifier SHA is pinned. The old and new
+SHAs and the reason are appended to `acceptance-migrations.jsonl` in the
+workspace's controller metadata. Earlier receipts become stale. The model has no
+migration tool.
+
+Adding a definition changes `acceptance_contracts.py` and therefore its
+execution hash. Earlier Lua receipts in registered workspaces become stale
+until they are rerun, and a running dashboard needs a reload before it can load a
+workspace registered with the new contract.
+
 ## Execution and evidence
 
 `run_coding_tests(profile=lua)` runs the editable test suite, then each registered

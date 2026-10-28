@@ -503,7 +503,8 @@ class ToolSession:
         if self.recovery_guard:
             self.recovery_guard.after(name, arguments, result)
             if result.get('status') == 'error' and isinstance(arguments,dict) and name in {
-                    'read_coding_file','propose_coding_edit','propose_coding_edits','propose_coding_patch','apply_coding_patch','propose_coding_restore'}:
+                    'read_coding_file','propose_coding_edit','propose_coding_edits','propose_coding_patch','apply_coding_patch','propose_coding_restore',
+                    'scaffold_contract_subject'}:
                 from recovery_guard import evidence
                 result['recovery'] = evidence(self.root, arguments)
         self.file_activity.finish(call, result)

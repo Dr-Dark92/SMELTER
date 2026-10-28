@@ -177,6 +177,34 @@ evidence; it does not prove the skeleton has a working native route or that a
 Windows cross-build executed in game. Earlier portable FOV-math experiments in
 other coding copies are historical work, not automatically adopted here.
 
+### Claude continuation 2026-10-28 (offline evidence only)
+
+- **Promotion.** `Mods/GtaArkLink/Scripts/{entity_policy,raptor_aggro,engine_adapter,raptor_system_main}.lua`
+  and the four Lua tests were copied into the main `mods/gta-ark` tree, hash-checked
+  (`diagnostics/PROMOTION_20261028.json`). The production README and
+  runtime_requirements were kept because they are newer. The `ark/` alternates, the
+  `.backup` file and the import-free `test_raptor_basic.lua` were left out. Main
+  tree: Lua 6/6 programs, mods 14/14.
+- **Generic controller contract.** `predator-controller-v1` defines the universal
+  boundary these gaps call for:
+  - `new(deps)` takes an injected adapter (`position`, `describe`, `candidates`,
+    `move_to`, `attack`, `stop`), `evaluate` and `policy`, a `clock`, and a profile
+    (`detect_radius`, `attack_radius`, `lose_radius`, `attack_cooldown`).
+  - Its 42 checks cover policy integration, vehicle rejection, actor/target
+    identity, a single move request, attack, injected-clock cooldown,
+    death/vanish/range loss with `stop`, adapter refusal and throwing, and
+    per-actor state.
+  - They run against two fake adapters at different unit scales. Game APIs and
+    tuning stay in adapters and profiles.
+- **Status.** GREEN offline: Qwen's scaffold-based controller (`789c37c8…`) passes
+  48/48 and is promoted to the main tree with its finish receipt. This is
+  fake-adapter evidence only; it does not show a GTA or ARK actor moving or
+  attacking.
+- **Not yet wired in.** `raptor_system_main.lua` and `engine_adapter.lua` still
+  need a real adapter implementing the six capabilities and a profile in
+  game units. Known untested edge: after acquisition, a failing re-describe
+  reaches the attack branch.
+
 ### Concrete remaining controller/adapter gaps
 
 The inspected canonical controller does not yet import/use `entity_policy`.

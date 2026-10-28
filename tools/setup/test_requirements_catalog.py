@@ -58,6 +58,11 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual(value['dependencies'],[])
         self.assertFalse(value['model_editable'])
         self.assertEqual(value['bounds']['checks_entity_policy_v1'],30)
+        self.assertEqual(value['bounds']['checks_predator_controller_v1'],48)
+        self.assertIn('--migrate',value['migrate'])
+        self.assertEqual(value['scaffold']['tool'],'scaffold_contract_subject');self.assertTrue((CATALOG_PATH.parent/value['scaffold']['module']).is_file())
+        gate=CATALOG['coding_edit_safety']['lua_syntax_gate']
+        self.assertIn('never executes',gate['parser']);self.assertEqual(gate['exempt'],['propose_coding_restore'])
         for module in [value['module'],value['register']]+value['verifiers']:self.assertTrue((CATALOG_PATH.parent/module).is_file())
 
     def test_recovery_guardrails_declares_local_runtime_and_bounded_retries(self):

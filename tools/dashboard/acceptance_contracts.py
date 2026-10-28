@@ -8,7 +8,45 @@ from uuid import uuid4
 _EXECUTION_SHA=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 DEFINITIONS = {'entity-policy-v1': {'profile':'lua','verifier':'entity_policy_v1.lua','checks':30,
-    'contract':'All entity/policy map entries must have string keys and boolean values. Only true entries participate. Optional maps are absent only at nil. Present empty/all-disabled any_traits rejects. Validate all entries before matching. Comments and editable test expectations cannot override this contract.'}}
+    'contract':'All entity/policy map entries must have string keys and boolean values. Only true entries participate. Optional maps are absent only at nil. Present empty/all-disabled any_traits rejects. Validate all entries before matching. Comments and editable test expectations cannot override this contract.'},
+    'predator-controller-v1': {'profile':'lua','verifier':'predator_controller_v1.lua','checks':48,
+    'interface':['M.new(deps) -> controller | nil, reason (module returns table M)',
+        'deps.adapter: position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id)',
+        'deps.evaluate(entity, policy) -> boolean, reason; deps.policy table; deps.clock() -> seconds',
+        'deps.profile: detect_radius, attack_radius, lose_radius, attack_cooldown (attack_radius <= detect_radius <= lose_radius)',
+        'controller:update(actor_id) -> {action=idle|move|attack|wait|lost|error, target_id, reason}',
+        'entity record: {id, kind, traits, valid, alive, position={x,y,z}}',
+        'forbidden in subject: os, io, require, print, _G, debug, load; no extra deps keys or adapter functions'],
+    # Structured interface for scaffold_contract_subject. Only generic plumbing
+    # (pcall wrapper, distance) has bodies; behaviour stays for the implementer.
+    'scaffold':{'constructor':'new',
+        'deps':[{'name':'adapter','type':'table','functions':['position','describe','candidates','move_to','attack','stop']},
+                {'name':'evaluate','type':'function'},{'name':'policy','type':'table'},{'name':'clock','type':'function'},
+                {'name':'profile','type':'table','numbers':['detect_radius','attack_radius','lose_radius','attack_cooldown'],
+                 'rules':[['attack_radius','<=','detect_radius'],['detect_radius','<=','lose_radius']]}],
+        'helpers':[
+            {'name':'call','args':['fn','...'],'doc':'pcall an adapter function; returns true,value or false,reason. nil/false value is a refusal.',
+             'body':['local ok, value, why = pcall(fn, ...)','if not ok then','  return false, "adapter_error:" .. tostring(value)','end',
+                     'if not value then','  return false, "adapter_refused:" .. tostring(why)','end','return true, value']},
+            {'name':'distance','args':['p','q'],'doc':'3D Euclidean distance between {x,y,z} positions, or nil if either is malformed.',
+             'body':['if type(p) ~= "table" or type(q) ~= "table" then','  return nil','end','for _, k in ipairs({"x", "y", "z"}) do',
+                     '  if type(p[k]) ~= "number" or type(q[k]) ~= "number" then','    return nil','  end','end',
+                     'local dx, dy, dz = p.x - q.x, p.y - q.y, p.z - q.z','return math.sqrt(dx * dx + dy * dy + dz * dz)']},
+            {'name':'eligible','args':['entity','actor_id','origin','radius'],
+             'doc':'Return distance when entity is a table, entity.id ~= actor_id, deps.evaluate(entity, deps.policy) == true (pcall it) and distance(origin, entity.position) <= radius; else nil.'},
+            {'name':'select_target','args':['actor_id','origin'],
+             'doc':'call(deps.adapter.candidates, actor_id, origin, deps.profile.detect_radius). If that call fails return nil, nil, reason. Else return id, distance of the nearest eligible candidate (tie: smaller id), or nil when none.'},
+            {'name':'current_distance','args':['actor_id','origin','target_id'],
+             'doc':'call(deps.adapter.describe, target_id) (never call the adapter directly); return eligible(record, actor_id, origin, deps.profile.lose_radius) or nil.'}],
+        'methods':[{'name':'update','args':['actor_id'],'returns':'{action=idle|move|attack|wait|lost|error, target_id, reason=nonempty string}',
+            'steps':['1. origin = call(deps.adapter.position, actor_id); if it fails return action "error" and issue no commands.',
+                     '2. s = state[actor_id] or new table. With s.target: d = current_distance(...); if nil, clear target and s.moving, call stop(actor_id) once: refused -> "error", else "lost". Never touch s.last_attack here.',
+                     '3. Without a target: id, d, why = select_target(actor_id, origin); why -> return "error"; no id -> "idle". Set s.target = id, s.moving = false.',
+                     '4. d > attack_radius: if not s.moving, call move_to(actor_id, target) (error on refusal), set s.moving; return "move".',
+                     '5. In range: if s.last_attack and deps.clock() - s.last_attack < attack_cooldown return "wait".',
+                     '6. call attack(actor_id, target); refusal -> "error" WITHOUT setting s.last_attack; else set it, s.moving=false, "attack".'],
+            'stub':'{action = "error", target_id = nil, reason = "not_implemented"}'}]},
+    'contract':'Pure module exposing new(deps) -> controller or nil,reason. deps = {adapter, evaluate, policy, clock, profile}; adapter needs position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id); a missing capability, non-function clock/evaluate or profile violating attack_radius <= detect_radius <= lose_radius rejects. controller:update(actor_id) returns {action=idle|move|attack|wait|lost|error, target_id, reason=nonempty}. Records are {id, kind, traits, valid, alive, position={x,y,z}}. Select the nearest candidate within detect_radius that is not the actor and for which evaluate(entity, policy) returns true; never trust the adapter to filter. Keep the target until describe fails, evaluate rejects or distance exceeds lose_radius, then call stop(actor) once and return lost. Request move_to once per target, not every update; while already moving return move without a new command. In attack_radius attack only when clock()-last_attack >= attack_cooldown; every adapter call (including position, candidates, describe and stop) is pcall-contained; a refused or throwing call returns error and does not start cooldown. Losing a target never starts cooldown; a refused stop on disengage returns error. State is per actor. Commands always name the actor as executor. No os/io/require/print; units are whatever the adapter and profile share.'}}
 
 
 def _config(root,sid):
@@ -44,6 +82,34 @@ def register(root,sid,identity,subject_path):
         return summary(config['contracts'])
 
 
+def migrate(root,sid,identity,reason):
+    """Trusted operator API: re-pin a registered contract to its reviewed current verifier.
+
+    The subject path is kept. Every migration is appended to an audit log next
+    to the registry; earlier receipts become stale because the revision changes.
+    """
+    import coding_workspace as cw
+    import time
+    if not isinstance(reason,str) or not 8<=len(reason.strip())<=500:raise ValueError('Give a review reason of 8 to 500 characters')
+    with cw.locked(root):
+        _,target=cw.load(root,sid)
+        path=_config(root,sid)
+        value=json.loads(path.read_text(encoding='utf-8'))
+        if value.get('schema_version')!=1 or value.get('workspace_id')!=sid:raise ValueError('Acceptance registry ownership mismatch')
+        matches=[c for c in value.get('contracts',[]) if isinstance(c,dict) and c.get('id')==identity]
+        if len(matches)!=1:raise ValueError('Contract is not registered; use register instead')
+        spec=matches[0];current=cw.digest(verifier_path(identity).read_bytes())
+        if spec['verifier_sha256']==current:raise ValueError('Verifier unchanged; nothing to migrate')
+        entry={'contract':identity,'from_verifier_sha256':spec['verifier_sha256'],'to_verifier_sha256':current,
+               'subject_path':spec['subject_path'],'reason':reason.strip(),'migrated_at':time.time()}
+        raw=(json.dumps(entry)+'\n').encode('utf-8');cw.reserve_metadata(root,len(raw)+len(json.dumps(value)),2)
+        with (path.parent/'acceptance-migrations.jsonl').open('ab') as log:log.write(raw)
+        spec['verifier_sha256']=current
+        cw._save(path,value)
+        load(root,sid,target)  # Recheck the whole registry fails closed after the change.
+        return {'migrated':entry,'contracts':summary(value['contracts'])}
+
+
 def load(root,sid,target):
     import coding_workspace as cw
     from python_tools import _plain_path
@@ -77,7 +143,9 @@ def _revision(contracts,runner_sha):
 def summary(contracts):
     return [{'id':c['id'],'profile':c['profile'],'subject_path':c['subject_path'],
              'verifier_sha256':c['verifier_sha256'],'checks':DEFINITIONS[c['id']]['checks'],
-             'contract':DEFINITIONS[c['id']]['contract'],'model_editable':False} for c in contracts]
+             'contract':DEFINITIONS[c['id']]['contract'],
+             **({'interface':DEFINITIONS[c['id']]['interface']} if 'interface' in DEFINITIONS[c['id']] else {}),
+             'model_editable':False} for c in contracts]
 
 
 def fresh(root,sid,target,profile,saved):
@@ -108,6 +176,8 @@ for spec in manifest:
   valid=set(counts)=={'checks','failures'} and type(counts['checks']) is int and type(counts['failures']) is int and counts['checks']==spec['expected_checks'] and 0<=counts['failures']<=counts['checks']
   stage='GREEN' if valid and ran.returncode==0 and counts['failures']==0 else 'RED' if valid and ran.returncode==1 and counts['failures']>0 else 'ERROR'
   item.update(stage=stage,exit_code=ran.returncode,counts=counts)
+  failed=[line[:300] for line in ran.stdout.splitlines() if line.startswith('[ACCEPTANCE FAIL]')]
+  if failed:item.update(failed_checks=failed[:8],failed_total=len(failed))
  except (OSError,subprocess.TimeoutExpired,ValueError) as exc:item.update(stage='ERROR',error=type(exc).__name__)
  results.append(item)
 print('SMELTER_ACCEPTANCE_RESULT|'+json.dumps(results),flush=True)

@@ -20,6 +20,20 @@ class RecoveryTests(unittest.TestCase):
         session=ToolSession(self.root,{'coding_workspace':True})
         return session,lambda n,a:session.execute({'function':{'name':n,'arguments':a}})
 
+    def test_frozen_failures_outrank_an_editable_syntax_error(self):
+        output=('ERROR: Source syntax preflight failed; behavioral tests were not run\n'
+                "lua5.4: tests/test_x.lua:99: '(' expected near 'end'\n"
+                '\n[CONTROLLER ACCEPTANCE]\n[ACCEPTANCE PASS] a\n'
+                '[ACCEPTANCE FAIL] new rejects missing adapter | observed: raised: s.lua:40: attempt to index a nil value\n'
+                '[ACCEPTANCE FAIL] b | observed: update(x) -> action=idle\n')
+        detail=diagnose(output)
+        self.assertEqual(detail['classification'],'acceptance_failure')
+        self.assertEqual(detail['failed_total'],2)
+        self.assertIn('observed: raised: s.lua:40',detail['failed_checks'][0])
+        self.assertEqual((detail['workspace_diagnostic']['classification'],detail['workspace_diagnostic']['line']),('syntax_error',99))
+        # Without frozen failures the editable cause is still reported as before.
+        self.assertEqual(diagnose(output.split('[CONTROLLER ACCEPTANCE]')[0])['classification'],'syntax_error')
+
     def test_lua_cause_is_first_frame_not_callers_and_log_has_no_mutations(self):
         output='lua5.4: Scripts/policy.lua:72: table expected, got nil\nstack traceback:\n\t[C]: in function next\n\tScripts/policy.lua:72: in validate_policy\n\ttests/test_policy.lua:150: in main chunk\n'
         detail=diagnose(output)

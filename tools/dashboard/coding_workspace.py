@@ -229,8 +229,9 @@ def read(root, arguments):
             'preferred_edit_tool':'propose_coding_edit',
             'edit_argument_names':['workspace_id','relative_path','expected_sha256','old_text','new_text']}
         if 'start_line' in arguments or 'line_count' in arguments:
-            if 'offset' in arguments or 'limit' in arguments:
-                raise ValueError('Choose line pagination OR character offset/limit, not both')
+            # Models often send a default offset/limit alongside line arguments;
+            # rejecting that cost whole turns. Lines win and the result says so.
+            ignored = sorted(k for k in ('offset', 'limit') if k in arguments)
             start, count = arguments.get('start_line', 1), arguments.get('line_count', 80)
             if type(start) is not int or start < 1 or type(count) is not int or not 1 <= count <= 300:
                 raise ValueError('Use start_line >= 1 and line_count 1-300')
@@ -242,7 +243,8 @@ def read(root, arguments):
             return {'status': 'coding_file_read', 'workspace_id': arguments['workspace_id'], 'relative_path': relative,
                     'sha256': digest(raw), 'bytes': len(raw), 'text': chunk, 'pagination_unit': 'lines',
                     'start_line': start, 'lines_returned': returned, 'total_lines': len(lines),
-                    'has_more': start - 1 + returned < len(lines), **location}
+                    'has_more': start - 1 + returned < len(lines), **location,
+                    **({'ignored_arguments': ignored, 'note': 'Line pagination used; character offset/limit ignored.'} if ignored else {})}
         offset, limit = arguments.get('offset', 0), arguments.get('limit', 16000)
         if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 16000:
             raise ValueError('Invalid code pagination')
@@ -274,9 +276,34 @@ def list_files(root, arguments):
                 'query': query, 'tracking': tracking}
 
 
+def _summary(full, index, checkpoints, contracts):
+    """Compact model view: changed files and evidence, not every hash/path/graph node.
+
+    The full view cost a 128K-context model ~27K tokens per call (hex hashes and
+    absolute paths tokenize poorly), which forced compaction mid-task.
+    """
+    def row(item):
+        return {'relative_path': item['relative_path'], 'sha256': item.get('sha256'), 'status': item.get('status')}
+    from access_policy import allowed
+    changed = [row(item) for item in index['files'] if item.get('status') not in (None, 'unchanged')
+               and allowed(Path(index['workspace_root']) / item['relative_path'], 'read')]
+    files = full['files']
+    return {**{k: full[k] for k in ('workspace_id', 'workspace_root', 'source_root', 'revision', 'tests')},
+            'detail': 'summary', 'query': full['query'], 'files': [row(item) for item in files],
+            'matching_files': full['matching_files'], 'total_files': full['total_files'],
+            'offset': full['offset'], 'has_more': full['has_more'],
+            'changed_files': changed[:30], 'changed_files_total': len(changed),
+            'checkpoints': [{k: c.get(k) for k in ('relative_path', 'sha256')} for c in checkpoints[-6:]],
+            'acceptance_contracts': contracts,
+            'more': 'Use read_coding_file for one exact path, query to search paths, or detail="full" for graph/history/absolute paths.'}
+
+
 def context(root, arguments):
-    if set(arguments) - {'workspace_id', 'query', 'offset', 'limit'}:
-        raise ValueError('Workspace context accepts workspace_id, query and pagination only')
+    if set(arguments) - {'workspace_id', 'query', 'offset', 'limit', 'detail'}:
+        raise ValueError('Workspace context accepts workspace_id, query, pagination and detail only')
+    detail = arguments.get('detail', 'summary')
+    if detail not in ('summary', 'full'):
+        raise ValueError('detail must be summary or full')
     from workspace_tracking import registry, capture, view
     with locked(root):
         if 'workspace_id' not in arguments:
@@ -293,9 +320,17 @@ def context(root, arguments):
             except (ValueError, OSError, KeyError):
                 continue
         from acceptance_contracts import load as load_contracts, summary
+        contracts = summary(load_contracts(root, arguments['workspace_id'], target))
+        if detail == 'summary':
+            # Without a query the summary lists changed files only, not every file.
+            limit = arguments.get('limit', 20) if arguments.get('query') else arguments.get('limit', 1)
+            full = view(value, arguments.get('query', ''), arguments.get('offset', 0), limit)
+            if not arguments.get('query'):
+                full['files'] = []
+            return {'status': 'coding_workspace_context', **_summary(full, value, checkpoints, contracts)}
         return {'status': 'coding_workspace_context', **view(value, arguments.get('query', ''),
                 arguments.get('offset', 0), arguments.get('limit', 50)), 'checkpoints': checkpoints,
-                'acceptance_contracts': summary(load_contracts(root,arguments['workspace_id'],target))}
+                'acceptance_contracts': contracts, 'detail': 'full'}
 
 
 def _changes(target, changes, allow_large_replacement=False):
@@ -369,6 +404,44 @@ def _record_proposal(root, workspace_id, changes, restoration_source=None, resto
     return result
 
 
+def _lua_gate(root, target, changes):
+    """Refuse a proposal that would break a parsing Lua file; never executes code.
+
+    A file that already fails to parse may be edited stepwise, so the result
+    then only carries the remaining parser error instead of a refusal.
+    """
+    lua = [c for c in changes if c['relative_path'].lower().endswith('.lua')]
+    if not lua:
+        return None
+    sources = {}
+    for c in lua:
+        path = _file(target, c['relative_path'], edit=True)
+        if path.is_file():
+            sources['before:' + c['relative_path']] = path.read_bytes().decode('utf-8', errors='replace')
+        sources['after:' + c['relative_path']] = c['content']
+    from sandbox import lua_parse
+    parsed = lua_parse(root, sources)
+    if parsed is None:
+        return {'checked': False, 'reason': 'Lua parser sandbox unavailable; run_coding_tests will still preflight syntax'}
+    report = []
+    for c in lua:
+        relative = c['relative_path']
+        error = parsed.get('after:' + relative)
+        if not error:
+            continue
+        before_ok = 'before:' + relative not in sources or parsed.get('before:' + relative) is None
+        lines = c['content'].splitlines()
+        number = int(error.split(':', 1)[0]) if error.split(':', 1)[0].isdigit() else 0
+        excerpt = '\n'.join(str(i + 1) + ': ' + lines[i][:200] for i in range(max(0, number - 3), min(len(lines), number + 2)))
+        if before_ok:
+            raise ValueError('Lua syntax error; proposal NOT recorded: ' + relative + ':' + error +
+                             '\n' + excerpt + '\nPut one statement per line, balance every do/if/function with end, '
+                             'then propose again against the same expected_sha256.')
+        report.append({'relative_path': relative, 'error': error, 'excerpt': excerpt,
+                       'note': 'File already failed to parse before this edit; fix this remaining error next.'})
+    return {'checked': True, 'remaining_syntax_errors': report}
+
+
 def propose(root, arguments):
     if set(arguments) - {'workspace_id', 'changes', 'allow_large_replacement'} or not {'workspace_id', 'changes'} <= set(arguments):
         raise ValueError('Coding proposals require workspace_id, changes and optional allow_large_replacement')
@@ -377,7 +450,15 @@ def propose(root, arguments):
         raise ValueError('allow_large_replacement must be boolean')
     with locked(root):
         _, target = load(root, arguments['workspace_id'])
-        return _record_proposal(root, arguments['workspace_id'], _changes(target, arguments['changes'], allow))
+        changes = _changes(target, arguments['changes'], allow)
+        syntax = _lua_gate(root, target, changes)
+        return _with_syntax(_record_proposal(root, arguments['workspace_id'], changes), syntax)
+
+
+def _with_syntax(result, syntax):
+    if syntax is not None:
+        result['lua_syntax'] = syntax
+    return result
 
 
 def newline_style(text):
@@ -451,7 +532,9 @@ def propose_edits(root, arguments):
         raise ValueError('Exact edit proposals require workspace_id and changes')
     with locked(root):
         _, target = load(root, arguments['workspace_id'])
-        return _record_proposal(root, arguments['workspace_id'], _changes(target, edit_changes(target, arguments['changes'])))
+        changes = _changes(target, edit_changes(target, arguments['changes']))
+        syntax = _lua_gate(root, target, changes)
+        return _with_syntax(_record_proposal(root, arguments['workspace_id'], changes), syntax)
 
 
 def propose_edit(root, arguments):
@@ -500,6 +583,20 @@ def checkpoint(root, sid, relative, raw):
     return {'relative_path': relative, 'sha256': sha, 'bytes': len(raw)}
 
 
+def _restore_position(metadata, relative, sha):
+    """Say how old a restored checkpoint is; a model once restored its first,
+    wrong draft and silently discarded a dozen later fixes."""
+    history = [c['sha256'] for c in metadata.get('checkpoints', []) if c.get('relative_path') == relative]
+    index = max((i for i, value in enumerate(history) if value == sha), default=-1)
+    newer = len(history) - index - 1 if index >= 0 else None
+    return {'checkpoint_position': (index + 1) if index >= 0 else None, 'checkpoints_for_path': len(history),
+            'newer_versions_discarded': newer,
+            'message': ('Restoring version ' + str(index + 1) + ' of ' + str(len(history)) + ' for this path discards '
+                        + str(newer) + ' newer saved version(s). Prefer the most recent checkpoint unless you know '
+                        'this older one is correct; compare the diff before applying.') if newer else
+                       'Restoring the most recent saved version of this path.'}
+
+
 def propose_restore(root, arguments):
     """Snapshot original text and destination hashes, without applying edits."""
     if set(arguments) - {'workspace_id', 'relative_paths', 'checkpoint_sha256'} or not {'workspace_id', 'relative_paths'} <= set(arguments):
@@ -524,7 +621,9 @@ def propose_restore(root, arguments):
             changes = [{'relative_path': relative, 'content': raw.decode('utf-8'),
                         'expected_sha256': digest(before) if before is not None else None}]
             origin = [{'relative_path': relative, 'sha256': digest(raw)}]
-            return _record_proposal(root, arguments['workspace_id'], _changes(target, changes, True), restoration_checkpoint=origin)
+            result = _record_proposal(root, arguments['workspace_id'], _changes(target, changes, True), restoration_checkpoint=origin)
+            result['restore_warning'] = _restore_position(load(root, arguments['workspace_id'])[0], relative, digest(raw))
+            return result
         changes, sources = [], []
         for supplied in paths:
             relative = relative_path(supplied, edit=True)
@@ -691,6 +790,12 @@ def test(root, arguments):
         raw = result.pop('_raw_output')
         from coding_recovery import diagnose
         result['diagnostic'] = diagnose(raw)
+        if contracts and result.get('acceptance', {}).get('stage') != 'GREEN':
+            from coding_recovery import anchor
+            if not result['diagnostic']:
+                result['diagnostic'] = {'classification': 'acceptance_error',
+                    'guidance': 'Frozen acceptance did not complete; read failing_contracts and the acceptance log section.'}
+            anchor(root, sid, target, result['diagnostic'], result['acceptance'])
         output = folder / (run_id + '.log')
         with output.open('xb') as stream:
             stream.write(raw)
@@ -748,7 +853,8 @@ def execute(root, grants, name, arguments):
         raise ValueError('Coding workspace was not approved for this message')
     from coding_recovery import recover
     from coding_finish import finish
-    handlers = {'prepare_coding_workspace': prepare, 'coding_workspace_context': context, 'coding_recovery_context': recover, 'list_coding_files': list_files, 'read_coding_file': read,
+    from contract_scaffold import scaffold
+    handlers = {'scaffold_contract_subject': scaffold, 'prepare_coding_workspace': prepare, 'coding_workspace_context': context, 'coding_recovery_context': recover, 'list_coding_files': list_files, 'read_coding_file': read,
                 'propose_coding_patch': propose, 'propose_coding_edit': propose_edit, 'propose_coding_edits': propose_edits, 'propose_coding_restore': propose_restore,
                 'apply_coding_patch': apply, 'run_coding_tests': test, 'finish_coding_task': finish,
                 'review_coding_workspace': review}

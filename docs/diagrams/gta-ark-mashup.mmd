@@ -12,7 +12,11 @@ flowchart TD
   FILE --> READER[ARK UE4SS reader and transforms]
   READER --> VIEW[Local ARK pawn and camera binding]
 
-  POLICY -. controller integration pending .-> CTRL[Shared aggression state machine]
+  TEST --> PROD[Promoted to main mods tree 2026-10-28: Lua 6 of 6, mods 14 of 14 offline]
+  FROZEN[Frozen predator-controller-v1: 48 checks, two fake adapters] --> COPY
+  SCAFFOLD[scaffold_contract_subject from contract interface] --> CTRL
+  POLICY -. injected evaluate .-> CTRL[Generic predator_controller: 48 of 48 offline, promoted]
+  FROZEN -. verifies .-> CTRL
   CTRL -. native actions unverified .-> ADAPTER[Engine and game adapters]
   ADAPTER -. runtime proof required .-> GTA
   COUGAR[Cougar behavior baseline] -. proposed creature experiment .-> ADAPTER

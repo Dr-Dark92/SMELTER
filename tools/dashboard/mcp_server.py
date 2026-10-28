@@ -35,7 +35,13 @@ def workspace_instructions(root, grants):
                  'file that exists only in the coding copy. ')
         text += ('coding_workspace_context and coding_recovery_context expose operator-frozen acceptance contracts. '
                  'These verifiers are outside the editable copy and run automatically with their profile. Overall GREEN requires both workspace tests and frozen acceptance. '
-                 'Never relax strict validation to match a comment or incidental reason-code assertion in an editable test; preserve the frozen behavior and report the contradiction. ')
+                 'Never relax strict validation to match a comment or incidental reason-code assertion in an editable test; preserve the frozen behavior and report the contradiction. '
+                 'When a test result has diagnostic.classification acceptance_failure, fix that first: failed_checks show "observed:" values from your code, '
+                 'and failing_contracts repeat the authoritative contract text and interface checklist. Use exactly those names; do not invent extra deps keys, '
+                 'adapter functions, globals or fallbacks. Proposals that would break Lua parsing are refused with the line and excerpt. '
+                 'For a contract subject that is new or has drifted from its interface, call scaffold_contract_subject, apply it, '
+                 'then implement one TODO helper per edit and run tests after each; do not rewrite the whole file again. '
+                 'A checkpoint restore reports how many newer versions it discards; prefer the most recent. ')
         text += ('A test RED is intermediate validation, not a task end. Continue the requested fix. '
                  'Only when actually finished, call finish_coding_task with the existing workspace_id, '
                  'outcome GREEN or a final unsuccessful RED, and every relevant test profile. '

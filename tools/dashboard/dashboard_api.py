@@ -170,7 +170,8 @@ class ApiRoutes:
         if set(data) != {'action', 'workspace_id'} or data['action'] != 'refresh':
             raise ValueError('Refresh the selected workspace index')
         with using(current(self.app.ROOT)):
-            return self.reply(200, context(self.app.ROOT, {'workspace_id': data['workspace_id']}))
+            # The UI renders the graph/history; the compact summary is for models.
+            return self.reply(200, context(self.app.ROOT, {'workspace_id': data['workspace_id'], 'detail': 'full'}))
 
     def _get_api_access_policy(self, route, data=None):
         from access_policy import current

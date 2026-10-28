@@ -103,6 +103,42 @@ contract, repair the actual nil-handling defect and complete acceptance checks.
 The controller changes do not repair gameplay logic or establish in-game
 compatibility. Read current recovery context before using these saved hashes.
 
+## Lessons from the 2026-10-28 predator-controller run
+
+Qwen's first attempt at `predator-controller-v1` stalled for three reasons.
+First, the test diagnostic reported only the first problem, a syntax error in
+its own editable test, and never mentioned that the frozen contract was failing
+42/42. Second, broken Lua could be proposed and applied, so each fix cost a full
+test run. Third, after four compactions its summaries had drifted from the
+contract interface. It used `deps.evaluator`, a nested radius profile, an adapter
+`count_entities` and `require`/`_G` fallbacks.
+
+Controller changes made in response:
+
+- Diagnostics: `classification: acceptance_failure` takes precedence. It gives
+  up to eight `failed_checks` with `observed:` values from the subject and nests
+  the editable cause as `workspace_diagnostic`.
+- Re-anchoring: failing results and `coding_recovery_context` attach
+  `failing_contracts` with the full contract text and interface checklist.
+- Syntax gate: Lua proposals are parsed before they are recorded (see
+  REQUIREMENTS.md, "Exact coding edits").
+
+A second attempt the same day showed three more gaps:
+
+- Whole-file rewrites of about 150 lines kept failing to parse.
+- When they did, the model restored its *first*, invented-interface checkpoint
+  and lost about a dozen later fixes.
+- Two reads were rejected for mixing line and character pagination.
+
+Further changes in response: `scaffold_contract_subject` builds the interface
+skeleton so the model fills small TODO helpers instead of rewriting the file;
+checkpoint restores report `newer_versions_discarded`; and line pagination now
+wins over a stray character offset/limit.
+
+These changes make failures visible and refuse broken syntax. They do not make
+the model reason correctly, and the watchdog still bounds retries. Keep task
+prompts to one file per step.
+
 ## Frozen acceptance supersedes editable test assumptions
 
 See [FROZEN_ACCEPTANCE.md](FROZEN_ACCEPTANCE.md) for the operator-registered,

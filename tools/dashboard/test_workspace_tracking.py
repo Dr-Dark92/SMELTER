@@ -32,7 +32,28 @@ class WorkspaceTrackingTests(unittest.TestCase):
         self.sid, self.target = ready['workspace_id'], Path(ready['path'])
 
     def context(self, **kwargs):
-        return coding.context(self.root, {'workspace_id': self.sid, **kwargs})
+        return coding.context(self.root, {'workspace_id': self.sid, 'detail': 'full', **kwargs})
+
+    def test_default_summary_is_compact_and_lists_changed_files_only(self):
+        full = self.context()
+        summary = coding.context(self.root, {'workspace_id': self.sid})
+        self.assertEqual(summary['detail'], 'summary')
+        for key in ('graph', 'mermaid', 'history'):
+            self.assertNotIn(key, summary)
+        self.assertEqual(summary['files'], [])
+        self.assertEqual(summary['total_files'], full['total_files'])
+        self.assertLess(len(json.dumps(summary)), len(json.dumps(full)) / 2)
+        relative = full['files'][0]['relative_path']
+        path = self.target / relative
+        path.write_bytes(path.read_bytes() + b'\n-- changed\n')
+        summary = coding.context(self.root, {'workspace_id': self.sid})
+        self.assertEqual([r['relative_path'] for r in summary['changed_files']], [relative])
+        self.assertEqual(set(summary['changed_files'][0]), {'relative_path', 'sha256', 'status'})
+        searched = coding.context(self.root, {'workspace_id': self.sid, 'query': relative})
+        self.assertEqual(searched['files'][0]['relative_path'], relative)
+        self.assertNotIn('physical_path', searched['files'][0])
+        with self.assertRaisesRegex(ValueError, 'summary or full'):
+            coding.context(self.root, {'workspace_id': self.sid, 'detail': 'everything'})
 
     def test_registry_recovers_id_and_canonical_host_location(self):
         result = coding.context(self.root, {})
@@ -72,8 +93,9 @@ class WorkspaceTrackingTests(unittest.TestCase):
         chars = coding.read(self.root, {'workspace_id': self.sid, 'relative_path': path, 'offset': 1, 'limit': 4})
         self.assertEqual(chars['text'], 'ocal')
         self.assertEqual(chars['pagination_unit'], 'characters')
-        with self.assertRaisesRegex(ValueError, 'not both'):
-            coding.read(self.root, {'workspace_id': self.sid, 'relative_path': path, 'start_line': 2, 'offset': 1})
+        mixed = coding.read(self.root, {'workspace_id': self.sid, 'relative_path': path, 'start_line': 2, 'offset': 1})
+        self.assertEqual((mixed['pagination_unit'], mixed['start_line']), ('lines', 2))
+        self.assertEqual(mixed['ignored_arguments'], ['offset'])
 
     def test_applied_edits_and_external_deletions_are_tracked(self):
         self.context()

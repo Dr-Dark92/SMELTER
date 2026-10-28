@@ -315,6 +315,15 @@ class NativeMetadataTests(unittest.TestCase):
         self.part('part_external','msg_assistant',{'type':'tool','tool':'unknown_publish_operation','state':{'status':'completed'}},2300)
         self.assertTrue(self.native.metadata(self.task,[])['unrecognized_tool_domain'])
 
+    def test_hallucinated_tool_is_a_protocol_error_not_an_unknown_domain(self):
+        for n in range(3):
+            self.part('part_invalid_'+str(n),'msg_assistant',{'type':'tool','tool':'invalid','state':{'status':'completed',
+                'output':'The arguments provided to the tool are invalid: Model tried to call unavailable tool'}},2200+n)
+            value=self.native.metadata(self.task,[])
+            self.assertFalse(value['unrecognized_tool_domain'])
+            self.assertEqual(value['protocol_errors'],n+1)
+        self.assertTrue(value['protocol_error_burst'])
+
     def test_preexecution_guard_rejection_does_not_count_as_executed_shell(self):
         self.part('part_guard','msg_assistant',{'type':'tool','tool':'bash','state':{'status':'error','error':'Error: '+GUARD_ERROR}},2200)
         self.assertFalse(self.native.metadata(self.task,[])['unrecognized_tool_domain'])

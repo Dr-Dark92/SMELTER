@@ -439,7 +439,7 @@ class Bridge:
         from coding_workspace import context
         try:
             with using(current(self.root)):
-                snapshot = context(self.root, {'workspace_id': binding['workspace_id'], 'limit': 1})
+                snapshot = context(self.root, {'workspace_id': binding['workspace_id'], 'limit': 1, 'detail': 'full'})
             # Retain only graph metadata, not a duplicate of the complete file index.
             full = {k: snapshot[k] for k in ('workspace_id', 'source_root', 'workspace_root', 'storage',
                 'tests_use', 'updated_at', 'revision', 'operation', 'tests', 'graph', 'mermaid')}

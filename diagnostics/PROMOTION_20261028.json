@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "promoted": "2026-10-28",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "source_tree_sha256": "eaff3fa39d33b07d7b7a00f6de754802140c422ec6c892b9411275d04555f79c",
+  "receipts": {
+    "lua": "6ee4b5e8-2a0a-49d9-8b6e-d53708e42f36",
+    "mods": "f85b25de-e3b4-40a2-ae42-9b03fdb7e58e"
+  },
+  "frozen_verifier_sha256": "b303d3d738ee98a847174e706d15264c091731c23459d2c2ba9a4c59854680ea",
+  "files": [
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+      "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_aggro.lua",
+      "sha256": "dd63522fd0479a55440646045e136e753d32a4a3d9b2962fc6ed7f85ffe9750c",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "sha256": "a22c0d6be09ba5dff8a9a0b27ec3d540f8df329b319d5fb90c42c7abad660410",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "sha256": "ebf484bce41b75287e18e5d41da0dc50f123f5eeaab94295b2536cfc5cf51ca0",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_entity_policy.lua",
+      "sha256": "9ab4733cdf8b2f0603b1e474209efecccc7b05be39c4696f19c6258e4b885115",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_fixture_breakage.lua",
+      "sha256": "a3420bb7f4d740433c361ed39bf7085f37bef61def2c98376dbf7c975db8f3b5",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_raptor_behavior.lua",
+      "sha256": "408f9c7927e7c0c43ffa30967a705ed5fea46b1b6a77f388ee350407b5f62729",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_raptor_modules.lua",
+      "sha256": "d55c7a2919fd23aaa57a4b14eb7ea292018083e7544a8f04b5e802fe786a2575",
+      "destination_before": null
+    }
+  ],
+  "not_promoted": {
+    "mods/gta-ark/README.md": "production copy is newer (cougar/Raptor design section)",
+    "mods/gta-ark/runtime_requirements.json": "production copy is newer (cougar_raptor_candidate block)",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua.backup": "editor backup, not source",
+    "mods/gta-ark/test_raptor_basic.lua": "self-contained arithmetic; imports no implementation",
+    "mods/gta-ark/ark/Mods/GtaArkLink/Scripts/raptor_*.lua, engine_adapter.lua, raptor_config.json, ../raptor_README.md": "historical alternate copies with different interfaces; kept only in docs/handovers/checkpoint-20261027"
+  },
+  "evidence": "offline only; no in-game behavior verified",
+  "later_promotions": [
+    {
+      "promoted": "2026-10-28T12:00+04:00",
+      "files": [
+        {
+          "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+          "sha256": "789c37c8ed41f1e8e6f55dcd945a53d3adb64101c63d2cf8bfa0ce5093f47b57",
+          "destination_before": null
+        },
+        {
+          "relative_path": "mods/gta-ark/tests/test_predator_controller.lua",
+          "sha256": "dfbc8c21d1d4420d48e8fcc763afe29e4a76b29bf550782b328461b429abd855",
+          "destination_before": null
+        }
+      ],
+      "source_tree_sha256": "see workspace review at promotion time",
+      "receipts": {
+        "lua": "from finish d970f26f-b137-4779-93ff-a4ed69491909"
+      },
+      "finish_flag": "GREEN d970f26f-b137-4779-93ff-a4ed69491909",
+      "acceptance": {
+        "entity-policy-v1": "30/30",
+        "predator-controller-v1": "48/48 (verifier c5478a76)"
+      },
+      "author": "SMELTER/Qwen via scaffold_contract_subject; reviewed by Claude",
+      "known_gaps": [
+        "update re-describes the target after acquisition; a failing second describe falls through to the cooldown/attack branch without a verified range (untested by the contract)",
+        "editable test_predator_controller.lua only checks module load; real entity_policy wiring test still pending"
+      ],
+      "evidence": "offline fake adapters only; no in-game behavior verified"
+    }
+  ]
+}

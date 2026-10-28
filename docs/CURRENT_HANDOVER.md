@@ -1,3 +1,97 @@
+# Claude checkpoint: generic predator controller GREEN and promoted — 2026-10-28
+
+Nothing is committed. All results below are offline (fake adapters, Docker
+Lua/Python). No GTA or ARK runtime behavior has been verified.
+
+**Result.** Qwen implemented `mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua`
+(SHA `789c37c8…`) through SMELTER, starting from `scaffold_contract_subject`.
+It passes the frozen `predator-controller-v1` contract, 48/48 checks against
+verifier `c5478a76…`, and the policy contract stays at 30/30. Qwen recorded an
+explicit GREEN finish, receipt `d970f26f-b137-4779-93ff-a4ed69491909` (watch
+`93ad3ee2`, one watchdog nudge). Claude re-ran the verifier independently and
+reviewed the code. The controller and its editable test were then promoted
+to the main tree. Main tree results: Lua 7/7 programs, mods 14/14, 48/48 and
+30/30. Manifest: `diagnostics/PROMOTION_20261028.json`.
+
+**How it got there.** Qwen's first attempts failed: it invented its own
+interface, its whole-file rewrites didn't parse, it restored an old draft,
+compaction made its summaries drift, and it often ended a turn after only
+announcing its next step. Tooling was added in response:
+
+- Frozen failures come first in diagnostics, with `observed:` values labelled
+  by the setup that produced them.
+- Failing results and recovery context repeat the contract text and an
+  interface checklist.
+- Lua proposals are parsed before they are recorded.
+- Operators can re-pin a reviewed verifier with `register_acceptance.py --migrate`.
+- `coding_workspace_context` returns a compact summary by default
+  (about 7.7K characters instead of 47K).
+- `scaffold_contract_subject` generates the interface skeleton.
+- Checkpoint restores report how many newer versions they discard.
+- `read_coding_file` accepts line paging even with a stray offset/limit.
+- The watchdog counts OpenCode's synthetic `invalid` tool as a protocol error
+  instead of an unknown tool.
+
+The verifier grew from 42 to 48 checks after review found three gaps that 42/42
+didn't cover. Details: `docs/RECOVERY_GUARDRAILS.md`, `docs/FROZEN_ACCEPTANCE.md`
+and `REQUIREMENTS.md`. Final suites after the last edits: dashboard 795 OK (9 skipped,
+`.smelter/claude-final-dashboard-tests.log`), setup 144 OK, Node 78/78.
+
+**Known gaps (next steps).**
+
+1. `update` calls `describe` again after acquiring a target. If that second call
+   fails, the code reaches the cooldown/attack branch without a verified range.
+   The contract doesn't cover this; reusing the distance it already has fixes it.
+2. The editable `test_predator_controller.lua` only checks that the module loads.
+   A test that wires in the real `entity_policy` with vehicle/human records is
+   still pending.
+3. `raptor_system_main.lua` and `engine_adapter.lua` don't use the controller yet.
+   The real adapter (`position`/`describe`/`candidates`/`move_to`/`attack`/`stop`
+   for the chosen GTA runtime) and the in-game proof gates in the GTA–ARK handover
+   remain.
+4. Melty reuses one long OpenCode session per project. Each run compacts at
+   around 115–128K tokens, and the Qwen model only partly fits on the GPU, so
+   steps are slow. A fresh session per task would help.
+5. After changing tool code, restart Melty (so its MCP tool process reloads) and
+   the watchdog (so its tool list reloads).
+
+**Runtime.** The dashboard (8769), watchdog and Docker were started from Claude
+after a reboot. The dashboard uses the same Codex-side database and 7 grants.
+
+---
+# Claude checkpoint: promotion, controller contract, tooling fixes — 2026-10-28
+
+Nothing is committed. Read [the GTA–ARK handover](handovers/GTA_ARK_MASHUP_HANDOVER_20261028.md),
+the section "Claude continuation 2026-10-28".
+
+- **Promoted.** The reviewed coding-copy files (4 scripts and 4 Lua tests) are now
+  in the main `mods/gta-ark` tree. Manifest: `diagnostics/PROMOTION_20261028.json`.
+  On the main tree, offline: Lua 6/6 programs and mods 14/14, both GREEN.
+- **New frozen contract.** `predator-controller-v1` (42 checks, two fake adapters at
+  different scales) is registered for workspace `897b9243`, with subject
+  `mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua`. After review its
+  verifier was migrated to SHA `18269468…` (see `acceptance-migrations.jsonl`).
+- **Qwen attempt 1.** Phase 1 (the stub) was GREEN. Phase 2 stalled: the controller
+  invents its own interface and fails 42/42, and the editable test doesn't parse
+  (line 99). The watch is parked in `wait_scope_review` with 0 retries. The copy is
+  still RED/ERROR. Nothing from that attempt was promoted.
+- **Tooling fixes in response:**
+  - Frozen failures now come first in diagnostics, with `observed:` values.
+  - Failing contract text and an interface checklist are attached to failing
+    results and to recovery context.
+  - Lua proposals are parsed before they are recorded.
+  - Operators can re-pin a reviewed verifier with `register_acceptance.py --migrate`.
+  See `docs/RECOVERY_GUARDRAILS.md`, `docs/FROZEN_ACCEPTANCE.md` and `REQUIREMENTS.md`.
+- **Runtime.** After the reboot, Docker Desktop, the dashboard (8769, same
+  Codex-side database, 7 grants) and the watchdog were restarted from Claude.
+- **Next.** Run the controller-only retry prompt (it replaces the broken test, then
+  rewrites the controller against the contract). Write the policy-wired editable
+  test as a separate later step.
+- **Evidence boundary.** All of the above is offline. No in-game behavior has been
+  verified.
+
+---
+
 # GitHub/Claude checkpoint: saved coding copy GREEN — 2026-10-28
 
 Game vision and integration details are consolidated in

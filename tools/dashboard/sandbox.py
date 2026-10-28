@@ -338,6 +338,56 @@ def lua_runner_sha256():
     return hashlib.sha256(CODING_LUA.encode('utf-8')).hexdigest()
 
 
+LUA_PARSE = r'''
+import json,subprocess
+from pathlib import Path
+out={}
+for path in sorted(Path('/workspace/src').glob('*.lua')):
+ try:
+  ran=subprocess.run(['luac5.4','-p','-o','/dev/null',str(path)],capture_output=True,text=True,timeout=10)
+  out[path.stem]=None if ran.returncode==0 else (ran.stderr or ran.stdout).strip()[-600:]
+ except (OSError,subprocess.TimeoutExpired) as exc:out[path.stem]='parser unavailable: '+type(exc).__name__
+print('SMELTER_LUA_PARSE|'+json.dumps(out),flush=True)
+'''
+
+
+def lua_parse(root,sources):
+    """Parse Lua texts with luac -p in the pinned no-network image; never executes them.
+
+    Returns {key: None | 'line: message'} or None when the sandbox is unavailable.
+    """
+    if not sources:return {}
+    if len(sources)>12:raise ValueError('Parse at most twelve Lua sources at once')
+    ready=status(root,operation='coding_lua')
+    if not ready['ready']:return None
+    from python_tools import _plain_path
+    base=_plain_path(Path(root)/'.smelter/sandbox-runs')
+    folder=_plain_path(base/str(uuid4()));folder.mkdir(parents=True);folder.chmod(0o755)
+    code=folder/'code';(code/'src').mkdir(parents=True,mode=0o755);(code/'.smelter').mkdir()
+    keys={}
+    for index,(key,text) in enumerate(sources.items()):
+        stem='s'+str(index);keys[stem]=key
+        out=code/'src'/(stem+'.lua');out.write_bytes(text.encode('utf-8'));out.chmod(0o644)
+    for directory in (code,code/'src'):directory.chmod(0o755)
+    name='smelter-tests-'+uuid4().hex;image=ready['configured']['cpp_image'];confirmed=False
+    try:
+        record_owner(folder,name,image,'tests')
+        result=run(_flags(ready['docker'],name,code)+['--rm',image,'python','-I','-c',LUA_PARSE],timeout=40,max_output=256*1024)
+        output=(result.stdout+result.stderr).decode('utf-8',errors='replace')
+        packets=re.findall(r'^SMELTER_LUA_PARSE\|(\{[^\n]*\})\s*$',output,re.M)
+        if len(packets)!=1:return None
+        parsed=json.loads(packets[0])
+        if set(parsed)!=set(keys):return None
+        # luac names the private staging file; keep only "line: message".
+        return {keys[stem]:(re.sub(r'^.*?/'+stem+r'\.lua:','',error) if isinstance(error,str) else None)
+                for stem,error in parsed.items()}
+    except (ValueError,OSError,subprocess.SubprocessError):return None
+    finally:
+        confirmed=_remove(ready['docker'],name)
+        record_owner(folder,name,image,'tests',finished=confirmed)
+        if confirmed and folder.resolve().parent==base.resolve():shutil.rmtree(folder)
+
+
 def lua_snapshot_manifest(code):
     """Host hashes of the fresh mounted copy, independent of gameplay test output."""
     import hashlib

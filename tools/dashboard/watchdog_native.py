@@ -14,12 +14,15 @@ from native_progress import NoRedirect,same_directory,token
 RESUMABLE_TOOLS={'read','glob','grep','list','skill','todowrite','todoread','question','webfetch','websearch',
     'smelter_coding_workspace_context','smelter_coding_recovery_context','smelter_prepare_coding_workspace',
     'smelter_list_coding_files','smelter_read_coding_file','smelter_propose_coding_edit','smelter_propose_coding_edits','smelter_propose_coding_patch',
-    'smelter_propose_coding_restore','smelter_apply_coding_patch','smelter_run_coding_tests','smelter_finish_coding_task','smelter_review_coding_workspace',
+    'smelter_propose_coding_restore','smelter_scaffold_contract_subject','smelter_apply_coding_patch','smelter_run_coding_tests','smelter_finish_coding_task','smelter_review_coding_workspace',
     'smelter_build_native_mod','smelter_project_memory','smelter_web_access','smelter_modding_tool_catalog',
     'smelter_universal_modder','smelter_inventory_directory','smelter_read_inventory_file','smelter_inspect_game_files',
     'smelter_inspect_engine_archive','smelter_write_diagnostic_markdown'}
 
 GUARDED_NATIVE_TOOLS={'bash','edit','write','apply_patch','patch','multiedit','multi_edit','task'}
+# OpenCode records a call to a nonexistent tool as the synthetic 'invalid' tool.
+# Nothing executes, so it is a protocol error, not an unknown side-effect domain.
+SYNTHETIC_INVALID_TOOL='invalid'
 GUARD_ERROR=('SMELTER guarded task: use scoped read/propose_coding_edits/apply_coding_patch/run_coding_tests tools in the existing workspace. '
              'Native shell, edits and delegated agents bypass its checkpoints and are disabled for this bound task.')
 
@@ -81,7 +84,7 @@ class Native:
             # Named error classes only: no prompts, rejected code or tool bodies
             # leave SQLite. A protocol failure is not a transient model stall.
             protocol=db.execute(f"""SELECT sum(bad),count(*) FROM (
-                SELECT CASE WHEN json_extract(data,'$.state.status')='error' AND (
+                SELECT CASE WHEN json_extract(data,'$.tool')='invalid' THEN 1 WHEN json_extract(data,'$.state.status')='error' AND (
                   json_extract(CASE WHEN json_valid(json_extract(data,'$.state.error')) THEN json_extract(data,'$.state.error') ELSE '{{}}' END,'$.tool_result.code') IN ('input_contract_error','recovery_required')
                   OR instr(coalesce(json_extract(data,'$.state.error'),''),'Input validation error:')>0
                   OR instr(coalesce(json_extract(data,'$.state.error'),''),'Duplicate/case-colliding patch path')>0
@@ -112,7 +115,7 @@ class Native:
                 'assistant_seen':bool(assistant),
                 'turn_ended':bool(assistant and assistant[2] and assistant[3]!='tool-calls' and (not latest_user or assistant[0]>=latest_user[1])),
                 'active_tools':active,'last_progress':max(progress,assistant[1] if assistant else since)/1000,
-                'unrecognized_tool_domain':any(name not in RESUMABLE_TOOLS and not (name in GUARDED_NATIVE_TOOLS and status=='error' and blocked) for name,status,blocked in names),
+                'unrecognized_tool_domain':any(name not in RESUMABLE_TOOLS and name!=SYNTHETIC_INVALID_TOOL and not (name in GUARDED_NATIVE_TOOLS and status=='error' and blocked) for name,status,blocked in names),
                 'protocol_errors':protocol[0] or 0,'protocol_error_burst':(protocol[0] or 0)>=3,
                 'receipts':receipts,'endings':endings,'delivered':delivered,'sessions_truncated':len(sessions)>16,'session_ids':ids}
 
