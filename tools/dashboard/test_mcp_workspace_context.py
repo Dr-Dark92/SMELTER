@@ -58,6 +58,29 @@ class WorkspaceContextTests(unittest.TestCase):
                             result = actual.structuredContent['tool_result']
                             self.assertEqual(result['status'], 'coding_file_read')
                             self.assertIn('Existing prototype fixture', result['text'])
+                            tools=await client.list_tools()
+                            self.assertIn('propose_coding_edit',{tool.name for tool in tools.tools})
+                            malformed=await client.call_tool('propose_coding_edits',{
+                                'workspace_id':workspace['workspace_id'],'changes':'private rejected code '*200})
+                            self.assertTrue(malformed.isError)
+                            self.assertEqual(malformed.structuredContent['tool_result']['code'],'input_contract_error')
+                            self.assertNotIn('private rejected code',json.dumps(malformed.structuredContent))
+                            proposed=await client.call_tool('propose_coding_edit',{
+                                'workspace_id':workspace['workspace_id'],'relative_path':'mods/gta-ark/README.md',
+                                'expected_sha256':result['sha256'],'old_text':'Existing prototype fixture',
+                                'new_text':'Changed isolated fixture'})
+                            self.assertFalse(proposed.isError,proposed)
+                            plan=proposed.structuredContent['tool_result']
+                            applied=await client.call_tool('apply_coding_patch',{
+                                'workspace_id':workspace['workspace_id'],'proposal_id':plan['proposal_id']})
+                            self.assertEqual(applied.structuredContent['tool_result']['status'],'coding_patch_applied')
+                            # The same stdio child survives many user turns. It
+                            # must not permanently fail after 32 lifetime calls.
+                            for _ in range(35):
+                                reply=await client.call_tool('list_coding_files',{'workspace_id':workspace['workspace_id']})
+                                self.assertFalse(reply.isError)
+                            recovery=await client.call_tool('coding_recovery_context',{'workspace_id':workspace['workspace_id']})
+                            self.assertEqual(recovery.structuredContent['tool_result']['status'],'coding_recovery_context')
             asyncio.run(run())
             self.assertEqual(list(caller.iterdir()), [])
             self.assertIn('Existing prototype fixture', mod.read_text())

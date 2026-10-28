@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-26",
+  "script_hook_v": {
+    "source": "https://www.dev-c.com/gtav/scripthookv/",
+    "version": "v3889.0 / 1158.13",
+    "released": "2026-07-15",
+    "supported_enhanced": ["1.0.1158.13"],
+    "installed_by_smelter": false
+  },
+  "ue4ss": {
+    "source": "https://github.com/UE4SS-RE/RE-UE4SS",
+    "reviewed_source_commit": "cdbc0b66cb2bb5b4a3d2f69b6e61a8460961e54c",
+    "latest_stable_observed": "v3.0.1",
+    "required_api": "LoopInGameThreadWithDelay",
+    "api_documentation": "https://docs.ue4ss.com/dev/lua-api/global-functions/delayedactions.html",
+    "compatibility": "Unknown for this ARK client; current development documentation is not proof of stable-release or game compatibility",
+    "installed_by_smelter": false
+  }
+}

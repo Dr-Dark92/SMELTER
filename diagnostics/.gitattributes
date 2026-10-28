@@ -1,0 +1,2 @@
+# Unified diff artifacts intentionally contain space-prefixed blank context lines.
+*.diff -whitespace

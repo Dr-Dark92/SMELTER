@@ -31,7 +31,7 @@ class NativeProgressTests(unittest.TestCase):
     def setUp(self):
         test_workspace_tracking.WorkspaceTrackingTests.setUp(self)
         self.native = Path(self.tmp.name) / 'MeltyProject'; self.native.mkdir()
-        self.bridge = progress.Bridge(self.root, Metadata)
+        self.bridge = progress.Bridge(self.root, Metadata, activity=None)
         with patch.object(self.bridge, '_start'):
             self.bridge.bind({'session_id': SID, 'directory': str(self.native), 'workspace_id': self.sid,
                               'expected_revision': self.bridge.view()['configuration_revision']})
@@ -87,7 +87,7 @@ class NativeProgressTests(unittest.TestCase):
 
     def test_persisted_identity_and_gap_survive_process_restart(self):
         self.bridge.ingest(self.tool())
-        reloaded = progress.Bridge(self.root, Metadata)
+        reloaded = progress.Bridge(self.root, Metadata, activity=None)
         self.assertEqual(reloaded.view()['binding'], self.bridge.view()['binding'])
         self.assertTrue(reloaded.view()['gap'])
         self.assertEqual(reloaded.view()['connection'], 'stopped')
@@ -185,7 +185,7 @@ class NativeProgressTests(unittest.TestCase):
                 self.send_response(200); self.send_header('Content-Type', content_type); self.send_header('Content-Length', str(len(payload))); self.end_headers(); self.wfile.write(payload)
         server = ThreadingHTTPServer(('127.0.0.1',0),Handler)
         threading.Thread(target=server.serve_forever,daemon=True).start()
-        live = progress.Bridge(self.root)
+        live = progress.Bridge(self.root, activity=None)
         try:
             with patch.object(progress,'BASE','http://127.0.0.1:'+str(server.server_port)):
                 live.bind({'session_id': SID, 'directory': native, 'workspace_id': self.sid,

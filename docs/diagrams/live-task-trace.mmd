@@ -1,0 +1,25 @@
+flowchart LR
+  Melty["Melty task / native turn"] --> OpenCode["OpenCode root session"]
+  OpenCode --> Ollama["Ollama provider"] --> Model["Observed model ID"]
+  OpenCode --> Child["Current-turn child sessions"]
+  OpenCode --> MCP["SMELTER tools"]
+  Child --> MCP
+  MCP --> Files["Named file paths / indexed hashes"]
+  OpenCode --> Skills["Observed loaded skills"]
+  OpenCode -.-> DB["Read-only SQLite metadata"]
+  Child -.-> DB
+  Child -.-> Access["GET-only ACP access / question waits"]
+  DB --> Trace["Bound task trace / wait clues"]
+  Access --> Trace
+  Files -.-> Trace
+  Ollama -.->|"host-wide loaded-model metadata"| Trace
+  Trace --> WS["Authenticated same-origin WebSocket"] --> UI["Live task cards / files / timeline"]
+  UI --> Health["Separate task quiet timer and observer heartbeat"]
+  WS --> WB["Trace workbench: graph, inspector, waits, tabs"]
+  WB -->|"evidence: observed / binding / inferred"| Graph["Stable-slot relationship graph"]
+  Trace -->|"terminal or superseded turn"| Charts["Saved final charts (.smelter/task-trace/charts.json)"]
+  Charts -->|"paths rechecked on view"| WB
+  WB -->|"explicit POST, metadata only"| Art["Task artifact registry"]
+  Art -->|"ownership + access + SHA-256 recheck"| Preview["Image blob / existing GLB viewer"]
+  Files -.->|"registered as"| Art
+  Graphify["Graphify (evaluated, not installed)"] -.-> Graph

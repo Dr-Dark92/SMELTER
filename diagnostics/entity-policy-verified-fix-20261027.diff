@@ -1,0 +1,56 @@
+--- before/mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua
++++ reference/mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua
+@@ -54,7 +54,8 @@
+   end
+   
+   -- Validate blocked_kinds: string keys, boolean values; false only
+-  if p.blocked_kinds then
++  if p.blocked_kinds ~= nil then
++    if type(p.blocked_kinds) ~= "table" then return false, "blocked_kinds_not_table" end
+     for k, v in pairs(p.blocked_kinds) do
+       if type(k) ~= "string" then return false, "blocked_kinds_non_string_key" end
+       if type(v) ~= "boolean" then return false, "blocked_kinds_non_boolean_value" end
+@@ -62,7 +63,7 @@
+   end
+   
+   -- Validate required_traits: string keys, boolean values; false only
+-  if p.required_traits then
++  if p.required_traits ~= nil then
+     if type(p.required_traits) ~= "table" then return false, "required_traits_not_table" end
+     for k, v in pairs(p.required_traits) do
+       if type(k) ~= "string" then return false, "required_traits_non_string_key" end
+@@ -90,11 +91,6 @@
+     end
+     if not has_any_true then return false, "any_traits_all_disabled" end
+   end
+-  local has_any_true = false
+-  for _, v in pairs(p.any_traits or {}) do
+-    if v == true then has_any_true = true break end
+-  end
+-  if not has_any_true then return false, "any_traits_all_disabled" end
+ 
+   return true, nil
+ end
+--- before/mods/gta-ark/tests/test_entity_policy.lua
++++ reference/mods/gta-ark/tests/test_entity_policy.lua
+@@ -260,7 +260,7 @@
+ allowed, reason = policy_evaluator.evaluate(cop_entity_for_any, any_mixed_policy)
+ check(allowed == false and reason == "no_required_trait_match", "npc=false cannot satisfy any_traits")
+ 
+-print("\n=== TEST GROUP 22: Nonboolean trait values in entity (must reject safely via missing_required_trait) ===")
++print("\n=== TEST GROUP 22: Nonboolean trait values in entity (must reject safely during validation) ===")
+ local bad_trait_entity = {
+   id = "Bad_Trait_001",
+   kind = "character",
+@@ -268,8 +268,9 @@
+   valid = true,
+   alive = true
+ }
+-allowed, reason = policy_evaluator.evaluate(bad_trait_entity, raptor_policy)
+-check(allowed == false and reason == "missing_required_trait", "Nonboolean entity trait values result in trait lookup failure")
++local bad_trait_ran, bad_trait_allowed, bad_trait_reason = pcall(policy_evaluator.evaluate, bad_trait_entity, raptor_policy)
++check(bad_trait_ran and bad_trait_allowed == false and type(bad_trait_reason) == "string" and #bad_trait_reason > 0,
++  "Nonboolean entity trait values reject safely during validation")
+ 
+ print("\n=== TEST GROUP 23: Nonboolean policy trait map values (must reject safely) ===")
+ local bad_policy_traits = {

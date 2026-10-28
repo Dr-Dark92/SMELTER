@@ -1,0 +1,25 @@
+{
+  "comment": "Shared GTA -> Unreal transform cases. Origins: GTA (100, 200, 30) yaw 0; Unreal (5000, -3000, 1200) yaw 90. Signs are unverified in the running games.",
+  "gta_origin": [100.0, 200.0, 30.0],
+  "gta_yaw_origin": 0.0,
+  "ue_origin": [5000.0, -3000.0, 1200.0],
+  "ue_yaw_origin": 90.0,
+  "cases": [
+    {"name": "no movement", "gta_pos": [100.0, 200.0, 30.0], "gta_rot": [0.0, 0.0, 0.0],
+     "ue_loc": [5000.0, -3000.0, 1200.0], "ue_rot": [0.0, 90.0, 0.0]},
+    {"name": "one metre north is one metre forward (+X)", "gta_pos": [100.0, 201.0, 30.0], "gta_rot": [0.0, 0.0, 0.0],
+     "ue_loc": [5100.0, -3000.0, 1200.0], "ue_rot": [0.0, 90.0, 0.0]},
+    {"name": "one metre east is one metre right (+Y)", "gta_pos": [101.0, 200.0, 30.0], "gta_rot": [0.0, 0.0, 0.0],
+     "ue_loc": [5000.0, -2900.0, 1200.0], "ue_rot": [0.0, 90.0, 0.0]},
+    {"name": "up stays up", "gta_pos": [100.0, 200.0, 32.5], "gta_rot": [0.0, 0.0, 0.0],
+     "ue_loc": [5000.0, -3000.0, 1450.0], "ue_rot": [0.0, 90.0, 0.0]},
+    {"name": "turn 90 left in GTA turns 90 left in Unreal", "gta_pos": [100.0, 200.0, 30.0], "gta_rot": [0.0, 0.0, 90.0],
+     "ue_loc": [5000.0, -3000.0, 1200.0], "ue_rot": [0.0, 0.0, 0.0]},
+    {"name": "look up keeps its sign", "gta_pos": [100.0, 200.0, 30.0], "gta_rot": [20.0, 0.0, 0.0],
+     "ue_loc": [5000.0, -3000.0, 1200.0], "ue_rot": [20.0, 90.0, 0.0]},
+    {"name": "roll flips with handedness", "gta_pos": [100.0, 200.0, 30.0], "gta_rot": [0.0, 10.0, 0.0],
+     "ue_loc": [5000.0, -3000.0, 1200.0], "ue_rot": [0.0, 90.0, -10.0]},
+    {"name": "yaw wraps into -180..180", "gta_pos": [100.0, 200.0, 30.0], "gta_rot": [0.0, 0.0, -100.0],
+     "ue_loc": [5000.0, -3000.0, 1200.0], "ue_rot": [0.0, -170.0, 0.0]}
+  ]
+}

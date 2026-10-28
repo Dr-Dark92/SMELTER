@@ -1,0 +1,17 @@
+flowchart TD
+  USER[Operator frozen behavior] --> REG[Owned workspace acceptance registry]
+  MODEL[SMELTER agent] --> EDIT[Editable subject and local tests]
+  EDIT --> SNAP[Fresh read-only source snapshots]
+  REG --> PIN[Pinned controller verifier and subject path]
+  PIN --> ISOLATE[Separate no-network acceptance runner]
+  SNAP --> LOCAL[Editable test suite result]
+  SNAP --> ISOLATE
+  LOCAL --> COMBINE[Combined validation receipt]
+  ISOLATE --> COMBINE
+  COMBINE --> BOTH{Both layers pass?}
+  BOTH -->|Yes| GREEN[GREEN within tested scope]
+  BOTH -->|No| FAIL[RED or ERROR with exact evidence]
+  FINISH[Native response ended] --> VIEW[Live task outcome]
+  GREEN --> VIEW
+  FAIL --> VIEW
+  VIEW --> NEED[Changes needed, not verified, or checks passed]

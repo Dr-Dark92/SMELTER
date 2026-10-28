@@ -14,6 +14,8 @@ const SmelterAnimations = (() => {
     const save = document.createElement('button'); save.textContent = 'Save animation name';
     const note = document.createElement('p'); note.textContent = 'Names are saved in SMELTER. The original GLB and embedded clip names remain unchanged.';
     element.append(heading, notice, select, original, play, restart, seek, time, label, save, note);
+    // Task artifacts are previewed in place; their clip labels are not stored as chat attachment metadata.
+    if (asset.labels_read_only) { label.hidden = save.hidden = true; note.textContent = 'Clip names shown as embedded in the GLB. Labels do not prove clip semantics.'; }
     let viewer = null, timer = null, names = [], busy = false, saving = false, generation = 0;
     const controls = [select, play, restart, seek, label, save];
     function usable() { return viewer && names.length && names.filter(n => n === names[select.selectedIndex]).length === 1; }

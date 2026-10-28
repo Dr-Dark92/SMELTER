@@ -17,6 +17,7 @@ import time
 from urllib.parse import quote, urlencode
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 from uuid import uuid4
+from native_activity import NativeActivity
 
 BASE = 'http://127.0.0.1:4096'
 MAX_FRAME = 1024 * 1024
@@ -181,12 +182,14 @@ def _empty():
 
 
 class Bridge:
-    def __init__(self, root, transport=Transport):
+    def __init__(self, root, transport=Transport, activity=NativeActivity):
         self.root = Path(root).resolve()
         self.transport = transport
+        self.activity = activity
         self.lock = threading.RLock()
         self.stopped = threading.Event()
         self.thread = None
+        self.activity_thread = None
         path = _path(root)
         self.value = _empty()
         if path.is_file():
@@ -199,6 +202,7 @@ class Bridge:
             self.value['connection'] = 'stopped'
             if self.value['enabled']:
                 self.value['gap'] = True  # Process downtime has no guaranteed replay contract.
+        self.value['activity_connection'] = 'stopped'
         self.rate = deque()
 
     def _save(self):
@@ -268,13 +272,15 @@ class Bridge:
         binding = {'session_id': token(data.get('session_id'), 'ses'),
                    'directory': directory(data.get('directory')),
                    'workspace_id': identifier(data.get('workspace_id'))}
+        if data.get('melty_task_id'):
+            binding['melty_task_id'] = token(data['melty_task_id'])
         self._verify(binding)
         with self.lock:
             self._revision(data.get('expected_revision'))
-            if self.thread and self.thread.is_alive():
+            if self._alive():
                 raise ValueError('Stop the existing monitor and wait for it to disconnect before rebinding')
             self._archive()
-            self.value = {**_empty(), 'binding': binding, 'enabled': True}
+            self.value = {**_empty(), 'binding': binding, 'enabled': True, 'activity_since': now()}
             self._save()
             self._start()
         return self.view()
@@ -285,11 +291,11 @@ class Bridge:
             if action == 'stop':
                 self.value['enabled'] = False
                 self.stopped.set()
-                self.value['connection'] = 'stopping' if self.thread and self.thread.is_alive() else 'stopped'
+                self.value['connection'] = 'stopping' if self._alive() else 'stopped'
             elif action == 'start':
                 if not self.value['binding']:
                     raise ValueError('Bind an exact native session first')
-                if self.thread and self.thread.is_alive() and self.stopped.is_set():
+                if self._alive() and self.stopped.is_set():
                     raise ValueError('Previous monitor is stopping; retry after it disconnects')
                 self._verify(self.value['binding'])
                 self.value['enabled'] = True
@@ -300,13 +306,33 @@ class Bridge:
             self._save()
         return self.view()
 
+    def correlate(self, melty_task_id, expected):
+        """Attach a supplied Melty ID without restarting or reselecting the task."""
+        identifier = token(melty_task_id) if melty_task_id else None
+        with self.lock:
+            self._revision(expected)
+            if not self.value['binding']:
+                raise ValueError('Bind an exact native session first')
+            self.value['binding'] = dict(self.value['binding'])
+            if identifier: self.value['binding']['melty_task_id'] = identifier
+            else: self.value['binding'].pop('melty_task_id', None)
+            self.value['configuration_revision'] = uuid4().hex
+            self._save()
+        return self.view()
+
     def _start(self):
         if self.thread and self.thread.is_alive():
             return
         self.stopped = threading.Event()
         self.value['connection'] = 'connecting'
+        if self.activity:
+            self.activity_thread = threading.Thread(target=self._activity_run, daemon=True, name='smelter-native-activity')
+            self.activity_thread.start()
         self.thread = threading.Thread(target=self._run, daemon=True, name='smelter-native-progress')
         self.thread.start()
+
+    def _alive(self):
+        return any(thread and thread.is_alive() for thread in (self.thread,self.activity_thread))
 
     def resume(self):
         with self.lock:
@@ -319,8 +345,16 @@ class Bridge:
     def view(self):
         with self.lock:
             # Return a detached copy; transport and authentication never leave this module.
-            value = json.loads(json.dumps({k: v for k, v in self.value.items() if k not in ('seen', 'cursor', 'pending')}))
+            value = json.loads(json.dumps({k: v for k, v in self.value.items() if k not in ('seen', 'cursor', 'pending','activity_cursor')}))
             value['finalizing_snapshot'] = bool(self.value.get('pending'))
+            value['event_connection'] = value['connection']
+            if value.get('activity_connection') == 'connected':
+                value['connection'] = 'connected' if value['enabled'] else value['connection']
+                value['status_source'] = 'shared native lifecycle metadata (HTTP + ACP)'
+                if value.get('catching_up'):
+                    value['task_state'] = value.get('activity_task_state',value['task_state'])
+            else:
+                value['status_source'] = 'Shared lifecycle metadata unavailable; HTTP process observations only'
         from access_policy import current, using
         from coding_workspace import load
         binding = value['binding']
@@ -338,7 +372,7 @@ class Bridge:
                 'read_only': True, 'raw_content_mirrored': False,
                 'scope': 'Idle is a session observation, not proof that code or in-game behavior passed.'}
 
-    def ingest(self, event, cursor=None):
+    def ingest(self, event, cursor=None, source='event_stream'):
         """Deterministic admission used by the worker and disposable transport tests."""
         binding = self.value['binding']
         if not binding:
@@ -346,6 +380,7 @@ class Bridge:
         record = normalize(event, binding['session_id'])
         if not record:
             return False
+        record['source'] = source
         with self.lock:
             if record['kind'] == 'tool':
                 if 'tool' not in record:
@@ -370,7 +405,7 @@ class Bridge:
             phase = record['phase']
             if record['kind'] == 'tool' and self.value['task_state'] not in ('busy', 'retry'):
                 self.value['cycle'] += 1
-                self.value['gap'] = self.value['connection'] != 'connected'
+                self.value['gap'] = self.value['connection'] != 'connected' or bool(self.value.get('catching_up'))
                 self.value['task_state'] = 'busy'
             elif record['kind'] == 'session':
                 previous = self.value['task_state']
@@ -434,8 +469,9 @@ class Bridge:
                         statuses = transport.get('/session/status')
                         if not isinstance(statuses, dict):
                             raise ValueError('Invalid native session status response')
-                        self.ingest({'type': 'session.status', 'properties': {'sessionID': binding['session_id'],
-                            'status': statuses.get(binding['session_id'], {'type': 'idle'})}})
+                        if not self.value.get('activity_authoritative'):
+                            self.ingest({'type': 'session.status', 'properties': {'sessionID': binding['session_id'],
+                                'status': statuses.get(binding['session_id'], {'type': 'idle'})}})
                         self.finish_pending()
                         with self.lock:
                             self.value['connection'] = 'connected'
@@ -445,7 +481,9 @@ class Bridge:
                         for cursor, event in frames(response, self.stopped):
                             if self.stopped.is_set():
                                 break
-                            self.ingest(event, cursor or event.get('id'))
+                            public=normalize(event,binding['session_id'])
+                            if not self.value.get('activity_authoritative') or public and public['kind']=='tool':
+                                self.ingest(event, cursor or event.get('id'))
                             self.finish_pending()
                         if not self.stopped.is_set():
                             raise OSError('Native event stream ended')
@@ -465,6 +503,42 @@ class Bridge:
         finally:
             with self.lock:
                 self.value['connection'] = 'stopped'
+
+    def _activity_run(self):
+        client=self.activity()
+        try:
+            while not self.stopped.is_set():
+                try:
+                    binding=self.value['binding']
+                    since=self.value.get('activity_since') or self.value.get('last_observed_at') or now()
+                    observed=client.poll(binding,self.value.get('activity_cursor'),since)
+                    with self.lock:
+                        changed=(self.value.get('activity_connection')!='connected' or
+                                 self.value.get('activity_cursor')!=observed['cursor'] or
+                                 self.value.get('activity_task_state')!=observed['phase'] or
+                                 self.value.get('catching_up')!=observed['has_more'])
+                        self.value.update(activity_connection='connected',activity_task_state=observed['phase'],
+                                          activity_authoritative=True,catching_up=observed['has_more'])
+                    for event in observed['events']:
+                        changed=self.ingest(event,source='native_database') or changed
+                    with self.lock:
+                        self.value['activity_cursor']=observed['cursor']
+                    if not observed['has_more']:
+                        historical=(not observed['events'] and self.value['cycle']==0 and
+                                    observed['phase'] in ('failed','cancelled') and
+                                    observed['status_time']<int(datetime.fromisoformat(since).timestamp()*1000))
+                        if historical:
+                            with self.lock:self.value['task_state']=observed['phase']
+                        else:
+                            changed=self.ingest(observed['status_event'],source='native_database') or changed
+                        self.finish_pending()
+                    if changed:
+                        with self.lock:self._save()
+                except (ValueError,OSError,sqlite3.Error,KeyError,TypeError):
+                    with self.lock:self.value['activity_connection']='unavailable'
+                if self.stopped.wait(2):break
+        finally:
+            with self.lock:self.value['activity_connection']='stopped'
 
 
 def manager(root):

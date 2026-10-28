@@ -1,5 +1,44 @@
 # Workspace files and task relationships
 
+## Safe targeted edits and checkpoint recovery
+
+For focused changes use `smelter_propose_coding_edits`, then review and apply
+the returned proposal. Its `changes` array contains one to six existing files;
+each file has `relative_path`, the current full-file `expected_sha256`, and an
+`edits` array of one to sixteen `{old_text,new_text}` pairs. Every old_text must
+match exactly once in sequence. A missing/ambiguous context or stale hash rejects
+the complete proposal without writing code. The controller retains the rest of
+each file, including UTF-8 BOM and CRLF bytes. Use actual text from a fresh read.
+
+`propose_coding_patch.content` remains a COMPLETE file replacement, never a diff
+or snippet. Proposal previews now expose before_lines/after_lines and a
+large_replacement flag. For existing files of at least 1 KiB and thirty lines,
+shrinking below 35% of bytes and 50% of lines rejects by default. Intentional,
+reviewed whole-file rewrites can use explicit `allow_large_replacement=true`;
+do not use that acknowledgement for focused fixes. This is a truncation clue,
+not semantic validation or a guarantee against edits made outside SMELTER.
+
+Before replacing existing code, apply persists a pre-edit checkpoint under the
+exact workspace's `.smelter/coding-workspaces/<UUID>/checkpoints/` metadata.
+Checkpoints verify full path/workspace/SHA ownership, use short storage keys for
+Windows path limits, and share the existing 128 MiB/4,096-file evidence quota.
+Identical bytes/path reuse the same checkpoint. No automatic history deletion
+or new external dependency is introduced. Ordinary apply rollback remains intact.
+
+Apply receipts and `coding_workspace_context` expose checkpoint relative paths,
+full hashes and byte counts. To recover a file that exists only in the coding
+copy, call `propose_coding_restore` with `workspace_id`, one path in
+`relative_paths` and its `checkpoint_sha256`; review and apply the proposal.
+The checkpoint is verified again before apply. Without that optional hash,
+restoration still uses the original checkout. An original baseline cannot
+restore a file created later in the coding copy. A derived index stores paths
+and hashes, not replacement file bytes.
+
+27 October recovery evidence:
+`.smelter/progress-reviews/patch-corruption-20261027/`. The operator recovered
+exact pre-edit audit bytes rather than inventing new gameplay logic, preserved
+the bad fragment, restored the reviewed hash and saved a durable checkpoint.
+
 SMELTER keeps a derived file ledger for each owned coding workspace. This fixes
 the missing context behind repeated searches in the Melty staging folder: a
 coding copy lives on the host, and Docker tests use a read-only snapshot of it.
@@ -51,6 +90,17 @@ panel, while arbitrary external writes still need a scan.
 
 ## Storage, limits and API
 
+Lua test receipts now expose `source_snapshot` (fresh copy ID, host/container
+source manifest hashes and `bytes_match`) and `test_programs` (each test's working
+directory, exit code and actual standard Lua file-loader imports with SHA-256).
+Missing or inconsistent source/execution proof makes the run ERROR. The immutable
+Docker image contains the runtime/toolchain; current project files are copied
+per invocation and bind-mounted read-only. Rebuilding an image or preparing a new
+workspace does not fix a test's Lua call signature or import prefix. The `mods`
+profile runs Python tests; Lua uses `profile=lua` from each `mods/<project>` root.
+Returned manifests/import lists are bounded; the full runner evidence is retained
+in the run log. Custom loaders and `dofile` are outside the standard-import trace.
+
 Derived records are stored under
 `.smelter/coding-workspaces/<workspace_id>/file-index.json` and `relations.mmd`.
 The index is separate from immutable baseline hashes and proposal admission.
@@ -86,3 +136,12 @@ is declared in `system-requirements.json`. No extra package is installed.
 
 See [native progress and media plan](NATIVE_PROGRESS_AND_MEDIA_ROADMAP.md) and
 the [tracking architecture source](diagrams/workspace-tracking.mmd).
+
+## Guided recovery after repeated failures
+
+See [RECOVERY_GUARDRAILS.md](RECOVERY_GUARDRAILS.md) for the read-only recovery
+context tool, automatic LF/CRLF matching, first-stack-frame diagnostics, bounded
+read retries and persistent MCP work-window limits. `coding_recovery_context`
+resolves test-relative paths through the recorded failing test working directory
+rather than the current Melty folder. Checkpoint restore remains a reviewable
+proposal; recovery does not weaken acceptance or replay writes automatically.

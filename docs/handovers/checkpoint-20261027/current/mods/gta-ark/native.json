@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {"name": "GtaArkLink", "kind": "asi", "sources": ["gta/src/GtaArkLink.cpp"], "libs": ["user32", "shell32", "ole32"]},
+    {"name": "shv_route", "kind": "obj", "sources": ["gta/src/GtaArkLink.cpp", "gta/src/shv_source.cpp"],
+     "include_dirs": ["gta/tests/shv_stub"], "defines": ["GAL_WITH_SHV"]},
+    {"name": "gal_record_test", "kind": "exe", "entry": "wmain", "sources": ["gta/tests/gal_record_test.cpp"], "libs": ["shell32", "ole32"]}
+  ]
+}

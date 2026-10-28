@@ -1,0 +1,16 @@
+flowchart LR
+  Workbench["SMELTER: tools, skills, evidence"] -.->|"proposed workflow"| Core["Shared creature/behavior controller"]
+  Profile["Project profile: policy, species, tuning"] -.->|"proposed configuration"| Core
+  Clock["Injected monotonic clock"] -.->|"proposed timing contract"| Core
+  Core -.->|"proposed normalized entities/actions"| Contract["Capability and adapter contract"]
+  Contract -.->|"proposed conformance"| FakeA["Fake adapter A"]
+  Contract -.->|"proposed conformance"| FakeB["Fake adapter B"]
+  Contract -.->|"project-specific integration"| Native["Engine/game adapter"]
+  Native -.->|"verified APIs required"| Runtime["Actual host game/runtime"]
+  Case["Raptor: first acceptance scenario"] -.->|"proposed shared tests"| Core
+  Policy["Observed: pure entity_policy helper in owned coding copy"] -->|"26 current checks pass"| Basic["Current Lua suite: GREEN, six programs"]
+  Policy -->|"seven prior regression checks pass"| Fixed["Prior defects fixed; required rejection assertion weakened"]
+  Policy -->|"same source bytes; six explicit-contract checks fail"| Probe["Disposable acceptance probe: RED"]
+  Core -.->|"policy integration pending"| Policy
+  FakeA -->|"one positive normalization case observed"| Policy
+  FakeB -->|"one positive normalization case observed"| Policy

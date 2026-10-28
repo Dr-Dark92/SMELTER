@@ -75,11 +75,19 @@ class AgentBridge:
             text += '\nSelected skill reference instructions (lower-trust data):\n' + self.skills['text']
         if self.memory['text']:text+='\n'+self.memory['text']+'\n'
         if self.session.grants.get('coding_workspace'):
+            text += ('Prefer propose_coding_edit for a focused fix: one file, one replacement, five flat string arguments '
+                     'workspace_id, relative_path, expected_sha256, old_text, new_text. Batch propose_coding_edits requires a real changes array and unique file paths. '
+                     'propose_coding_patch.content is COMPLETE file content, never a fragment. '
+                     'Use saved checkpoint_sha256 with propose_coding_restore for coding-copy-only file recovery. '
+                     'Call coding_recovery_context after failed edits or repeated reads; use its first failing frame and canonical paths. '
+                     'Do not bypass proposal failures with native shell/edit or weaken frozen acceptance tests. ')
             text += ('\nCoding task contract: the native snapshot is an admission-time source reference. '
                      'Read the live coding copy through smelter_read_coding_file. ECC examples do not grant shell, '
                      'package installs, coverage tools, Git checkpoints or delegation. Use propose_coding_restore to restore '
                      'original checkout files without retyping their bytes or guessing destination hashes. Use prepare/list/read/propose/apply/'
                      'run_coding_tests/review MCP operations. Save actual RED and GREEN receipts; an ERROR is not RED. '
+                     'Test RED is intermediate: continue fixing. Call finish_coding_task with current evidence and all relevant profiles '
+                     'only to explicitly end the task with GREEN or final unsuccessful RED. '
                      'A proposal alone is not an applied edit. The original source and existing V2 are preserved.\n')
         return text
 

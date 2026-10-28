@@ -1,0 +1,167 @@
+﻿-- entity_policy.lua: Engine-neutral eligibility evaluator.
+-- Interface: evaluate(entity, policy) -> allowed_boolean, reason_code
+local M = {}
+
+-- Validate boolean value (strict true/false only)
+local function is_boolean(v)
+  return v == true or v == false
+end
+
+-- Validate table map (all values must be boolean)
+local function is_bool_map(t)
+  if type(t) ~= "table" then
+    return false
+  end
+  for k, v in pairs(t) do
+    if type(v) ~= "boolean" then
+      return false
+    end
+  end
+  return true
+end
+
+-- Validate normalized entity structure and field types
+local function validate_entity(e)
+  if type(e) ~= "table" then
+    return false, "entity_not_table"
+  end
+  if not e.id or type(e.id) ~= "string" then
+    return false, "entity_no_id"
+  end
+  if not e.kind or type(e.kind) ~= "string" then
+    return false, "entity_no_kind"
+  end
+  if not e.traits or type(e.traits) ~= "table" then
+    return false, "entity_no_traits"
+  end
+  -- traits must be map-like (strings to booleans) but we don't enforce strict typing for flexibility
+  
+  -- Validate valid/alive flags are boolean if present together
+  local valid_is_bool = is_boolean(e.valid)
+  local alive_is_bool = is_boolean(e.alive)
+  
+  -- If both present, must be both boolean
+  if valid_is_bool and not alive_is_bool then
+    return false, "valid_true_alive_not_bool"
+  end
+  if alive_is_bool and not valid_is_bool then
+    return false, "alive_true_valid_not_bool"
+  end
+  
+  -- If only one is false, other must also be boolean (consistent typing)
+  if e.valid == false and type(e.alive) ~= "boolean" then
+    return false, "valid_false_alive_mixed_type"
+  end
+  if e.alive == false and type(e.valid) ~= "boolean" then
+    return false, "alive_false_valid_mixed_type"
+  end
+  
+  return true, nil
+end
+
+-- Validate policy structure with strict field checking
+local function validate_policy(p)
+  if type(p) ~= "table" then
+    return false, "policy_not_table"
+  end
+  if not p.allowed_kinds or type(p.allowed_kinds) ~= "table" then
+    return false, "policy_no_allowed_kinds"
+  end
+  
+  -- Validate allowed_kinds values are boolean
+  if not is_bool_map(p.allowed_kinds) then
+    return false, "allowed_kinds_non_boolean_values"
+  end
+  
+  -- blocked_kinds optional but must be boolean map if present
+  if p.blocked_kinds and not is_bool_map(p.blocked_kinds) then
+    return false, "blocked_kinds_non_boolean_values"
+  end
+  
+  -- required_traits optional but must be table if present
+  if p.required_traits and type(p.required_traits) ~= "table" then
+    return false, "required_traits_not_table"
+  end
+  
+  -- any_traits optional but must be table if present
+  if p.any_traits and type(p.any_traits) ~= "table" then
+    return false, "any_traits_not_table"
+  end
+  
+  return true, nil
+end
+
+-- Evaluate eligibility based on normalized entity and policy data
+function M.evaluate(entity, policy)
+  -- Pre-validation checks
+  local valid_entity, entity_reason = validate_entity(entity)
+  if not valid_entity then
+    return false, entity_reason
+  end
+
+  local valid_policy, policy_reason = validate_policy(policy)
+  if not valid_policy then
+    return false, policy_reason
+  end
+
+  -- Normalize valid/alive with type checking - must be boolean to interpret as flag
+  local valid_flag = entity.valid == true
+  local alive_flag = entity.alive == true
+  
+  -- Check alive/valid status first
+  if not valid_flag then
+    return false, "entity_invalid"
+  end
+  if not alive_flag then
+    return false, "entity_dead"
+  end
+
+  -- Check kind eligibility against allowed set (explicit blocks override allows)
+  local kind_allowed = policy.allowed_kinds[entity.kind]
+  
+  -- Explicit block takes priority (even if kind is in allowed list)
+  if policy.blocked_kinds and policy.blocked_kinds[entity.kind] then
+    return false, "kind_blocked"
+  end
+  
+  -- Must be explicitly allowed (false or missing = not allowed)
+  if not kind_allowed then
+    return false, "kind_not_allowed"
+  end
+
+  -- Check required traits (must have ALL specified)
+  local required = policy.required_traits
+  if required then
+    for trait, _ in pairs(required) do
+      if type(trait) ~= "string" then
+        return false, "invalid_trait_type"
+      end
+      if not entity.traits[trait] then
+        return false, "missing_required_trait"
+      end
+    end
+  end
+
+  -- Check any traits (must have AT LEAST ONE specified)
+  local any_traits = policy.any_traits
+  if any_traits then
+    local has_any = false
+    for trait, _ in pairs(any_traits) do
+      if type(trait) ~= "string" then
+        return false, "invalid_trait_type"
+      end
+      if entity.traits[trait] then
+        has_any = true
+        break
+      end
+    end
+    if not has_any then
+      return false, "no_required_trait_match"
+    end
+  end
+
+  -- All checks passed
+  return true, "allowed"
+end
+
+return M

@@ -1,4 +1,694 @@
+# GitHub/Claude checkpoint: saved coding copy GREEN — 2026-10-28
+
+SMELTER has applied proposal `b4eb565f-cd2a-4bb3-ae53-d648a37f1c50`.
+Saved Lua: GREEN, 6 programs, 30/30 frozen checks, receipt
+`6ee4b5e8-2a0a-49d9-8b6e-d53708e42f36`. Saved mods: GREEN, 14 tests with
+one skip, receipt `f85b25de-e3b4-40a2-ae42-9b03fdb7e58e`. Both match current
+tree `eaff3fa39d33b07d7b7a00f6de754802140c422ec6c892b9411275d04555f79c`.
+The isolated copy is preserved in the portable handover archive, not merged
+into production `mods/`. Do not reapply the prepared proposal.
+
+Latest watch `3a683f6b6e1948a1a988b5b8d35c96da` waits for its originating native
+runtime, which ended or changed; retries 0. The native turn ended without a
+successful explicit finish marker. Preserve state and verify the live session
+before any continuation. This is separate from the now-passing saved tests.
+
+Start with [the updated Claude continuation handover](handovers/CLAUDE_CONTINUATION_HANDOVER_20261027.md).
+All older RED/unapplied sections below are historical checkpoints.
+
+---
+
+# Verified correction prepared; working copy still RED — historical, 2026-10-27
+
+Claude continuation: [complete handover](handovers/CLAUDE_CONTINUATION_HANDOVER_20261027.md).
+Portable mod-source checkpoint and reference hashes:
+[checkpoint archive](handovers/checkpoint-20261027/README.md).
+
+Latest Qwen subject is `bd1a94e6ef3a3f63cacdc04183ce902bb6cf6c84b0638d49ebc459f079cba691`.
+It added a guarded any-traits block but left an unconditional duplicate directly
+below it (lines 93–97). Actual receipt `c2a32a39-57ef-4741-b79f-808ce7fbacaf`
+loaded that SHA and stayed 24/30. Watch explicitly ended RED with zero retries.
+
+Codex verified corrections in disposable copies without editing the working
+policy/tests. Removing the duplicate reaches 28/30; fixing optional required/
+blocked map presence/type checks reaches 30/30. One editable Group 22 assertion
+still demanded an obsolete lookup reason; reference alignment to safe rejection
+and nonempty reason yields Lua GREEN (6 programs), plus mods GREEN (14 tests,
+one skipped). Frozen verifier unchanged. These are reference results, not a
+claim that the saved workspace is GREEN or playable.
+
+Prepared, **unapplied** targeted proposal:
+`b4eb565f-cd2a-4bb3-ae53-d648a37f1c50` for existing workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`. Its two files exactly match the tested
+reference bytes. See [reference review](../diagnostics/POLICY_REFERENCE_REVIEW_20261027.md)
+and [verified diff](../diagnostics/entity-policy-verified-fix-20261027.diff).
+Next SMELTER task should apply that proposal, run Lua and mods, then explicitly
+finish with both profiles. No new Qwen inference or automatic retry was sent.
+No new tool/package installed; existing requirements suffice.
+
+---
+
+# Focused Melty slice: protocol succeeds, logic unchanged — earlier checkpoint, 2026-10-27
+
+New human task `msg_17e5429000013wWw9w3jGi6nTt` used the scalar edit tool,
+applied one proposal, ran Lua before/after and explicitly finished RED. Watch
+`f74f75e8811340558ec28e33c91c0634` ended with zero retries. No malformed tool
+arguments occurred in this slice; the two native tool errors were RED test
+receipts. The cancelled prior watch's three retries remain separate.
+
+Current receipt `d132185c-1de2-4ee2-a593-f40aaa5c5c7f` matches the saved tree.
+Frozen result remains 24/30, with six failures. Subject SHA:
+`b371dc8b136c3de3e5540a9a30c62c08790f1a5171a2b330cf0b6849729bb604`.
+The edit changed `evaluate` from `if any then` to `if any and next(any) then`.
+It did not change the earlier `validate_policy` rejection at lines 82/89, where
+nil is substituted with an empty map. Thus it cannot fix the reported failures.
+
+The pasted compaction summary is not authoritative: a whole optional map set to
+false is malformed, but boolean false entries inside a table are valid disabled
+entries. Nil alone means absent. Required/blocked empty maps impose no matching
+constraint; a present empty/all-disabled any map rejects. Validate types before
+iteration. The six failing NPC cases use normalized kind `character`, not
+special human/police kinds. Next bounded change should target `validate_policy`
+only, using a fresh live read and the existing frozen requirements. Do not edit
+test assertions or kind classification to satisfy stale summary prose.
+
+---
+
+# Repair-loop run stopped; simpler coding protocol — earlier checkpoint, 2026-10-27
+
+The prior recovered run consumed all three watchdog continuations and did not
+converge. Repeated schema/duplicate-path/snippet errors coexisted with applied
+patches, while frozen failures remained around 5–7 of 30. The exact bound turn
+was stopped, its backend became idle and its watch is cancelled with reason
+`operator_stopped_repair_loop`, retries still 3/3. No fourth prompt was sent.
+Files/checkpoints and the journal are preserved; Codex did not author gameplay
+repairs or weaken acceptance. See
+[the diagnosis](../diagnostics/REPAIR_LOOP_REVIEW_20261027.md).
+
+Current saved tree `3b95a5b1c9ce391f714dc01ed2c89fc037a153246a6eaf74eaf6fe0a74bcb2ae`
+matches Lua receipt `77f473c5-83f7-4881-ae9b-e117c30e7536`: RED, six programs,
+one failed program, no runner errors, frozen acceptance **6 failures / 30**.
+Checkpoint metadata: `.smelter/repair-loop-checkpoint.json`.
+
+New generic `propose_coding_edit` uses five scalar fields and the existing exact
+edit engine. Stdio ToolSession now validates the same published schemas before
+execution, recording malformed calls in budgets/audits/guards and returning
+compact `input_contract_error` guidance. SDK pre-handler validation previously
+bypassed those controls and echoed rejected code. No argument coercion added.
+The already installed jsonschema dependency is explicitly pinned in requirements.
+
+The watchdog holds on repeated protocol errors or three non-improving comparable
+frozen results; it does not spend a retry to repeat a protocol/logic failure.
+Explicit verified finish and the three-retry cap remain its automatic exits.
+A new human task is required for further model work. Prefer a narrow failing
+behavior on the SAME saved workspace; do not reset/replay the cancelled watch.
+No new model inference is part of controller validation or MCP refresh.
+
+Validation logs: `.smelter/repair-loop-contract-tests.log` (50 targeted tests
+passed), `.smelter/repair-loop-dashboard-tests.log` (777 tests run, passed with 9 skipped),
+`.smelter/repair-loop-setup-tests.log` (26 setup/requirements tests passed).
+The idle native MCP instance was refreshed with conversation preserved and no
+inference submitted. Dashboard refreshed (PID 53132 at this checkpoint); browser
+visibly shows Cancelled, current Lua RED and WebSocket connected. Screenshot:
+`.smelter/repair-loop-stopped-20261027.png`. Watchdog is enabled/running for future
+human tasks (PID 50360 at this checkpoint), while the old watch stays cancelled
+at 3/3. Always discover current process IDs instead of relying on this snapshot.
+
+---
+
+# Restart and watchdog completion correction — earlier checkpoint, 2026-10-27
+
+SMELTER dashboard restarted on port 8769, PID 36700 at this checkpoint. The
+browser visibly shows the live workbench, connected WebSocket and the recovered
+Qwen turn. Private launch credentials stay outside this document. Screenshot:
+`.smelter/smelter-restarted-live-20261027.png`.
+
+The interrupted task exposed a completion bug: the old worker treated a current
+RED test receipt plus an ended native turn as a final task flag, even when the
+agent said it would keep working. It now requires a successful explicit
+`finish_coding_task` call AND matching current receipt/tree/profile/hash proof.
+Ordinary TDD RED/GREEN never ends a watch. Later validation invalidates an older
+finish declaration. Frozen acceptance remains required for GREEN.
+
+New controller module `tools/dashboard/coding_finish.py` is shared by the MCP
+finish tool and watchdog verification. MCP instructions and recovery prompts
+explain the protocol. Native shell/edit calls rejected before execution by the
+exact SMELTER guard are recognized as blocked; executed/unknown side-effect
+domains still hold. Requirements and WATCHDOG.md include the new component.
+
+Operator `manage_task_watchdog.py resume` repairs only legacy automatic-RED
+termination. It refuses explicit completion, Stop, a new objective, a changed
+backend or active/human-waiting work. It preserves task ID and retry budget.
+The original watch `19fb315a1d054d6380be8e23d0b6aa54` was rearmed and its first
+continuation was observed busy in the same native session, with retries 1/3.
+The daemon was restarted independently, preserving the running native turn and
+journal. Use `status` for current PID/state; no hardcoded PID is authoritative.
+
+Validation: 33 targeted watchdog/acceptance/MCP tests, 2 setup tests and 24
+requirements tests passed. Latest focused watchdog rerun is recorded separately
+in `.smelter/watchdog-final-focused-tests.log`. No external packages were added.
+Gameplay remains Qwen's task; no new gameplay success is claimed here. The last
+pre-recovery Lua receipt was RED with six protected failures out of 30.
+
+---
+
+# Initial watchdog installation — historical checkpoint, 2026-10-27
+
+User explicitly authorized prompt capture and automatic recovery while AFK,
+then clarified: no confirmation; exit on an end flag or after three stall
+retries. This supersedes the former no-auto-prompt boundary for the separate
+watchdog controller. Trace observation/its WebSocket remain read-only.
+
+See [WATCHDOG.md](WATCHDOG.md). New standalone hidden Python service plus native
+capture hook, scoped to the enabled exact native session/directory/workspace and
+originating ACP process. The original objective, model/agent/variant and available
+request constraints are preserved. A continuation recovers current checkpoints
+instead of blindly repeating writes. At most three retries after the original
+attempt; counter/reservations persist across restart. Verified scoped current
+RED or GREEN ended a watch in this initial implementation. The explicit-finish
+correction above supersedes that receipt-only rule.
+
+Stop/new human input override recovery. Active tools/children, permissions,
+questions and native retry waits do not admit another model turn. Unknown
+external side-effect domains and uncertain POST delivery hold without replay.
+No-reply context messages never cause watchdog-started inference. Compaction
+messages do not reset the task or its counter. Text-only prompt capture is
+bounded; unsupported attachments are not silently dropped.
+
+Installed capture hook uses a SHA-named immutable local module to avoid stale
+native ESM caches. Global OpenCode config preserved/backed up. Exact idle ACP
+instance was reloaded with conversation preserved and zero inference submitted.
+The hook ensures the hidden service is running when a bound prompt arrives.
+
+Initial service PID was 45672 (no longer authoritative).
+The adopted watch `19fb315a1d054d6380be8e23d0b6aa54` observed verified RED and
+exited with zero retries. End receipt `ce534f2f-1ff8-4d33-9364-7adf589a752c`:
+Lua RED, six programs/one assertion failure, frozen acceptance RED/six failures
+of 30 checks. This is a later gameplay checkpoint than the previous 4-failure
+report; Codex did not edit gameplay files during watchdog implementation.
+The private prompt and copied request options are cleared in terminal records.
+
+The service remains ready for the next human task. Safe operational proof:
+`.smelter/watchdog/verification.json`. Public metadata projection:
+`.smelter/watchdog/public.json`. Never serve runtime.json, private SQLite state,
+raw prompts or copied system/tool options to the browser. Claude can add a
+read-only trace adapter for the safe projection without adding socket controls.
+
+Validation: full dashboard 763 tests run (9 skipped), setup 143 tests and
+JavaScript 78 tests passed. Subsequent focused checks passed: 18 watchdog tests,
+2 setup tests and 4 capture-hook tests. They include a real exited-process-handle
+regression on Windows. Full logs `.smelter/watchdog-{dashboard,setup,node}-tests.log`;
+latest focused watchdog log `.smelter/watchdog-focused-tests.log`.
+No new external packages. Requirements and the state diagram declare components.
+
+Operator commands: `python tools/setup/manage_task_watchdog.py status`, `start`,
+`disable`, `activate`; `install` enables/registers, and `adopt` explicitly captures
+only the latest real human prompt in the bound session. Do not adopt synthetic
+compaction or old cancelled tasks. Do not reset the durable retry journal to
+restart a stalled task's budget.
+
+Parallel Claude trace files were preserved. Existing `dw3_decomp-main/` remains
+unrelated and untouched. No commit/push requested.
+
+---
+
+# Frozen acceptance checkpoint — 2026-10-27
+
+User reported another interruption and then a rate-limit cutoff; resumed this
+controller task from its current state. Native metadata recorded the last model
+turn as ended with no active tool. That does not identify the cutoff cause.
+The substantive regression is verified: the model fixed the nil-map crash but
+removed strict trait validation to satisfy an obsolete editable assertion.
+
+[Implementation and limitations](FROZEN_ACCEPTANCE.md): new generic,
+operator-registered frozen acceptance runs outside model-editable copies.
+Registered `entity-policy-v1` for workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`, subject
+`mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua`. Verifier has 30 checks,
+no engine-specific code or new package dependencies. Registration is not exposed
+to the model. Ordinary Lua validation now requires both local and frozen layers.
+
+Fresh receipt `5608029b-67de-4aa9-9453-6961f8578f56`:
+- Editable Lua suite GREEN (six programs); frozen acceptance RED (26/30 pass).
+- Overall RED. Four failures: unused nonboolean entity trait; false instead of
+  each optional required_traits, any_traits and blocked_kinds map.
+- Tree `0f3ee8054d19e1e6bf612db8fe1c35db49845c414365286801eeb76248e7e224`.
+- Subject SHA `4ef6844341f176cef01ffc17cf32ff2379e12d0ad656d12b8ee8a7b440dc94b5`.
+- No gameplay source, test fixtures, controllers or adapters edited by Codex.
+
+The live trace now separates ended responses from task outcome: changes needed,
+not verified, or current checks passed within scope. Both local and frozen stages
+are visible. Frozen failure sets the native MCP failure signal; repeated failed
+unchanged test calls redirect to recovery. No automatic model turn/resubmission
+or cancellation override was introduced.
+
+The actual idle native ACP worker's SMELTER MCP server was refreshed and reported
+connected; conversation preserved and no inference submitted. Evidence:
+`.smelter/frozen-acceptance-native-refresh.json`. Native hooks' updated wording
+loads on the next native process; acceptance enforcement is active in the MCP
+server independently of that wording. Validation passed: 732 dashboard tests run (9 skipped), 140 setup tests,
+59 JavaScript tests, and 6 focused acceptance checks after the receipt wording
+update. Logs: `.smelter/frozen-acceptance-{dashboard,setup,node,focused}-tests.log`.
+GUI gracefully reloaded on port 8769 (PID 5456). Browser verified a connected
+WebSocket, editable GREEN/frozen RED/current overall RED and Changes needed.
+Screenshot: `.smelter/frozen-acceptance-ui.jpg`.
+
+SMELTER/Qwen remains the gameplay author: restore upfront strict trait validation,
+use explicit nil checks for optional maps, and reconcile Group 22's incidental
+reason-code assertion with the frozen behavior. Never relax validation to match
+an editable comment. Do not alter the frozen verifier. Keep the architecture
+universal. Existing untracked `dw3_decomp-main/` is unrelated and untouched.
+No commit/push requested this turn.
+
+---
+
+# Recovery guardrails checkpoint — 2026-10-27
+
+The current request is to improve guidance/guardrails and recover from stalls.
+Infrastructure implementation and registration are described in
+[RECOVERY_GUARDRAILS.md](RECOVERY_GUARDRAILS.md). No gameplay source or fixtures
+were edited by this controller task; no model turn was submitted.
+
+- New `coding_recovery_context` returns current canonical paths/hashes,
+  checkpoint references and verified first-failure evidence. Failed test CWDs
+  resolve stack paths to the right copy, with ambiguity left explicit.
+- Exact targeted edits tolerate unique LF/CRLF contexts and preserve unrelated
+  bytes. Reads disclose newline style. Repeated failures/reads redirect to
+  recovery; only transient approved reads get one audited retry.
+- Persistent stdio MCP uses a 128-call/15-minute renewable rate window rather
+  than a lifetime 32-call budget. GUI message budgets remain unchanged.
+- Local native recovery plugin registered in OpenCode config with a backup;
+  native config validation succeeded. Hooks load on next native process and
+  guard only the enabled exact session/directory binding. Native edit/bash/task
+  bypasses are blocked for that task. No ACP worker was running during setup.
+- Missing Ollama provider deadline defaults added: chunk 180s, headers 300s,
+  total request 900s. Existing explicit settings are preserved. No automatic
+  prompt submission, access approval or cancelled-task restart was added.
+- Requirements and documentation declare all components; no new packages.
+- Fresh prototype Lua receipt `81ff027f-ba7b-4b09-9ed1-21824e5e7795` is **ERROR**,
+  six programs / one runtime exception, with unchanged source tree
+  `3d22fe530310b92357c29b723951694963820087f088e8af74c93c3f8f92b97c`.
+  The failure is `entity_policy.lua:72` (`pairs(nil)`), not syntax at test line
+  150. Policy SHA is `2d44b3ade5ddc9b424f73d4d8cb47ca50a7a30bec03f5ef0217e5fa3433f1e10`.
+  Never repeat the attachment's stale GREEN claim.
+
+Validation: dashboard suite 724 tests run (9 skipped), setup 139 passed,
+JavaScript 58 passed. Final focused recovery suite: 8 passed after adding
+canonical first-frame resolution and bounded test metadata. Logs are
+`.smelter/recovery-{dashboard,setup,node,focused}-tests.log`.
+Native config validation is `.smelter/recovery-native-config-validation.json`.
+The GUI was gracefully reloaded on port 8769 (PID 48136); browser inspection
+confirmed lua ERROR/current and mods GREEN/stale over the live WebSocket.
+Screenshot: `.smelter/recovery-guardrails-ui.jpg`.
+No end-to-end Qwen stalled-inference recovery run was submitted.
+
+Preserve the original frozen eligibility semantics, regression fixtures, both
+controller copies and the universal shared-policy/engine-adapter separation.
+SMELTER/Qwen remains the gameplay author. Existing untracked `dw3_decomp-main/`
+is unrelated and must remain untouched. No commit/push was requested this turn.
+
+---
+
 # Continue SMELTER work
+
+## Fragment-overwrite incident recovered; generic editing safeguards added
+
+The reported stall was an ended native response (finish=stop, no pending tool),
+after applied proposal `d2e29b77-ae2c-4ef3-a777-8774fb8d2524` replaced the
+4,962-byte/118-line policy with a 537-byte/11-line fragment. Expected pre-edit SHA
+was `0eeb5bcc...feeb`; fragment SHA `ec4bd17f...c74e`. The original checkout
+contains no entity_policy.lua, so source-baseline restoration could not recover
+that coding-copy-only file. The file index also has hashes, not old file bytes.
+
+Preserved the fragment and extracted exact pre-edit bytes from the existing tool
+audit, verified full SHA, and restored them via recovery proposal
+`c21e761c-3f75-47c9-b01a-ee1811187e4d`. Current tree returned exactly to
+`3b2801df5fdf5320b979cb6b4d4d6785725fe08d707c34434e8649a8f0d8cfd4`.
+Saved a durable owned checkpoint with full policy hash
+`0eeb5bccda445136d25a65ef6b75f941a31c6e49e386eabd8e1df84f1e07feeb`.
+Recovery restored prior bytes only: the six frozen acceptance failures remain.
+No gameplay implementation was authored and no model continuation was submitted.
+Evidence: `.smelter/progress-reviews/patch-corruption-20261027/recovery.json`,
+`entity_policy.corrupted.lua`, `entity_policy.recovered.lua`.
+
+Generic fix: new `propose_coding_edits` assembles complete files from unique exact
+old_text/new_text replacements. Legacy content proposals explicitly replace the
+whole file and now reject likely snippet truncations by default, with line-count
+previews and explicit acknowledgement for intentional whole rewrites. Apply saves
+pre-edit checkpoints; restoration accepts one checkpoint_sha256 for workspace-only
+files. Context/receipts expose checkpoint hashes. Updated schemas, dispatch,
+file cards, native/direct bridge instructions and requirements. No packages added.
+Live trace now says Response ended and shows current/stale validation receipts.
+See [editing/recovery docs](WORKSPACE_TRACKING.md#safe-targeted-edits-and-checkpoint-recovery).
+
+Validation: 712 dashboard tests OK / 9 skipped, 136 setup OK, 50 JavaScript OK.
+Eight new exact-edit/checkpoint tests include real MCP round trips, full-file
+cards, stale/ambiguous context, Unicode/CRLF/BOM preservation, checkpoint ownership
+and tampering, workspace-only recovery, and exact incident truncation rejection.
+Initial checkpoint filenames exceeded Windows path limits; shortened deterministic
+keys with full ownership/SHA validation corrected that before final checks.
+Logs: `.smelter/exact-edit-{dashboard,setup,node,new}-tests.log`.
+Fresh restored-workspace Lua receipt `556796d3-aa2c-4021-876c-fc4a8f7fefbe`
+is GREEN for six programs with matching source; frozen acceptance failures remain.
+
+GUI gracefully reloaded: PID 50064, port 8769 at this checkpoint. Current launch
+credential is only in `.smelter/dashboard-knowledge.stdout.log`. Hot refresh of
+the native MCP registration was not performed: Melty is open but no ACP worker
+is running (only the separate OpenCode serve process remains). The updated stdio
+server/schema loads when Melty next connects/starts its OpenCode worker. Do not
+claim an ACP hot refresh succeeded or resume gameplay automatically. No prompt
+or task restart was submitted.
+
+## Graphify feasibility reviewed; not installed
+
+User asked about Graphify-Labs/graphify with the live WebSocket trace. Reviewed
+official README, package manifest, CLI, watcher, JSON/HTML exporters. Recommended
+Graphify as the code-relationship layer, joined to existing observed native task
+events by workspace/path/revision. Code-only AST indexing can avoid model calls;
+the watcher handles debounced source changes. A custom graph adapter/live overlay
+is still needed. Exported HTML currently uses a CDN vis-network script, so use
+validated JSON and a locally served renderer under the existing CSP. No packages,
+skills, hooks or requirements entries added: this was assessment only. Details:
+[GRAPHIFY_TRACE_PLAN.md](GRAPHIFY_TRACE_PLAN.md). Future implementation must pin
+and declare actual dependencies, preserve observed/extracted/inferred evidence
+and keep current task-ID and test-receipt semantics intact.
+
+## Latest eligibility report: 26 checks GREEN, acceptance rule weakened
+
+Reviewed attachment `bb169603-9e91-4a69-b444-64733f544c3a/Pasted text.txt`.
+Receipt `46d43b67-2cd0-4168-a67e-bbd9d2c76825` genuinely matches current tree
+`3b2801df5fdf5320b979cb6b4d4d6785725fe08d707c34434e8649a8f0d8cfd4`:
+one Lua profile, six test programs, zero failures/errors/skips, matching source
+and imports. Policy SHA
+`0eeb5bccda445136d25a65ef6b75f941a31c6e49e386eabd8e1df84f1e07feeb`;
+policy-test SHA `97916a81363a178b5e3845e56700118c1047e93a8c54453156cd00204406022e`.
+All seven prior operator regression checks now pass, including disabled trait
+handling and rejection of a queried nonboolean trait. Test-local Unity/RAGE-shaped
+normalizers now call the same real evaluator for one allowed police fixture.
+Both controllers, behavior harness and six original fixtures remain unchanged.
+
+Do not approve controller integration yet. Group 25's heading still says no
+enabled any-trait alternatives reject, but its assertion was changed to allow.
+Policy now allows both `{}` and all-false present any-trait maps, contrary to the
+explicit prompt. Entire entity trait maps are not validated; unqueried malformed
+values/keys can be admitted. Any-trait validation stops at the first true entry,
+so a later malformed entry can be ignored. Optional `required_traits=false` is
+also accepted instead of rejected as malformed.
+
+Independent unchanged-copy probe:
+`.smelter/progress-reviews/f86231eb88614804a6de9750745c98ab/policy-acceptance.json`.
+Thirteen checks: the seven prior regressions pass, six explicit-contract cases
+fail; one diagnostic Lua program is RED with matching source bytes/imports.
+The active task tree was not edited. This is test-contract drift, not stale
+Docker source. Freeze these acceptance expectations before another SMELTER pass;
+do not alter assertions to fit the implementation. Validate all maps before
+short-circuit evaluation, restore the present-empty/all-disabled rejection rule,
+and finish opposite policy outcomes plus positive/negative fake-adapter cases.
+Group 20 should use an entity actually missing the disabled required trait.
+No real Unity/RAGE integration is established by test-local normalization.
+
+Workspace index/relations and project memory updated. No new package, native
+prompt or gameplay edit by the operator. The WebSocket feature below remains
+implemented; this review did not change the monitor or restart it. See newest
+[review](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+## Live WebSocket task visualization implemented
+
+User requested per-task component/file activity and stall clues across Melty,
+OpenCode, Ollama/Qwen and SMELTER skills/tools. Implemented `task_trace.py`,
+`task_socket.py`, `task_trace_ui.js`, authenticated HTTP/socket routes, and the
+Live task trace panel/card. Uses the existing exact native session/directory/
+owned workspace binding. Traces current-turn descendants, named file paths and
+indexed hashes, loaded skill names, model/provider metadata, access/question
+waits, tool-budget errors and operation durations. Separates transport heartbeat,
+collector freshness and native activity: 120s quiet warning; >15s stale collector
+becomes telemetry delayed. No model calls, native task controls or auto-approvals.
+
+The live browser verified an authenticated WebSocket, current task completion,
+actual file paths/index hashes and settings navigation. Screenshot:
+`.smelter/task-trace-ui.jpg`. One UI issue (details button only selected a hidden
+panel) and a Windows UTF-8 round-trip issue were caught and corrected during
+browser verification. Expanded timeline/scroll state survives streamed redraws;
+file overview groups repeated operations by path. Native lifecycle history and
+final relation snapshots remain in the original monitor.
+
+Important integration boundary: Melty's current connector and observed native
+session metadata expose no Melty-generated task-ID feed. The automatic ID is the
+actual native user-message ID and is explicitly labelled. A supplied Melty ID
+can be linked without restarting/rebinding via Native task progress / Link Melty
+task ID or authenticated `action=correlate`, `melty_task_id`, `expected_revision`.
+It is not independently verified or fabricated. A Melty-side ID hook remains to
+be supplied. Upstream stays SSE/read-only SQLite; the dashboard feed is WebSocket.
+
+Requirements updated in REQUIREMENTS.md and system-requirements.json; no packages
+installed. Existing Windows PowerShell/CIM finds actual ACP listeners for GET-only
+access/question inspection. Unsupported platforms explicitly lack that feed;
+other native metadata still works. Snapshot records are bounded and exclude
+prompts, reasoning, contents, shell commands, arbitrary args/results/error bodies.
+Hashes are indexed identities with timestamps, not fresh per-read content proof.
+
+Validation: dashboard 704 tests OK / 9 skipped; setup 135 OK; final JavaScript
+49 OK; focused trace/socket tests 17 OK. Logs:
+`.smelter/task-trace-{dashboard,setup,node,focused}-tests.log`. GUI gracefully
+reloaded on port 8769, current PID 7192 at this checkpoint; current launch token
+is only in `.smelter/dashboard-knowledge.stdout.log`. Native conversation/model
+was not restarted and no prompt was submitted. Details and task-flow diagram:
+[Native progress](NATIVE_PROGRESS.md#live-websocket-task-trace),
+[live-task-trace.mmd](diagrams/live-task-trace.mmd).
+
+## Latest policy review: original defects fixed; trait maps and conformance remain
+
+Reviewed attachment `0e848155-b42d-4fd1-863b-a47d2ca03554/Pasted text.txt`.
+Fresh receipt `2c922abd-cbd9-4af0-a3ac-bcffe41d5db5` is genuinely GREEN: six
+Lua programs, nineteen policy checks, zero failures/errors/skips. Current tree
+independently matches
+`7c95849a44f541f4fde25ca30a10dd39e24d83b5b9699d0a97552211fed9f90c`;
+source bytes/imports match. Policy SHA is
+`428b29e0eca3080f52886a33fd77b1d7b99488bdb3ddd27e4f6fe70b8c973cdd`.
+The three original failures are fixed: malformed required-trait field rejects
+safely, explicit blocks override allows, and string flags cannot admit an entity.
+The behavior harness now fails on an existing deterministic ID and has no
+unasserted vehicle call. Both controllers and the six original fixtures remain
+unchanged. Do not redo these completed fixes.
+
+Not ready for controller integration: unchanged-copy diagnostic probe
+`.smelter/progress-reviews/f0fd4b417f1047b4b17b0f094ad731a9/policy-contract.json`
+passes those three original regressions but fails four trait cases. A false
+required-trait entry still requires presence; a false any-trait entry can satisfy
+the rule; nonboolean entity trait values and required-trait map values can be
+accepted. Apply boolean-map validation to trait maps and interpret only enabled
+entries. Optional-field and empty/all-disabled-map semantics must be explicit.
+
+The nineteen-check file still has no two fake adapters. Its same-entity policy
+test asserts true under both policies, so it does not prove configuration changes
+the eligibility outcome. Add two different raw adapter translations into the
+same real evaluator, contradictory name/classification cases, and a demonstrated
+allow-to-reject policy switch. Keep flag reason codes stable and avoid another
+whole-module rewrite. Use actual current hashes with propose/apply/readback;
+metadata still contains no new applied proposals for these direct native edits.
+No operator gameplay changes or model turn were made; no dependencies installed.
+Workspace index, relations and project memory were refreshed. See the newest
+[review](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+## Live task unblocked: child access request and MCP budget
+
+Latest status after recovery: both parent and child are idle with
+`MessageAbortedError`, completed at approximately 07:58:53 UTC (11:58:53 Muscat).
+The second read ended with `Tool execution aborted`. Cancellation origin is not
+established. No new test receipt was produced and no automatic resume was sent.
+Keep the saved task files; user-controlled continuation is required to resume.
+
+27 October, approximately 11:57 Muscat: the parent session was waiting on child
+`ses_e83e3ab6cffep45ufziYUadIAG`. The child had exhausted the persistent SMELTER
+tool-call budget, then waited about seventy minutes on a native
+`external_directory` permission request for the existing owned workspace's test
+folder. Parent progress showed busy throughout; no new test receipt existed.
+
+Using the user's standing access authorization, the operator refreshed only the
+actual ACP process's SMELTER registration with its exact existing configuration,
+after verifying the bound parent/child directories and zero in-flight SMELTER
+calls in that directory. The conversation was busy, but its SMELTER connection
+was quiescent. Then granted the exact pending test-directory read once. The read
+completed at 07:56:51 UTC; Ollama subsequently loaded
+`qwen3.5:35b-a3b-128k` with context length 131072. No prompt was submitted and no
+session was restarted. Do not confuse this recovery with gameplay validation.
+
+A second pending read subsequently requested the same owned task's
+`mods/gta-ark/Mods/GtaArkLink/Scripts/*` folder. After verifying the tool was a
+read inside that folder, the operator approved and remembered that exact folder
+scope. The earlier tests-folder grant was once only; no broader directory grant
+was added.
+
+Policy, policy-test and behavior-harness files changed after the prior review;
+their current tree was `4cef4fd171305ba6a51939cd0a9edac17014c8c9c6b7a75bc9967de4b00c7750`.
+The earlier GREEN receipt is stale for that tree. Follow this same task to a new
+receipt before judging the fixes. Infrastructure follow-up: show child-session
+pending permissions in the progress UI, and address lifetime MCP call-budget
+exhaustion without bypassing per-task limits. A one-time read grant does not
+preapprove later native directory requests.
+
+## Latest eligibility review: helper exists; hardening required
+
+The same owned workspace `897b9243-fd7e-42f4-a46a-d1b814a33a81` now contains
+`entity_policy.lua` (SHA `ee4e5fed...37e66`) and its eleven-check test
+(`e9764d3c...4d78e`). Lua receipt `7ee2d221-1065-4ac3-b1d3-4502fd6ad94e`
+is genuinely GREEN: six test programs, zero failures/errors/skips, matching
+host/container source bytes and actual policy-module import. Independently
+rehashed current tree matches
+`9cced0c411e561d580cff110987ccdf378c5e2da9b87b3e3baab8830fac1fe64`.
+
+A disposable offline probe of the identical policy bytes reproduces three
+failures: a string `required_traits` throws, a kind in both allowed and blocked
+sets is allowed, and string `"false"` valid/alive flags are admitted. Evidence:
+`.smelter/progress-reviews/1c19ea5bdd754a6fb59fb8a9b07575cf/policy-safety.{json,log}`.
+The ordinary tests construct normalized tables directly; two different fake
+adapters and misleading-name classification tests remain absent. Do not accept
+the printed adapter-portability claim or integrate this helper into the controller
+yet. The old harness still has its `_new` ID fallback and unasserted vehicle call.
+
+Next SMELTER slice: reproduce these failures in the existing tests, validate
+optional policy fields and boolean values, define block-over-allow and disabled
+set-entry semantics, then prove both fake adapters exercise the same evaluator.
+Keep controllers/native adapters and six original fixtures unchanged; clean up
+the two harness leftovers alongside this slice. Require propose/apply/readback
+and current source/import evidence. Gameplay authorship and prompt submission
+remain with SMELTER/Qwen and the user. Operator review only copied unchanged
+policy bytes into a disposable diagnostic fixture; no gameplay edits or new model
+turn were made. No dependencies were installed. Workspace index and relation
+source were refreshed. See the newest [review](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+## Current acceptance: aligned state-creation harness verified
+
+Proposal `5e75056e-a257-4ca7-9f3a-c67934b2cb83` applied; harness hash
+`46e1f095f32122c7a353f5f954fd8c22e0f2e552cb3e95576724b2c37a91ed9d`.
+Current Lua GREEN receipt `58e11405-b6b4-4089-bccc-81a5b311e2ef` has five programs,
+0 failures/errors/skips, matching host/container bytes. Rehashed tree matches
+`c3f870a1a3d18bb097576da19db072f4d1d4385b45dedae934b0d16e62ec44fd`.
+Behavior and export tests both load root Mods/... controller dd63522f; actual
+exports are checked before setup and no state table replacement or fake vehicle
+pass remains. Offline state-creation evidence only; vehicle handling is explicitly
+UNIMPLEMENTED/untested. Old Python/mods evidence remains stale.
+
+Move to a small generic eligibility slice: normalized adapter entity descriptors,
+configuration-based policy, allowed humans/NPCs/cops/player and rejected vehicles/
+invalid/dead targets, same real shared logic through two fake adapters. Alongside
+that test work, replace the `_new` fixture-ID fallback with an explicit fresh-ID
+assertion and replace/remove the unasserted vehicle call. Do not start another
+harness/Docker diagnosis loop or expand into spawning/attacks/assets yet. Operator
+review made no gameplay edits or extra model/test run. Keep SMELTER authorship and
+user-controlled prompt submission. See the newest
+[review checkpoint](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+## Current harness review: real GREEN, coverage gaps remain
+
+Latest supplied attempt finally uses a dot call and has a genuine current Lua
+GREEN receipt `9251a9d5-bdd0-4056-9eec-18b175d4e831`: five programs, no failures,
+errors or skips, matching host/container manifests. Rehashed current tree:
+`55a46cf2c5a15664a3242c1dc6518b0dbb34176c1aac61dfa7c452399b4f34c0`.
+Harness SHA `86edcf72...2c3af`; controller hashes dd63522f/root and 05e91c2/ark
+are unchanged. Three latest applied proposals affect only the harness. Six
+original regression fixtures still match checkout; the old Python receipt is stale.
+
+Do not approve full harness/gameplay completion yet: the vehicle branch increments
+tests_passed unconditionally; behavior now loads ark/Mods/... while module/export
+tests load the distinct root Mods/... implementation; and resetting raptor_states
+before asserting its type can mask a missing export. Next SMELTER pass must align
+one authoritative implementation by tracing callers, remove fake pass accounting
+and validate actual exports. Generic classification and two-adapter conformance
+remain unimplemented. No operator gameplay edits or new model/test run in this
+review. See the newest section of
+[forensic review](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+## Latest checkpoint: Docker diagnosis disproved; ACP progress corrected
+
+User supplied the long Raptor attempt in attachment
+`78d425c5-3177-41f8-b201-8f9642fae35d/Pasted text.txt`. It contains repeated
+incorrect Docker-cache claims and workspace resets. See
+[forensic review](../diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md).
+
+Fresh original-workspace Lua receipt `4e6049ea-9abb-4ec3-95bb-72c1b0ae9191`
+is RED, with matching host/container Lua source bytes and actual imports proving
+the controller `dd63522f...9750c` was loaded from the expected Mods/ path. The
+test is still `3d96b91f...cb2c` and calls dot-defined start_chase using `:`.
+That supplies the module table as ID; the guard returns false without throwing.
+The harness mistakes pcall success for operation success. New copies also repeat
+the mods/gta-ark prefix in package.path and contain a check(true) vehicle test.
+Python mods GREEN does not execute Lua. Do not rebuild images or create more copies.
+
+Added universal runner evidence: a fresh snapshot identity, independent host and
+container source manifest comparison, per-test CWD/exit code and standard Lua
+loader import paths/hashes. Missing/inconsistent proof becomes ERROR. Source
+is bind-mounted from a per-invocation copy; the fixed image is runtime/toolchain.
+Disposable evidence under `.smelter/progress-reviews/24f0f091b50049e985cfb7372e9a3188/`
+proves colon rejection and successful dot call with the identical controller.
+This does not prove targeting or game integration. No active gameplay file was
+edited, and every agent-created workspace remains preserved.
+
+The first real run exposed an HTTP-only monitor limitation: Melty's OpenCode ACP
+process has a separate event bus from the manually started HTTP server. Added
+`native_activity.py`, selecting only allowlisted shared SQLite lifecycle fields
+in mode=ro/query_only. It verifies the exact session/directory, excludes all raw
+message/part bodies, samples bounded batches and persists a cursor. Shared
+lifecycle state takes precedence over the other HTTP process's idle report.
+Recovered this run's public tool activity: native progress sequence 68, idle,
+shared metadata connected, one final original-workspace chart captured. Recovery
+is sampled metadata, not a lossless live event transcript.
+
+Native budget recovery used the actual ACP process's discovered loopback API
+port 51748 (PID 28516 at this checkpoint), after both its session status and
+shared lifecycle metadata confirmed idle. Refreshed only its SMELTER registration,
+preserving exact config/environment and the conversation. Port 4096 belongs to
+the separate HTTP serve process and would not refresh ACP's MCP child. Native
+ports/PIDs can change; discover and verify ownership/directory before future use.
+
+GUI reloaded gracefully: PID 21744 → 41632, port 8769; current private token is in
+`.smelter/dashboard-knowledge.stdout.log`. No native/model task was submitted.
+Validation: full dashboard 686 OK / 9 skipped, final focused metadata 8 OK,
+Lua runner 8 OK (real Docker), setup 134 OK, JavaScript 44 OK. Logs:
+`.smelter/forensic-runner-{dashboard,setup,node}-tests.log`,
+`.smelter/native-activity-tests.log`, `.smelter/snapshot-evidence-lua-tests.log`.
+Metadata test #8 was added after the full suite and verifies a new binding cannot
+fabricate completion for an old cancelled task. Runtime observation saved in
+`.smelter/forensic-runtime-status.json`. Requirements/docs record the built-in
+SQLite reader and stronger Lua evidence; no new package/image was installed.
+
+Next user-run SMELTER slice: original UUID only; fix harness call/return semantics,
+consistent counters and meaningful vehicle assertion before production changes.
+Then implement the shared generic boundary from the universal contract. Preserve
+SMELTER gameplay authorship, original regression fixtures and user-submitted
+prompts. Leave unrelated `dw3_decomp-main/` alone. Do not auto-commit new changes.
+
+## Current direction: universal gameplay first — 27 October 2026
+
+The user clarified that SMELTER is a universal modding workbench. The Raptor work
+is an acceptance case; reusable controller logic, debugging, file tracking and
+testing must not depend on GTA/ARK. Native calls, units, assets and loaders belong
+in explicit engine/game adapters and project profiles. Necessary adapter-specific
+changes remain inside that boundary, with shared conformance tests.
+
+Prepared [shared gameplay contract](UNIVERSAL_GAMEPLAY_CONTRACT.md),
+[SMELTER task brief](tasks/RAPTOR_GENERIC_TASK_BRIEF.md) and
+[proposed relation chart](diagrams/universal-gameplay.mmd). These are design and
+handoff artifacts, not a claimed implementation or new installed skill/tool.
+Existing coding runners and ECC/debugging/gameplay profiles suffice for the
+offline slice. A future adapter-contract skill should grow from proven shared
+interfaces, rather than adding another large skill pack now.
+
+Current file inspection found a replaced minimal controller, not the earlier
+line-95 implementation. Controller hash `165a5e79...c164c17`; behavior test
+`a5229f90...926ca059`. The test still uses `:` against a dot-defined function,
+misinterprets pcall success, has inconsistent counters/undefined checks_failed,
+and does not assert actual vehicle rejection. The controller fabricates sample
+targets, and the adapter can return success for a placeholder spawn or silently
+fall back to simulation. See exact paths/hashes in the task brief. Do not repair
+old remembered code or replace baseline tests to get GREEN.
+
+Only documentation and project memory were updated for this architecture review.
+No gameplay edits, fresh gameplay test run or model prompt was performed. Last
+startup check found GUI/native OpenCode unreachable; saved binding was intact.
+Start the existing stack when proceeding with user-run Melty acceptance. Continue
+using the same owned workspace and keep NPCs/cops/player eligible, vehicles
+excluded. Preserve user-controlled prompt submission and SMELTER gameplay authorship.
 
 ## Latest checkpoint: live native progress — 27 October 2026
 
@@ -752,3 +1442,16 @@ The configured scope is exactly `D:\SteamLibrary\steamapps\common\ARK Survival A
 Original GUI sandbox settings before the compatible selection migration are in
 `.smelter/tooling/engine-cli/sandbox-before-compatible-selection.json`.
 No game files were modified, game processes launched or unrelated changes reset.
+
+## Parallel Claude trace assignment — 2026-10-27
+
+The user requested a handover for Claude to expand live task trace while
+Codex/SMELTER continue coding/gameplay fine-tuning. The implementation brief and
+paste-ready prompt are under `docs/handovers/CLAUDE_LIVE_TRACE_*_20261027.*`.
+Claude owns trace visualization/inspection and additive trace/media adapters;
+core coding, acceptance, recovery and active gameplay copies remain this task's
+scope. Integrate shared route/assets/requirements changes narrowly and reconcile
+current hashes. Substantial trace code is modified/untracked and absent from
+GitHub HEAD; use the current checkout or the selected-source review bundle over
+a full clone. A source manifest pins the handover baseline. No external Claude
+message, new agent, code deployment or dependency installation was performed.

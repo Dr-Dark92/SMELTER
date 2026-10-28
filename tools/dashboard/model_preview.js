@@ -49,8 +49,10 @@ const SmelterModels = (() => {
         if (!library) library = import('/assets/model-viewer.min.js').catch(error => { library = null; throw error; });
         await library;
         if (!owns()) return;
-        const response = await fetch('/api/models/' + encodeURIComponent(asset.id), {signal:entry.controller.signal, headers:{'X-Smelter-Token':SmelterAuth.token()}});
-        if (!response.ok) throw Error('Could not read the saved model attachment');
+        // Task artifacts supply their own opaque same-origin route; anything else uses chat attachments.
+        const source = typeof asset.source_url === 'string' && /^\/api\/task-trace\/artifacts\/[0-9a-f]{32}$/.test(asset.source_url) ? asset.source_url : '/api/models/' + encodeURIComponent(asset.id);
+        const response = await fetch(source, {signal:entry.controller.signal, headers:{'X-Smelter-Token':SmelterAuth.token()}});
+        if (!response.ok) throw Error(asset.source_url ? 'Could not read the task artifact (changed, missing or access revoked)' : 'Could not read the saved model attachment');
         const blob = await response.blob();
         if (!owns()) return;
         const viewer = document.createElement('model-viewer');

@@ -1,0 +1,22 @@
+flowchart TD
+  HUMAN[Bound human coding prompt] --> CAP[Private scoped capture]
+  CAP --> STORE[Durable task and retry journal]
+  STORE --> OBS[Observe exact native process and session]
+  OBS --> WAIT{Work, human wait, or native retry active?}
+  WAIT -->|Yes| DRAIN[Wait for existing operation to drain]
+  DRAIN --> OBS
+  WAIT -->|No| FLAG{Explicit finish and current verified RED or GREEN?}
+  FLAG -->|Yes| END[End this watch and clear active prompt]
+  FLAG -->|No| STALL{Quiet incomplete task and cooldown elapsed?}
+  TEST[Intermediate test RED or GREEN] --> OBS
+  STALL -->|No| OBS
+  STALL -->|Yes| BUDGET{Three retries already spent?}
+  BUDGET -->|Yes| EXHAUST[End this watch as exhausted]
+  BUDGET -->|No| RESERVE[Persist unique message ID and spend one retry]
+  RESERVE --> RESUME[Same objective, settings, session and checkpoint]
+  RESUME --> OBS
+  RESERVE --> UNCERTAIN[Uncertain delivery reconciles by message ID]
+  UNCERTAIN -->|Observed| OBS
+  HUMAN -->|New objective| SUPER[Supersede prior watch]
+  STOP[Human Stop] --> CANCEL[Cancel recovery]
+  EXTERNAL[Unrecognized side-effect domain] --> HOLD[Hold without replay]

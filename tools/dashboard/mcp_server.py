@@ -25,9 +25,37 @@ def workspace_instructions(root, grants):
         text += ('Recover forgotten locations with coding_workspace_context: omit its workspace_id to list '
                  'managed copies, or pass the existing ID and filename query to refresh the file index. '
                  'read_coding_file supports start_line/line_count, or character offset/limit; do not mix them. ')
+        text += ('For focused fixes prefer propose_coding_edit: five flat string arguments workspace_id, relative_path, expected_sha256, old_text, new_text. '
+                 'For a batch use propose_coding_edits with a real changes array and UNIQUE file paths; group a file\'s replacements in one edits array. '
+                 'the controller preserves all unrelated bytes. propose_coding_patch.content replaces the ENTIRE file, '
+                 'never just a snippet or diff. Review before_lines/after_lines and the diff before apply. '
+                 'Large accidental truncations are rejected. Apply receipts and workspace context expose saved '
+                 'pre-edit checkpoint hashes. To recover workspace-only files use propose_coding_restore with one '
+                 'relative_path in relative_paths plus checkpoint_sha256; the checkout baseline cannot restore a '
+                 'file that exists only in the coding copy. ')
+        text += ('coding_workspace_context and coding_recovery_context expose operator-frozen acceptance contracts. '
+                 'These verifiers are outside the editable copy and run automatically with their profile. Overall GREEN requires both workspace tests and frozen acceptance. '
+                 'Never relax strict validation to match a comment or incidental reason-code assertion in an editable test; preserve the frozen behavior and report the contradiction. ')
+        text += ('A test RED is intermediate validation, not a task end. Continue the requested fix. '
+                 'Only when actually finished, call finish_coding_task with the existing workspace_id, '
+                 'outcome GREEN or a final unsuccessful RED, and every relevant test profile. '
+                 'The controller verifies current receipts before accepting this explicit end flag. ')
+        text += ('If an edit fails or you lose the task location, use coding_recovery_context with the existing workspace ID. '
+                 'It returns current hashes, canonical paths, verified checkpoints and the first failing test frame. '
+                 'CRLF/LF contexts are matched by the controller; do not repeatedly re-read a file to guess line endings. '
+                 'Two identical failed calls or four identical unchanged reads trigger a recovery redirect. '
+                 'Read the cause before its callers; a runtime error is not a syntax error. Preserve frozen acceptance '
+                 'criteria and regression fixtures, and never bypass a rejected proposal with native shell/edit. '
+                 'Recover within this task; do not restart the workspace, weaken tests, approve access or resume cancelled tasks. ')
         text += ('Load the diagrams skill for task relationships. Refresh the exact workspace context after changes '
                  'and tests and at task completion; its SHA-256 ledger and relations.mmd preserve the handoff. '
                  'Static/inferred imports and snapshot test receipts do not establish in-game behavior. ')
+        text += ('Each test invocation copies current source into a NEW read-only bind-mounted snapshot. '
+                 'The pinned Docker image supplies the runtime/toolchain, not cached project source; do not rebuild it '
+                 'or create a new workspace to refresh edits. Lua receipts expose source_snapshot hashes, test_programs '
+                 'working directories and actual standard-loader import paths. profile=mods runs Python tests; '
+                 'profile=lua runs Lua tests from mods/<project>. A:B(x) inserts A as argument one, '
+                 'whereas A.B(x) does not. Inspect the declared signature and returned value before blaming caching. ')
         try:
             from access_policy import current, using
             from workspace_tracking import registry
@@ -77,6 +105,9 @@ async def serve(root, grants):
     from access_policy import Policy, current
     policy = Policy(json.loads(os.environ['SMELTER_ACCESS_POLICY'])) if os.environ.get('SMELTER_ACCESS_POLICY') else current(root)
     session = ToolSession(root, grants, policy=policy)
+    from recovery_guard import PersistentBudget
+    session.persistent_budget = PersistentBudget()
+    session.validate_tool_arguments = True
     # Persistent children cannot belong to this short-lived stdio process.
     # The dashboard handles the preview lifecycle locally, including when
     # all other workspace operations use MCP.
@@ -90,8 +121,11 @@ async def serve(root, grants):
         return [types.Tool(name=item['function']['name'], description=item['function']['description'],
                            inputSchema=item['function']['parameters']) for item in session.tools]
 
-    @server.call_tool()
+    @server.call_tool(validate_input=False)
     async def call_tool(name, arguments):
+        # ToolSession validates the SAME advertised schema before execution so
+        # malformed calls enter budgets, guards and audits instead of bypassing
+        # them in the SDK's verbose, unaudited pre-handler error path.
         # Run fixed operations off the protocol event loop; ToolSession audits,
         # validates scopes, limits calls and denies unapproved operations.
         result = await asyncio.to_thread(session.execute, {'function': {'name': name, 'arguments': arguments}})

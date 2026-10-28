@@ -312,6 +312,10 @@ class ToolSession:
             from coding_activity import CodingActivity
             self.file_activity = CodingActivity(self.root, self.file_activity, policy)
         self.cache = {}
+        from recovery_guard import RecoveryGuard
+        self.recovery_guard = RecoveryGuard() if self.grants.get('coding_workspace') else None
+        self.persistent_budget = None
+        self.validate_tool_arguments = False  # Stdio validates here, before execution, with audited errors.
         self.run_id = str(uuid4())
         self.conversation_id = conversation_id
         self.audit_path = None
@@ -435,7 +439,7 @@ class ToolSession:
             return execute_builtin(self.root,self.grants,name,arguments)
 
     def _execute(self, call):
-        if len(self.events) >= self.call_limit:
+        if self.persistent_budget is None and len(self.events) >= self.call_limit:
             raise ValueError("Python tool call limit reached")
         function = call.get("function", {}) if isinstance(call, dict) else {}
         if not isinstance(function, dict):
@@ -457,6 +461,22 @@ class ToolSession:
                 raise ValueError("Tool not approved for this message")
             if not isinstance(arguments, dict):
                 raise ValueError("Tool arguments must be a JSON object")
+            blocked = self.persistent_budget.consume() if self.persistent_budget else None
+            if blocked is None and self.recovery_guard:
+                blocked = self.recovery_guard.before(name, arguments)
+            if blocked is not None:
+                result = blocked
+                if self.recovery_guard and blocked.get('code') == 'recovery_required':
+                    from recovery_guard import evidence
+                    result['recovery'] = evidence(self.root, arguments)
+                return self._record_blocked(call, event, result, audit)
+            if self.validate_tool_arguments:
+                from tool_arguments import validate
+                schema=next(t['function']['parameters'] for t in self.tools if t['function']['name']==name)
+                invalid=validate(arguments,schema,name)
+                if invalid:
+                    if self.recovery_guard:self.recovery_guard.after(name,arguments,invalid)
+                    return self._record_blocked(call,event,invalid,audit)
             self.file_activity.begin(call)
             key = json.dumps([name, arguments], sort_keys=True)
             # A preview must recheck current validation on every request. Its
@@ -467,17 +487,40 @@ class ToolSession:
                 event["reused"] = True
             else:
                 event['executed']=True
-                result=self._invoke(name,arguments,event)
+                try:
+                    result=self._invoke(name,arguments,event)
+                except OSError as exc:
+                    from recovery_guard import retryable_read
+                    if not retryable_read(name, exc):raise
+                    if self.control:self.control.check()
+                    event['recovery_attempts'] = 1
+                    result=self._invoke(name,arguments,event)
                 if cacheable:
                     self.cache[key] = result
         except (ValueError, OSError, UnicodeError) as exc:
             result = {"status": "error", "error": str(exc)}
         event["result"] = result
+        if self.recovery_guard:
+            self.recovery_guard.after(name, arguments, result)
+            if result.get('status') == 'error' and isinstance(arguments,dict) and name in {
+                    'read_coding_file','propose_coding_edit','propose_coding_edits','propose_coding_patch','apply_coding_patch','propose_coding_restore'}:
+                from recovery_guard import evidence
+                result['recovery'] = evidence(self.root, arguments)
         self.file_activity.finish(call, result)
         self.events.append(event)
+        if self.persistent_budget is not None:self.events[:] = self.events[-128:]
         recorded=json.dumps({**event,"phase":"result"},ensure_ascii=True)+"\n"
         if len(recorded.encode())>3*1024*1024:raise ValueError('Tool receipt exceeds reserved audit budget')
         with audit.open("a",encoding="utf-8",newline="\n") as out:out.write(recorded)
+        return result
+
+    def _record_blocked(self, call, event, result, audit):
+        event.update(result=result, blocked=True)
+        self.file_activity.finish(call, result)
+        self.events.append(event)
+        if self.persistent_budget is not None:self.events[:] = self.events[-128:]
+        with audit.open('a', encoding='utf-8', newline='\n') as out:
+            out.write(json.dumps({**event,'phase':'result'},ensure_ascii=True)+'\n')
         return result
 
     def receipt(self):
@@ -516,6 +559,8 @@ class ToolSession:
                 lines.append(f"{prefix}: {result['action']} | recalled={result.get('recalled',True)} | notes={len(result.get('notes',[]))}")
             elif result['status'].startswith(('workspace_', 'coding_', 'native_build_')):
                 lines.append(f"{prefix}: {result['status']} | {result.get('message', result.get('path', result.get('relative_path', 'Result recorded')))}")
+                if isinstance(result.get('acceptance'),dict):
+                    lines.append('Editable tests: '+str(result.get('workspace_tests_stage'))+' | Frozen acceptance: '+str(result['acceptance'].get('stage'))+' | Overall: '+str(result.get('stage')))
                 if result.get('url'):
                     lines.append('Preview: ' + result['url'])
             elif result['status'] == 'model_inspected':

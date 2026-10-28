@@ -172,10 +172,13 @@ def capture(root, metadata, target, files, operation='indexed'):
     tests = []
     for profile, result in metadata.get('tests', {}).items():
         current = result.get('tree_sha256') == revision
+        from acceptance_contracts import fresh
+        current = current and fresh(root,sid,target,profile,result)
         if profile == 'lua':
             from sandbox import lua_runner_sha256
             current = current and result.get('runner_sha256') == lua_runner_sha256()
         tests.append({'profile': profile, 'stage': result.get('stage', 'UNKNOWN'),
+                      'workspace_tests_stage':result.get('workspace_tests_stage'), 'acceptance_stage':result.get('acceptance_stage'),
                       'tree_sha256': result.get('tree_sha256'), 'current': current})
     relation = graph(root, target, rows, tests, revision)
     history = ((previous or {}).get('history', []) + changes + [{'time': now, 'operation': operation, 'tree_sha256': revision}])[-MAX_HISTORY:]

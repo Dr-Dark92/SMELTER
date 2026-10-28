@@ -1,6 +1,127 @@
 # SMELTER V1 — System Requirements
 
+## Bounded native task watchdog
+
+The user-authorized watchdog captures the bound coding prompt privately, waits
+for an explicit `finish_coding_task` with verified RED/GREEN, and submits at most three same-session checkpoint
+continuations if work stalls without an end flag. Stop, new human input, active
+tools, permissions/questions and uncertain delivery prevent duplicate work.
+Repeated tool-contract errors and non-improving frozen results hold recovery
+for diagnosis rather than replaying the same objective.
+
+Install/start with `python tools/setup/manage_task_watchdog.py install` and
+`python tools/setup/manage_task_watchdog.py start`; `activate` loads the new hook
+only when the exact native instance is idle. `status`, `disable` and explicit
+`adopt` operations are also available. `resume` repairs only legacy automatic-RED
+termination without resetting retries or reviving Stop/explicit completion.
+Existing Python/OpenCode standard-library
+runtimes are reused: no new packages. All files and bounds are declared under
+`task_watchdog` in `system-requirements.json`. See [watchdog behavior and private
+state](docs/WATCHDOG.md). The trace WebSocket remains read-only.
+
+Focused coding edits use `propose_coding_edit` (one file, one replacement, five
+flat string fields); the batch API remains available. Stdio validates the same
+advertised schema inside the controller so malformed calls are audited and
+budgeted. `tools/dashboard/requirements-mcp.txt` explicitly pins the already
+installed `jsonschema==4.26.0` dependency used for validation. No new package
+installation was needed. See [coding recovery](docs/RECOVERY_GUARDRAILS.md).
+
+## Frozen acceptance checks
+
+`tools/dashboard/acceptance_contracts.py` registers reviewed module behavior in
+controller metadata outside the model-editable copy. The initial
+`entity-policy-v1` verifier uses the existing pinned Lua sandbox and checks 30
+engine-neutral entity-policy cases. No new packages are required.
+
+Register a subject explicitly with
+`python tools/setup/register_acceptance.py --workspace-id <UUID> --contract entity-policy-v1 --subject <relative-module.lua>`.
+The model has no registration tool. Lua validation then requires both its
+editable tests and the frozen verifier to pass. Evidence pins subject/verifier
+hashes and the executing controller revision. Missing or inconsistent evidence
+fails closed. The machine-readable entry is `frozen_acceptance` in
+`system-requirements.json`; see [Frozen acceptance](docs/FROZEN_ACCEPTANCE.md).
+
+## Coding recovery and native guardrails
+
+`coding_recovery_context` supplies canonical paths, current hashes, verified
+checkpoint references and the first failing stack frame from saved test logs.
+Targeted edits handle CRLF/LF differences; the controller blocks repeated failed
+calls and unchanged reads. Persistent stdio MCP connections use a renewable
+128-call / 15-minute work window, rather than a lifetime 32-call budget. GUI
+turn budgets retain their existing limits.
+
+Register the local OpenCode hooks with
+`python tools/setup/configure_recovery_guard.py --apply`. Hooks load on the next
+OpenCode process and guard only the enabled, exact session/directory binding in
+SMELTER's native progress ledger. Native shell/edit/delegation bypasses are
+blocked for that task. The installer preserves existing config, makes a backup
+and adds missing Ollama request timeout defaults; explicit existing timeouts
+remain unchanged. No model turn is submitted or restarted.
+
+This uses the existing Python/OpenCode runtimes and their built-in modules;
+there are **no new external packages**. `recovery_guardrails` in
+`system-requirements.json` declares the files, limits and setup command. See
+[recovery behavior and limitations](docs/RECOVERY_GUARDRAILS.md).
+
+## Exact coding edits and recovery checkpoints
+
+Built-in `coding_workspace.py` now exposes `propose_coding_edits` for unique
+old_text/new_text changes; the controller assembles complete files and preserves
+unrelated bytes. Existing whole-file proposals remain available, with explicit
+line counts and a guard against large accidental truncations. Each confirmed
+apply saves hash-verified pre-edit checkpoints, including files created only in
+the coding copy. `propose_coding_restore` can select one by `checkpoint_sha256`;
+workspace context and apply receipts expose available hashes. This uses Python's
+standard library only; no package installation is needed. The machine-readable
+entry is `coding_edit_safety` in system-requirements.json. See
+[workspace editing and recovery](docs/WORKSPACE_TRACKING.md#safe-targeted-edits-and-checkpoint-recovery).
+
+## Universal gameplay implementation slice
+
+The Raptor task is an acceptance case for reusable gameplay logic and project
+adapters. Its proposed [shared contract](docs/UNIVERSAL_GAMEPLAY_CONTRACT.md) and
+[SMELTER task brief](docs/tasks/RAPTOR_GENERIC_TASK_BRIEF.md) require no additional
+external package for the current offline work. Reuse the declared coding MCP,
+confined Lua/Python/C++ runners and ECC/gameplay/debugging profiles. This contract
+is an implementation specification, not an installed cross-engine runtime.
+Add tools only when a concrete engine adapter capability gap requires them, and
+declare each actual addition in this file and `system-requirements.json`.
+
 ## Native Melty / OpenCode progress
+
+The live task visualization adds `tools/dashboard/task_trace.py`,
+`task_socket.py` and `task_trace_ui.js`, using Python's standard library and the
+browser's native WebSocket/DOM APIs. No package installation is required. The
+same-origin authenticated WebSocket is `/api/task-trace/ws`; a token-protected
+HTTP snapshot is `/api/task-trace`. On Windows, existing PowerShell/CIM and TCP
+listener metadata discover actual OpenCode ACP processes for read-only pending
+access/question inspection. Other platforms retain SQLite task/file telemetry
+and explicitly report the ACP permission feed unavailable. Ollama discovery uses
+the existing loopback `/api/ps` endpoint. See [live task trace](docs/NATIVE_PROGRESS.md#live-websocket-task-trace).
+
+`task_trace` in `system-requirements.json` declares the modules, sources and
+bounds. A supplied Melty task ID can be linked to the exact native binding;
+otherwise a native turn ID is labelled as such. No Melty-side task-ID hook is
+installed or claimed. The view includes explicit child-session access waits,
+budget errors, named file/skill metadata, indexed hashes and quiet-task clues;
+it does not submit prompts, grant access, inspect shell contents or restart work.
+
+The trace workbench (`task_trace_graph.js`, `task_trace_workbench.js`,
+`trace_artifacts_ui.js`, `trace_history.py`, `trace_artifacts.py`) adds an
+interactive relationship graph, inspector, saved final task charts and explicit
+task-artifact previews over the same WebSocket feed. It uses the browser's native
+SVG/DOM and Python's standard library, and reuses the existing local GLB viewer;
+no package is installed. Saved charts (`GET /api/task-trace/charts`) and
+artifact registration (`GET/POST /api/task-trace/artifacts`) are bounded files
+under `.smelter/task-trace/`. Graphify was evaluated and is **not** installed.
+See `task_trace_workbench` in `system-requirements.json` and
+[the trace workbench](docs/TRACE_WORKBENCH.md).
+
+The monitor also reads allowlisted lifecycle columns from OpenCode's shared
+SQLite metadata in read-only mode. This covers Melty ACP processes whose event
+bus differs from the separately running HTTP server. It uses Python's existing
+`sqlite3`; no package is installed. Unsupported schemas fail closed and are
+reported as unavailable. Message/argument/output/reasoning bodies are excluded.
 
 The built-in `tools/dashboard/native_progress.py` consumes the existing native
 OpenCode server's SSE stream at `http://127.0.0.1:4096`. It uses Python's standard

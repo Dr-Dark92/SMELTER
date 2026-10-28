@@ -12,10 +12,14 @@ from unittest.mock import patch
 
 
 class LuaEvidenceTests(unittest.TestCase):
-    def classify(self, syntax_marker):
+    def classify(self, syntax_marker, execution_marker=None):
         with tempfile.TemporaryDirectory() as tmp:
             folder=Path(tmp)/'snapshot';folder.mkdir()
-            output=('SMELTER_TEST_RESULT|'+json.dumps({'tests':1,'failures':0,'errors':0,'skipped':0})+'\n'+syntax_marker).encode()
+            for name in ('Scripts/controller.lua','tests/test_controller.lua'):
+                path=folder/'mods/demo'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('return {}\n')
+            if execution_marker is None:
+                execution_marker='SMELTER_LUA_EXECUTION|'+json.dumps({'manifest':sandbox.lua_snapshot_manifest(folder),'programs':[{'test':'mods/demo/tests/test_controller.lua','working_directory':'mods/demo','exit_code':0,'imports':[]}]})+'\n'
+            output=('SMELTER_TEST_RESULT|'+json.dumps({'tests':1,'failures':0,'errors':0,'skipped':0})+'\n'+syntax_marker+execution_marker).encode()
             ready={'ready':True,'docker':'docker','configured':{'cpp_image':'sha256:'+'a'*64}}
             with patch('sandbox.status',return_value=ready),patch('sandbox.snapshot',return_value=(folder,folder)), \
                  patch('sandbox.run',return_value=subprocess.CompletedProcess([],0,output,b'')), \
@@ -31,6 +35,14 @@ class LuaEvidenceTests(unittest.TestCase):
             with self.subTest(marker=marker):self.assertEqual(self.classify(marker)['stage'],'ERROR')
 
 
+    def test_missing_or_mismatched_container_bytes_cannot_be_green(self):
+        clean='SMELTER_LUA_SYNTAX_RESULT|'+json.dumps({'files_total':2,'files_checked':2,'errors':0,'failed_files':[]})+'\n'
+        for marker in ('','SMELTER_LUA_EXECUTION|'+json.dumps({'manifest':{},'programs':[]})+'\n'):
+            value=self.classify(clean,marker)
+            self.assertEqual(value['stage'],'ERROR')
+            self.assertFalse(value['source_snapshot']['bytes_match'])
+
+
 @unittest.skipUnless(toolchain(), 'Docker and smelter-cpp:2 required')
 class LuaProfileTests(unittest.TestCase):
     def run_fixture(self, files):
@@ -39,7 +51,7 @@ class LuaProfileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             code=Path(tmp)/'code';(code/'.smelter').mkdir(parents=True)
             for relative,content in files.items():
-                path=code/'mods/demo'/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content,encoding='utf-8')
+                path=code/'mods/demo'/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(content.encode('utf-8'))
             name='smelter-tests-'+uuid4().hex
             try:
                 result=run(sandbox._flags(ready['docker'],name,code)+['--rm',ready['configured']['cpp_image'],
@@ -80,6 +92,28 @@ class LuaProfileTests(unittest.TestCase):
         code,counts,syntax,output=self.run_fixture(files)
         self.assertEqual((code,counts['tests'],counts['errors']),(1,0,1),output)
         self.assertEqual((syntax['files_total'],syntax['files_checked']),(513,0))
+
+    def test_runtime_nil_iteration_is_error_not_a_red_assertion(self):
+        code,counts,syntax,output=self.run_fixture({'Scripts/policy.lua':'return function() for k,v in pairs(nil) do end end\n',
+            'tests/test_policy.lua':'package.path="Scripts/?.lua;"..package.path\nrequire("policy")()\n'})
+        self.assertEqual((code,counts['failures'],counts['errors']),(1,0,1),output)
+        self.assertEqual(syntax['errors'],0)
+
+    def test_runtime_trace_reports_actual_import_and_current_bytes(self):
+        import hashlib
+        module='return {value=17}\n'
+        files={'Scripts/controller.lua':module,'tests/test_controller.lua':'package.path="Scripts/?.lua;"..package.path\nassert(require("controller").value==17)\n'}
+        code,counts,syntax,output=self.run_fixture(files)
+        self.assertEqual(code,0,output)
+        detail=json.loads(next(row.split('|',1)[1] for row in output.splitlines() if row.startswith('SMELTER_LUA_EXECUTION|')))
+        self.assertEqual(detail['manifest']['mods/demo/Scripts/controller.lua'],hashlib.sha256(module.encode()).hexdigest())
+        self.assertEqual(detail['programs'][0]['working_directory'],'mods/demo')
+        self.assertEqual(detail['programs'][0]['imports'][0]['path'],'mods/demo/Scripts/controller.lua')
+        files['Scripts/controller.lua']='return {value=99}\n'
+        code,counts,syntax,output=self.run_fixture(files)
+        self.assertEqual((code,counts['failures']),(1,1),output)
+        changed=json.loads(next(row.split('|',1)[1] for row in output.splitlines() if row.startswith('SMELTER_LUA_EXECUTION|')))
+        self.assertNotEqual(changed['manifest'],detail['manifest'])
 
     def test_shared_gal1_fixture_and_transform_vectors(self):
         source = Path(__file__).resolve().parents[2] / 'mods/gta-ark'

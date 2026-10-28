@@ -1,3 +1,5 @@
 # Optional MCP v1 compatibility layer; install into the dashboard's interpreter.
 # Also used by the native REA context gateway; no additional package is required.
 mcp==1.30.0
+# Already supplied transitively by MCP; pinned for audited controller schema validation.
+jsonschema==4.26.0

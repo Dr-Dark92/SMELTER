@@ -1,0 +1,11 @@
+flowchart LR
+  Host["Owned host coding workspace"] -->|"observed: copy each invocation"| Snapshot["Fresh source snapshot UUID"]
+  HostHashes["Host Lua file hashes"] -->|"observed: compare manifests"| Proof["Source byte comparison"]
+  Snapshot -->|"observed: read-only bind mount"| Container["Docker test container"]
+  Image["Pinned runtime/toolchain image"] --> Container
+  Container -->|"observed: independent hashes"| Proof
+  Container -->|"observed: Lua file loader trace"| Imports["Actual imports + SHA-256 + test CWD"]
+  Proof --> Receipt["Evidence receipt; mismatches are ERROR"]
+  Imports --> Receipt
+  ACP["Melty OpenCode ACP process"] -->|"observed: public lifecycle metadata"| DB["Shared native SQLite store"]
+  DB -->|"observed: read-only selected fields"| Monitor["SMELTER task progress and final chart"]

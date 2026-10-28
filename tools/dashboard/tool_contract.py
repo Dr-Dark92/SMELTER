@@ -21,5 +21,7 @@ def result_failed(result):
     if not isinstance(result, dict):
         return True
     status = result.get('status')
+    if status=='coding_tests_failed' and isinstance(result.get('acceptance'),dict) and result['acceptance'].get('stage') in ('RED','ERROR'):
+        return True
     return status in {'error', 'rea_failed', 'mcp_failed', 'workspace_validation_failed', 'native_build_failed', 'engine_archive_failed', 'access_denied'} or (
         status == 'coding_tests_failed' and result.get('stage') != 'RED')

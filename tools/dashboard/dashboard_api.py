@@ -27,11 +27,18 @@ class ApiRoutes:
     GET_ROUTES['/api/project-memory']='_get_project_memory'
     GET_ROUTES['/api/workspace-tracking']='_get_workspace_tracking'
     GET_ROUTES['/api/native-progress']='_get_native_progress'
+    GET_ROUTES['/api/task-trace']='_get_task_trace'
+    GET_ROUTES['/api/task-trace/charts']='_get_task_trace_charts'
+    GET_ROUTES['/api/task-trace/artifacts']='_get_task_artifacts'
+    POST_ROUTES['/api/task-trace/artifacts']='_post_task_artifacts'
+    GET_PREFIXES.append(('/api/task-trace/artifacts/', '_get_task_artifact'))
     POST_ROUTES['/api/native-progress']='_post_native_progress'
     POST_ROUTES['/api/workspace-tracking']='_post_workspace_tracking'
     POST_ROUTES['/api/web-access']='_post_web_access'
     POST_ROUTES['/api/project-memory']='_post_project_memory'
     ASSETS={
+        '/assets/task-trace.js':'task_trace_ui.js',
+        '/assets/task-trace-graph.js':'task_trace_graph.js','/assets/task-trace-workbench.js':'task_trace_workbench.js','/assets/trace-artifacts.js':'trace_artifacts_ui.js',
         '/assets/native-progress.js':'native_progress_ui.js',
         '/assets/workspace-tracking.js':'workspace_tracking_ui.js',
         '/assets/knowledge.js':'knowledge_ui.js',
@@ -47,6 +54,11 @@ class ApiRoutes:
     def do_GET(self):
         try:
             route=urlsplit(self.path).path
+            if route == '/api/task-trace/ws':
+                if urlsplit(self.path).query or not self.trace_authorized():
+                    return self.reply(403, {'error': 'Same-origin authenticated trace connection required'})
+                from task_socket import serve
+                return serve(self)
             if route in self.ASSETS:
                 source=Path(self.app.__file__).with_name(self.ASSETS[route])
                 return self.reply(200,source.read_text(encoding='utf-8'),'application/javascript')
@@ -88,16 +100,45 @@ class ApiRoutes:
             raise ValueError('Native progress status accepts no query parameters')
         return self.reply(200, manager(self.app.ROOT).view())
 
+    def _get_task_trace(self, route, data=None):
+        if urlsplit(self.path).query: raise ValueError('Task trace accepts no query parameters')
+        from task_trace import manager
+        return self.reply(200, manager(self.app.ROOT).view())
+
+    def _get_task_trace_charts(self, route, data=None):
+        if urlsplit(self.path).query: raise ValueError('Task charts accept no query parameters')
+        from trace_history import view
+        return self.reply(200, view(self.app.ROOT))
+
+    def _get_task_artifacts(self, route, data=None):
+        if urlsplit(self.path).query: raise ValueError('Task artifacts accept no query parameters')
+        from trace_artifacts import view
+        return self.reply(200, view(self.app.ROOT))
+
+    def _get_task_artifact(self, route, data=None):
+        if urlsplit(self.path).query: raise ValueError('Task artifacts accept no query parameters')
+        from trace_artifacts import content
+        raw, mime = content(self.app.ROOT, route.removeprefix('/api/task-trace/artifacts/'))
+        return self.reply(200, raw, mime)
+
+    def _post_task_artifacts(self, route, data):
+        from trace_artifacts import register
+        if data.get('action') != 'register': raise ValueError('Only explicit artifact registration is supported')
+        return self.reply(200, register(self.app.ROOT, data))
+
     def _post_native_progress(self, route, data):
         from native_progress import manager
         bridge = manager(self.app.ROOT)
         action = data.get('action')
         if action == 'sessions' and set(data) == {'action', 'directory'}:
             return self.reply(200, bridge.discover(data['directory']))
-        if action == 'bind' and set(data) == {'action', 'session_id', 'directory', 'workspace_id', 'expected_revision'}:
+        if action == 'bind' and set(data) in ({'action', 'session_id', 'directory', 'workspace_id', 'expected_revision'},
+                                             {'action', 'session_id', 'directory', 'workspace_id', 'expected_revision', 'melty_task_id'}):
             return self.reply(200, bridge.bind(data))
         if action in ('start', 'stop') and set(data) == {'action', 'expected_revision'}:
             return self.reply(200, bridge.control(action, data['expected_revision']))
+        if action == 'correlate' and set(data) == {'action', 'expected_revision', 'melty_task_id'}:
+            return self.reply(200, bridge.correlate(data['melty_task_id'], data['expected_revision']))
         raise ValueError('Use exact native session discovery, binding or read-only start/stop controls')
 
     def _get_workspace_tracking(self, route, data=None):

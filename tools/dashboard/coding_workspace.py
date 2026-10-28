@@ -222,9 +222,12 @@ def read(root, arguments):
         raw = path.read_bytes()
         text = raw.decode('utf-8')
         location = {'workspace_root': str(target), 'source_root': str(Path(root).resolve()),
+                    'newline_style': newline_style(text),
                     'physical_path': str(path), 'storage': 'host_directory',
                     'test_working_directory': '/'.join(Path(relative).parts[:2]) if relative.startswith('mods/') else '.',
-                    'tests_use': 'read-only Docker snapshots, not the live edit directory'}
+            'tests_use': 'read-only Docker snapshots, not the live edit directory',
+            'preferred_edit_tool':'propose_coding_edit',
+            'edit_argument_names':['workspace_id','relative_path','expected_sha256','old_text','new_text']}
         if 'start_line' in arguments or 'line_count' in arguments:
             if 'offset' in arguments or 'limit' in arguments:
                 raise ValueError('Choose line pagination OR character offset/limit, not both')
@@ -282,11 +285,20 @@ def context(root, arguments):
             return {'status': 'coding_workspace_registry', **registry(root)}
         metadata, target = load(root, arguments['workspace_id'])
         value = capture(root, metadata, target, _scan(target), 'context refreshed')
+        checkpoints = []
+        for item in metadata.get('checkpoints', [])[-12:]:
+            try:
+                _file(target, item['relative_path'])
+                checkpoints.append(item)
+            except (ValueError, OSError, KeyError):
+                continue
+        from acceptance_contracts import load as load_contracts, summary
         return {'status': 'coding_workspace_context', **view(value, arguments.get('query', ''),
-                arguments.get('offset', 0), arguments.get('limit', 50))}
+                arguments.get('offset', 0), arguments.get('limit', 50)), 'checkpoints': checkpoints,
+                'acceptance_contracts': summary(load_contracts(root,arguments['workspace_id'],target))}
 
 
-def _changes(target, changes):
+def _changes(target, changes, allow_large_replacement=False):
     if not isinstance(changes, list) or not 1 <= len(changes) <= MAX_CHANGES:
         raise ValueError('Propose one to six file replacements')
     result, seen, size = [], set(), 0
@@ -295,7 +307,7 @@ def _changes(target, changes):
             raise ValueError('Each change requires relative_path, expected_sha256 and complete content')
         relative = relative_path(change['relative_path'], edit=True)
         if relative.lower() in seen:
-            raise ValueError('Duplicate/case-colliding patch path')
+            raise ValueError('Duplicate/case-colliding patch path: group all replacements for a file in ONE edits entry, or use propose_coding_edit for one replacement')
         seen.add(relative.lower())
         path = _file(target, relative, edit=True)
         expected = change['expected_sha256']
@@ -318,43 +330,180 @@ def _changes(target, changes):
         if len(after) > MAX_FILE or size > MAX_PATCH:
             raise ValueError('Patch exceeds 128 KiB per file or 512 KiB total')
         old = before.decode('utf-8') if before is not None else ''
+        before_lines, after_lines = len(old.splitlines()), len(text.splitlines())
+        large_drop = bool(before and len(before) >= 1024 and before_lines >= 30 and
+                          len(after) < len(before) * .35 and after_lines < before_lines * .5)
+        if large_drop and not allow_large_replacement:
+            raise ValueError('Likely snippet-as-file replacement rejected for ' + relative +
+                ': ' + str(before_lines) + ' lines would become ' + str(after_lines) +
+                '. content replaces the ENTIRE file. Use propose_coding_edits for targeted changes. '
+                'Only intentional whole-file rewrites may set allow_large_replacement=true.')
         diff = ''.join(difflib.unified_diff(old.splitlines(keepends=True), text.splitlines(keepends=True),
                        fromfile='before/' + relative, tofile='after/' + relative))
         result.append({**change, 'after_sha256': digest(after), 'bytes': len(after), 'diff': diff[:2600],
-                       'diff_truncated': len(diff) > 2600})
+                       'diff_truncated': len(diff) > 2600, 'before_lines': before_lines,
+                       'after_lines': after_lines, 'large_replacement': large_drop})
     return result
 
 
-def _record_proposal(root, workspace_id, changes, restoration_source=None):
+def _record_proposal(root, workspace_id, changes, restoration_source=None, restoration_checkpoint=None):
     """Record validated changes while the caller holds the workspace lock."""
     pid = str(uuid4())
     value = {'proposal_id': pid, 'workspace_id': workspace_id, 'state': 'proposed', 'changes': changes}
+    value['allow_large_replacement'] = any(c['large_replacement'] for c in changes)
     if restoration_source is not None:
         value['restoration_source'] = restoration_source
+    if restoration_checkpoint is not None:
+        value['restoration_checkpoint'] = restoration_checkpoint
     reserve_metadata(root, len(json.dumps(value).encode()))
     folder = base_path(root) / workspace_id / 'proposals'
     folder.mkdir(exist_ok=True)
     _save(folder / (pid + '.json'), value)
     result = {'status': 'coding_patch_proposed', 'workspace_id': workspace_id, 'proposal_id': pid,
-              'files': [{k: c[k] for k in ('relative_path', 'expected_sha256', 'after_sha256', 'bytes', 'diff', 'diff_truncated')}
+              'files': [{k: c[k] for k in ('relative_path', 'expected_sha256', 'after_sha256', 'bytes', 'diff', 'diff_truncated', 'before_lines', 'after_lines', 'large_replacement')}
                         for c in changes], 'applied': False}
     if restoration_source is not None:
         result['restoration_source'] = restoration_source
+    if restoration_checkpoint is not None:
+        result['restoration_checkpoint'] = restoration_checkpoint
     return result
 
 
 def propose(root, arguments):
-    if set(arguments) != {'workspace_id', 'changes'}:
-        raise ValueError('Coding proposals require workspace_id and changes only')
+    if set(arguments) - {'workspace_id', 'changes', 'allow_large_replacement'} or not {'workspace_id', 'changes'} <= set(arguments):
+        raise ValueError('Coding proposals require workspace_id, changes and optional allow_large_replacement')
+    allow = arguments.get('allow_large_replacement', False)
+    if type(allow) is not bool:
+        raise ValueError('allow_large_replacement must be boolean')
     with locked(root):
         _, target = load(root, arguments['workspace_id'])
-        return _record_proposal(root, arguments['workspace_id'], _changes(target, arguments['changes']))
+        return _record_proposal(root, arguments['workspace_id'], _changes(target, arguments['changes'], allow))
+
+
+def newline_style(text):
+    crlf = text.count('\r\n')
+    lf = text.count('\n') - crlf
+    cr = text.count('\r') - crlf
+    kinds = [name for name, count in (('CRLF', crlf), ('LF', lf), ('CR', cr)) if count]
+    return 'mixed' if len(kinds) > 1 else kinds[0] if kinds else 'none'
+
+
+def replace_context(text, old, new):
+    """Only normalize CRLF/LF for matching; preserve bytes outside that match.
+
+    Match uniqueness is checked on the normalized view even if one raw match
+    exists: otherwise two visually identical contexts could select arbitrarily.
+    Bare CR and whitespace are never treated as equivalent.
+    """
+    normalized, needle = text.replace('\r\n', '\n'), old.replace('\r\n', '\n')
+    count = normalized.count(needle)
+    if count != 1:
+        raise ValueError('Exact edit context matched ' + str(count) + ' times; provide unique current context')
+    start = normalized.index(needle)
+    # Map LF-view character boundaries back to original UTF-8 text boundaries.
+    boundaries, index = [0], 0
+    while index < len(text):
+        index += 2 if text.startswith('\r\n', index) else 1
+        boundaries.append(index)
+    first, last = boundaries[start], boundaries[start + len(needle)]
+    matched = text[first:last]
+    style = newline_style(matched)
+    if style == 'CRLF':
+        new = new.replace('\r\n', '\n').replace('\n', '\r\n')
+    elif style == 'LF':
+        new = new.replace('\r\n', '\n')
+    return text[:first] + new + text[last:]
+
+
+def edit_changes(target, changes):
+    """Assemble complete files on the controller from unique exact contexts."""
+    if not isinstance(changes, list) or not 1 <= len(changes) <= MAX_CHANGES:
+        raise ValueError('Edit one to six existing files')
+    assembled = []
+    for change in changes:
+        if not isinstance(change, dict) or set(change) != {'relative_path', 'expected_sha256', 'edits'}:
+            raise ValueError('Exact edits require relative_path, expected_sha256 and edits')
+        path = _file(target, change['relative_path'], edit=True)
+        if not path.is_file() or path.stat().st_size > MAX_FILE:
+            raise ValueError('Read an existing UTF-8 file before targeted edits')
+        raw = path.read_bytes()
+        if digest(raw) != change['expected_sha256']:
+            raise ValueError('File changed before exact edits; read the current destination hash')
+        edits = change['edits']
+        if not isinstance(edits, list) or not 1 <= len(edits) <= 16:
+            raise ValueError('Use one to sixteen exact text replacements per file')
+        text = raw.decode('utf-8')
+        for edit in edits:
+            if not isinstance(edit, dict) or set(edit) != {'old_text', 'new_text'}:
+                raise ValueError('Each edit needs old_text and new_text')
+            old, new = edit['old_text'], edit['new_text']
+            if not isinstance(old, str) or not old or not isinstance(new, str) or '\x00' in old + new:
+                raise ValueError('Use nonempty exact old_text and UTF-8 new_text without NUL')
+            if len(old.encode('utf-8')) > MAX_FILE or len(new.encode('utf-8')) > MAX_FILE:
+                raise ValueError('Exact edit text exceeds 128 KiB')
+            text = replace_context(text, old, new)
+        assembled.append({'relative_path': change['relative_path'], 'expected_sha256': change['expected_sha256'], 'content': text})
+    return assembled
+
+
+def propose_edits(root, arguments):
+    if set(arguments) != {'workspace_id', 'changes'}:
+        raise ValueError('Exact edit proposals require workspace_id and changes')
+    with locked(root):
+        _, target = load(root, arguments['workspace_id'])
+        return _record_proposal(root, arguments['workspace_id'], _changes(target, edit_changes(target, arguments['changes'])))
+
+
+def propose_edit(root, arguments):
+    """Scalar one-file/one-replacement interface; same checked proposal engine."""
+    if set(arguments) != {'workspace_id','relative_path','expected_sha256','old_text','new_text'}:
+        raise ValueError('Single edit requires workspace_id, relative_path, expected_sha256, old_text and new_text')
+    return propose_edits(root, {'workspace_id':arguments['workspace_id'], 'changes':[{
+        'relative_path':arguments['relative_path'], 'expected_sha256':arguments['expected_sha256'],
+        'edits':[{'old_text':arguments['old_text'], 'new_text':arguments['new_text']}]}]})
+
+
+def _checkpoint_path(root, sid, relative, sha):
+    relative = relative_path(relative, edit=True)
+    if not isinstance(sha, str) or not re.fullmatch(r'[a-f0-9]{64}', sha):
+        raise ValueError('Choose an exact checkpoint SHA-256')
+    # Short deterministic storage keys keep atomic-temp filenames below Windows
+    # path limits. Full path ownership and the complete SHA are checked in JSON.
+    key = digest((relative + '\x00' + sha).encode('utf-8'))[:32]
+    return _plain_path(base_path(root) / identifier(sid) / 'checkpoints' / (key + '.json'))
+
+
+def read_checkpoint(root, sid, relative, sha):
+    path = _checkpoint_path(root, sid, relative, sha)
+    if not path.is_file() or path.stat().st_size > MAX_FILE * 6 + 4096:
+        raise ValueError('No bounded checkpoint exists for this workspace, path and hash')
+    value = json.loads(path.read_text(encoding='utf-8'))
+    if (value.get('workspace_id') != sid or value.get('relative_path') != relative or
+        value.get('sha256') != sha or not isinstance(value.get('content'), str)):
+        raise ValueError('Checkpoint ownership mismatch')
+    raw = value['content'].encode('utf-8')
+    if len(raw) > MAX_FILE or digest(raw) != sha:
+        raise ValueError('Checkpoint bytes changed')
+    return raw
+
+
+def checkpoint(root, sid, relative, raw):
+    sha = digest(raw); path = _checkpoint_path(root, sid, relative, sha)
+    if path.exists():
+        if read_checkpoint(root, sid, relative, sha) != raw:
+            raise ValueError('Existing checkpoint does not match its hash')
+    else:
+        value = {'workspace_id': sid, 'relative_path': relative, 'sha256': sha, 'content': raw.decode('utf-8')}
+        reserve_metadata(root, len(json.dumps(value).encode('utf-8')))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _save(path, value)
+    return {'relative_path': relative, 'sha256': sha, 'bytes': len(raw)}
 
 
 def propose_restore(root, arguments):
     """Snapshot original text and destination hashes, without applying edits."""
-    if set(arguments) != {'workspace_id', 'relative_paths'}:
-        raise ValueError('Restoration accepts workspace_id and original relative_paths only')
+    if set(arguments) - {'workspace_id', 'relative_paths', 'checkpoint_sha256'} or not {'workspace_id', 'relative_paths'} <= set(arguments):
+        raise ValueError('Restoration accepts workspace_id, relative_paths and optional checkpoint_sha256')
     paths = arguments['relative_paths']
     if (not isinstance(paths, list) or not 1 <= len(paths) <= MAX_CHANGES
             or any(not isinstance(p, str) for p in paths)
@@ -362,12 +511,27 @@ def propose_restore(root, arguments):
         raise ValueError('Restore one to six distinct original source paths')
     with locked(root):
         _, target = load(root, arguments['workspace_id'])
+        if 'checkpoint_sha256' in arguments:
+            if len(paths) != 1:
+                raise ValueError('Restore one checkpoint path at a time')
+            relative = relative_path(paths[0], edit=True)
+            _file(target, relative)
+            raw = read_checkpoint(root, arguments['workspace_id'], relative, arguments['checkpoint_sha256'])
+            destination = _file(target, relative, edit=True)
+            if destination.is_file() and destination.stat().st_size > MAX_FILE:
+                raise ValueError('Existing code file exceeds 128 KiB')
+            before = destination.read_bytes() if destination.is_file() else None
+            changes = [{'relative_path': relative, 'content': raw.decode('utf-8'),
+                        'expected_sha256': digest(before) if before is not None else None}]
+            origin = [{'relative_path': relative, 'sha256': digest(raw)}]
+            return _record_proposal(root, arguments['workspace_id'], _changes(target, changes, True), restoration_checkpoint=origin)
         changes, sources = [], []
         for supplied in paths:
             relative = relative_path(supplied, edit=True)
             source = _file(Path(root).resolve(), relative)
             if not source.is_file() or source.stat().st_size > MAX_FILE:
-                raise ValueError('Original UTF-8 source is missing or oversized: ' + relative)
+                raise ValueError('Original UTF-8 source is missing or oversized: ' + relative +
+                    '. Workspace-only files have no checkout baseline; choose a saved checkpoint_sha256 from workspace context.')
             raw = source.read_bytes()
             destination = _file(target, relative, edit=True)
             if destination.is_file() and destination.stat().st_size > MAX_FILE:
@@ -376,7 +540,7 @@ def propose_restore(root, arguments):
             changes.append({'relative_path': relative, 'content': raw.decode('utf-8'),
                             'expected_sha256': digest(before) if before is not None else None})
             sources.append({'relative_path': relative, 'sha256': digest(raw)})
-        return _record_proposal(root, arguments['workspace_id'], _changes(target, changes), sources)
+        return _record_proposal(root, arguments['workspace_id'], _changes(target, changes, True), sources)
 
 
 def proposal(root, workspace_id, proposal_id):
@@ -401,7 +565,7 @@ def apply(root, arguments):
                    digest(_file(target, c['relative_path']).read_bytes()) != c['after_sha256'] for c in plan['changes']):
                 raise ValueError('Already-applied proposal has subsequent edits; inspect current files')
             return {'status': 'coding_patch_applied', 'workspace_id': arguments['workspace_id'],
-                    'proposal_id': arguments['proposal_id'], 'reused': True, 'files': plan['files']}
+                    'proposal_id': arguments['proposal_id'], 'reused': True, 'files': plan['files'], 'checkpoints': plan.get('checkpoints', [])}
         if plan['state'] != 'proposed':
             raise ValueError('Proposal is not replayable: ' + plan['state'])
         for original in plan.get('restoration_source', []):
@@ -409,19 +573,26 @@ def apply(root, arguments):
             if (not source.is_file() or source.stat().st_size > MAX_FILE
                     or digest(source.read_bytes()) != original['sha256']):
                 raise ValueError('Original source changed since restoration proposal: ' + original['relative_path'])
-        changes = _changes(target, [{k: c[k] for k in ('relative_path', 'expected_sha256', 'content')} for c in plan['changes']])
+        for original in plan.get('restoration_checkpoint', []):
+            read_checkpoint(root, arguments['workspace_id'], original['relative_path'], original['sha256'])
+        changes = _changes(target, [{k: c[k] for k in ('relative_path', 'expected_sha256', 'content')} for c in plan['changes']],
+                           plan.get('allow_large_replacement') is True)
         backups, staged, installed = {}, [], []
+        plan['checkpoints'] = []
         plan['state'] = 'applying'
         _save(record, plan)
         try:
             for change in changes:
                 path = _file(target, change['relative_path'], edit=True)
                 backups[path] = path.read_bytes() if path.exists() else None
+                if backups[path] is not None:
+                    plan['checkpoints'].append(checkpoint(root, arguments['workspace_id'], change['relative_path'], backups[path]))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 temporary = _plain_path(path.with_name('.smelter-patch-' + uuid4().hex))
                 with temporary.open('xb') as stream:
                     stream.write(change['content'].encode('utf-8'))
                 staged.append((temporary, path, change))
+            _save(record, plan)  # Persist recovery references before replacing any source bytes.
             for temporary, path, change in staged:
                 current = path.read_bytes() if path.exists() else None
                 if (digest(current) if current is not None else None) != change['expected_sha256']:
@@ -432,6 +603,8 @@ def apply(root, arguments):
                     raise ValueError('Saved bytes did not match proposal')
             plan['files'] = [{k: c[k] for k in ('relative_path', 'after_sha256', 'bytes')} for c in changes]
             metadata['edits'].append(plan['proposal_id'])
+            references = metadata.get('checkpoints', []) + plan['checkpoints']
+            metadata['checkpoints'] = list({(c['relative_path'], c['sha256']): c for c in references}.values())[-64:]
             _save(base_path(root) / arguments['workspace_id'] / 'workspace.json', metadata)
             plan['state'] = 'applied'
             _save(record, plan)
@@ -463,7 +636,7 @@ def apply(root, arguments):
         tracking = observe(root, metadata, target, None, 'patch applied')
         return {'status': 'coding_patch_applied', 'workspace_id': arguments['workspace_id'],
                 'proposal_id': plan['proposal_id'], 'files': plan['files'], 'reused': False,
-                'source_written': False, 'tracking': tracking}
+                'source_written': False, 'tracking': tracking, 'checkpoints': plan['checkpoints']}
 
 
 def test_profiles(target):
@@ -486,6 +659,8 @@ def test(root, arguments):
             raise ValueError('No tests exist for this profile')
         files = _scan(target)
         before = tree_digest(files)
+        from acceptance_contracts import load as load_contracts, run as run_contracts, revision
+        contracts=[c for c in load_contracts(root,sid,target) if c['profile']==profile]
         from workspace_tracking import observe
         observe(root, metadata, target, files, 'testing ' + profile)
         from sandbox import coding_test
@@ -493,6 +668,19 @@ def test(root, arguments):
         # The runner takes its own immutable snapshot before releasing this
         # operation lock. Other tool processes cannot race snapshot creation.
         evidence = coding_test(root, target, profile)
+        if contracts:
+            try:
+                accepted=run_contracts(root,target,contracts,files)
+            except (ValueError,OSError) as exc:
+                accepted={'stage':'ERROR','contracts_revision':revision(contracts),'contracts':[],
+                          'error':str(exc)[:500],'_raw_output':('ACCEPTANCE ERROR: '+str(exc)[:500]).encode('utf-8')}
+            evidence['_raw_output']+=b'\n[CONTROLLER ACCEPTANCE]\n'+accepted.pop('_raw_output')
+            evidence['workspace_tests_stage']=evidence['stage']
+            evidence['acceptance']=accepted
+            stages=(evidence['stage'],accepted['stage'])
+            evidence['stage']='ERROR' if 'ERROR' in stages else 'RED' if 'RED' in stages else 'GREEN'
+            if accepted['stage']!='GREEN':evidence['exit_code']=1
+            evidence['log_tail']=evidence['_raw_output'].decode('utf-8',errors='replace')[-10000:]
         current, _ = load(root, sid)
         current_tree = tree_digest(_scan(target))
         result = {**evidence, 'workspace_id': sid, 'profile': profile, 'tree_sha256': before,
@@ -501,6 +689,8 @@ def test(root, arguments):
         folder.mkdir(exist_ok=True)
         run_id = str(uuid4())
         raw = result.pop('_raw_output')
+        from coding_recovery import diagnose
+        result['diagnostic'] = diagnose(raw)
         output = folder / (run_id + '.log')
         with output.open('xb') as stream:
             stream.write(raw)
@@ -511,6 +701,10 @@ def test(root, arguments):
                                     'stage': result['stage'], 'exit_code': result['exit_code']}
         if profile=='lua':
             current['tests'][profile]['runner_sha256']=result.get('runner_sha256')
+        if contracts:current['tests'][profile]['acceptance_revision']=revision(contracts)
+        if contracts:
+            current['tests'][profile].update(workspace_tests_stage=result['workspace_tests_stage'],
+                acceptance_stage=result['acceptance']['stage'])
         _save(base_path(root) / sid / 'workspace.json', current)
         tracking = observe(root, current, target, None, 'tested ' + profile + ': ' + result['stage'])
         return {**result, 'evidence_path': str(log),
@@ -530,6 +724,8 @@ def review(root, arguments):
         profiles = test_profiles(target)
         checks = [{'profile': profile, **metadata['tests'].get(profile, {}),
                    'current': metadata['tests'].get(profile, {}).get('tree_sha256') == tree} for profile in profiles]
+        from acceptance_contracts import fresh
+        for check in checks:check['current']=check['current'] and fresh(root,arguments['workspace_id'],target,check['profile'],check)
         if 'lua' in profiles:
             from sandbox import lua_runner_sha256
             for check in checks:
@@ -550,9 +746,11 @@ def review(root, arguments):
 def execute(root, grants, name, arguments):
     if not grants.get('coding_workspace'):
         raise ValueError('Coding workspace was not approved for this message')
-    handlers = {'prepare_coding_workspace': prepare, 'coding_workspace_context': context, 'list_coding_files': list_files, 'read_coding_file': read,
-                'propose_coding_patch': propose, 'propose_coding_restore': propose_restore,
-                'apply_coding_patch': apply, 'run_coding_tests': test,
+    from coding_recovery import recover
+    from coding_finish import finish
+    handlers = {'prepare_coding_workspace': prepare, 'coding_workspace_context': context, 'coding_recovery_context': recover, 'list_coding_files': list_files, 'read_coding_file': read,
+                'propose_coding_patch': propose, 'propose_coding_edit': propose_edit, 'propose_coding_edits': propose_edits, 'propose_coding_restore': propose_restore,
+                'apply_coding_patch': apply, 'run_coding_tests': test, 'finish_coding_task': finish,
                 'review_coding_workspace': review}
     if name not in handlers or not isinstance(arguments, dict):
         raise ValueError('Unknown coding operation or invalid arguments')

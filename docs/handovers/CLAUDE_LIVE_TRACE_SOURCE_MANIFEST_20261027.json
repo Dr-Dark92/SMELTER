@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-27T14:34:55.319473+00:00",
+  "source_root": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER",
+  "branch": "feature/agent-stack-game-mods",
+  "head": "a7a844e1332d7869d6f5b1fcbee5d9ad296ecb71",
+  "kind": "selected current source and local-change snapshot; overlay onto a full project copy",
+  "complete_repository": false,
+  "dirty_working_tree": true,
+  "deleted_baseline_paths": [],
+  "exclusions": [
+    ".git",
+    ".smelter runtime state/logs/credentials",
+    "dw3_decomp-main",
+    "game installs and active coding workspaces"
+  ],
+  "files": [
+    {
+      "path": "REQUIREMENTS.md",
+      "sha256": "356f6f8dd6a5209a58a7af67496c1743814de3275f5b16084b7c7c8c72001633",
+      "bytes": 40275
+    },
+    {
+      "path": "diagnostics/RAPTOR_FORENSIC_REVIEW_20261027.md",
+      "sha256": "6f2631fa2a7ea5e9d4f306e1d1cef3aac56d5da5aeda35fa63430c813994d312",
+      "bytes": 26842
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "865873dbd37f68f7e3b377f9c03cd268bbef5f1325c72f64694cf97aed2b2e03",
+      "bytes": 2281
+    },
+    {
+      "path": "docs/CURRENT_HANDOVER.md",
+      "sha256": "1d9a8414de68ad4b1ec39b4a0b1e1c3771d099ef645e83d1f8c1c8b835a31a6b",
+      "bytes": 83573
+    },
+    {
+      "path": "docs/FROZEN_ACCEPTANCE.md",
+      "sha256": "fef6806e8be772982a5ff25d9ca01f7f9bc6e7e2b7701be0c72f8365b1b54796",
+      "bytes": 5687
+    },
+    {
+      "path": "docs/GRAPHIFY_TRACE_PLAN.md",
+      "sha256": "bd0cfbaddb0926423c2a133cf7c03dadefc40ca60e49fac5a511a5ba29cb8089",
+      "bytes": 4271
+    },
+    {
+      "path": "docs/NATIVE_PROGRESS.md",
+      "sha256": "9d6c696f5daf22ccbce659eab4b19ad41baca80d8f9a4f908594de5b4c2b8768",
+      "bytes": 14284
+    },
+    {
+      "path": "docs/NATIVE_PROGRESS_AND_MEDIA_ROADMAP.md",
+      "sha256": "2c55896e7d7f0cce2739f9c4cab9127e00125dbc4b98098c53ab27044bd0a927",
+      "bytes": 4664
+    },
+    {
+      "path": "docs/RECOVERY_GUARDRAILS.md",
+      "sha256": "3824d2c9dd62eff3bb3599d02143010c16848b2a174f4886961dc551c2e74db1",
+      "bytes": 6794
+    },
+    {
+      "path": "docs/UNIVERSAL_GAMEPLAY_CONTRACT.md",
+      "sha256": "7bcf44d96e960bec62efbfebf32fed008eddd71bc4153f4a5a5d304e99de4c01",
+      "bytes": 7358
+    },
+    {
+      "path": "docs/WORKSPACE_TRACKING.md",
+      "sha256": "9d8e6a5eac2c91182ae2cb6b37285d300bd30ead551903c64fff5a84e9365ef5",
+      "bytes": 9142
+    },
+    {
+      "path": "docs/diagrams/frozen-acceptance.mmd",
+      "sha256": "f3024744f3a4e73f5e3c9fbdf6ab091f638c6736320641ccdcd9ec071de9201e",
+      "bytes": 756
+    },
+    {
+      "path": "docs/diagrams/live-task-trace.mmd",
+      "sha256": "1d3fc5d0c0dce76969881801133f1efa3e275794881519b280908cd74becbcfa",
+      "bytes": 796
+    },
+    {
+      "path": "docs/diagrams/test-provenance.mmd",
+      "sha256": "63790795a5f61be733594b93c712030a1c1f29e89937af2d3dc6a618a07c81d5",
+      "bytes": 817
+    },
+    {
+      "path": "docs/diagrams/universal-gameplay.mmd",
+      "sha256": "7827212ca4f15b29fe6283c205c7a8ff1fb42f5dd0b7b2d9a889e33d1a542aa3",
+      "bytes": 1304
+    },
+    {
+      "path": "docs/handovers/CLAUDE_LIVE_TRACE_HANDOVER_20261027.md",
+      "sha256": "11a5c83c0bf2cdb7f92cee17bb206105f56effda4215a99e5b5ddccb88760c3e",
+      "bytes": 19875
+    },
+    {
+      "path": "docs/handovers/CLAUDE_LIVE_TRACE_PROMPT_20261027.md",
+      "sha256": "6509b0632a9f00c3ea00a911665ac5fad5855f25c45fcf00c1036f4c234f8275",
+      "bytes": 1696
+    },
+    {
+      "path": "docs/tasks/RAPTOR_GENERIC_TASK_BRIEF.md",
+      "sha256": "25f676c3e63dd4dd9e9c5c8f57c3ba1ee29e2dc1273468ac2f0d7fff1accf04d",
+      "bytes": 4259
+    },
+    {
+      "path": "system-requirements.json",
+      "sha256": "a45597c7ed4d56a7d70650fb33d7ba5c83d5e50730d2c8e4a2c9fdc3411c328d",
+      "bytes": 34319
+    },
+    {
+      "path": "tools/dashboard/acceptance/entity_policy_v1.lua",
+      "sha256": "b303d3d738ee98a847174e706d15264c091731c23459d2c2ba9a4c59854680ea",
+      "bytes": 4693
+    },
+    {
+      "path": "tools/dashboard/acceptance_contracts.py",
+      "sha256": "0db350ee6db585e49dfed0943484ee6a7572b29ea27aa997d68b38f4b579fa32",
+      "bytes": 9707
+    },
+    {
+      "path": "tools/dashboard/agent_bridge.py",
+      "sha256": "106de6451382f0016c1abc848bebb92d89a7c7a051b5c064d52f5c9324da65c0",
+      "bytes": 7176
+    },
+    {
+      "path": "tools/dashboard/chat_renderer.js",
+      "sha256": "707fd281df0ddb589006363db1eda86c6aa4e1187ae113fdb80115cc9a6a8c30",
+      "bytes": 4992
+    },
+    {
+      "path": "tools/dashboard/coding_activity.py",
+      "sha256": "ce32c66571c483f793fcf1029e34382e09e43f62ee8a9694863edd9d278d785a",
+      "bytes": 6419
+    },
+    {
+      "path": "tools/dashboard/coding_recovery.py",
+      "sha256": "541aee78c6cdda121c10929ca2bcf991af182385cfffec15564dd18817ff0067",
+      "bytes": 8394
+    },
+    {
+      "path": "tools/dashboard/coding_workspace.py",
+      "sha256": "97af8cbde79009b7e8edcde685949e4320c5f66ec02c5a68273d6fceeecc027a",
+      "bytes": 42316
+    },
+    {
+      "path": "tools/dashboard/dashboard.py",
+      "sha256": "35b4077771eb65ab48c7e6f2fa7391b666f116f781eabb93e3cc91aafb005638",
+      "bytes": 52787
+    },
+    {
+      "path": "tools/dashboard/dashboard_api.py",
+      "sha256": "cb8160f799c0e6483ed15f25f5efe35a1c824e7daf3e7bbcdbc8d366094010b6",
+      "bytes": 38646
+    },
+    {
+      "path": "tools/dashboard/dashboard_shell.js",
+      "sha256": "cce1be6925851925073f59c87350dd172f79ac785bc3b422822124a1edfb430f",
+      "bytes": 52164
+    },
+    {
+      "path": "tools/dashboard/file_activity.js",
+      "sha256": "367fab1a1136dc6252f274a0399d851cacfb5910a22e759e1720eaab7246568a",
+      "bytes": 4593
+    },
+    {
+      "path": "tools/dashboard/mcp_server.py",
+      "sha256": "fb3cf16d2c85ee412803f2c8001539db0c41d11780715dd964b0145fa0f3a640",
+      "bytes": 10477
+    },
+    {
+      "path": "tools/dashboard/media.py",
+      "sha256": "e9c0c1b7bef26bd35c1b50c595d038828dbbc3bf6663f60c623fb2ab704e1eac",
+      "bytes": 3492
+    },
+    {
+      "path": "tools/dashboard/model_animations.js",
+      "sha256": "0bd7ac480922a0f6752edd8d282696e87a0d4fe24ebf62b79a384eddf5cc2f38",
+      "bytes": 5370
+    },
+    {
+      "path": "tools/dashboard/model_assets.py",
+      "sha256": "4dd67151466562d3c84e0c90b49c81e0911911eac36885db1aa5506929b49181",
+      "bytes": 15543
+    },
+    {
+      "path": "tools/dashboard/model_preferences.py",
+      "sha256": "5d74ad764a578bb5e34b448634a5f07dea2790d4a06c80f2a260861517f27769",
+      "bytes": 2766
+    },
+    {
+      "path": "tools/dashboard/model_preview.js",
+      "sha256": "44150934e8fcec3179b80f61346baf6fc6f32c513269a4a829a4eac72003a62f",
+      "bytes": 8516
+    },
+    {
+      "path": "tools/dashboard/native_activity.py",
+      "sha256": "1fc4729c7311466d77b5bd59caab5e6c552276327f715d459d39f9b567ca36ca",
+      "bytes": 3984
+    },
+    {
+      "path": "tools/dashboard/native_progress.py",
+      "sha256": "7991bbbc6154f2f79f3cbe0aabb3aa58b9cdf1713c1a746ae58ed8acf46372ce",
+      "bytes": 27153
+    },
+    {
+      "path": "tools/dashboard/native_progress_ui.js",
+      "sha256": "e42ff656fa83c2f9ea1d54ceeefb3b4f1a33f7cdd4f7a7726e6f48e188f44497",
+      "bytes": 8198
+    },
+    {
+      "path": "tools/dashboard/native_recovery_core.mjs",
+      "sha256": "0f513dbb88e41f23638892aad56d11995b20f26ceba3c1fdc16c593d5aa85cfa",
+      "bytes": 3947
+    },
+    {
+      "path": "tools/dashboard/native_recovery_plugin.mjs",
+      "sha256": "b56cde350eea5c45a4c37e3eb9a198c75be26e206f49c1310bbf884bad271d11",
+      "bytes": 1239
+    },
+    {
+      "path": "tools/dashboard/python_tools.py",
+      "sha256": "f2a2f76a0bd030660bd595a099880695a8dc355ac8dee487845d4e7b36d33194",
+      "bytes": 37582
+    },
+    {
+      "path": "tools/dashboard/recovery_guard.py",
+      "sha256": "7ce4b66a73149d2e47980fae44b63c3ebbece95bd5828fe352447f4254e3d216",
+      "bytes": 4161
+    },
+    {
+      "path": "tools/dashboard/sandbox.py",
+      "sha256": "ebaf9c08b917eb92c1162984d20e8c4d1781b1367ca3fe3ed3df83ce762751c3",
+      "bytes": 34955
+    },
+    {
+      "path": "tools/dashboard/session_auth.js",
+      "sha256": "a6cb4b9931521d72070250b0860c0426d282f077a621e33e5cff9b8bf2613249",
+      "bytes": 1200
+    },
+    {
+      "path": "tools/dashboard/settings_ui.js",
+      "sha256": "7d278c96cba5d2d644200cfcba7bcd9441d4d38c4b57f29431fae917ab0cf0c2",
+      "bytes": 7506
+    },
+    {
+      "path": "tools/dashboard/task_socket.py",
+      "sha256": "ccf7fb196891c7d474d2d539efb9fd641380c3c9caa23d313fd41184fdee5afd",
+      "bytes": 4866
+    },
+    {
+      "path": "tools/dashboard/task_trace.py",
+      "sha256": "c9b38036710c86756fc4f31ea11fbbe6492f3b170749c1eef74bc32a161fd5bf",
+      "bytes": 21250
+    },
+    {
+      "path": "tools/dashboard/task_trace_ui.js",
+      "sha256": "478603528d995d4bbd0827ce4346d58cd95aedf16dba9be34c2fbedbba2bfad7",
+      "bytes": 10163
+    },
+    {
+      "path": "tools/dashboard/test_acceptance_contracts.py",
+      "sha256": "8ae6e0c1dc9e2e2ab0cbb92ab8c508557a02be1e8e6aadeca9631dc49619fea9",
+      "bytes": 6903
+    },
+    {
+      "path": "tools/dashboard/test_coding_edits.py",
+      "sha256": "8b21962fe2b760e25fb2e801214dd0b1476900b803ca11a2abeff2e1811a342b",
+      "bytes": 9434
+    },
+    {
+      "path": "tools/dashboard/test_lua_profile.py",
+      "sha256": "755cdb229c8441a155279ed418c735b752622521dbdea2391419acd734113ca4",
+      "bytes": 9361
+    },
+    {
+      "path": "tools/dashboard/test_mcp_workspace_context.py",
+      "sha256": "0e0252a9acf6ebec93d3493e312633ca4b3f4b7378d347e9539248a1fe45c8ee",
+      "bytes": 4527
+    },
+    {
+      "path": "tools/dashboard/test_media.py",
+      "sha256": "4ab16bd15b3b8e80d3f886c45343134ac8ef931d15a80db67e28ab78b8af968b",
+      "bytes": 2859
+    },
+    {
+      "path": "tools/dashboard/test_model_assets.py",
+      "sha256": "f14d14c5b378693875424b386268588798a2d6baa0e42e4c451b518f140ea65d",
+      "bytes": 7828
+    },
+    {
+      "path": "tools/dashboard/test_native_activity.py",
+      "sha256": "6d89da2ffe179b36f77061da87c716d3d6a99aabe39de56ed446b66676fafb2a",
+      "bytes": 7842
+    },
+    {
+      "path": "tools/dashboard/test_native_progress.py",
+      "sha256": "d01368fae61984e7e5abdbb2feebf0e338a9cf1d555c0aff2155957bf9c6c4ff",
+      "bytes": 12094
+    },
+    {
+      "path": "tools/dashboard/test_native_progress_ui.js",
+      "sha256": "047a2bf07e95de628d516d5dbb79f7b5f9069a83347ce486e9ae48d73d2edec7",
+      "bytes": 3414
+    },
+    {
+      "path": "tools/dashboard/test_native_recovery.mjs",
+      "sha256": "3563e3faba4aa1b32145e618f93af800e9df77df2c6ee02b3c6022708364306a",
+      "bytes": 3315
+    },
+    {
+      "path": "tools/dashboard/test_recovery_guard.py",
+      "sha256": "addcad13a570e8f973715e24d93c93b5ec83deb2c6de2d1b1e9c55cf3a5d1b1e",
+      "bytes": 8528
+    },
+    {
+      "path": "tools/dashboard/test_task_socket.py",
+      "sha256": "c2ba6afcdc2cce46e302f496a282e36d98197728f95258d1c3f956e587887424",
+      "bytes": 5744
+    },
+    {
+      "path": "tools/dashboard/test_task_trace.py",
+      "sha256": "9a47aa079d996426a6b469bd29f3be8b08cc5cec6648300ce765644037ba1bc6",
+      "bytes": 10405
+    },
+    {
+      "path": "tools/dashboard/test_task_trace_ui.js",
+      "sha256": "d5b7fddfad73a5fcd03689af4bbbd9b5559af7c79be485d61a87d430cca9bd5a",
+      "bytes": 5743
+    },
+    {
+      "path": "tools/dashboard/tool_contract.py",
+      "sha256": "0a1d5ec05c7c29dfcc12b219024c99a15a41fb4cda47845e44c3337606c9b218",
+      "bytes": 1415
+    },
+    {
+      "path": "tools/dashboard/tool_registry.py",
+      "sha256": "af2ee1ab0fbc46c05d22aed32c7a89f72e899ea43f460e79ccf81cb82bc7e51c",
+      "bytes": 26455
+    },
+    {
+      "path": "tools/dashboard/turntable.js",
+      "sha256": "e2b52f2d601e2e90d6e9940cbc3c876e0b8b417d17f184fdfab15cef6b2caff1",
+      "bytes": 5797
+    },
+    {
+      "path": "tools/dashboard/workspace_tracking.py",
+      "sha256": "bb60a1735fd95f6724b73a6d37316a32284b01feb35617e83508f61c7c473418",
+      "bytes": 14845
+    },
+    {
+      "path": "tools/dashboard/workspace_tracking_ui.js",
+      "sha256": "28d9c908b52216f51ffc0d85355bd5a731619baaa79f3d94de4fc3e27b0bedfb",
+      "bytes": 8418
+    },
+    {
+      "path": "tools/setup/configure_recovery_guard.py",
+      "sha256": "a732c4b3a462a72bf8f0fd6fbac7ca03a09432598386c0c27e89263eef589376",
+      "bytes": 3383
+    },
+    {
+      "path": "tools/setup/register_acceptance.py",
+      "sha256": "076623466099ddd34374cd4767eb5d54b6e4f0bba805a49011535c3acf82b044",
+      "bytes": 789
+    },
+    {
+      "path": "tools/setup/test_configure_recovery_guard.py",
+      "sha256": "7147449e3dede12c938f769b9209d7df7effa43a7f7b01164cd32babc6638cba",
+      "bytes": 2533
+    },
+    {
+      "path": "tools/setup/test_requirements_catalog.py",
+      "sha256": "016f076cfac820777cfd087704aaee0b9d128afb712b65d6256ad6500d3f964c",
+      "bytes": 10557
+    }
+  ]
+}

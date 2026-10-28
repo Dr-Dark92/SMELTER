@@ -1,0 +1,32 @@
+{
+  "version": "0.1.0",
+  "adapter_mode": "simulation",
+  "raptor_species": {
+    "name": "Raptor (Velociraptor)",
+    "species_code": "Velociraptor_C"
+  },
+  "behaviors": {
+    "idle_range_cm": 1000,
+    "detection_range_cm": 500,
+    "chase_range_cm": 1000,
+    "melee_attack_range_cm": 300,
+    "max_chase_time_sec": 10,
+    "disengagement_distance_cm": 800
+  },
+  "attacks": {
+    "damage_per_bite": 25,
+    "attack_cooldown_sec": 1.5,
+    "movement_speed_cm_per_sec": 550,
+    "turn_speed_deg_per_sec": 90
+  },
+  "placeholders": {
+    "cougar_behavior": true,
+    "real_ark_ai_data_needed": true,
+    "notes": [
+      "Current behavior is simplified placeholder pending ARK AI data",
+      "Real cougar attack patterns (jump, claw swipe) not implemented",
+      "Dino-specific abilities (dodge, pack hunting) not available",
+      "Uses generic canine movement and aggression rules"
+    ]
+  }
+}

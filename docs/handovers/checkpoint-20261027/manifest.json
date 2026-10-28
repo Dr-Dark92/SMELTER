@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "repository_base": "a7a844e1332d7869d6f5b1fcbee5d9ad296ecb71",
+  "current_scope": "Complete isolated mod source inventory after SMELTER applied the verified correction; offline Lua/acceptance/mods checks pass on the same tree; not promoted to production mods",
+  "current_frozen_result": {
+    "checks": 30,
+    "failures": 0,
+    "receipt_id": "6ee4b5e8-2a0a-49d9-8b6e-d53708e42f36"
+  },
+  "reference_scope": "Two original disposable reference files; their bytes now match the applied managed coding-copy files; not promoted to production mods",
+  "reference_result": {
+    "frozen_checks": 30,
+    "frozen_failures": 0,
+    "lua_programs": 6,
+    "lua_failures": 0,
+    "mods_tests": 14,
+    "mods_failures": 0,
+    "mods_skipped": 1
+  },
+  "prepared_local_proposal_id": "b4eb565f-cd2a-4bb3-ae53-d648a37f1c50",
+  "proposal_applied": true,
+  "frozen_verifier_sha256": "b303d3d738ee98a847174e706d15264c091731c23459d2c2ba9a4c59854680ea",
+  "files": [
+    {
+      "path": "current/mods/gta-ark/.gitignore",
+      "sha256": "9fdaf1d362b697029ec4268ea826f979dbe48953e8ac72caf860305efd871b2c",
+      "bytes": 24
+    },
+    {
+      "path": "current/mods/gta-ark/MODLOG.md",
+      "sha256": "868f85d71ca0d242d96dfd89dba1e16aab05caaf11cf865977bd0dba05698ac6",
+      "bytes": 4858
+    },
+    {
+      "path": "current/mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "sha256": "a22c0d6be09ba5dff8a9a0b27ec3d540f8df329b319d5fb90c42c7abad660410",
+      "bytes": 2147
+    },
+    {
+      "path": "current/mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+      "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7",
+      "bytes": 6091
+    },
+    {
+      "path": "current/mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua.backup",
+      "sha256": "ec52440f1ca10ccf7c71d692bb3ec7ef1544f65df675da92d9d47ff06a5358a5",
+      "bytes": 4807
+    },
+    {
+      "path": "current/mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_aggro.lua",
+      "sha256": "dd63522fd0479a55440646045e136e753d32a4a3d9b2962fc6ed7f85ffe9750c",
+      "bytes": 3044
+    },
+    {
+      "path": "current/mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "sha256": "ebf484bce41b75287e18e5d41da0dc50f123f5eeaab94295b2536cfc5cf51ca0",
+      "bytes": 2700
+    },
+    {
+      "path": "current/mods/gta-ark/README.md",
+      "sha256": "6efa90acaba7217cbb71a0208d652d18b6288de53bf72ddfe697d67191f4c839",
+      "bytes": 2868
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "sha256": "b03ef59b9a2fbf5eee80ff68018e0a445ca720aaa3840eee835b7c93b538b9aa",
+      "bytes": 828
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/gal_link.lua",
+      "sha256": "5b0ebdd1ffb47a3af013903161ed6a4c0865462dfc6df09fffc03ffb7a65db7d",
+      "bytes": 2928
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/main.lua",
+      "sha256": "8e2e48b72e9cce2d3b9d9d71f91a4cb4c20a8ee8084950b8e2a9cb13e77526f7",
+      "bytes": 3330
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/raptor_aggro.lua",
+      "sha256": "05e91c249aa0ce502335922c9aea70ea119c5fcd865ce5776aee793c7edfb927",
+      "bytes": 3482
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/raptor_config.json",
+      "sha256": "d5be76fc6a8fd15fcdb04d5a5dad69074a26ff2628aa89ab0667fa4aba9d829f",
+      "bytes": 900
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "sha256": "87edb832b137eaa2aa04db0576fb348377bcc3b6f2473641859270895d3c99d3",
+      "bytes": 253
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/enabled.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "current/mods/gta-ark/ark/Mods/GtaArkLink/raptor_README.md",
+      "sha256": "d9791a1b3fd2e0a9d4ff19472e20104512ed1ddc0e708b782b556a8159bd054c",
+      "bytes": 3322
+    },
+    {
+      "path": "current/mods/gta-ark/gta/build.bat",
+      "sha256": "847fa1d1f638020a367223ac4b0ca50545fdad1b0f7a05d85df4896950c8da50",
+      "bytes": 1881
+    },
+    {
+      "path": "current/mods/gta-ark/gta/src/GtaArkLink.cpp",
+      "sha256": "051100f7e6cfe1e841f8eb02dbfffdb924018a6bea0a40e8f39d2b1f99d52823",
+      "bytes": 2173
+    },
+    {
+      "path": "current/mods/gta-ark/gta/src/camera_source.h",
+      "sha256": "d6be6600414212a385b248cd341829a461ae6f962d9a3d5b04ea0849a730aca0",
+      "bytes": 789
+    },
+    {
+      "path": "current/mods/gta-ark/gta/src/link_record.h",
+      "sha256": "457ebf26bc5e57ec48af13f1ef3eac969344dd955747622b7335ff68b51fbe73",
+      "bytes": 3706
+    },
+    {
+      "path": "current/mods/gta-ark/gta/src/natives.h",
+      "sha256": "645cb111c455acd5a9e25a948baefbfb68df27d79c6e5f1384af7da4ee3b7081",
+      "bytes": 1255
+    },
+    {
+      "path": "current/mods/gta-ark/gta/src/shv_source.cpp",
+      "sha256": "af0da47ee9b2f4f3e8fed3a4f0d927711306dd1bacd5692a7a9edd3fda9e6c82",
+      "bytes": 2078
+    },
+    {
+      "path": "current/mods/gta-ark/gta/tests/gal_record_test.cpp",
+      "sha256": "975b7ecc6fb2ea353626f5722d0340f4ecc25e048a74a0782a9eb67c36ea525a",
+      "bytes": 2123
+    },
+    {
+      "path": "current/mods/gta-ark/gta/tests/shv_stub/main.h",
+      "sha256": "98d158fd89aa4584621148d01ef4be7269f77a89e50e58ad04f52336ef30b522",
+      "bytes": 475
+    },
+    {
+      "path": "current/mods/gta-ark/link-format.md",
+      "sha256": "cf2aa31d4e051f901a8fefcb38913e03a0b8c767e7c99a9d71b3e44ad5619560",
+      "bytes": 2254
+    },
+    {
+      "path": "current/mods/gta-ark/native.json",
+      "sha256": "faecb6914ed10dad6464bdafd050369231120a4d66e4d75f6239b95f7311ca18",
+      "bytes": 490
+    },
+    {
+      "path": "current/mods/gta-ark/runtime_requirements.json",
+      "sha256": "19e57f4f5132bfa555a809e57bf49a14c0e28fc1e2622049a122799c3f0e0072",
+      "bytes": 792
+    },
+    {
+      "path": "current/mods/gta-ark/test_raptor_basic.lua",
+      "sha256": "3f79fd8de5ecc7e3d8f61f8de50ab555c5826a6f1b1d55e37eeb8c2fba0a7300",
+      "bytes": 1520
+    },
+    {
+      "path": "current/mods/gta-ark/tests/gal1_fixture.hex",
+      "sha256": "63bb8c5a340029f7f70ef9c0789d5fea8547308f38f186f136101af1fce22a35",
+      "bytes": 129
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_ark_runtime.lua",
+      "sha256": "f5d36115099ac6e829fa0a39d399a082db657f9f2d527545322cc21e92826d6d",
+      "bytes": 4588
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_entity_policy.lua",
+      "sha256": "9ab4733cdf8b2f0603b1e474209efecccc7b05be39c4696f19c6258e4b885115",
+      "bytes": 14823
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_fixture_breakage.lua",
+      "sha256": "a3420bb7f4d740433c361ed39bf7085f37bef61def2c98376dbf7c975db8f3b5",
+      "bytes": 1344
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_gal_link.lua",
+      "sha256": "51c92785b67c80439bbebdb14667fa6ccf7f82cb7252079dd40710d3eafd8ded",
+      "bytes": 2573
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_link.py",
+      "sha256": "777602005fd023690abc7c6625d3f5c7951468564a48fc1f1cd821910784d8bb",
+      "bytes": 6026
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_raptor_behavior.lua",
+      "sha256": "408f9c7927e7c0c43ffa30967a705ed5fea46b1b6a77f388ee350407b5f62729",
+      "bytes": 2776
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_raptor_modules.lua",
+      "sha256": "d55c7a2919fd23aaa57a4b14eb7ea292018083e7544a8f04b5e802fe786a2575",
+      "bytes": 3330
+    },
+    {
+      "path": "current/mods/gta-ark/tests/test_runtime_workflow.py",
+      "sha256": "e937a6ce5e111d124900162a79a98a5a60c36a29e2d6b86c62db13dd77c0933b",
+      "bytes": 4053
+    },
+    {
+      "path": "current/mods/gta-ark/tests/vectors.json",
+      "sha256": "d2ab1017f0f65101de47ba16e9d2f5f71649df7b861472391b88e11f8edd8b1d",
+      "bytes": 1735
+    },
+    {
+      "path": "current/mods/gta-ark/tools/fake_gta_writer.py",
+      "sha256": "99b29a57028a7da33a89c5ce3664f9a71f3abef19335f1d35715ec0576697368",
+      "bytes": 1187
+    },
+    {
+      "path": "current/mods/gta-ark/tools/gal_link.py",
+      "sha256": "163e4683b1ec54e0bdaf6542d3ae05bc3bf26bb208838558bb6402bc6ffcf3b3",
+      "bytes": 3590
+    },
+    {
+      "path": "current/mods/gta-ark/tools/read_link.py",
+      "sha256": "f643af16cef7e42ac124abd807687fb4b89f85f07b771c5f769c46a4379a392c",
+      "bytes": 1277
+    },
+    {
+      "path": "current/mods/gta-ark/tools/runtime_workflow.py",
+      "sha256": "90342d09a2a7ca66ed18bc3ea5506b317ecb827a6f2b127c5d3e87172cdfd2a9",
+      "bytes": 8705
+    },
+    {
+      "path": "reference/mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+      "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7",
+      "bytes": 6091
+    },
+    {
+      "path": "reference/mods/gta-ark/tests/test_entity_policy.lua",
+      "sha256": "9ab4733cdf8b2f0603b1e474209efecccc7b05be39c4696f19c6258e4b885115",
+      "bytes": 14823
+    }
+  ],
+  "checkpoint_verified_date": "2026-10-28",
+  "current_tests": {
+    "tree_sha256": "eaff3fa39d33b07d7b7a00f6de754802140c422ec6c892b9411275d04555f79c",
+    "lua": {
+      "stage": "GREEN",
+      "programs": 6,
+      "failures": 0,
+      "errors": 0,
+      "receipt_id": "6ee4b5e8-2a0a-49d9-8b6e-d53708e42f36"
+    },
+    "mods": {
+      "stage": "GREEN",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "receipt_id": "f85b25de-e3b4-40a2-ae42-9b03fdb7e58e"
+    }
+  }
+}

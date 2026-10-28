@@ -252,7 +252,7 @@ timer.cancel()
 sys.exit(0 if counts['tests'] and not counts['failures'] and not counts['errors'] else 1)
 '''
 CODING_LUA = r'''
-import json,os,subprocess,sys,threading,time
+import hashlib,json,os,re,subprocess,sys,threading,time
 from pathlib import Path
 timer=threading.Timer(60,lambda:os._exit(124));timer.daemon=True;timer.start()
 tests=sorted(Path('mods').glob('*/tests/test_*.lua'))
@@ -269,6 +269,17 @@ for mod in sorted({test.parents[1] for test in tests}):
  for source in sorted(mod.rglob('*')):
   if source.is_file() and source.suffix.lower()=='.lua':sources.append(source)
 syntax['files_total']=len(sources)
+manifest={p.as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sources} if len(sources)<=512 else {}
+programs=[]
+# Trace the actual standard Lua file searcher, preserving loader and loader-data.
+# Hex fields keep paths/module names data rather than interpolated source code.
+bootstrap="""local original=package.searchers[2]
+local function hex(s) return (tostring(s):gsub('.',function(c) return string.format('%02x',string.byte(c)) end)) end
+package.searchers[2]=function(name)
+ local loader,path=original(name)
+ if type(loader)=='function' then io.stdout:write('SMELTER_LUA_IMPORT|'..hex(name)..'|'..hex(path)..'\\n');io.stdout:flush() end
+ return loader,path
+end"""
 if len(sources)>512:
  counts['errors']+=1;syntax['errors']+=1
  print('ERROR: Lua source syntax suite exceeds 512 files; nothing was silently omitted',flush=True)
@@ -297,10 +308,24 @@ for test in tests:
  try:
   remaining=deadline-time.monotonic()
   if remaining<=0:raise subprocess.TimeoutExpired('lua5.4',55)
-  result=subprocess.run(['lua5.4',str(test.relative_to(test.parents[1]))],cwd=test.parents[1],capture_output=True,text=True,timeout=min(15,remaining))
+  result=subprocess.run(['lua5.4','-e',bootstrap,str(test.relative_to(test.parents[1]))],cwd=test.parents[1],capture_output=True,text=True,timeout=min(15,remaining))
+  imports=[]
+  for module_hex,path_hex in re.findall(r'^SMELTER_LUA_IMPORT\|([a-f0-9]+)\|([a-f0-9]+)\s*$',result.stdout,re.M)[:64]:
+   if len(module_hex)>1024 or len(path_hex)>4096:continue
+   module=bytes.fromhex(module_hex).decode('utf-8',errors='replace')
+   resolved=(test.parents[1]/bytes.fromhex(path_hex).decode('utf-8',errors='replace')).resolve()
+   try:
+    relative=resolved.relative_to(Path.cwd().resolve()).as_posix()
+    imports.append({'module':module,'path':relative,'sha256':manifest.get(relative),'scope':'standard Lua file loader'})
+   except ValueError:imports.append({'module':module,'outside_snapshot':True})
+  programs.append({'test':test.as_posix(),'working_directory':test.parents[1].as_posix(),'exit_code':result.returncode,'imports':imports})
   print(result.stdout[-3000:]+result.stderr[-3000:],flush=True)
-  if result.returncode:counts['failures']+=1
+  if result.returncode:
+   # A Lua runtime/import exception is not a deliberate TDD assertion failure.
+   runtime_error=bool(re.search(r'^lua[\d.]*: .+\.lua:\d+:',result.stderr,re.M))
+   counts['errors' if runtime_error and 'assertion failed' not in result.stderr else 'failures']+=1
  except (OSError,subprocess.TimeoutExpired) as exc:counts['errors']+=1;print(type(exc).__name__,flush=True)
+print('SMELTER_LUA_EXECUTION|'+json.dumps({'manifest':manifest,'programs':programs}),flush=True)
 print('SMELTER_TEST_RESULT|'+json.dumps(counts),flush=True)
 timer.cancel()
 sys.exit(0 if counts['tests'] and not counts['failures'] and not counts['errors'] else 1)
@@ -311,6 +336,15 @@ def lua_runner_sha256():
     """Invalidate earlier Lua receipts when the host-controlled runner changes."""
     import hashlib
     return hashlib.sha256(CODING_LUA.encode('utf-8')).hexdigest()
+
+
+def lua_snapshot_manifest(code):
+    """Host hashes of the fresh mounted copy, independent of gameplay test output."""
+    import hashlib
+    tests=sorted(Path(code).glob('mods/*/tests/test_*.lua'))
+    sources=sorted({p for test in tests for p in test.parents[1].rglob('*') if p.is_file() and p.suffix.lower()=='.lua'})
+    if len(sources)>512:return {}
+    return {p.relative_to(code).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
 
 
 CODING_NODE = r'''
@@ -366,6 +400,7 @@ def coding_test(root,target,profile):
     if not ready['ready']:raise ValueError('Confined coding tests unavailable: '+ready['reason'])
     folder,code=snapshot(root,target)
     name='smelter-tests-'+uuid4().hex
+    expected_lua=lua_snapshot_manifest(code) if profile=='lua' else None
     image=ready['configured'][image_key]
     command={'python':['python','-I','-c',CODING_PYTHON],'mods':['python','-I','-c',CODING_MODS],
              'cpp':['python','-I','-c',CODING_CPP], 'lua':['python','-I','-c',CODING_LUA]}.get(profile,['node','-e',CODING_NODE])
@@ -390,6 +425,10 @@ def coding_test(root,target,profile):
         evidence={'exit_code':result.returncode,'stage':stage,'counts':counts,'image':image,
                   'sandbox':'docker-no-network','profile':profile,'coverage':'not measured',
                   'log_tail':output[-6000:],'_raw_output':raw}
+        evidence['source_snapshot']={'id':folder.name,'mode':'fresh_copy_per_invocation',
+            'mount':'read_only_bind','image_role':'runtime_toolchain_only; source is not an image layer'}
+        if profile=='mods':
+            evidence['validation_scope']='Python unittest discovery under mods/*/tests; this profile does not run Lua. Use profile=lua for test_*.lua.'
         if profile=='lua':
             markers=re.findall(r'^SMELTER_LUA_SYNTAX_RESULT\|(\{[^\n]+\})\s*$',output,re.M)
             syntax=None
@@ -404,6 +443,39 @@ def coding_test(root,target,profile):
                 evidence['stage']='ERROR'
             evidence.update(source_syntax=syntax if valid else None, runner_sha256=lua_runner_sha256(),
                 validation_scope='Lua 5.4 source syntax in tested mods, then test-program exit codes. Tests must import actual implementations and assert failures; behavioral coverage and game compatibility are not measured.')
+            executions=re.findall(r'^SMELTER_LUA_EXECUTION\|(\{[^\n]+\})\s*$',output,re.M)
+            execution=None
+            if len(executions)==1:
+                try:execution=json.loads(executions[0])
+                except ValueError:pass
+            proof=(isinstance(execution,dict) and execution.get('manifest')==expected_lua and
+                   isinstance(execution.get('programs'),list) and len(execution['programs'])<=64 and
+                   len(execution['programs'])==counts.get('tests'))
+            import hashlib
+            checksum=lambda value:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+            observed=execution.get('manifest') if isinstance(execution,dict) else None
+            evidence['source_snapshot'].update(lua_files_total=len(expected_lua),
+                expected_lua_sha256=checksum(expected_lua),observed_lua_sha256=checksum(observed) if isinstance(observed,dict) else None,
+                bytes_match=proof,files=[{'path':p,'sha256':sha} for p,sha in list(expected_lua.items())[:64]],files_truncated=len(expected_lua)>64)
+            evidence['test_programs']=[]
+            if proof:
+                remaining_imports=128
+                for item in execution['programs']:
+                    if not isinstance(item,dict) or not isinstance(item.get('test'),str) or not isinstance(item.get('working_directory'),str) or type(item.get('exit_code')) is not int or not isinstance(item.get('imports'),list):
+                        proof=False;break
+                    if item['test'] not in expected_lua or item['working_directory']!=Path(item['test']).parents[1].as_posix():
+                        proof=False;break
+                    if any(not isinstance(entry,dict) or not isinstance(entry.get('module'),str) or
+                           not entry.get('outside_snapshot') and (entry.get('path') not in expected_lua or
+                           entry.get('sha256')!=expected_lua.get(entry.get('path'))) for entry in item['imports']):
+                        proof=False;break
+                    imports=item['imports'][:min(16,remaining_imports)]
+                    remaining_imports-=len(imports)
+                    evidence['test_programs'].append({**item,'imports':imports,'imports_truncated':len(imports)<len(item['imports'])})
+            evidence['source_snapshot']['bytes_match']=proof
+            if not proof:
+                evidence['stage']='ERROR'
+                evidence['source_snapshot']['error']='Missing or inconsistent container source/execution receipt; no cache rebuild was attempted.'
     finally:
         confirmed=_remove(ready['docker'],name)
         record_owner(folder,name,image,'tests',finished=confirmed)

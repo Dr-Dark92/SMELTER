@@ -27,6 +27,52 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual(value['endpoint'], 'http://127.0.0.1:4096')
         self.assertTrue(value['read_only'])
         self.assertTrue((CATALOG_PATH.parent / value['module']).is_file())
+        self.assertTrue((CATALOG_PATH.parent / value['activity_module']).is_file())
+        self.assertIn('read-only', value['supplemental_transport'].lower())
+
+    def test_task_trace_declares_websocket_and_existing_runtime_only(self):
+        value = CATALOG['task_trace']
+        self.assertEqual(value['dependencies'], [])
+        self.assertEqual(value['transport'], 'WebSocket')
+        self.assertTrue(value['read_only'])
+        for key in ('module', 'socket_module', 'ui_module'):
+            self.assertTrue((CATALOG_PATH.parent / value[key]).is_file())
+        self.assertEqual(value['bounds']['quiet_warning_seconds'], 120)
+        self.assertIn('never fabricated', value['identity'])
+
+    def test_trace_workbench_declares_modules_and_no_new_dependencies(self):
+        value = CATALOG['task_trace_workbench']
+        self.assertEqual(value['dependencies'], [])
+        for key in ('graph_module', 'ui_module', 'artifact_ui_module', 'history_module', 'artifact_module'):
+            self.assertTrue((CATALOG_PATH.parent / value[key]).is_file())
+        self.assertIn('not installed', value['optional_layers']['graphify'])
+
+    def test_watchdog_declares_bounded_retries_and_no_new_dependencies(self):
+        value=CATALOG['task_watchdog']
+        self.assertEqual(value['dependencies'],[]);self.assertEqual(value['max_retries'],3)
+        self.assertTrue(value['private_prompt'])
+        for module in value['modules']+[value['setup']]:self.assertTrue((CATALOG_PATH.parent/module).is_file())
+
+    def test_frozen_acceptance_is_controller_owned_and_uses_existing_sandbox(self):
+        value=CATALOG['frozen_acceptance']
+        self.assertEqual(value['dependencies'],[])
+        self.assertFalse(value['model_editable'])
+        self.assertEqual(value['bounds']['checks_entity_policy_v1'],30)
+        for module in [value['module'],value['register']]+value['verifiers']:self.assertTrue((CATALOG_PATH.parent/module).is_file())
+
+    def test_recovery_guardrails_declares_local_runtime_and_bounded_retries(self):
+        value=CATALOG['recovery_guardrails']
+        self.assertEqual(value['dependencies'],[])
+        self.assertEqual(value['mcp_work_window'],{'calls':128,'seconds':900})
+        self.assertEqual(value['safe_retries']['writes'],0)
+        for module in value['modules']+[value['configure']]:self.assertTrue((CATALOG_PATH.parent/module).is_file())
+
+    def test_coding_edit_safety_uses_builtin_runtime_and_bounded_checkpoints(self):
+        value=CATALOG['coding_edit_safety']
+        self.assertEqual(value['dependencies'],[])
+        self.assertIn('propose_coding_edits',value['tools'])
+        self.assertEqual(value['limits']['edits_per_file'],16)
+        self.assertTrue((CATALOG_PATH.parent/value['module']).is_file())
 
     def test_opencode_agent_profile_needs_wsl_and_docker(self):
         self.assertEqual(set(profiles.PROFILES["opencode_agent"]["requires"]), {"ollama", "node", "wsl", "docker"})
