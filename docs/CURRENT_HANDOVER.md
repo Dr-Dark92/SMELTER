@@ -1,5 +1,8 @@
 # Claude checkpoint: generic predator controller GREEN and promoted — 2026-10-28
 
+**Codex: start with [the Codex handover](handovers/CODEX_HANDOVER_20261028.md).**
+Commit `17073e6` (not pushed).
+
 Nothing is committed. All results below are offline (fake adapters, Docker
 Lua/Python). No GTA or ARK runtime behavior has been verified.
 
