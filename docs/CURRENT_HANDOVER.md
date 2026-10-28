@@ -1,5 +1,10 @@
 # GitHub/Claude checkpoint: saved coding copy GREEN — 2026-10-28
 
+Game vision and integration details are consolidated in
+[the GTA–ARK mashup handover](handovers/GTA_ARK_MASHUP_HANDOVER_20261028.md),
+including the bridge, rendering plans, creature/shop roadmap and remaining
+controller/native gaps. Read it alongside the Claude continuation handover.
+
 SMELTER has applied proposal `b4eb565f-cd2a-4bb3-ae53-d648a37f1c50`.
 Saved Lua: GREEN, 6 programs, 30/30 frozen checks, receipt
 `6ee4b5e8-2a0a-49d9-8b6e-d53708e42f36`. Saved mods: GREEN, 14 tests with

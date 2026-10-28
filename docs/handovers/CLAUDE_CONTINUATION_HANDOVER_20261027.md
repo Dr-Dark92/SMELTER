@@ -1,5 +1,11 @@
 # SMELTER continuation handover for Claude — 2026-10-28
 
+For the full game vision, two-engine camera/rendering architecture, cougar/Raptor
+approach, requested dinosaurs/shop/taming features and playable acceptance gates,
+also read [the GTA–ARK game handover](GTA_ARK_MASHUP_HANDOVER_20261028.md).
+It distinguishes verified offline progress, user-reported runtime progress,
+historical loader observations and unimplemented gameplay.
+
 ## Start here
 
 Repository: `https://github.com/Dr-Dark92/SMELTER`

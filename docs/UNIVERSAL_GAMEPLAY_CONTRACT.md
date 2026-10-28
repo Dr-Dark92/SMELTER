@@ -1,5 +1,11 @@
 # Universal gameplay logic and adapter contracts
 
+**2026-10-28 update:** The isolated generic policy now passes all 30 frozen
+checks, with saved Lua and Python profiles GREEN on the same tree. The earlier
+review checkpoint below is historical. Full controller integration, adapter
+conformance and in-game behavior are still separate unverified stages. See
+[the current game handover](handovers/GTA_ARK_MASHUP_HANDOVER_20261028.md).
+
 Status: implementation specification, 27 October 2026. This is a new contract to
 implement and verify, not a description of exports already present in a game mod.
 The Raptor prototype is its first acceptance scenario. SMELTER remains a universal

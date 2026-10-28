@@ -1,0 +1,25 @@
+flowchart TD
+  USER[Creator intent and bounded task] --> MELTY[Melty]
+  MELTY --> OC[OpenCode]
+  OC --> QWEN[Ollama and Qwen 35B 128K]
+  OC --> MCP[SMELTER MCP skills and tools]
+  MCP --> COPY[Owned host coding copy]
+  COPY --> TEST[Fresh read-only Docker tests]
+  TEST --> POLICY[Generic entity policy: 30 of 30 offline]
+
+  GTA[GTA Story Mode: intended host] --> ASI[CameraSource and ASI source]
+  ASI --> FILE[GAL1 file: 64-byte camera and player record]
+  FILE --> READER[ARK UE4SS reader and transforms]
+  READER --> VIEW[Local ARK pawn and camera binding]
+
+  POLICY -. controller integration pending .-> CTRL[Shared aggression state machine]
+  CTRL -. native actions unverified .-> ADAPTER[Engine and game adapters]
+  ADAPTER -. runtime proof required .-> GTA
+  COUGAR[Cougar behavior baseline] -. proposed creature experiment .-> ADAPTER
+  ASSETS[ARK-inspired creature assets] -. rigging animation collision pipeline pending .-> GTA
+  ARK[ARK rendered frames] -. native export pending .-> COMP[M2 compositor and ReShade route]
+  COMP -. visual integration pending .-> GTA
+  GAMEPLAY[More dinos shop tranqs taming saddles] -. later tested slices .-> CTRL
+
+  NOTE[Bridge arrows describe implemented source and protocol only. Live cross-game operation remains to be evidenced.]
+  NOTE --- FILE

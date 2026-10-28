@@ -1,5 +1,12 @@
 # Raptor acceptance case for universal gameplay logic
 
+**2026-10-28 checkpoint:** The standalone policy now passes 30/30 protected
+checks and the saved Lua/mods profiles are GREEN. The dated hashes and test
+defects below are historical observations, not fresh file identities. The
+canonical controller still needs policy integration and actual adapter/action
+coverage. Begin with [the current game handover](../handovers/GTA_ARK_MASHUP_HANDOVER_20261028.md)
+and recover live hashes before selecting a new bounded behavior task.
+
 Prepared for the user to pass to SMELTER/Qwen. No native prompt was submitted.
 The shared controller and conformance contract are to remain engine-neutral.
 Game-specific objects/assets/units belong in a project adapter/profile.
