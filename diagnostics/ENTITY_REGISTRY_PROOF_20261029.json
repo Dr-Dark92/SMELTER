@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "subject": "mods/gta-ark/common/managed/EntityRegistry.cs",
+  "source_sha256": "638ff4f46570db098ce418cc787d8d656821b746637174d67754ff5cc42e8fb8",
+  "stage": "GREEN",
+  "checks": 46,
+  "receipt": ".smelter/entity-registry-runs/ad47535a-671d-471f-a432-f8e369990975/receipt.json",
+  "receipt_sha256": "722447406383e437f08203ee5cc550d76fc8422ce260a52c923a230aa349a280",
+  "fixture_sha256": "61af7864e049ade0c1c58f2b44eb57d64977e10499509bda7f1da5e61fd7ecfa",
+  "mutation_evidence": [
+    {
+      "name": "ownership_bypass",
+      "stage": "RED",
+      "compile_exit_code": 0,
+      "exit_code": 1,
+      "failure": "System.Exception: REGISTRY FAIL: observation does not grant ownership",
+      "receipt": ".smelter/entity-registry-runs/e355b270-967b-4dc8-b278-1574e2d40fba/receipt.json"
+    },
+    {
+      "name": "clear_reissues_old_id",
+      "stage": "RED",
+      "compile_exit_code": 0,
+      "exit_code": 1,
+      "failure": "System.Exception: REGISTRY FAIL: clear never reissues even the oldest retired id",
+      "receipt": ".smelter/entity-registry-runs/082446eb-9a17-4441-9e7a-1ab49d93d194/receipt.json"
+    },
+    {
+      "name": "stale_delegate_rejects_fresh",
+      "stage": "RED",
+      "compile_exit_code": 0,
+      "exit_code": 1,
+      "failure": "System.Exception: REGISTRY FAIL: stale observation retired before capacity: valid_throws",
+      "receipt": ".smelter/entity-registry-runs/a7caf302-7d04-4b2b-adc1-62b123bec002/receipt.json"
+    }
+  ],
+  "qwen_session": "ses_e78f63071ffeLUb5KBg2I55gKY",
+  "qwen_lua_finish_receipt": "659a5c13-7de2-4b37-993b-c86413b26117",
+  "scope": "Engine-neutral offline identity and ownership registry; no game or SDK calls",
+  "game_runtime_verified": false,
+  "promoted": true
+}

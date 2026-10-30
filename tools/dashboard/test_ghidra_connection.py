@@ -187,6 +187,12 @@ class GhidraConnectionTests(unittest.TestCase):
         self.assertIn('.BAT',env['PATHEXT'])
         self.assertNotIn('JAVA_TOOL_OPTIONS',env)
 
+    def test_windows_environment_keeps_system_drive_so_no_relative_programdata_appears(self):
+        if os.name != 'nt': self.skipTest('Windows launcher environment')
+        env=ghidra._environment()
+        for name in ('SystemRoot','SystemDrive','ProgramData'):
+            self.assertEqual(env[name],os.environ[name])
+
     def test_ghidra_receipt_has_engine_identity_without_rea_package_version(self):
         from python_tools import ToolSession
         result=self.invoke()

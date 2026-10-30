@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "gate": "Managed Lua 5.4 read-only host inside GTA Enhanced RPH",
+  "verdict": "lua_host_verified",
+  "reasons": [],
+  "verdict_receipt": ".smelter/runtime-probe-verdicts/d0b90a7e8cf748ca82378d7e3e729d8b-20261029T093951871898Z.json",
+  "verdict_receipt_sha256": "e6b80d35ce08290afa9bf41294ceba8f8e567f77fdd6455411a3ab7cc82748e1",
+  "report": {
+    "run_id": "d0b90a7e8cf748ca82378d7e3e729d8b",
+    "sha256": "0d97904d0ebaf0f8501a4fb95782a39152540bad5e87914289c27905fb3ad221",
+    "stage": "native_reads_observed",
+    "samples": 4,
+    "network_session_checks": 4,
+    "probe_mutating_calls": 0
+  },
+  "deployed_plugin": {
+    "path": "D:\\SteamLibrary\\steamapps\\common\\Grand Theft Auto V Enhanced\\Plugins\\SmelterLuaHostProbe.dll",
+    "sha256": "3f311c670481ce3eeca0323e24ea7a6b1cc69512b72890b6c1d60df5a101ac63"
+  },
+  "lua_host": {
+    "path": "C:\\Users\\Dr.Dark92\\AppData\\Local\\SMELTER\\runtime-probes\\gta-rph-lua-host-probe\\d0b90a7e8cf748ca82378d7e3e729d8b\\lua_host.json",
+    "sha256": "fc51fac0e753929de7ec4718d9707911b690fd9a134fdfdb47991e6c3c68edb7",
+    "lua_version": "Lua 5.4",
+    "lua54_module_path": "D:\\SteamLibrary\\steamapps\\common\\Grand Theft Auto V Enhanced\\lua54.DLL",
+    "lua54_sha256": "2d563db79f53acca0164fa0c0d53f99e2d1bd0d50b427b85c7cc2b2158657833",
+    "keralua_path": "D:\\SteamLibrary\\steamapps\\common\\Grand Theft Auto V Enhanced\\KeraLua.dll",
+    "keralua_sha256": "5a8addbb6c119a887bdcbd9b971d338f0849066be82e25ff20eaaeaf00e0443c",
+    "callback_calls": 4,
+    "tick_numbers": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "host_thread_id": 13,
+    "tick_thread_ids": [
+      13,
+      13,
+      13,
+      13
+    ],
+    "ambient_libraries_absent": true
+  },
+  "loader_log_sha256": "0f7de9f10f1dfd1fbb234f64a8a545996fc3a27b60e89e7b493f80e4aae6a493",
+  "evidence_snapshot": ".smelter/lua-host-gate/20261029",
+  "gameplay_verified": false,
+  "same_process_user_mods": "Existing trainer, Script Hook V and DirectStorage fix retained. No trainer action or gameplay mutation used for this read-only probe.",
+  "not_established": [
+    "six-capability native provider",
+    "actor spawn/move/attack",
+    "cougar gameplay",
+    "Raptor or ARK asset integration"
+  ],
+  "authenticity": "Plugin self-report cross-checked against disk identities and exact RPH log receipt; not authenticated proof"
+}

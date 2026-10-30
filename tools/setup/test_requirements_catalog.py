@@ -10,6 +10,49 @@ import profiles
 
 
 class RequirementsCatalogTests(unittest.TestCase):
+    def test_native_reader_and_generic_registry_reuse_fixed_operator_fixtures(self):
+        for name in ['gta_entity_reader','entity_identity_registry']:
+            value=CATALOG[name]
+            self.assertTrue(value['operator_only']);self.assertFalse(value['mcp_exposed'])
+            self.assertFalse(value['game_runtime_verified']);self.assertEqual(value['dependencies'],[])
+            for key in ['fixture','documentation']:
+                self.assertTrue((CATALOG_PATH.parent/value[key]).is_file())
+        registry=CATALOG['entity_identity_registry']
+        self.assertIn('one_zero_failure_summary_matching_pass_lines',registry['checked_evidence'])
+        self.assertTrue((CATALOG_PATH.parent/registry['checker']).is_file())
+        self.assertEqual(CATALOG['gta_entity_reader']['bounds']['fixture_seconds'],10)
+
+    def test_managed_lua_uses_pinned_native_runtime_and_operator_fixture_only(self):
+        value=CATALOG['managed_lua_host']
+        self.assertTrue(value['operator_only']);self.assertFalse(value['mcp_exposed'])
+        self.assertFalse(value['game_runtime_verified']);self.assertEqual(value['dependencies'],[])
+        self.assertEqual(value['sdk']['version'],'1.4.11')
+        for key in ['module','check','tests','documentation']:
+            self.assertTrue((CATALOG_PATH.parent/value[key]).is_file())
+        pins=json.loads((CATALOG_PATH.parent/'tools/setup/managed-sdk-lock.json').read_text())
+        self.assertFalse(pins['sdks']['keralua']['files']['lua54.dll']['reference'])
+        self.assertTrue(pins['sdks']['keralua']['files']['KeraLua.dll']['reference'])
+
+    def test_managed_development_is_operator_only_and_development_sdk_is_not_redistributed(self):
+        value=CATALOG['managed_plugin_development']
+        self.assertTrue(value['operator_only']);self.assertFalse(value['mcp_exposed'])
+        self.assertFalse(value['executes_artifacts']);self.assertFalse(value['sdk']['redistribute'])
+        self.assertTrue(value['sdk']['development_only']);self.assertEqual(value['dependencies'],[])
+        for key in ['module','sdk_installer','sdk_lock']:self.assertTrue((CATALOG_PATH.parent/value[key]).is_file())
+        for path in value['tests']:self.assertTrue((CATALOG_PATH.parent/path).is_file())
+        for key in ['manifest','documentation']:self.assertTrue((CATALOG_PATH.parent/value['read_probe'][key]).is_file())
+        self.assertFalse(value['read_probe']['runtime_installed'])
+
+    def test_runtime_probe_verification_is_read_only_and_operator_only(self):
+        value=CATALOG['runtime_probe_verification']
+        self.assertTrue(value['operator_only']);self.assertFalse(value['mcp_exposed'])
+        self.assertFalse(value['executes_artifacts']);self.assertFalse(value['extracts_archives'])
+        self.assertFalse(value['game_runtime_verified']);self.assertEqual(value['dependencies'],[])
+        for path in [value['verifier'],value['inventory'],value['documentation'],*value['tests'],*value['profiles']]:
+            self.assertTrue((CATALOG_PATH.parent/path).is_file(),path)
+        self.assertIn('deployed_plugin_sha256',value['checked_evidence'])
+        self.assertIn('exact_loader_report_path',value['checked_evidence'])
+
     def test_file_is_at_repository_root(self):
         self.assertEqual(CATALOG_PATH.name, "system-requirements.json")
         self.assertTrue((CATALOG_PATH.parent / "REQUIREMENTS.md").is_file())
@@ -58,9 +101,18 @@ class RequirementsCatalogTests(unittest.TestCase):
         self.assertEqual(value['dependencies'],[])
         self.assertFalse(value['model_editable'])
         self.assertEqual(value['bounds']['checks_entity_policy_v1'],30)
-        self.assertEqual(value['bounds']['checks_predator_controller_v1'],48)
+        self.assertEqual(value['bounds']['checks_predator_controller_v1'],52)
+        self.assertEqual(value['bounds']['checks_provider_admission_v1'],26)
+        self.assertEqual(value['bounds']['checks_predator_system_v1'],20)
+        self.assertIn('tools/dashboard/acceptance/provider_admission_v1.lua',value['verifiers'])
+        generated=value['test_scaffold']
+        self.assertEqual(generated['dependencies'],[])
+        self.assertTrue(generated['proposal_only'])
+        self.assertTrue(generated['protected_acceptance_independent'])
+        for path in [generated['module'],generated['setup']]:self.assertTrue((CATALOG_PATH.parent/path).is_file())
         self.assertIn('--migrate',value['migrate'])
         self.assertEqual(value['scaffold']['tool'],'scaffold_contract_subject');self.assertTrue((CATALOG_PATH.parent/value['scaffold']['module']).is_file())
+        self.assertIn('predator-system-v1',value['scaffold']['contracts'])
         gate=CATALOG['coding_edit_safety']['lua_syntax_gate']
         self.assertIn('never executes',gate['parser']);self.assertEqual(gate['exempt'],['propose_coding_restore'])
         for module in [value['module'],value['register']]+value['verifiers']:self.assertTrue((CATALOG_PATH.parent/module).is_file())

@@ -20,6 +20,28 @@ const SmelterAuth = (() => {
     const current = parse(value, location.origin);
     location.hash = '#' + new URLSearchParams({token: current}).toString();
   }
-  return {token, parse, apply};
+  // A token the server rejected stays rejected: pollers stop hitting the network with it
+  // until a new launch URL changes the fragment, and the shell is told once.
+  const rejected = new Set();
+  function guard(fetchImpl, notify) {
+    return async (input, init = {}) => {
+      const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+      const sent = headers.get('X-Smelter-Token');
+      if (sent && rejected.has(sent)) {
+        return new Response(JSON.stringify({error: 'Unauthorized'}), {status: 403, headers: {'Content-Type': 'application/json'}});
+      }
+      const response = await fetchImpl(input, init);
+      if (sent && (response.status === 401 || response.status === 403) && !rejected.has(sent)) {
+        rejected.add(sent);
+        notify?.();
+      }
+      return response;
+    };
+  }
+  const isRejected = value => rejected.has(value);
+  if (typeof window !== 'undefined' && window.fetch) {
+    window.fetch = guard(window.fetch.bind(window), () => window.dispatchEvent(new Event('smelter-auth-rejected')));
+  }
+  return {token, parse, apply, guard, isRejected};
 })();
 if (typeof module !== 'undefined') module.exports = SmelterAuth;

@@ -28,7 +28,8 @@ const SmelterTraceWorkbench=(()=>{
 .trace-graph-svg{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 .trace-lane-title{fill:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em}
 .trace-node{cursor:pointer}
-.trace-node rect:first-child{fill:var(--card);stroke:var(--border-strong);stroke-width:1}
+.trace-layer-band{fill-opacity:.12;pointer-events:none}.trace-layer-stripe{fill-opacity:.85;pointer-events:none}
+.trace-node rect:first-child{fill:var(--card);stroke:var(--border-strong);stroke:color-mix(in srgb,var(--layer-colour,var(--border-strong)) 65%,var(--border-strong));stroke-width:1}
 .trace-node-bar{fill:var(--subtle)}
 .trace-node-label{fill:var(--text);font-size:12px;font-weight:600}
 .trace-node-sub{fill:var(--muted);font-size:10.5px}
@@ -39,11 +40,12 @@ const SmelterTraceWorkbench=(()=>{
 .trace-node.selected rect:first-child{stroke:var(--focus);stroke-width:2.5}
 .trace-node.match rect:first-child{stroke:var(--info);stroke-width:2}
 .trace-node:focus{outline:none}.trace-node:focus-visible rect:first-child{stroke:var(--focus);stroke-width:3}
-.trace-node.dim,.trace-edge.dim{opacity:.18}
-.trace-edge{fill:none;stroke:var(--subtle);stroke-width:1.3}
+.trace-node.dim,.trace-edge.dim,.trace-edge-casing.dim{opacity:.18}
+.trace-edge-casing{fill:none;stroke:var(--bg);stroke-width:5;stroke-linejoin:round}
+.trace-edge{fill:none;stroke:var(--subtle);stroke-width:1.4;stroke-linejoin:round}
 .trace-edge.evidence-observed{stroke:#6aa88e}.trace-edge.evidence-binding{stroke:var(--info)}.trace-edge.evidence-inferred{stroke:#8c91ba}
 .trace-edge.related{stroke-width:2.6}
-.trace-arrow{fill:var(--muted)}
+.trace-arrow{fill:var(--muted)}.trace-arrow-observed{fill:#6aa88e}.trace-arrow-binding{fill:var(--info)}.trace-arrow-inferred{fill:#8c91ba}
 .trace-edge-label{display:none;fill:var(--text);font-size:10.5px;paint-order:stroke;stroke:var(--bg);stroke-width:4px}
 .trace-edge-label.shown{display:block}
 .tw-inspector{grid-row:1/3;grid-column:2;overflow:auto;padding:12px 14px;font-size:13px}
@@ -106,9 +108,9 @@ const SmelterTraceWorkbench=(()=>{
   const banner=el(doc,'div',null,'tw-banner');banner.hidden=true;const bannerText=el(doc,'span'),live=el(doc,'button','Return to live trace');banner.append(bannerText,live);
   const main=el(doc,'div',null,'tw-main'),graphBox=el(doc,'div',null,'tw-graph'),toolbar=el(doc,'div',null,'tw-toolbar');
   const search=el(doc,'input');search.type='search';search.placeholder='Search nodes, IDs, paths, hashes…';search.setAttribute('aria-label','Search the trace graph');
-  const fit=el(doc,'button','Fit'),zin=el(doc,'button','+'),zout=el(doc,'button','−'),tidy=el(doc,'button','Tidy layout'),focus=el(doc,'button','Focus neighbourhood');
-  zin.setAttribute('aria-label','Zoom in');zout.setAttribute('aria-label','Zoom out');focus.setAttribute('aria-pressed','false');
-  toolbar.append(search,fit,zin,zout,tidy,focus);
+  const fit=el(doc,'button','Fit'),zin=el(doc,'button','+'),zout=el(doc,'button','−'),tidy=el(doc,'button','Tidy layout'),focus=el(doc,'button','Focus neighbourhood'),contain=el(doc,'button','Containment edges');
+  zin.setAttribute('aria-label','Zoom in');zout.setAttribute('aria-label','Zoom out');focus.setAttribute('aria-pressed','false');contain.setAttribute('aria-pressed','false');contain.title='Draw one workspace → file binding edge per file';
+  toolbar.append(search,fit,zin,zout,tidy,focus,contain);
   const legend=el(doc,'div',null,'tw-legend');
   for(const [evidence,label] of Object.entries(G.EVIDENCE)){const item=el(doc,'span');const s=doc.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('width','30');s.setAttribute('height','8');const l=doc.createElementNS('http://www.w3.org/2000/svg','line');Object.entries({x1:0,y1:4,x2:30,y2:4,class:'trace-edge evidence-'+evidence,'stroke-dasharray':{observed:'',binding:'9 5',inferred:'2 5'}[evidence]}).forEach(([k,v])=>l.setAttribute(k,v));s.append(l);item.append(s,doc.createTextNode(label));legend.append(item)}
   legend.append(el(doc,'span','Bar: green active · amber waiting · red error · violet stale'));
@@ -200,6 +202,7 @@ const SmelterTraceWorkbench=(()=>{
   search.onkeydown=e=>{if(e.key==='Enter'){const hits=view.search(search.value);if(hits[0])view.select(hits[0].id)}};
   fit.onclick=()=>view.fit();zin.onclick=()=>view.zoom(1.2);zout.onclick=()=>view.zoom(1/1.2);tidy.onclick=()=>view.tidy();
   focus.onclick=()=>{const on=focus.getAttribute('aria-pressed')!=='true';focus.setAttribute('aria-pressed',String(on));view.setFocus(on)};
+  contain.onclick=()=>{const on=contain.getAttribute('aria-pressed')!=='true';contain.setAttribute('aria-pressed',String(on));view.setContainment(on)};
   live.onclick=()=>{viewing=null;draw()};close.onclick=()=>dialog.close();
   dialog.addEventListener?.('close',()=>{clearInterval(nativeTimer);nativeTimer=null;if(typeof SmelterTraceArtifacts!=='undefined')SmelterTraceArtifacts.release()});
   let nativeTimer=null;

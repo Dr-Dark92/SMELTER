@@ -1,0 +1,121 @@
+{
+  "scope": "Disposable Qwen-authored editable-test checkpoint mutation proof; offline only",
+  "source_hashes": {
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua": "5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7",
+    "mods/gta-ark/tests/test_predator_controller.lua": "18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358"
+  },
+  "cases": [
+    {
+      "case": "baseline",
+      "stage": "GREEN",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_snapshot": {
+        "id": "1521c6b3-7911-44f8-81d5-4a95fed1f5d2",
+        "mode": "fresh_copy_per_invocation",
+        "mount": "read_only_bind",
+        "image_role": "runtime_toolchain_only; source is not an image layer",
+        "lua_files_total": 3,
+        "expected_lua_sha256": "230865c5b4ba792daff397658af0332ccc4aa5d78c3983b5201302fa64c4885a",
+        "observed_lua_sha256": "230865c5b4ba792daff397658af0332ccc4aa5d78c3983b5201302fa64c4885a",
+        "bytes_match": true,
+        "files": [
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+            "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7"
+          },
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+            "sha256": "5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab"
+          },
+          {
+            "path": "mods/gta-ark/tests/test_predator_controller.lua",
+            "sha256": "18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358"
+          }
+        ],
+        "files_truncated": false
+      },
+      "log_tail": "SMELTER_LUA_SYNTAX_RESULT|{\"files_total\": 3, \"files_checked\": 3, \"errors\": 0, \"failed_files\": []}\nSMELTER_LUA_IMPORT|7072656461746f725f636f6e74726f6c6c6572|4d6f64732f47746141726b4c696e6b2f536372697074732f7072656461746f725f636f6e74726f6c6c65722e6c7561\nSMELTER_LUA_IMPORT|656e746974795f706f6c696379|4d6f64732f47746141726b4c696e6b2f536372697074732f656e746974795f706f6c6963792e6c7561\nALL test assertions passed\n\nSMELTER_LUA_EXECUTION|{\"manifest\": {\"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\": \"5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab\", \"mods/gta-ark/tests/test_predator_controller.lua\": \"18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358\"}, \"programs\": [{\"test\": \"mods/gta-ark/tests/test_predator_controller.lua\", \"working_directory\": \"mods/gta-ark\", \"exit_code\": 0, \"imports\": [{\"module\": \"predator_controller\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\", \"sha256\": \"5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab\", \"scope\": \"standard Lua file loader\"}, {\"module\": \"entity_policy\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\", \"sha256\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"scope\": \"standard Lua file loader\"}]}]}\nSMELTER_TEST_RESULT|{\"tests\": 1, \"failures\": 0, \"errors\": 0, \"skipped\": 0}\n"
+    },
+    {
+      "case": "evaluator_bypassed",
+      "stage": "ERROR",
+      "exit_code": 1,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      },
+      "source_snapshot": {
+        "id": "102c0b5b-008e-41a3-a776-8516b6bfbbb4",
+        "mode": "fresh_copy_per_invocation",
+        "mount": "read_only_bind",
+        "image_role": "runtime_toolchain_only; source is not an image layer",
+        "lua_files_total": 3,
+        "expected_lua_sha256": "72f23e76e213481988bb260d9bd665046a2741dbe412d3b671b49db4aa79fd7c",
+        "observed_lua_sha256": "72f23e76e213481988bb260d9bd665046a2741dbe412d3b671b49db4aa79fd7c",
+        "bytes_match": true,
+        "files": [
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+            "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7"
+          },
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+            "sha256": "934e9acddd3c7dec7b4164147a254c7e70e44be4fd180943bc6ba362b987c0ad"
+          },
+          {
+            "path": "mods/gta-ark/tests/test_predator_controller.lua",
+            "sha256": "18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358"
+          }
+        ],
+        "files_truncated": false
+      },
+      "log_tail": "A_SYNTAX_RESULT|{\"files_total\": 3, \"files_checked\": 3, \"errors\": 0, \"failed_files\": []}\nSMELTER_LUA_IMPORT|7072656461746f725f636f6e74726f6c6c6572|4d6f64732f47746141726b4c696e6b2f536372697074732f7072656461746f725f636f6e74726f6c6c65722e6c7561\nSMELTER_LUA_IMPORT|656e746974795f706f6c696379|4d6f64732f47746141726b4c696e6b2f536372697074732f656e746974795f706f6c6963792e6c7561\nlua5.4: tests/test_predator_controller.lua:28: initial move toward human target at distance 5\nstack traceback:\n\t[C]: in function 'assert'\n\ttests/test_predator_controller.lua:28: in local 'run_scenario'\n\ttests/test_predator_controller.lua:47: in main chunk\n\t[C]: in ?\n\nSMELTER_LUA_EXECUTION|{\"manifest\": {\"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\": \"934e9acddd3c7dec7b4164147a254c7e70e44be4fd180943bc6ba362b987c0ad\", \"mods/gta-ark/tests/test_predator_controller.lua\": \"18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358\"}, \"programs\": [{\"test\": \"mods/gta-ark/tests/test_predator_controller.lua\", \"working_directory\": \"mods/gta-ark\", \"exit_code\": 1, \"imports\": [{\"module\": \"predator_controller\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\", \"sha256\": \"934e9acddd3c7dec7b4164147a254c7e70e44be4fd180943bc6ba362b987c0ad\", \"scope\": \"standard Lua file loader\"}, {\"module\": \"entity_policy\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\", \"sha256\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"scope\": \"standard Lua file loader\"}]}]}\nSMELTER_TEST_RESULT|{\"tests\": 1, \"failures\": 0, \"errors\": 1, \"skipped\": 0}\n"
+    },
+    {
+      "case": "wrong_actor_move",
+      "stage": "ERROR",
+      "exit_code": 1,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      },
+      "source_snapshot": {
+        "id": "96af0b4b-b7bc-44c7-ad5d-66bd23ce2039",
+        "mode": "fresh_copy_per_invocation",
+        "mount": "read_only_bind",
+        "image_role": "runtime_toolchain_only; source is not an image layer",
+        "lua_files_total": 3,
+        "expected_lua_sha256": "3670cfb9c0d733563cbe89616128be6f7e6b7dec02581a1f4eb2fa9ff4af674a",
+        "observed_lua_sha256": "3670cfb9c0d733563cbe89616128be6f7e6b7dec02581a1f4eb2fa9ff4af674a",
+        "bytes_match": true,
+        "files": [
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+            "sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7"
+          },
+          {
+            "path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+            "sha256": "5ba3b1a92cafcff479f43d9b7ff3360f8a51867fa2bf9cedc5f90a2959b05571"
+          },
+          {
+            "path": "mods/gta-ark/tests/test_predator_controller.lua",
+            "sha256": "18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358"
+          }
+        ],
+        "files_truncated": false
+      },
+      "log_tail": "A_SYNTAX_RESULT|{\"files_total\": 3, \"files_checked\": 3, \"errors\": 0, \"failed_files\": []}\nSMELTER_LUA_IMPORT|7072656461746f725f636f6e74726f6c6c6572|4d6f64732f47746141726b4c696e6b2f536372697074732f7072656461746f725f636f6e74726f6c6c65722e6c7561\nSMELTER_LUA_IMPORT|656e746974795f706f6c696379|4d6f64732f47746141726b4c696e6b2f536372697074732f656e746974795f706f6c6963792e6c7561\nlua5.4: tests/test_predator_controller.lua:28: initial move toward human target at distance 5\nstack traceback:\n\t[C]: in function 'assert'\n\ttests/test_predator_controller.lua:28: in local 'run_scenario'\n\ttests/test_predator_controller.lua:47: in main chunk\n\t[C]: in ?\n\nSMELTER_LUA_EXECUTION|{\"manifest\": {\"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\": \"5ba3b1a92cafcff479f43d9b7ff3360f8a51867fa2bf9cedc5f90a2959b05571\", \"mods/gta-ark/tests/test_predator_controller.lua\": \"18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358\"}, \"programs\": [{\"test\": \"mods/gta-ark/tests/test_predator_controller.lua\", \"working_directory\": \"mods/gta-ark\", \"exit_code\": 1, \"imports\": [{\"module\": \"predator_controller\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua\", \"sha256\": \"5ba3b1a92cafcff479f43d9b7ff3360f8a51867fa2bf9cedc5f90a2959b05571\", \"scope\": \"standard Lua file loader\"}, {\"module\": \"entity_policy\", \"path\": \"mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua\", \"sha256\": \"2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7\", \"scope\": \"standard Lua file loader\"}]}]}\nSMELTER_TEST_RESULT|{\"tests\": 1, \"failures\": 0, \"errors\": 1, \"skipped\": 0}\n"
+    }
+  ]
+}

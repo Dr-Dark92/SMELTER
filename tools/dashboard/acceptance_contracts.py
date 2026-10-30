@@ -9,7 +9,7 @@ _EXECUTION_SHA=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 DEFINITIONS = {'entity-policy-v1': {'profile':'lua','verifier':'entity_policy_v1.lua','checks':30,
     'contract':'All entity/policy map entries must have string keys and boolean values. Only true entries participate. Optional maps are absent only at nil. Present empty/all-disabled any_traits rejects. Validate all entries before matching. Comments and editable test expectations cannot override this contract.'},
-    'predator-controller-v1': {'profile':'lua','verifier':'predator_controller_v1.lua','checks':48,
+    'predator-controller-v1': {'profile':'lua','verifier':'predator_controller_v1.lua','checks':52,
     'interface':['M.new(deps) -> controller | nil, reason (module returns table M)',
         'deps.adapter: position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id)',
         'deps.evaluate(entity, policy) -> boolean, reason; deps.policy table; deps.clock() -> seconds',
@@ -46,7 +46,61 @@ DEFINITIONS = {'entity-policy-v1': {'profile':'lua','verifier':'entity_policy_v1
                      '5. In range: if s.last_attack and deps.clock() - s.last_attack < attack_cooldown return "wait".',
                      '6. call attack(actor_id, target); refusal -> "error" WITHOUT setting s.last_attack; else set it, s.moving=false, "attack".'],
             'stub':'{action = "error", target_id = nil, reason = "not_implemented"}'}]},
-    'contract':'Pure module exposing new(deps) -> controller or nil,reason. deps = {adapter, evaluate, policy, clock, profile}; adapter needs position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id); a missing capability, non-function clock/evaluate or profile violating attack_radius <= detect_radius <= lose_radius rejects. controller:update(actor_id) returns {action=idle|move|attack|wait|lost|error, target_id, reason=nonempty}. Records are {id, kind, traits, valid, alive, position={x,y,z}}. Select the nearest candidate within detect_radius that is not the actor and for which evaluate(entity, policy) returns true; never trust the adapter to filter. Keep the target until describe fails, evaluate rejects or distance exceeds lose_radius, then call stop(actor) once and return lost. Request move_to once per target, not every update; while already moving return move without a new command. In attack_radius attack only when clock()-last_attack >= attack_cooldown; every adapter call (including position, candidates, describe and stop) is pcall-contained; a refused or throwing call returns error and does not start cooldown. Losing a target never starts cooldown; a refused stop on disengage returns error. State is per actor. Commands always name the actor as executor. No os/io/require/print; units are whatever the adapter and profile share.'}}
+    'contract':'Pure module exposing new(deps) -> controller or nil,reason. deps = {adapter, evaluate, policy, clock, profile}; adapter needs position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id); a missing capability, non-function clock/evaluate or profile violating attack_radius <= detect_radius <= lose_radius rejects. controller:update(actor_id) returns {action=idle|move|attack|wait|lost|error, target_id, reason=nonempty}. Records are {id, kind, traits, valid, alive, position={x,y,z}}. Select the nearest candidate within detect_radius that is not the actor and for which evaluate(entity, policy) returns true; never trust the adapter to filter. Keep the target until describe fails, evaluate rejects or distance exceeds lose_radius, then call stop(actor) once and return lost. Reuse the distance already validated by acquisition or retention within the update; an unavailable redundant describe must never cause an attack without verified range. Request move_to once per target, not every update; while already moving return move without a new command. In attack_radius attack only when clock()-last_attack >= attack_cooldown; every adapter call (including position, candidates, describe and stop) is pcall-contained; a refused or throwing call returns error and does not start cooldown. Losing a target never starts cooldown; a refused stop on disengage returns error. State is per actor. Commands always name the actor as executor. No os/io/require/print; units are whatever the adapter and profile share.'}}
+
+
+DEFINITIONS['provider-admission-v1'] = {
+    'profile':'lua', 'verifier':'provider_admission_v1.lua', 'checks':26,
+    'interface':['Pure module M: new(provider), get_adapter_type(), init_simulation(provider), init_real_game(provider), spawn_raptor(...)',
+        'provider: position(id), describe(id), candidates(actor_id, origin, radius), move_to(actor_id, target_id), attack(actor_id, target_id), stop(actor_id)',
+        'new(provider) -> adapter | nil, reason; preserve provider outputs/arguments, no provider calls or legacy mode changes during admission',
+        'Missing/non-table provider -> nil, unsupported_runtime; missing function -> nil, unsupported_capability:<name>',
+        'Initial/failed initialization mode uninitialized; explicit simulation mode simulation; explicit configured provider mode provider',
+        'spawn_raptor -> nil, unsupported_capability:spawn; no implicit simulation, native API probe, spawn or scheduler'],
+    'contract':'Generic structural provider admission only; not native runtime verification. Validate provider is a table before inspecting six required function fields (position, describe, candidates, move_to, attack, stop). new returns an adapter or nil,reason, never invokes provider functions or changes legacy mode. Preserve exact read values/reasons, candidate arrays, actor/origin/radius and actor/target command arguments. Preserve command true/false/nil and reason; do not turn successful pcall into command success. Exceptions may propagate to the controller pcall boundary or return nil/false with nonempty reason; never report success. Loading starts uninitialized. init_simulation requires an explicit complete provider and returns its adapter in simulation mode. init_real_game requires an explicit complete provider and returns its adapter in provider mode: this admits supplied functions, not game compatibility. Either failed initializer clears prior mode to uninitialized and returns the same unsupported reason. spawn_raptor always returns nil,unsupported_capability:spawn. No os/io/require/print/global game APIs or implicit fallback.'}
+
+
+DEFINITIONS['predator-system-v1'] = {
+    'profile':'lua', 'verifier':'predator_system_v1.lua', 'checks':20,
+    'interface':['M.new(deps) -> system | nil,reason; passive module import and constructor',
+        'deps.adapter (explicit provider) OR deps.runtime only when adapter is nil; clock,profile,policy are explicit',
+        'Use actual sibling engine_adapter.new, predator_controller.new, entity_policy.evaluate',
+        'system:add_actor(nonempty_string_id), system:remove_actor(id), system:tick() -> results keyed by actor ID',
+        'Track one fresh real controller per registration; duplicate IDs reject; removing/re-adding resets target/cooldown',
+        'Only stop registered actors; refusal/throw returns failure and retains registration; successful removal prevents future ticks'],
+    'contract':'Passive generic lifecycle module requiring only sibling engine_adapter, predator_controller and entity_policy modules. No implicit simulation, native globals, timers, spawn, game branches or import-time work. new(deps) validates explicit dependencies through engine_adapter.new and predator_controller.new using real entity_policy.evaluate. Only absent adapter (nil) may use deps.runtime; an invalid explicit adapter rejects without fallback. Missing runtime/capability returns exact admission reason, invalid clock/tuning rejects safely. Returned colon methods add_actor(id), remove_actor(id), tick(). IDs must be nonempty strings; duplicates and unknown removal reject with nonempty reason. Each registration owns fresh controller state, including after removal/re-add. remove_actor calls adapter.stop(id) once for a registered actor only; a refusal or throw returns failure/reason and retains the registration. Successful removal deletes it and prevents future commands. tick returns results keyed by actor ID, preserves real movement/attack/cooldown/death-loss semantics and actor/target identity, and contains one actor error without suppressing another actor. Dependencies are loaded from the subject directory through an allowlisted pure loader; keep the separately registered policy, controller and provider contracts. Offline lifecycle evidence only.'}
+
+
+DEFINITIONS['predator-system-v1']['scaffold'] = {
+    'constructor':'new', 'deps':[],
+    'imports':[{'name':'Adapter','module':'engine_adapter'},
+               {'name':'Predator','module':'predator_controller'},
+               {'name':'Policy','module':'entity_policy'}],
+    'setup':['local provider = deps.adapter',
+        'if provider == nil then provider = deps.runtime end',
+        'local adapter, why = Adapter.new(provider)',
+        'if not adapter then return nil, why end',
+        'local function make_controller()',
+        '  return Predator.new({adapter = adapter, evaluate = Policy.evaluate,',
+        '    clock = deps.clock, profile = deps.profile, policy = deps.policy})',
+        'end',
+        'local validated, invalid = make_controller()',
+        'if not validated then return nil, invalid end'],
+    'methods':[
+        {'name':'add_actor','args':['id'],'returns':'true or nil, nonempty reason',
+         'steps':['Reject nonstring/empty id and existing state[id].',
+                  'Create a fresh c,why = make_controller(); reject nil; state[id]=c; return true.'],
+         'stub':'nil, "not_implemented"'},
+        {'name':'remove_actor','args':['id'],'returns':'true or nil, nonempty reason; refuse keeps state[id]',
+         'steps':['Unknown state[id]: return nil,unknown_actor without stop.',
+                  'local ok,value,why = pcall(adapter.stop,id); reject throw or nil/false, retaining state[id].',
+                  'Only on admitted stop: state[id]=nil and return true.'],
+         'stub':'nil, "not_implemented"'},
+        {'name':'tick','args':[],'returns':'table keyed by actor ID',
+         'steps':['For each id,c in pairs(state), pcall(c.update,c,id).',
+                  'Put a returned result table in results[id]; on throw/non-table put action=error with nonempty reason.',
+                  'Continue all actors and return results. Do not call module-level Predator.update.'],
+         'stub':'{}'}]}
 
 
 def _config(root,sid):

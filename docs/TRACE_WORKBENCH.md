@@ -15,11 +15,12 @@ panel keep working as before; one socket feeds all three views.
 - **Response lifecycle and task outcome as separate chips.** "Response ended"
   never implies success; frozen acceptance RED shows "Changes needed" even when
   editable tests are GREEN.
-- **Relationship graph** in five lanes (task identity → agent runtime →
-  services & skills → operations → files & evidence) covering Melty, OpenCode,
-  sessions and child sessions, Ollama, observed models, SMELTER, loaded skills,
-  tool groups, access/question waits, workspace, files, tests and registered
-  artifacts.
+- **Relationship graph**, a layered top-down hierarchy (task and Melty →
+  OpenCode → sessions, services and workspace → tools and models → files, tests
+  and artifacts) covering Melty, OpenCode, sessions and child sessions, Ollama,
+  observed models, SMELTER, loaded skills, tool groups, access/question waits,
+  workspace, files, tests and registered artifacts. See
+  [Graph layout](#graph-layout).
 - **Edge evidence classes**, by line style and label rather than colour alone:
   solid = observed at runtime, long dash = explicit binding/configuration,
   dotted = inferred (tool-name prefix or expected provider path).
@@ -40,15 +41,77 @@ last non-final state is shown as `unknown`, not `active`.
 
 Click or Tab + Enter selects a node; arrow keys move to the nearest node in that
 direction; Esc clears. Drag to pan, wheel or +/− to zoom, **Fit**, **Tidy layout**
-(re-pack slots) and **Focus neighbourhood** (dim everything except the selection
-and its neighbours). Search matches labels, IDs, paths and hashes.
+(re-run the full crossing optimisation), **Focus neighbourhood** (dim everything
+except the selection and its neighbours) and **Containment edges** (draw the
+workspace → file binding edges; see below). Search matches labels, IDs, paths
+and hashes. Selecting a node shows the relation labels of its edges.
 
-Node positions are stable: each node keeps its lane slot across heartbeats and
-is only re-packed on Tidy or when the task (session + native turn) changes. The
-DOM is reconciled by node ID, so focus, selection and an open preview survive
+The DOM is reconciled by node ID, so focus, selection and an open preview survive
 updates. No animation runs; the only transition is disabled under
 `prefers-reduced-motion`. Under 900 px the layout stacks vertically and chips
 scroll horizontally.
+
+## Graph layout
+
+`layout()` in `task_trace_graph.js` is a deterministic layered (Sugiyama-style)
+layout in plain JS/SVG, with no dependency. It was chosen over a force-directed
+network, arc or chord view because the trace is mostly a hierarchy (who
+started whom, which tool touched which file), like an org or relationship chart:
+
+1. **Direction.** Edges point down. A wait hangs below the session it blocks
+   (its arrow points up into the session), and any cycle is broken by
+   reversing depth-first back edges.
+2. **Layers.** Longest-path layering from the roots. A layer with more than
+   seven nodes wraps by pushing leaves (and their successors) one layer down.
+   On a heartbeat, wrapping prefers nodes that were lower last time and new
+   nodes, so rows do not reshuffle.
+3. **Long edges** get a narrow placeholder on every layer they cross, so a
+   connector only passes through free columns. Long edges from one source with
+   one evidence class share a trunk (a bus, as in an org chart) and branch at
+   the target's layer.
+4. **Ordering.** Barycentre sweeps followed by adjacent transposes minimise
+   crossings. The first layout and **Tidy layout** optimise freely. On later
+   heartbeats only new nodes and placeholders move, and nodes already on screen
+   keep their left-to-right order.
+5. **Placement and routing.** Order-preserving placement aligns nodes with
+   their neighbours. Connectors are orthogonal with rounded corners: they leave
+   a node's bottom edge, run horizontally on their own track in the channel
+   between two layers, and enter the target's top edge. Ports are spread along
+   each box edge in the order of the other end. A port is nudged off any other
+   connector's column, so two connectors never share a stretch of line (except
+   the trunk of one bus). Each connector has a background-coloured casing, so a
+   crossing reads as one line passing over another.
+
+The left gutter labels each layer with the kinds on it. Each layer is colour
+coded: a faintly tinted band with a solid stripe at its left edge, and the
+outline of every node on that row in the same colour. Six hues
+(`LAYER_COLOURS`) cycle by row and are chosen to stay distinct from the state
+bar and evidence colours, so state still reads from the node's left bar and
+evidence from the line. Exported SVGs keep the colours. Layout is recomputed
+on every snapshot (a few milliseconds at 60 nodes). Evidence keeps its line style
+(solid observed, long dash binding, dotted inferred), and arrowheads take the
+evidence colour. All colours are theme tokens, so the graph follows the
+dashboard theme; the exported SVG uses a fixed dark palette.
+
+**Workspace containment.** Every file inside the bound workspace has an
+`inside bound workspace` binding edge from the workspace. On a typical Qwen run
+these are a third of all edges, so the view draws them only when **Containment
+edges** is pressed. Otherwise the workspace node reads `contains N files`. The
+edges stay in the graph data: the inspector, neighbourhood focus and the
+JSON/Mermaid exports always include them.
+
+`test_task_trace_graph.js` checks the layout on Qwen-sized fixtures (13–57
+nodes):
+- no two node boxes come within 8 px of each other;
+- every connector is orthogonal, starts and ends on its own boxes and never
+  enters another box;
+- no two connectors overlap, except within a same-source, same-evidence bus;
+- layers run top-down and no layer exceeds seven nodes;
+- the result is deterministic, and a tree has zero crossings;
+- adding a node on a heartbeat keeps the existing order.
+
+The node `lane` field from `project()` is kept for compatibility but no longer
+drives placement.
 
 ## Saved final task charts
 

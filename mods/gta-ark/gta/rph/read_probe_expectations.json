@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "description": "Pass criteria for the supervised GTA Enhanced RPH read-only probe (docs/GTA_NATIVE_READ_PROBE.md, step 5)",
+  "channel": "gta-rph-read-probe",
+  "stage": "native_reads_observed",
+  "scope": "read_only_native_probe_not_gameplay",
+  "sample_count": 4,
+  "executable": {
+    "name": "GTA5_Enhanced.exe",
+    "file_version": "1.0.1158.16",
+    "sha256": "b48e80f5fc899eb89e5dcc9f3b68e9551cc8dcfac78b2a940b207e569e9987ea"
+  },
+  "plugin": {
+    "name": "SmelterNativeProbe.dll",
+    "deployed_relative_path": "Plugins/SmelterNativeProbe.dll",
+    "sha256": "456c10067fddea64829be2fe3bc41d44b372f853332b93756f6a0d3470033705"
+  },
+  "loader_log": {
+    "name": "RagePluginHook.log",
+    "required": true,
+    "receipt_prefix": "[SMELTER] Native read-probe receipt:",
+    "must_mention": ["SmelterNativeProbe"]
+  }
+}

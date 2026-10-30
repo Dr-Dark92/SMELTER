@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "sdks": {
+    "rph": {
+      "package": "RagePluginHook",
+      "version": "1.124.0",
+      "source": "https://api.nuget.org/v3-flatcontainer/ragepluginhook/1.124.0/ragepluginhook.1.124.0.nupkg",
+      "package_sha256": "b48e24aa586a73b5f1f3b220ea7eb7576d388a52446a11d69fa29842f8508c36",
+      "max_package_bytes": 2097152,
+      "files": {
+        "RagePluginHook.dll": {
+          "member": "lib/net472/RagePluginHook.dll",
+          "bytes": 219648,
+          "sha256": "5d439745604a5fedbf8fa401520d4f296c1b6800d77e2923ba3bf9772182c7e0"
+        },
+        "RagePluginHook.xml": {
+          "member": "lib/net472/RagePluginHook.xml",
+          "bytes": 792593,
+          "sha256": "0a7ab74f67c4360f0b16bc12f5b89aa3106b6814254ddd68d0cb8e31962aa846"
+        },
+        "license.txt": {
+          "member": "licenses/license.txt",
+          "bytes": 320,
+          "sha256": "7f367ef4c16f0b0d5c7364be1767c8a25dc3507bac44480f92c4ee216cce4a08"
+        }
+      },
+      "development_only": true,
+      "redistribute": false,
+      "framework": "net472",
+      "publisher": "MulleDK19 and LMS",
+      "metadata_source": "https://www.nuget.org/packages/RagePluginHook/1.124.0",
+      "runtime_support_source": "https://www.lcpdfr.com/downloads/gta5mods/g17media/52970-lspd-first-response-enhanced-preview/"
+    },
+    "keralua": {
+      "package": "KeraLua",
+      "version": "1.4.11",
+      "source": "https://api.nuget.org/v3-flatcontainer/keralua/1.4.11/keralua.1.4.11.nupkg",
+      "package_sha256": "6348f08b9e72198ce00f969f32b4a5f1284a2faae37965f08c7c1324c2ebc1dc",
+      "max_package_bytes": 8388608,
+      "files": {
+        "KeraLua.dll": {
+          "member": "lib/net46/KeraLua.dll",
+          "bytes": 32256,
+          "sha256": "5a8addbb6c119a887bdcbd9b971d338f0849066be82e25ff20eaaeaf00e0443c",
+          "reference": true
+        },
+        "KeraLua.xml": {
+          "member": "lib/net46/KeraLua.xml",
+          "bytes": 93803,
+          "sha256": "3909049433ca02e0220e20a0a419965b4695f19e1b2a9de3e21cd0e71ad79ecd",
+          "reference": false
+        },
+        "lua54.dll": {
+          "member": "runtimes/win-x64/native/lua54.dll",
+          "bytes": 523264,
+          "sha256": "2d563db79f53acca0164fa0c0d53f99e2d1bd0d50b427b85c7cc2b2158657833",
+          "reference": false
+        },
+        "LICENSE": {
+          "member": "LICENSE",
+          "bytes": 1103,
+          "sha256": "afb9c88f94e23c4a325bbbd4da922a436358681ce0c3f024d430c9ffd5ac290a",
+          "reference": false
+        }
+      },
+      "development_only": true,
+      "redistribute": true,
+      "framework": "net46",
+      "publisher": "NLua/KeraLua authors",
+      "metadata_source": "https://www.nuget.org/packages/KeraLua/1.4.11",
+      "license": "MIT; retain package LICENSE and Lua license before any runtime distribution",
+      "scope": "Offline managed Lua 5.4 bridge evaluation; not deployed into any game"
+    }
+  }
+}

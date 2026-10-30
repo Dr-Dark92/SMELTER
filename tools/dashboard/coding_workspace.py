@@ -22,7 +22,7 @@ MAX_COPY = 128 * 1024 * 1024
 MAX_PATCH = 512 * 1024
 MAX_CHANGES = 6
 EDITABLE = {'.py', '.js', '.mjs', '.cjs', '.css', '.html', '.json', '.md', '.toml', '.yaml', '.yml',
-            '.c', '.cpp', '.h', '.hpp', '.lua', '.txt', '.hex'}
+            '.c', '.cpp', '.h', '.hpp', '.cs', '.lua', '.txt', '.hex'}
 # Build outputs never enter a coding copy. Scripts (.bat/.ps1/.cmd) are copied but not editable,
 # so model edits cannot change anything SMELTER runs on the host.
 BUILD_OUTPUTS = {'.exe', '.obj', '.asi', '.dll', '.lib', '.pdb', '.exp', '.ilk', '.bin'}

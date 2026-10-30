@@ -185,7 +185,8 @@ def process_fixture(base,root,target,bridge,binary):
         'mcp':{'smelter':{'type':'local','command':[node,str(REPO/'tools/dashboard/opencode_mcp_proxy.mjs'),
             '--manifest',str(manifest),'--queue',str(queue)],'enabled':True,'timeout':150000}}}
     home=base/'home';home.mkdir()
-    env={key:value for key,value in os.environ.items() if key in ('PATH','SystemRoot','WINDIR','COMSPEC','PATHEXT','TEMP','TMP')}
+    # os.environ keys are upper-case on Windows, so look each name up rather than matching keys.
+    env={key:os.environ[key] for key in ('PATH','SystemRoot','SystemDrive','ProgramData','ProgramFiles','ALLUSERSPROFILE','WINDIR','COMSPEC','PATHEXT','TEMP','TMP') if key in os.environ}
     env.update(HOME=str(home),USERPROFILE=str(home),XDG_CONFIG_HOME=str(home/'config'),
         XDG_CACHE_HOME=str(home/'cache'),XDG_DATA_HOME=str(home/'data'),XDG_STATE_HOME=str(home/'state'),
         OPENCODE_CONFIG_CONTENT=json.dumps(config),OPENCODE_SERVER_PASSWORD=password,

@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-28",
+  "checks": 26,
+  "verifier_sha256": "11cd4e8195c02b6d18886c103130d986cc1359fabefa84b96a1616a96dcc9a87",
+  "proof_tests": {
+    "tests": 20,
+    "result": "OK",
+    "log": ".smelter/codex-provider-contract-tests-20261028.log",
+    "mutants_rejected": [
+      "wrapped_position",
+      "wrapped_candidates",
+      "swallowed_refusal",
+      "scalar_panic",
+      "wrong_missing_reason",
+      "implicit_simulation",
+      "always_refused_real",
+      "fake_spawn"
+    ]
+  },
+  "requirements_tests": 24,
+  "draft_baseline": {
+    "stage": "RED",
+    "checks": 26,
+    "failures": 21,
+    "evidence": ".smelter/codex-provider-draft-baseline-20261028.json"
+  },
+  "native_verified": false,
+  "dashboard_tests": {
+    "tests": 798,
+    "result": "OK",
+    "skipped": 9,
+    "log": ".smelter/codex-provider-dashboard-tests-20261028.log"
+  },
+  "lifecycle_contract": {
+    "id": "predator-system-v1",
+    "checks": 20,
+    "reference": "GREEN",
+    "mutants_rejected": [
+      "false_removal",
+      "stale_cooldown",
+      "bypassed_policy",
+      "hidden_fallback"
+    ],
+    "tests_log": ".smelter/codex-lifecycle-scaffold-tests-20261028.log"
+  },
+  "subject_scaffold": {
+    "lifecycle_baseline": "9/20",
+    "completed_disposable_fixture": "20/20",
+    "focused_tests": 14,
+    "result": "OK",
+    "source": "Operator-declared imports/setup; Qwen implements three lifecycle methods with scalar edits"
+  },
+  "generated_test": {
+    "scope": "Contract-derived editable conformance, not independent integration/native proof",
+    "focused_tests": 4,
+    "result": "OK",
+    "protected_acceptance_independent": true
+  },
+  "final_dashboard_tests": {
+    "tests": 805,
+    "skipped": 9,
+    "result": "OK",
+    "log": ".smelter/codex-lifecycle-final-dashboard-tests-20261028.log"
+  },
+  "main_validation": "diagnostics/PASSIVE_SYSTEM_PROMOTION_20261028.json"
+}

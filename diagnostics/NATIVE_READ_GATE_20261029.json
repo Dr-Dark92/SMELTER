@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "gate": "GTA Enhanced RPH read-only native probe (docs/GTA_NATIVE_READ_PROBE.md step 5)",
+  "verdict": "native_reads_verified",
+  "verdict_receipt": ".smelter/runtime-probe-verdicts/0e9ef9d163ab41ddae5eb3496e4d69b4-20261029T041645411537Z.json",
+  "verdict_receipt_sha256": "1bff05325e0072517b17ff3a44c42ce9e27109d6b98069a6a1ae3b6a20ce9c52",
+  "report": {
+    "run_id": "0e9ef9d163ab41ddae5eb3496e4d69b4",
+    "sha256": "8bc7ca2e87fd0324a15e0c8039008c4eb7a50dd1fa09d0901a3ac6601fbee765",
+    "stage": "native_reads_observed",
+    "samples": 4,
+    "network_session_checks": 4,
+    "elapsed_ms": 1221,
+    "probe_mutating_calls": 0,
+    "game_runtime_verified": false,
+    "player_handle": "00000002",
+    "position": [
+      -1899.790771484375,
+      -594.652587890625,
+      11.88533878326416
+    ],
+    "runtime_assembly": "RagePluginHook, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+  },
+  "executable": {
+    "file_version": "1.0.1158.16",
+    "sha256": "b48e80f5fc899eb89e5dcc9f3b68e9551cc8dcfac78b2a940b207e569e9987ea"
+  },
+  "plugin": {
+    "reported_sha256": "456c10067fddea64829be2fe3bc41d44b372f853332b93756f6a0d3470033705",
+    "deployed_sha256": "456c10067fddea64829be2fe3bc41d44b372f853332b93756f6a0d3470033705"
+  },
+  "runtime": {
+    "name": "RAGE Plugin Hook",
+    "version": "1.132.1428.17748",
+    "exe_sha256": "73f05b3f7973d4731f4151ae061dd3c991065e8bf3ece51ea1d9ab728b9b42ac",
+    "source_archive": "lspdfr_049_9695_Manual_Install_Enhanced_1158_16.zip",
+    "archive_sha256": "8524e534f219c7f33634ed45ced055f3c7b0b461fa8302ff2f0ac46470c7ed34",
+    "log_lines": [
+      "Version: RAGE Plugin Hook v1.132.1428.17748",
+      "Product version: 1.0.1158.16",
+      "Is enhanced version: True",
+      "Supported version detected",
+      "Loaded plugin \"SMELTER Native Read Probe\" (SmelterNativeProbe.dll)",
+      "[SMELTER] Native read-probe receipt: ...\u0000e9ef9d163ab41ddae5eb3496e4d69b4\\probe.json"
+    ],
+    "log_sha256": "d24e0295f60568abea40de229af2d4b9d844f32ac26887005e5447f1877718a0"
+  },
+  "deployment": {
+    "install_record": ".smelter/native-read-gate/installs/046eae2cdda84c4a9b59f766016b50d4.json",
+    "files": 25,
+    "changed_since_install": [
+      "XInput1_4.dll"
+    ]
+  },
+  "same_process_user_mods": {
+    "note": "Installed by the user by hand for the DirectStorage warning, outside the tracked install; loaded in the same game process. Script Hook V reported game version VER_EN_1_0_1158_13 although the executable is 1158.16, and NativeTrainer.asi (a Script Hook V trainer) was running.",
+    "files": {
+      "ScriptHookV.dll": {
+        "sha256": "126be57ca9dca00e471f9de611766009c900aad88f89ae6c2926ec62e5aaeb4f",
+        "bytes": 1987072
+      },
+      "NativeTrainer.asi": {
+        "sha256": "f2302573ced45cdaaf190f332deeafd3f32e179d7e9102d939608a9ab774b3cf",
+        "bytes": 216576
+      },
+      "DirectStorageFix.asi": {
+        "sha256": "7f50b8a9a2e8a376e2adb7d46bc9483c2754bbbdd964f0918787d4f6f1b76e2c",
+        "bytes": 592384
+      },
+      "XInput1_4.dll": {
+        "sha256": "a1a8bde409ed75d94a0439c37cf881bc354b13c2f8cd32e4bef3b10f308f1392",
+        "bytes": 133632
+      }
+    }
+  },
+  "not_established": [
+    "Lua host inside GTA",
+    "six-capability native provider",
+    "actor spawn/move/attack",
+    "cougar gameplay",
+    "Raptor assets"
+  ],
+  "authenticity": "Self-reported plugin data cross-checked against on-disk hashes and the runtime log; not an authenticated proof"
+}

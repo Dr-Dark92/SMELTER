@@ -1,5 +1,8 @@
 # SMELTER — Master handover
 
+> **Current state lives in [docs/CURRENT_HANDOVER.md](docs/CURRENT_HANDOVER.md)** (desktop, Qwen 3.5 35B-A3B).
+> The section below is the 24 October laptop baseline, kept for history.
+
 ## State (2026-10-24)
 `main` installs and runs end to end on a Windows 11 laptop (GTX 1050 Ti, 4 GB):
 direct chat and managed OpenCode work with `qwen3.5:4b`. Every tool and setup

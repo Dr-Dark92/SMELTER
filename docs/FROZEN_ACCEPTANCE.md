@@ -36,9 +36,66 @@ compaction notes and incidental reason-code assertions cannot override the
 operator's frozen behavior. Correcting a contradictory editable assertion must
 preserve the frozen allow/reject expectations and remain a reviewable patch.
 
+### `predator-system-v1` (added 2026-10-28)
+
+Twenty checks cover the passive entry/lifecycle boundary: explicit dependencies,
+safe validation, actual policy/controller wiring, per-actor results and command
+identity, failed removal retaining registration, successful removal preventing
+ticks and removal/re-add starting fresh state. This catches a subtle lifecycle
+bug: dropping an ID from an active set while reusing its old controller state
+can retain a target/cooldown when the ID is added again. One fresh controller
+per registration satisfies the contract without changing the shared controller.
+
+The pure loader permits only the subject's sibling `engine_adapter`,
+`predator_controller` and `entity_policy`. Native scheduling/spawn globals are
+sentinels that must never be called. Keep their three independently registered
+contracts alongside this one; the four contracts total 128 checks. No native
+game integration is supplied or proven. The operator fixture proves a reference
+and rejects false removal, stale cooldown, policy bypass and hidden fallback.
+
+### `provider-admission-v1` (added 2026-10-28)
+
+When a model repeatedly invents interfaces while writing editable tests, the
+operator can run `tools/setup/scaffold_acceptance_test.py --workspace-id <UUID>
+--contract <registered-id> --destination <project>/tests/test_<name>.lua`.
+`contract_test_scaffold.py` validates the registry/verifier and same-project
+destination, then creates a normal proposal with current file hashes and Lua
+syntax validation. It never applies automatically. The generated test is an
+editable conformance copy of the pinned verifier; changing it cannot change the
+independently executed frozen gate. It does not provide separate integration,
+profile or native evidence. Add those targeted tests separately.
+
+The existing `scaffold_contract_subject` also supports `predator-system-v1`.
+Its operator-reviewed structured imports/setup supply constructor admission and
+the real policy/controller factory inside the per-instance scope. Three colon
+methods remain TODOs. The pure controller scaffold remains import-free. Imports
+are limited to six validated module/alias pairs and setup to forty short lines;
+neither can be supplied in a model tool call. The lifecycle skeleton passes 9/20
+checks; a disposable completion of only the three methods passes all 20.
+
+Verifier: `tools/dashboard/acceptance/provider_admission_v1.lua`, 26 checks.
+The subject exposes `new(provider)`, `get_adapter_type()`,
+`init_simulation(provider)`, `init_real_game(provider)` and `spawn_raptor(...)`.
+The six required provider functions are `position`, `describe`, `candidates`,
+`move_to`, `attack` and `stop`. A missing/non-table provider returns
+`nil,"unsupported_runtime"`; each missing function returns
+`nil,"unsupported_capability:<name>"`. Construction must not call the provider
+or change legacy mode. Read values/reasons, arrays and command arguments/results
+pass through unchanged. A successful `pcall` must never mask a refused command.
+Exceptions may propagate to the controller's existing containment boundary or
+return a refusal with a nonempty reason.
+
+Loading starts in `uninitialized` mode. Simulation requires an explicit complete
+provider; configured-provider initialization uses mode `provider`. Failed
+initialization clears the previous mode. `spawn_raptor` explicitly rejects with
+`unsupported_capability:spawn`. Structural admission proves neither a native
+runtime nor game compatibility; no game API, implicit fallback or scheduler is
+introduced. The disposable reference and eight regression mutants live only in
+the operator test fixture, never the mod. Registration remains operator-owned.
+
 ### `predator-controller-v1` (added 2026-10-28)
 
-Verifier: `tools/dashboard/acceptance/predator_controller_v1.lua`, 48 checks (42 until the 2026-10-28 tightening below).
+Verifier: `tools/dashboard/acceptance/predator_controller_v1.lua`, 52 checks (earlier revisions had 42 and 48).
 The subject is a pure Lua module exposing `new(deps)`. Everything game-specific
 is injected: `adapter` (`position`, `describe`, `candidates`, `move_to`,
 `attack`, `stop`), `evaluate(entity, policy)` (for example the registered
@@ -47,7 +104,7 @@ entity policy), `policy`, `clock` and a `profile` holding `detect_radius`,
 returns `{action, target_id, reason}`. The contract text in
 `acceptance_contracts.DEFINITIONS` is the authoritative summary.
 
-The verifier runs 4 construction checks, then the same 19 scenarios against
+The verifier runs 4 construction checks, then the same 24 scenarios against
 two fake adapters at different unit scales (×1 and ×100). They cover evaluator
 integration, a nearer vehicle being rejected, the actor never targeting itself,
 ignoring adapter-returned candidates beyond range, a single move request per
@@ -88,6 +145,21 @@ fails exactly the 6 new checks. The scaffold step comments were corrected at the
 same time; their earlier wording led to returning `idle` when `candidates` threw.
 A GREEN contract run is evidence for the scenarios it contains, not a code review.
 
+### Range reuse tightening (48 → 52, 2026-10-28)
+
+Review found that a redundant target description could fail after selection,
+leaving no distance and falling through to attack. Two scenarios at both adapter
+scales now require movement to an eligible, out-of-range target when a redundant
+acquisition lookup throws or a second retention lookup returns nil. The distance
+already validated for that update must be reused. No native APIs are involved.
+
+The disposable reference passes all 52 checks. A regression mutant that adds
+this lookup and treats missing distance as in range fails exactly the four new
+checks while passing the older 48. The saved Qwen subject is checked separately;
+reference success is never reported as a fix to the working copy. Re-pin only
+after verifying this proof, while native work is idle. Earlier receipts remain
+historical after the verifier/controller revision changes.
+
 ### Contract scaffolds
 
 A definition may include a structured `scaffold` spec: dependencies with
@@ -97,9 +169,9 @@ methods with step comments. The model tool `scaffold_contract_subject` renders
 it as a whole-file proposal for the registered subject. That proposal goes
 through the Lua syntax gate and is never applied automatically.
 
-For `predator-controller-v1`, the scaffold alone passes 8/48 checks: the four
+For `predator-controller-v1`, the scaffold alone passes 8/52 checks: the four
 constructor checks and four error paths. Filling its TODOs with the reference
-behaviour in a scratch copy reached 48/48, so the scaffold shape is completable.
+behaviour in a scratch copy reached 52/52, so the scaffold shape is completable.
 Only generic plumbing is pre-written (a pcall wrapper and 3D distance).
 Selection, loss, movement, attack and cooldown are left to the implementer.
 

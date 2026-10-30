@@ -1,13 +1,17 @@
 # Handover to Codex — 2026-10-28, from Claude
 
+**Later checkpoint: work is paused at the user's request. Read
+[CODEX_PAUSE_CHECKPOINT_20261028.md](CODEX_PAUSE_CHECKPOINT_20261028.md) before
+acting on the historical next steps below.**
+
 Read this first, then [CURRENT_HANDOVER.md](../CURRENT_HANDOVER.md) (top
 section) and [the GTA–ARK handover](GTA_ARK_MASHUP_HANDOVER_20261028.md).
 
 ## Where things stand
 
-- Branch `feature/agent-stack-game-mods`. Last commit is **`17073e6`** "Promote
-  verified mod work and add contract-guided coding tools". It is not pushed.
-  This handover file is uncommitted.
+- Branch `feature/agent-stack-game-mods`. Handover commit **`876352f`** follows
+  checkpoint **`17073e6`**. Both were local and unpushed at continuation start.
+  See the top of `docs/CURRENT_HANDOVER.md` for newer uncommitted work.
 - `dw3_decomp-main/` is the user's own untracked work. Never stage it.
 - Everything verified is **offline**: fake adapters, plus Docker Lua 5.4 and
   Python. No GTA or ARK runtime behavior has been verified.

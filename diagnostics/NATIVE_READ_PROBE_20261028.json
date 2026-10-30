@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-28",
+  "authorship": "Operator-owned diagnostic sources/tooling; prior Lua gameplay authored through Qwen/SMELTER",
+  "scope": "Compile-only plugin plus offline fake-callback tests; no game execution or modification",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "tree_sha256": "ad0578912e6cbaed9c70429f826a4fa0f0e27d3ce85cac08ac22664de4a4dd65",
+  "source_hashes": {
+    "mods/gta-ark/common/managed/RuntimeProbeHarness.cs": "26757e0801ffd11e48e1466db1474afdf8b3a0a4c6da629917f925ce8ff5cfd9",
+    "mods/gta-ark/gta/rph/GtaProbeProfile.cs": "e45c8243362508e345fe4819d77209e1157d5fcac65e7e95016729e862e6a0e2",
+    "mods/gta-ark/gta/rph/ReadOnlyProbe.cs": "7f1a48e9c2b455519ea1f52d563f7b05098502c69db9f6f5461d1bdebcf5c5ec",
+    "mods/gta-ark/managed.json": "1932ca1809bb919f76f3c5bb2ef57ff60b01e9b48abca267b35a71abf0c996ab"
+  },
+  "build": {
+    "stage": "compiled",
+    "target": "SmelterNativeProbe",
+    "artifact": {
+      "bytes": 11264,
+      "sha256": "456c10067fddea64829be2fe3bc41d44b372f853332b93756f6a0d3470033705"
+    },
+    "compiler_sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3",
+    "framework_release": 534296,
+    "sdk": {
+      "id": "rph",
+      "version": "1.124.0",
+      "package_sha256": "b48e24aa586a73b5f1f3b220ea7eb7576d388a52446a11d69fa29842f8508c36",
+      "redistribute": false
+    },
+    "receipt": ".smelter/managed-builds/c8e65992-49e1-43eb-a25d-005da1f5b16a/receipt.json",
+    "receipt_sha256": "24c8c07ce3bde657df44062184c6a1a5fe6a041d4f7f30bcb849d596e6efb594",
+    "artifact_executed": false,
+    "game_runtime_verified": false,
+    "sdk_copied_to_output": false
+  },
+  "staged_package": ".smelter/mod-packages/gta-native-read-probe-20261028",
+  "staged_plugin": ".smelter/mod-packages/gta-native-read-probe-20261028/Plugins/SmelterNativeProbe.dll",
+  "runtime": {
+    "source": "https://www.lcpdfr.com/downloads/gta5mods/g17media/52970-lspd-first-response-enhanced-preview/",
+    "author_declared_enhanced": "1158.16",
+    "release_date": "2026-09-17",
+    "installed": false,
+    "local_compatibility_verified": false,
+    "acquisition": "Author download endpoint redirected repeatedly; no runtime archive obtained"
+  },
+  "tests": {
+    "dashboard": {
+      "tests": 805,
+      "skipped": 9,
+      "stage": "OK"
+    },
+    "setup": {
+      "tests": 159,
+      "stage": "OK"
+    },
+    "managed_build": {
+      "tests": 7,
+      "stage": "OK"
+    },
+    "fake_callback_probe": {
+      "tests": 7,
+      "stage": "OK"
+    },
+    "requirements_catalog": {
+      "tests": 25,
+      "stage": "OK"
+    },
+    "coding_workspace": {
+      "lua": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tree_sha256": "ad0578912e6cbaed9c70429f826a4fa0f0e27d3ce85cac08ac22664de4a4dd65",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\363aef2d-b8a6-464d-a19c-d2bdc2facb1a.json",
+        "contracts": [
+          {
+            "id": "entity-policy-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 30,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-controller-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 52,
+              "failures": 0
+            }
+          },
+          {
+            "id": "provider-admission-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 26,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-system-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 20,
+              "failures": 0
+            }
+          }
+        ]
+      },
+      "mods": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "tree_sha256": "ad0578912e6cbaed9c70429f826a4fa0f0e27d3ce85cac08ac22664de4a4dd65",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\08ecc559-66c6-4548-9297-d078c0dbc8fe.json"
+      }
+    }
+  },
+  "unchanged_gameplay_sources": {
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua": "829b87ebc7d6e2d8af1eb67ae60679b01f1dde22ff345a13a11ea02d883bb756",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua": "65b497e1414bdd5c1872a18a4cca415636b640b4b324b93fc8c7637ee9b2446f",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/profiles/gta_cougar.lua": "ac49c9fdbda545271eb05547704f3002593c6eebe7028f70a33c1f52075fe1f0",
+    "mods/gta-ark/tests/test_engine_adapter.lua": "01744fbd0abfda22df9138d36bd263cc75d0c59bf4737847e7e0eb07f8221896",
+    "mods/gta-ark/tests/test_predator_system.lua": "e14f9b5ed6f9a5966dec110b10cad6f0e51816992d284b70d3f549524f90a70b",
+    "mods/gta-ark/tests/test_failure_reasons.lua": "ce15e2f5598289c3f9e6bd5dba456fb4d01f7ebb16bd38236ad05a025d4f0d7f"
+  },
+  "remaining_gates": [
+    "Acquire and identify author-distributed Enhanced runtime",
+    "Supervised Story Mode plugin load with runtime log and native read receipt",
+    "Verified Lua host/transport",
+    "Implement and verify native six-capability provider",
+    "Controlled cougar spawn/move/attack/stop",
+    "Raptor asset/rig/animation and later taming/shop/riding"
+  ],
+  "test_logs": {
+    ".smelter/codex-managed-dashboard-tests-20261028.log": "149c8060aa12ce7945c6350366ec47fe7e476954ead66ef6f0eaf0347b852152",
+    ".smelter/codex-managed-setup-tests-20261028.log": "df3d981e653dc07dcab5d573994797e66de56cacb51243a4160b640ef47ca092",
+    ".smelter/codex-runtime-probe-tests-20261028.log": "73c9f98239b3cfbe96e95561dde1817b2d93535e11a0002ab07b8cfb9c7126c4",
+    ".smelter/codex-managed-requirements-tests-20261028.log": "11e90130727cb2f10e821da242d5fe83a23510aa6cb4d494d66791a26d34e4d5"
+  }
+}

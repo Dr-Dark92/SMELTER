@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-28",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "source_tree_sha256": "bdea47102e69d0246c9efde09cbdb39f1df1f2c9871603104cfd7b13daf60619",
+  "files": [
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "sha256": "829b87ebc7d6e2d8af1eb67ae60679b01f1dde22ff345a13a11ea02d883bb756",
+      "destination_before": "a22c0d6be09ba5dff8a9a0b27ec3d540f8df329b319d5fb90c42c7abad660410"
+    },
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "sha256": "65b497e1414bdd5c1872a18a4cca415636b640b4b324b93fc8c7637ee9b2446f",
+      "destination_before": "ebf484bce41b75287e18e5d41da0dc50f123f5eeaab94295b2536cfc5cf51ca0"
+    },
+    {
+      "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/profiles/gta_cougar.lua",
+      "sha256": "ac49c9fdbda545271eb05547704f3002593c6eebe7028f70a33c1f52075fe1f0",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_engine_adapter.lua",
+      "sha256": "01744fbd0abfda22df9138d36bd263cc75d0c59bf4737847e7e0eb07f8221896",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_predator_system.lua",
+      "sha256": "e14f9b5ed6f9a5966dec110b10cad6f0e51816992d284b70d3f549524f90a70b",
+      "destination_before": null
+    },
+    {
+      "relative_path": "mods/gta-ark/tests/test_failure_reasons.lua",
+      "sha256": "ce15e2f5598289c3f9e6bd5dba456fb4d01f7ebb16bd38236ad05a025d4f0d7f",
+      "destination_before": null
+    }
+  ],
+  "receipts": [
+    {
+      "profile": "lua",
+      "id": "4bc813be-893c-4eea-93c2-de81dfc5862d",
+      "sha256": "07bb4996f7520fb10cc8f2b82ed4ae514f0496c12d065ea3ae6b313e1f3039b9",
+      "stage": "GREEN"
+    },
+    {
+      "profile": "mods",
+      "id": "32996759-6f53-4183-8557-c68e6d4280fa",
+      "sha256": "becf61dd19aa9aa9633762ec00e9b6845f1516c9334b7059659c0a8b2cbd1c0e",
+      "stage": "GREEN"
+    }
+  ],
+  "finish": {
+    "id": "0bc75ea8f2094427a1fcc640b1bbf118",
+    "session_id": "ses_e7d3c24bbffeWnzrXO1kY5SFRg",
+    "flag": "GREEN",
+    "flag_receipt": "4bc813be-893c-4eea-93c2-de81dfc5862d",
+    "retries": 0
+  },
+  "contracts": [
+    {
+      "id": "entity-policy-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+      "verifier_sha256": "b303d3d738ee98a847174e706d15264c091731c23459d2c2ba9a4c59854680ea",
+      "checks": 30
+    },
+    {
+      "id": "predator-controller-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+      "verifier_sha256": "3a3b3b8d4069b3ce238cd309e7c878bce911e4e497fc7d60118027ab228a3b02",
+      "checks": 52
+    },
+    {
+      "id": "provider-admission-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "verifier_sha256": "11cd4e8195c02b6d18886c103130d986cc1359fabefa84b96a1616a96dcc9a87",
+      "checks": 26
+    },
+    {
+      "id": "predator-system-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "verifier_sha256": "d121faecc157711292f8475db62c8deba803f9bd8529d853435ac501abf4d122",
+      "checks": 20
+    }
+  ],
+  "authorship": "Qwen provider and lifecycle methods through SMELTER; operator-provided constructor/test scaffolds and failure-reason regression; reviewed by Codex",
+  "scope": "Offline only; no native game/runtime verification",
+  "main_validation": {
+    "lua": {
+      "stage": "GREEN",
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "exit_code": 0,
+      "bytes_match": true
+    },
+    "mods": {
+      "stage": "GREEN",
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "exit_code": 0
+    },
+    "frozen": {
+      "stage": "GREEN",
+      "contracts": [
+        {
+          "id": "entity-policy-v1",
+          "subject_sha256": "2a0f65002b562b409abce2ac698563fab6f1bbc9fd81a087bd2696be417ad1c7",
+          "counts": {
+            "checks": 30,
+            "failures": 0
+          },
+          "stage": "GREEN"
+        },
+        {
+          "id": "predator-controller-v1",
+          "subject_sha256": "5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab",
+          "counts": {
+            "checks": 52,
+            "failures": 0
+          },
+          "stage": "GREEN"
+        },
+        {
+          "id": "provider-admission-v1",
+          "subject_sha256": "829b87ebc7d6e2d8af1eb67ae60679b01f1dde22ff345a13a11ea02d883bb756",
+          "counts": {
+            "checks": 26,
+            "failures": 0
+          },
+          "stage": "GREEN"
+        },
+        {
+          "id": "predator-system-v1",
+          "subject_sha256": "65b497e1414bdd5c1872a18a4cca415636b640b4b324b93fc8c7637ee9b2446f",
+          "counts": {
+            "checks": 20,
+            "failures": 0
+          },
+          "stage": "GREEN"
+        }
+      ]
+    }
+  },
+  "regression_proof": "diagnostics/PASSIVE_SYSTEM_TEST_PROOF_20261028.json"
+}

@@ -6,3 +6,7 @@ skills/diagrams/SKILL.md text eol=lf
 tools/dashboard/ecc_native_instructions.md text eol=lf
 tools/dashboard/workspace_native_instructions.md text eol=lf
 tools/setup/ecc-bridge-lock.json text eol=lf
+# Lua sources are hashed into promotion manifests; keep their bytes identical on every checkout.
+*.lua text eol=lf
+# Managed sources are also pinned in build and operator verification receipts.
+*.cs text eol=lf

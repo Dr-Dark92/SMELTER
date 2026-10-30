@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-28",
+  "scope": "Offline managed Lua 5.4 host, callbacks and compile-only library; no game evidence",
+  "authorship": "Operator-owned generic bridge/tooling; Qwen gameplay sources unchanged",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "tree_sha256": "b1f67b332c4d2073d8a4edf44e84b4a2069171aaef53fceaf0a8ec6114bdc6be",
+  "source_hashes": {
+    "mods/gta-ark/common/managed/LuaModuleHost.cs": "9434499ed6f3f22722308bfe7c43ea0c4d53f8207c71dcea63a1e69a27815ccd",
+    "mods/gta-ark/managed.json": "c6cd024d979bbbe7dbf6417b5d9cbce07234b01d092493c77c88b15500f2b56d",
+    "tools/setup/check_managed_lua.py": "3fa0342bc352ed151c293b7cec695886cbcea53d66724dbc00bf4350f28c6336",
+    "tools/setup/install_managed_sdk.py": "fa625bae3fcee2c8399105de44f0550f99a1cacb38ed07c3fef33f87f5e0e387",
+    "tools/setup/build_managed_mod.py": "2ccd6d8925850797cbd5280b4ee95e3759a31c97a65cef5c51c96561c3f531f3",
+    "tools/setup/managed-sdk-lock.json": "fdc9310e08e5455638ab9d28dbec546c259a27efb5f18a7ae419cffff94aded4",
+    "tools/setup/fixtures/LuaHostFixture.cs": "954df74dfa2f81920a1a3ee27eb44227052db0437a3438db51502ad02837fa0a",
+    "tools/setup/test_managed_lua.py": "911a78d8c12739f8d3221ec791b1d69a4ed05592c024a3a5adb3821467d9596b",
+    "tools/setup/test_managed_mod_build.py": "e91cdca033ca425be3da295beb6dccc56c64b6926159a9a9ff1d18e90c769624"
+  },
+  "sdk": {
+    "id": "keralua",
+    "version": "1.4.11",
+    "package_sha256": "6348f08b9e72198ce00f969f32b4a5f1284a2faae37965f08c7c1324c2ebc1dc"
+  },
+  "runtime_file_hashes": {
+    "KeraLua.dll": "5a8addbb6c119a887bdcbd9b971d338f0849066be82e25ff20eaaeaf00e0443c",
+    "lua54.dll": "2d563db79f53acca0164fa0c0d53f99e2d1bd0d50b427b85c7cc2b2158657833",
+    "LICENSE": "afb9c88f94e23c4a325bbbd4da922a436358681ce0c3f024d430c9ffd5ac290a"
+  },
+  "offline_proof": {
+    "receipt": ".smelter/managed-lua-runs/fb41c3c4-e1c0-4fc1-89d4-51c78931917f/receipt.json",
+    "receipt_sha256": "d03432788972164f9b97847f2de04103b8a92ea41b30ba79b3ed1ae77377b0ef",
+    "checks": {
+      "boundaries": {
+        "exit_code": 0,
+        "log_sha256": "60339e3810accf21b88c542a9892b8d127f7191edc08afe97acbe1acfc8e9164"
+      },
+      "failures": {
+        "exit_code": 0,
+        "log_sha256": "5951d68e48fedb9dfe448c3b20ca1d1349663cf209557e213ee63c8f42147b5f"
+      },
+      "gameplay": {
+        "exit_code": 0,
+        "log_sha256": "1d61c1117f658b1651cf2f51a84d6fb7c8a7408e1a4e6710c59dad51d3fefbe0"
+      },
+      "contracts": {
+        "exit_code": 0,
+        "log_sha256": "154ec87405c9693e00a1392e0126acb1feb5eee87afc16e0d2c2d87a196080e8",
+        "counts": [
+          {
+            "checks": 30,
+            "failures": 0
+          },
+          {
+            "checks": 52,
+            "failures": 0
+          },
+          {
+            "checks": 26,
+            "failures": 0
+          },
+          {
+            "checks": 20,
+            "failures": 0
+          }
+        ]
+      },
+      "missing_attack_mutant": {
+        "expected_failure": true,
+        "exit_code": 1,
+        "log_sha256": "46037fbd23792cea3d58739fe30804b723b5e36f2b5966dfc14e43b6995480f2"
+      }
+    },
+    "frozen_verifiers_unchanged": true
+  },
+  "build": {
+    "receipt": ".smelter/managed-builds/0a81ad6a-1586-49c1-bf7e-ccc733f88bd5/receipt.json",
+    "receipt_sha256": "e7360c3b65b98e7192eb85fa014a77d390398e0938ae5544b004a2af06aa40d3",
+    "artifact": {
+      "bytes": 15872,
+      "sha256": "3debc9fc6e1529937c126fd1c49047706da0b5285ffd4984d0e0ef4cab2a317c"
+    },
+    "artifact_executed": false,
+    "game_runtime_verified": false,
+    "sdk_copied_to_output": false
+  },
+  "tests": {
+    "setup": {
+      "tests": 168,
+      "stage": "OK"
+    },
+    "managed_lua": {
+      "tests": 7,
+      "stage": "OK"
+    },
+    "managed_build": {
+      "tests": 8,
+      "stage": "OK"
+    },
+    "requirements_catalog": {
+      "tests": 26,
+      "stage": "OK"
+    },
+    "coding_workspace": {
+      "lua": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tree_sha256": "b1f67b332c4d2073d8a4edf44e84b4a2069171aaef53fceaf0a8ec6114bdc6be",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\abf7a036-b4ef-4bb9-b8ad-8be6d39e6906.json",
+        "contracts": [
+          {
+            "id": "entity-policy-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 30,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-controller-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 52,
+              "failures": 0
+            }
+          },
+          {
+            "id": "provider-admission-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 26,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-system-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 20,
+              "failures": 0
+            }
+          }
+        ]
+      },
+      "mods": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "tree_sha256": "b1f67b332c4d2073d8a4edf44e84b4a2069171aaef53fceaf0a8ec6114bdc6be",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\7dd4ba82-fd4e-4468-a718-4aa1a8aca0cc.json"
+      }
+    }
+  },
+  "test_logs": {
+    ".smelter/codex-lua-host-setup-tests-20261028.log": "4c5b4d6c0074117d817101c3cae6999efbfbde29ea2470148215f2549d699ed1",
+    ".smelter/codex-managed-lua-tests-20261028.log": "a8c85fd7b805ea9e61eb55a1ec043207a96e20beaed3fbcbfddc52211932d225",
+    ".smelter/codex-lua-host-catalog-tests-20261028.log": "a1445d941bea17d6caf3aa7880e8e5fb5b538b3d7fab25c53a4958e38633f0e3"
+  },
+  "prior_probe": {
+    "three_sources_unchanged": true,
+    "staged_dll_unchanged": true,
+    "manifest_extended_with_host_target": true,
+    "runtime_download": "Author endpoint still returns 403/redirect failure",
+    "runtime_installed": false
+  },
+  "gameplay_sources_unchanged": {
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua": "829b87ebc7d6e2d8af1eb67ae60679b01f1dde22ff345a13a11ea02d883bb756",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua": "65b497e1414bdd5c1872a18a4cca415636b640b4b324b93fc8c7637ee9b2446f",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/profiles/gta_cougar.lua": "ac49c9fdbda545271eb05547704f3002593c6eebe7028f70a33c1f52075fe1f0",
+    "mods/gta-ark/tests/test_engine_adapter.lua": "01744fbd0abfda22df9138d36bd263cc75d0c59bf4737847e7e0eb07f8221896",
+    "mods/gta-ark/tests/test_predator_system.lua": "e14f9b5ed6f9a5966dec110b10cad6f0e51816992d284b70d3f549524f90a70b",
+    "mods/gta-ark/tests/test_failure_reasons.lua": "ce15e2f5598289c3f9e6bd5dba456fb4d01f7ebb16bd38236ad05a025d4f0d7f"
+  },
+  "open_gates": [
+    "Author-distributed Enhanced RPH runtime acquisition and supervised read probe",
+    "Actual Lua54 loading identity/scheduling inside GTA",
+    "Native six-capability provider/bootstrap",
+    "Controlled cougar gameplay test",
+    "Raptor assets and later ARK/taming/shop/riding work"
+  ]
+}

@@ -12,13 +12,29 @@ flowchart TD
   FILE --> READER[ARK UE4SS reader and transforms]
   READER --> VIEW[Local ARK pawn and camera binding]
 
-  TEST --> PROD[Promoted to main mods tree 2026-10-28: Lua 6 of 6, mods 14 of 14 offline]
-  FROZEN[Frozen predator-controller-v1: 48 checks, two fake adapters] --> COPY
+  TEST --> PROD[Promoted main tree: Lua 10 of 10, mods 14 of 14, frozen 128 of 128 offline]
+  FROZEN[Frozen predator-controller-v1: 52 checks, two fake adapters] --> COPY
   SCAFFOLD[scaffold_contract_subject from contract interface] --> CTRL
-  POLICY -. injected evaluate .-> CTRL[Generic predator_controller: 48 of 48 offline, promoted]
+  POLICY -. injected evaluate .-> CTRL[Generic predator_controller: 52 of 52 offline, promoted]
   FROZEN -. verifies .-> CTRL
-  CTRL -. native actions unverified .-> ADAPTER[Engine and game adapters]
+  ENTRY[Passive shared lifecycle: 20 of 20 offline, promoted] --> CTRL
+  ENTRY --> ADAPTER[Explicit provider admission: 26 of 26 offline, promoted]
+  CTRL -. commands through provider .-> ADAPTER
   ADAPTER -. runtime proof required .-> GTA
+  PROFILE[Game profile: units tuning asset IDs and target policy] -. supplied explicitly .-> ENTRY
+  HOST[Native provider and gameplay bootstrap: pending] -. required for real actions .-> ADAPTER
+  LUA54[Generic managed Lua 5.4 host: 128 unchanged checks offline] --> CTRL
+  CSFIXTURE[C# fake six-capability callbacks: move attack cooldown death loss] --> LUA54
+  LUA54 -. needs actual provider and RPH bootstrap .-> HOST
+  RPH[RPH 1.132 in Enhanced 1158.16: installed] --> PROBE[Read-only native probe: passed live]
+  BUILD[Operator fixed C# build plus pinned development SDK] --> PROBE
+  HARNESS[Generic executable gates and bounded report harness] --> PROBE
+  GTA_PROFILE[Exact GTA executable profile and RPH read callbacks] --> PROBE
+  PROBE --> READS[Four player identity and position samples plus exact runtime log]
+  READS --> LUAPROBE[Lua host probe: passed live, four callbacks on one thread]
+  LUAPROBE -. clears host prerequisite .-> HOST
+  REGISTRY[Generic entity identity and ownership: 46 C# checks, promoted] --> HOST
+  NREAD[Qwen read boundary: promoted, 31 fake SDK checks and real SDK compile] --> HOST
   COUGAR[Cougar behavior baseline] -. proposed creature experiment .-> ADAPTER
   ASSETS[ARK-inspired creature assets] -. rigging animation collision pipeline pending .-> GTA
   ARK[ARK rendered frames] -. native export pending .-> COMP[M2 compositor and ReShade route]

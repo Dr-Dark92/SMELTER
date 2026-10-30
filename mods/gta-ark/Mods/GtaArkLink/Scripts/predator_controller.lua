@@ -168,17 +168,19 @@ function M.new(deps)
         s.target=nil; s.moving=false
         return {action="lost", target_id=nil, reason="target_lost"}
       end
+      -- Retain the distance for reuse on next pass
+      s.last_checked_dist = d
     else
       -- No target: search for one
       local id, d, why = select_target(actor_id, origin)
       if why then return {action="error", target_id=nil, reason=why} end
       if not id then return {action="idle", target_id=nil, reason="no_candidates"} end
-      s.target=id; s.target_id=id; s.moving=false
+      s.target=id; s.target_id=id; s.moving=false; s.last_checked_dist=d
     end
 
-    local s_dist = current_distance(actor_id, origin, s.target)
+    local reused_d = s.last_checked_dist or current_distance(actor_id, origin, s.target)
 
-    if type(s_dist) == "number" and s_dist > deps.profile.attack_radius then
+    if type(reused_d) == "number" and reused_d > deps.profile.attack_radius then
       if s.moving then return {action="move", target_id=s.target, reason="chasing"} end
       local ok_move, msg = call(deps.adapter.move_to, actor_id, s.target)
       if not ok_move then return {action="error", target_id=s.target, reason="move_error"} end

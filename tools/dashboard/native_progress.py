@@ -174,6 +174,32 @@ def _path(root):
     return _plain_path(Path(root).resolve() / '.smelter/native-progress/state.json')
 
 
+def export_archives(root):
+    """Operator-only: move binding archives into a dated folder with a SHA-256 manifest.
+
+    Nothing is deleted. The manifest is written before any file moves and every moved
+    file is re-hashed, so a partial export is visible and can be re-run.
+    """
+    from python_tools import _plain_path
+    from coding_workspace import _save
+    source = _plain_path(_path(root).parent / 'archives')
+    files = sorted(source.glob('*.json')) if source.is_dir() else []
+    if not files:
+        return None
+    stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+    target = _plain_path(_path(root).parent / 'archive-exports' / stamp)
+    target.mkdir(parents=True, exist_ok=False)
+    entries = [{'name': f.name, 'bytes': f.stat().st_size, 'sha256': hashlib.sha256(f.read_bytes()).hexdigest()} for f in files]
+    manifest = {'schema_version': 1, 'exported_at': now(), 'source_root': str(Path(root).resolve()), 'files': entries}
+    _save(target / 'manifest.json', manifest)
+    for f, entry in zip(files, entries):
+        moved = target / f.name
+        os.replace(f, moved)
+        if hashlib.sha256(moved.read_bytes()).hexdigest() != entry['sha256']:
+            raise ValueError('Exported archive changed while moving: ' + f.name)
+    return {'folder': str(target), 'count': len(entries)}
+
+
 def _empty():
     return {'schema_version': 1, 'configuration_revision': uuid4().hex, 'binding': None,
             'enabled': False, 'connection': 'stopped', 'task_state': 'unknown',
@@ -233,7 +259,7 @@ class Bridge:
         from storage_budget import require
         folder = _plain_path(_path(self.root).parent / 'archives')
         if folder.is_dir() and len(list(folder.glob('*.json'))) >= 10:
-            raise ValueError('Ten native binding archives exist; preserve/review them before rebinding')
+            raise ValueError('Ten native binding archives exist; export them with tools/setup/export_native_archives.py before rebinding')
         archived = {**self.value, 'source_root': str(self.root)}
         raw = json.dumps(archived).encode()
         require(self.root, len(raw))

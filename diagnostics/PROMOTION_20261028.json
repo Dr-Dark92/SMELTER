@@ -88,6 +88,52 @@
         "editable test_predator_controller.lua only checks module load; real entity_policy wiring test still pending"
       ],
       "evidence": "offline fake adapters only; no in-game behavior verified"
+    },
+    {
+      "promoted": "2026-10-28",
+      "files": [
+        {
+          "relative_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+          "sha256": "5e2077c84320490218688cb42f94127cc20d436eb2735622ab137873ff3e95ab",
+          "destination_before": "789c37c8ed41f1e8e6f55dcd945a53d3adb64101c63d2cf8bfa0ce5093f47b57"
+        }
+      ],
+      "source_tree_sha256": "090d8ae2eef57ad3419b178000792c905e20d4c6c0093eae8b6b69eb21eeaff7",
+      "receipts": {
+        "lua": "f4ef0e36-6b69-4c4a-b357-3a4e7d23ea36"
+      },
+      "finish_flag": "GREEN; watch 2cafb13aa28142d286804ea4bc1844a3, one bounded nudge",
+      "acceptance": {
+        "predator-controller-v1": "52/52",
+        "entity-policy-v1": "30/30"
+      },
+      "author": "SMELTER/Qwen; reviewed by Codex",
+      "review": "Validated distance is assigned in each acquisition/retention branch before use. Missing retained target exits before an attack. No game-specific logic added.",
+      "evidence": "offline only; no native game actions verified"
+    },
+    {
+      "promoted": "2026-10-28",
+      "files": [
+        {
+          "relative_path": "mods/gta-ark/tests/test_predator_controller.lua",
+          "sha256": "18b8b86d0a64d6b7a1d90809c055754a2be452eb3d45faddb944913d3e271358",
+          "destination_before": "dfbc8c21d1d4420d48e8fcc763afe29e4a76b29bf550782b328461b429abd855"
+        }
+      ],
+      "source_tree_sha256": "f5d3a4635a0986b91f9c140f31fdc803ce8795496556c2725cf89b181027f9a8",
+      "receipts": {
+        "lua": "08a6f1b3-a405-44fa-a59d-cae855a05b7e",
+        "mods": "ff186455-2417-4342-a88b-45810bf2d5fe"
+      },
+      "finish_flag": "GREEN; watch 077c2b84755b4e35a0bee0d23238d6f9",
+      "author": "SMELTER/Qwen; known passing checkpoint recovered through Qwen; reviewed by Codex",
+      "review": "Real modules, shared dictionary fixture, strict flow/counters and actor assertions. Baseline passes; policy-bypass and wrong-actor mutants both exit 1. Three role labels currently share the same normalized human record; role-specific classification and explicit command-target spies remain adapter-test work.",
+      "evidence": "offline only"
     }
-  ]
+  ],
+  "passive_system_promotion": {
+    "manifest": "diagnostics/PASSIVE_SYSTEM_PROMOTION_20261028.json",
+    "source_tree_sha256": "bdea47102e69d0246c9efde09cbdb39f1df1f2c9871603104cfd7b13daf60619",
+    "scope": "offline only"
+  }
 }

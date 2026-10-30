@@ -275,6 +275,8 @@ async function startup(){
 }
 el('sessionReconnect').onclick=()=>{try{const previous=location.hash;SmelterAuth.apply(el('sessionToken').value);el('sessionToken').value='';if(previous===location.hash)startup()}catch(error){el('dbstatus').textContent=error.message}};
 window.addEventListener('hashchange',()=>startup());
+// A background request was rejected: show the session recovery once instead of polling with a dead token.
+window.addEventListener('smelter-auth-rejected',()=>startup());
 el('dbselect').onclick=async()=>{
  try{el('dbstatus').textContent='Initializing database...';await api('/api/database/select','POST',{directory:el('dbdirectory').value});await startup()}
  catch(e){el('dbstatus').textContent=e.message}

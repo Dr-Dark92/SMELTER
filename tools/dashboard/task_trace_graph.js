@@ -8,9 +8,8 @@ const SmelterTraceGraph=(()=>{
  const DASH={observed:'',binding:'9 5',inferred:'2 5'};
  const VERBS={read:'read path',edit:'edited path',write:'wrote path',glob:'searched under path',grep:'searched under path',smelter_read_coding_file:'read coding file'};
  const MAX_FILES=40,MAX_TOOL_GROUPS=40,MAX_SESSIONS=16;
- const W=196,H=46,COL=236,ROW=60,PAD=36;
- // Busy lanes use two fixed sub-columns so slots never move when a lane grows.
- const COLUMNS=[1,1,1,2,2],LANE_X=COLUMNS.map((_,i)=>PAD+COLUMNS.slice(0,i).reduce((a,b)=>a+b,0)*COL);
+ // Layer geometry: node box, placeholder width for long edges, gaps, channel tracks and the layer-label gutter.
+ const W=184,H=46,DUMMY=12,GAP=28,DGAP=10,TRACK=9,MIN_CHANNEL=46,PAD=36,LABEL=150,CAP=7,SWEEPS=16;
  const short=(value,size=26)=>{value=String(value??'');return value.length>size?value.slice(0,size-1)+'…':value};
  const slash=path=>String(path).replaceAll('\\','/');
  // Windows paths are case-insensitive; identity folds case, display keeps the original.
@@ -93,7 +92,7 @@ const SmelterTraceGraph=(()=>{
    const active=!terminal&&file.touches.some(t=>['pending','running'].includes(t.phase));
    node(id,{kind:'file',lane:4,label:short(file.identity.relative.split('/').at(-1),24),state:active?'active':stale?'stale':hash?'idle':'unknown',
     detail:{'Canonical path':file.path,'Workspace-relative':file.identity.inside?file.identity.relative:'outside workspace root (other visible scope)','Workspace':workspace||'unbound','Indexed SHA-256':hash?.indexed_sha256||'not in index','Index captured':hash?.index_updated_at||'n/a','Hash freshness':!hash?'No indexed hash for this path':stale?'Index predates an observed write; hash may be stale':'Index observation (not proof of bytes read by a tool)','Last activity':latest.tool+' · '+latest.phase+' · '+latest.updated_at,'Operations':String(file.touches.length)}});
-   if(file.identity.inside)edge('workspace',id,'inside bound workspace','binding');
+   if(file.identity.inside)edge('workspace',id,'inside bound workspace','binding',{containment:true});
    for(const touch of file.touches)edge('tool:'+touch.session_id+':'+touch.tool,id,VERBS[touch.tool]||'named path argument','observed');
   }
   if(fileOverflow)notes.push(fileOverflow+' further file operations are not drawn (limit '+MAX_FILES+' files).');
@@ -123,23 +122,112 @@ const SmelterTraceGraph=(()=>{
   return {nodes:[...nodes.values()],edges:[...edges.values()],notes,truncated:notes.length>0,
    identity:{task_id:data.task_id||null,task_id_source:data.task_id_source||null,native_turn_id:data.native_turn_id||null,session_id:binding.session_id||null,workspace_id:workspace||null,melty_task_id:binding.melty_task_id||null}};
  }
- // Stable placement: nodes keep their slot until the task changes or the user tidies.
+ const mean=values=>values.reduce((a,b)=>a+b,0)/values.length;
+ /* Layered top-down layout, deterministic for a given graph and previous layout:
+    1. edges point down: a wait hangs below the session it blocks and DFS back edges are reversed;
+    2. longest-path layers, and a layer wider than CAP pushes its leaves (then their successors) down;
+    3. a placeholder on every layer a long edge crosses, so edges only pass through free columns;
+    4. barycentre sweeps seeded from the previous order, kept only when crossings strictly drop;
+    5. order-preserving placement, then orthogonal connectors whose horizontal runs use separate
+       tracks in the channel between two layers. Connectors never enter a node box. */
  function layout(graph,previous){
-  const positions=previous||{slots:new Map(),lanes:LANES.map(()=>[])};
-  const present=new Set(graph.nodes.map(n=>n.id));
-  for(const node of graph.nodes){
-   if(!positions.slots.has(node.id)){const lane=positions.lanes[node.lane],free=lane.indexOf(null);const slot=free>=0?free:lane.length;lane[slot]=node.id;positions.slots.set(node.id,{lane:node.lane,slot})}
-  }
-  for(const [id,place] of positions.slots)if(!present.has(id)&&positions.retired?.has(id)){positions.lanes[place.lane][place.slot]=null;positions.slots.delete(id)}
-  positions.retired=new Set([...positions.slots.keys()].filter(id=>!present.has(id)));
-  return positions;
+  const ids=graph.nodes.map(n=>n.id),index=new Map(ids.map((id,i)=>[id,i])),kind=new Map(graph.nodes.map(n=>[n.id,n.kind]));
+  const links=[],adjacent=new Map(ids.map(id=>[id,[]]));
+  for(const e of graph.edges){if(!index.has(e.source)||!index.has(e.target)||e.source===e.target)continue;
+   const flip=kind.get(e.source)==='wait',link={edge:e,from:flip?e.target:e.source,to:flip?e.source:e.target,flip};links.push(link);adjacent.get(link.from).push(link)}
+  const seen=new Map(),visit=id=>{seen.set(id,1);for(const link of adjacent.get(id)){const state=seen.get(link.to);if(state===1)link.back=true;else if(!state)visit(link.to)}seen.set(id,2)};
+  for(const id of ids)if(!seen.has(id))visit(id);
+  for(const link of links)if(link.back){[link.from,link.to]=[link.to,link.from];link.flip=!link.flip}
+  const preds=new Map(ids.map(id=>[id,[]])),succs=new Map(ids.map(id=>[id,[]]));
+  for(const link of links){succs.get(link.from).push(link.to);preds.get(link.to).push(link.from)}
+  const rank=new Map(),waiting=new Map(ids.map(id=>[id,preds.get(id).length])),queue=ids.filter(id=>!waiting.get(id));
+  for(let i=0;i<queue.length;i++){const id=queue[i];rank.set(id,Math.max(0,...preds.get(id).map(p=>rank.get(p)+1)));
+   for(const s of succs.get(id)){waiting.set(s,waiting.get(s)-1);if(!waiting.get(s))queue.push(s)}}
+  const push=(id,r)=>{if(rank.get(id)>=r)return;rank.set(id,r);for(const s of succs.get(id))push(s,r+1)};
+  // Wrapping prefers nodes that sat lower last time, then new nodes, then leaves, so heartbeats do not reshuffle rows.
+  const was=id=>previous?.nodes.get(id)?.layer,lower=(id,r)=>was(id)===undefined?1:was(id)>r?2:0;
+  for(let r=0;r<=Math.max(0,...rank.values());r++){const members=ids.filter(id=>rank.get(id)===r);if(members.length<=CAP)continue;
+   members.sort((a,b)=>lower(b,r)-lower(a,r)||succs.get(a).length-succs.get(b).length||index.get(b)-index.get(a));for(const id of members.slice(0,members.length-CAP))push(id,r+1)}
+  const used=[...new Set(rank.values())].sort((a,b)=>a-b),compact=new Map(used.map((r,i)=>[r,i]));
+  const layers=used.map(()=>[]);let seq=0;
+  const add=(id,layer,real)=>{const v={id,layer,real,w:real?W:DUMMY,up:[],down:[],seq:seq++};layers[layer].push(v);return v};
+  const vertex=new Map(ids.map(id=>[id,add(id,compact.get(rank.get(id)),true)]));
+  // Long edges from one source with one evidence class share a trunk (a bus) and branch at their target's layer.
+  const dummies=new Map(),trunks=new Map();
+  const chains=links.map(link=>{const path=[vertex.get(link.from)],end=vertex.get(link.to),bundle=link.flip?link.edge.id:link.from+'|'+link.edge.evidence;
+   for(let r=path[0].layer+1;r<end.layer;r++){const id=bundle+'#'+r;if(!dummies.has(id))dummies.set(id,add(id,r,false));path.push(dummies.get(id))}path.push(end);
+   const segments=path.slice(1).map((bottom,i)=>{const top=path[i],key=top.id+'>'+bottom.id;if(!bottom.real&&trunks.has(key))return trunks.get(key);
+    const s={top,bottom,id:link.edge.id};top.down.push(s);bottom.up.push(s);if(!bottom.real)trunks.set(key,s);return s});return {link,segments}});
+  // Seed each layer from the previous centres; new vertices start under their parents.
+  const before=previous?.centres||new Map(),byKey=(a,b)=>(a.key===b.key?0:a.key<b.key?-1:1)||a.seq-b.seq;
+  for(const row of layers){for(const v of row){const ups=v.up.map(s=>s.top.key);v.key=before.get(v.id)??(ups.length?mean(ups):Infinity)}
+   row.sort(byKey);let last=0;for(const v of row){if(!Number.isFinite(v.key))v.key=last+W+GAP;last=v.key}row.forEach((v,i)=>v.order=i)}
+  const crossings=()=>{let total=0;for(const row of layers){const segs=row.flatMap(v=>v.down.map(s=>[v.order,s.bottom.order]));
+   for(let i=0;i<segs.length;i++)for(let j=i+1;j<segs.length;j++)if((segs[i][0]-segs[j][0])*(segs[i][1]-segs[j][1])<0)total++}return total};
+  const save=()=>layers.map(row=>[...row]);let best=crossings(),bestOrder=save();
+  for(let sweep=0;sweep<SWEEPS&&best>0;sweep++){const down=sweep%2===0,range=[...layers.keys()];if(!down)range.reverse();
+   for(const r of range.slice(1)){const row=layers[r];for(const v of row){const near=(down?v.up.map(s=>s.top):v.down.map(s=>s.bottom)).map(n=>n.order);v.bary=near.length?mean(near):v.order}
+    row.sort((a,b)=>a.bary-b.bary||a.order-b.order);
+    // On a heartbeat only new vertices and placeholders move; nodes already shown keep their relative order.
+    const kept=row.map((v,i)=>[v,i]).filter(([v])=>v.real&&before.has(v.id)),fixed=[...kept].sort((a,b)=>a[0].order-b[0].order);kept.forEach(([,i],k)=>row[i]=fixed[k][0]);
+    row.forEach((v,i)=>v.order=i)}
+   const count=crossings();if(count<best){best=count;bestOrder=save()}}
+  bestOrder.forEach((row,r)=>{layers[r]=row;row.forEach((v,i)=>v.order=i)});
+  // Transpose: swap neighbours while that removes crossings with the layers above and below.
+  const pairs=(u,v,side,end)=>{let n=0;for(const a of u[side])for(const b of v[side])if(a[end].order>b[end].order)n++;return n};
+  const cost=(u,v)=>pairs(u,v,'up','top')+pairs(u,v,'down','bottom');
+  for(let round=0,changed=true;changed&&round<8;round++){changed=false;
+   for(const row of layers)for(let i=0;i+1<row.length;i++){const u=row[i],v=row[i+1];if(u.real&&v.real&&before.has(u.id)&&before.has(v.id))continue;
+    if(cost(v,u)<cost(u,v)){row[i]=v;row[i+1]=u;u.order=i+1;v.order=i;changed=true}}}
+  best=crossings();
+  // Placement keeps the order; averaging a left-packed and a right-packed solution keeps every gap.
+  const sep=(a,b)=>(a.w+b.w)/2+(a.real||b.real?GAP:DGAP);
+  const place=(row,want)=>{const n=row.length,L=[],R=[];for(let i=0;i<n;i++)L[i]=i?Math.max(want[i],L[i-1]+sep(row[i-1],row[i])):want[i];
+   for(let i=n-1;i>=0;i--)R[i]=i<n-1?Math.min(want[i],R[i+1]-sep(row[i],row[i+1])):want[i];row.forEach((v,i)=>v.cx=(L[i]+R[i])/2)};
+  for(const row of layers){let x=0;row.forEach((v,i)=>{x+=i?sep(row[i-1],v):0;v.cx=x});row.forEach(v=>v.cx-=x/2)}
+  for(let pass=0;pass<8;pass++){const down=pass%2===0,last=pass===7,range=[...layers.keys()];if(!down)range.reverse();
+   for(const r of range)place(layers[r],layers[r].map(v=>{const near=[...(down||last?v.up.map(s=>s.top):[]),...(!down||last?v.down.map(s=>s.bottom):[])];return near.length?mean(near.map(n=>n.cx)):v.cx}))}
+  const all=layers.flat(),left=Math.min(...all.map(v=>v.cx-v.w/2));for(const v of all)v.cx+=PAD+LABEL-left;
+  // Ports spread along box edges in the order of the other end; a port is nudged off any other connector's column.
+  const spread=(v,list,other,key)=>list.sort((a,b)=>other(a)-other(b)||(a.id<b.id?-1:a.id>b.id?1:0)).forEach((s,i)=>s[key]=v.cx-v.w/2+v.w*(i+1)/(list.length+1));
+  const tracks=[];
+  layers.forEach((row,r)=>{for(const v of row)if(v.real)spread(v,v.down,s=>s.bottom.cx,'x1');else for(const s of v.down)s.x1=v.port??v.cx;
+   if(r+1===layers.length)return;const segs=row.flatMap(v=>v.down);
+   for(const v of layers[r+1])if(v.real)spread(v,v.up,s=>s.x1,'x2');else for(const s of v.up)s.x2=v.cx;
+   for(const s of segs){const clash=x=>segs.some(o=>o!==s&&((o.top!==s.top||s.top.real)&&Math.abs(o.x1-x)<3||Math.abs(o.x2-x)<3)),v=s.bottom,room=v.real?v.w/2-4:v.w/2;
+    if(Math.abs(s.x2-s.x1)<1.5&&!clash(s.x1)&&Math.abs(s.x1-v.cx)<=room)s.x2=s.x1;
+    else if(clash(s.x2))for(const d of [4,-4,6,-6,9,-9,12,-12])if(Math.abs(s.x2+d-v.cx)<=room&&!clash(s.x2+d)){s.x2+=d;break}
+    if(!v.real)v.port=s.x2}
+   const runs=segs.filter(s=>s.x1!==s.x2).sort((a,b)=>Math.min(a.x1,a.x2)-Math.min(b.x1,b.x2)||(a.id<b.id?-1:1)),ends=[];
+   for(const s of runs){const lo=Math.min(s.x1,s.x2),hi=Math.max(s.x1,s.x2);let t=ends.findIndex(end=>end+TRACK<lo);if(t<0){t=ends.length;ends.push(hi)}else ends[t]=hi;s.track=t}
+   tracks[r]=ends.length});
+  const tops=[],channels=[];let y=PAD;
+  layers.forEach((_,r)=>{tops[r]=y;channels[r]=Math.max(MIN_CHANNEL,((tracks[r]||0)+1)*TRACK+12);y+=H+channels[r]});
+  const trackY=(r,t)=>tops[r]+H+(channels[r]-((tracks[r]||1)-1)*TRACK)/2+t*TRACK;
+  const edges=new Map();
+  for(const {link,segments} of chains){let points=[];
+   for(const s of segments){const r=s.top.layer;points.push([s.x1,tops[r]+H]);if(s.track!==undefined)points.push([s.x1,trackY(r,s.track)],[s.x2,trackY(r,s.track)]);points.push([s.x2,tops[r+1]])}
+   points=points.filter((p,i)=>!i||p[0]!==points[i-1][0]||p[1]!==points[i-1][1]);
+   points=points.filter((p,i)=>i===0||i===points.length-1||!((p[0]===points[i-1][0]&&p[0]===points[i+1][0])||(p[1]===points[i-1][1]&&p[1]===points[i+1][1])));
+   edges.set(link.edge.id,{points:link.flip?points.reverse():points,source:link.edge.source,target:link.edge.target})}
+  const nodes=new Map(),centres=new Map();
+  for(const v of all){centres.set(v.id,v.cx);if(v.real)nodes.set(v.id,{x:v.cx-W/2,y:tops[v.layer],w:W,h:H,layer:v.layer})}
+  return {nodes,edges,centres,crossings:best,layers:layers.map((row,r)=>({y:tops[r],kinds:[...new Set(row.filter(v=>v.real).map(v=>kind.get(v.id)))]})),
+   width:Math.max(PAD+LABEL,...all.map(v=>v.cx+v.w/2))+PAD,height:layers.length?tops.at(-1)+H+PAD:PAD*2};
  }
- function point(positions,id){const place=positions.slots.get(id);if(!place)return null;const columns=COLUMNS[place.lane];return {x:LANE_X[place.lane]+(place.slot%columns)*COL,y:PAD+28+Math.floor(place.slot/columns)*ROW}}
- function bounds(positions,ids){let maxX=0,maxY=0,minX=Infinity,minY=Infinity;for(const id of ids){const p=point(positions,id);if(!p)continue;minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x+W);maxY=Math.max(maxY,p.y+H)}
-  return minX===Infinity?{x:0,y:0,width:COL*7,height:300}:{x:minX-PAD,y:minY-PAD-28,width:maxX-minX+PAD*2,height:maxY-minY+PAD*2+28}}
- function route(a,b){const sx=a.x+W,sy=a.y+H/2,tx=b.x,ty=b.y+H/2;
-  if(tx>sx+10){const mid=(sx+tx)/2;return `M ${sx} ${sy} C ${mid} ${sy} ${mid} ${ty} ${tx} ${ty}`}
-  const bend=Math.max(a.x,b.x)+W+40;return `M ${a.x+W} ${sy} C ${bend} ${sy} ${bend} ${ty} ${b.x+W} ${ty}`}
+ function point(positions,id){return positions?.nodes.get(id)||null}
+ function bounds(positions,ids){if(!positions||!positions.nodes.size)return {x:0,y:0,width:900,height:300};
+  if(!ids)return {x:0,y:0,width:positions.width,height:positions.height};
+  let maxX=-Infinity,maxY=-Infinity,minX=Infinity,minY=Infinity;for(const id of ids){const p=point(positions,id);if(!p)continue;minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x+W);maxY=Math.max(maxY,p.y+H)}
+  return minX===Infinity?bounds(positions):{x:minX-PAD,y:minY-PAD,width:maxX-minX+PAD*2,height:maxY-minY+PAD*2}}
+ // Orthogonal polyline with small rounded corners.
+ function route(points,radius=6){const f=n=>Math.round(n*10)/10;let d=`M ${f(points[0][0])} ${f(points[0][1])}`;
+  for(let i=1;i<points.length;i++){const [x,y]=points[i],next=points[i+1];if(!next){d+=` L ${f(x)} ${f(y)}`;break}
+   const [px,py]=points[i-1],a=Math.min(radius,Math.hypot(x-px,y-py)/2,Math.hypot(next[0]-x,next[1]-y)/2);
+   d+=` L ${f(x-Math.sign(x-px)*a)} ${f(y-Math.sign(y-py)*a)} Q ${f(x)} ${f(y)} ${f(x+Math.sign(next[0]-x)*a)} ${f(y+Math.sign(next[1]-y)*a)}`}return d}
+ // Edge labels sit on the middle of the longest straight run.
+ function labelPoint(points){let best=[points[0],points[1]],size=-1;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],l=Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]);if(l>size){size=l;best=[a,b]}}
+  return {x:(best[0][0]+best[1][0])/2,y:(best[0][1]+best[1][1])/2}}
  function neighbours(graph,id){const ids=new Set([id]);for(const e of graph.edges){if(e.source===id)ids.add(e.target);if(e.target===id)ids.add(e.source)}return ids}
  function matches(node,query){if(!query)return true;query=query.toLowerCase();return [node.label,node.id,...Object.values(node.detail||{})].some(v=>String(v).toLowerCase().includes(query))}
  function mermaid(graph){
@@ -150,6 +238,10 @@ const SmelterTraceGraph=(()=>{
   return lines.join('\n');
  }
  const NS='http://www.w3.org/2000/svg';
+ const KIND_LABEL={task:'Task',component:'Components',session:'Sessions',service:'Services',workspace:'Workspace',model:'Models',tool:'Tools',skill:'Skills',file:'Files',test:'Tests',artifact:'Artifacts',wait:'Waits'};
+ // Layer colours cycle by row; mid-tone hues read on dark and light backgrounds and stay clear of the state and evidence colours.
+ const LAYER_COLOURS=['#5b8def','#a77bf3','#e0a43a','#2fb5a8','#e46f9b','#8aa63a'];
+ const layerColour=r=>LAYER_COLOURS[r%LAYER_COLOURS.length];
  const STATE_LABEL={active:'active',waiting:'waiting',error:'error',done:'finished',idle:'idle',unknown:'unknown',stale:'stale',linked:'linked'};
  /* Interactive view. Keyed reconciliation keeps nodes, focus and the viewport across heartbeats. */
  function createView(doc,host,options={}){
@@ -158,12 +250,11 @@ const SmelterTraceGraph=(()=>{
   const defs=svg('defs');for(const evidence of Object.keys(EVIDENCE)){const marker=svg('marker',{id:'trace-arrow-'+evidence,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});marker.append(svg('path',{d:'M0 0 L10 5 L0 10 z',class:'trace-arrow trace-arrow-'+evidence}));defs.append(marker)}
   const viewport=svg('g',{class:'trace-viewport'}),laneLayer=svg('g',{class:'trace-lanes'}),edgeLayer=svg('g',{class:'trace-edges'}),labelLayer=svg('g',{class:'trace-edge-labels'}),nodeLayer=svg('g',{class:'trace-nodes'});
   viewport.append(laneLayer,edgeLayer,labelLayer,nodeLayer);root.append(defs,viewport);host.append(root);
-  LANES.forEach((name,i)=>{const t=svg('text',{x:LANE_X[i],y:PAD,class:'trace-lane-title'});t.textContent=name;laneLayer.append(t)});
-  let graph={nodes:[],edges:[]},positions=null,selected=null,query='',focus=false,view={x:0,y:0,k:1},userMoved=false,taskKey=null;
+  let graph={nodes:[],edges:[]},containment=false,positions=null,selected=null,query='',focus=false,view={x:0,y:0,k:1},userMoved=false,taskKey=null;
   const nodeEls=new Map(),edgeEls=new Map();
   function applyView(){viewport.setAttribute('transform',`translate(${view.x} ${view.y}) scale(${view.k})`)}
   function size(){const box=root.getBoundingClientRect?.()||{width:900,height:520};return {width:box.width||900,height:box.height||520}}
-  function fit(ids){const b=bounds(positions||{slots:new Map()},ids||graph.nodes.map(n=>n.id)),s=size(),k=Math.max(.1,Math.min(1.6,Math.min(s.width/b.width,s.height/b.height)));view={k,x:(s.width-b.width*k)/2-b.x*k,y:(s.height-b.height*k)/2-b.y*k};applyView()}
+  function fit(ids){const b=bounds(positions,ids),s=size(),k=Math.max(.1,Math.min(1.6,Math.min(s.width/b.width,s.height/b.height)));view={k,x:(s.width-b.width*k)/2-b.x*k,y:(s.height-b.height*k)/2-b.y*k};applyView()}
   function zoom(factor,cx,cy){const s=size();cx??=s.width/2;cy??=s.height/2;const k=Math.max(.1,Math.min(3,view.k*factor));view={k,x:cx-(cx-view.x)*k/view.k,y:cy-(cy-view.y)*k/view.k};userMoved=true;applyView()}
   function paint(){
    const visible=focus&&selected?neighbours(graph,selected):null;
@@ -172,7 +263,7 @@ const SmelterTraceGraph=(()=>{
     g.setAttribute('aria-pressed',n.id===selected?'true':'false')}
    for(const e of graph.edges){const parts=edgeEls.get(e.id);if(!parts)continue;const related=selected&&(e.source===selected||e.target===selected);
     const hidden=visible&&!(visible.has(e.source)&&visible.has(e.target));
-    parts.path.setAttribute('class','trace-edge evidence-'+e.evidence+(related?' related':'')+(hidden?' dim':''));
+    parts.path.setAttribute('class','trace-edge evidence-'+e.evidence+(related?' related':'')+(hidden?' dim':''));parts.casing.setAttribute('class','trace-edge-casing'+(hidden?' dim':''));
     parts.label.setAttribute('class','trace-edge-label'+(related?' shown':''))}
   }
   function select(id,announce=true){selected=id&&graph.nodes.some(n=>n.id===id)?id:null;paint();if(announce)options.onSelect?.(selected?graph.nodes.find(n=>n.id===selected):null,graph)}
@@ -188,8 +279,14 @@ const SmelterTraceGraph=(()=>{
   }
   function focusNode(id){select(id);nodeEls.get(id)?.focus?.()}
   function update(next,meta={}){
-   if(meta.taskKey!==undefined&&meta.taskKey!==taskKey){taskKey=meta.taskKey;positions=null;userMoved=false;for(const g of nodeEls.values())g.remove();nodeEls.clear();for(const p of edgeEls.values()){p.path.remove();p.label.remove()}edgeEls.clear()}
-   graph=next;positions=layout(graph,positions);
+   if(meta.taskKey!==undefined&&meta.taskKey!==taskKey){taskKey=meta.taskKey;positions=null;userMoved=false;for(const g of nodeEls.values())g.remove();nodeEls.clear();for(const p of edgeEls.values()){p.group.remove();p.label.remove()}edgeEls.clear()}
+   graph=next;
+   // Workspace containment (one binding edge per file) is drawn only on request; the node carries the count instead.
+   const hidden=containment?0:graph.edges.filter(e=>e.containment).length;positions=layout(hidden?{nodes:graph.nodes,edges:graph.edges.filter(e=>!e.containment)}:graph,positions);
+   // Each layer is a tinted band with a colour stripe; its label lists the kinds on that row, one per line (at most three).
+   laneLayer.replaceChildren();positions.layers.forEach((layer,r)=>{const names=layer.kinds.map(k=>KIND_LABEL[k]||k),lines=names.length>3?[...names.slice(0,2),'+'+(names.length-2)+' more']:names,colour=layerColour(r);
+    const band=svg('rect',{class:'trace-layer-band','data-layer':r,x:PAD/2,y:layer.y-10,width:positions.width-PAD,height:H+20,rx:10,fill:colour}),stripe=svg('rect',{class:'trace-layer-stripe',x:PAD/2,y:layer.y-10,width:4,height:H+20,rx:2,fill:colour});
+    const t=svg('text',{x:PAD,y:layer.y+H/2+4-(lines.length-1)*6.5,class:'trace-lane-title'});lines.forEach((line,i)=>{const span=svg('tspan',{x:PAD,dy:i?13:0});span.textContent=line;t.append(span)});laneLayer.append(band,stripe,t)});
    const ids=new Set(graph.nodes.map(n=>n.id));
    for(const [id,g] of nodeEls)if(!ids.has(id)){g.remove();nodeEls.delete(id)}
    for(const n of graph.nodes){let g=nodeEls.get(n.id);
@@ -198,15 +295,16 @@ const SmelterTraceGraph=(()=>{
      g.addEventListener?.('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select(n.id)}else if(event.key.startsWith('Arrow')){event.preventDefault();move(event.key)}else if(event.key==='Escape'){select(null)}});
      g.addEventListener?.('focus',()=>{if(selected!==n.id)select(n.id)});
      nodeEls.set(n.id,g);nodeLayer.append(g)}
-    const p=point(positions,n.id);g.setAttribute('transform',`translate(${p.x} ${p.y})`);
-    const [,, label, sub, title]=g.children;label.textContent=n.label;sub.textContent=n.kind+' · '+(STATE_LABEL[n.state]||n.state);title.textContent=n.label+' — '+n.kind+', '+(STATE_LABEL[n.state]||n.state);
+    const p=point(positions,n.id),r=positions.nodes.get(n.id)?.layer??0;g.setAttribute('transform',`translate(${p.x} ${p.y})`);g.setAttribute('data-layer',r);g.setAttribute('style','--layer-colour:'+layerColour(r));
+    const [,, label, sub, title]=g.children;label.textContent=n.label;sub.textContent=n.kind+' · '+(STATE_LABEL[n.state]||n.state)+(n.id==='workspace'&&hidden?' · contains '+hidden+(hidden===1?' file':' files'):'');title.textContent=n.label+' — '+n.kind+', '+(STATE_LABEL[n.state]||n.state);
     g.setAttribute('aria-label',n.label+', '+n.kind+', '+(STATE_LABEL[n.state]||n.state))}
    const edgeIds=new Set(graph.edges.map(e=>e.id));
-   for(const [id,p] of edgeEls)if(!edgeIds.has(id)){p.path.remove();p.label.remove();edgeEls.delete(id)}
-   for(const e of graph.edges){const a=point(positions,e.source),b=point(positions,e.target);if(!a||!b)continue;let parts=edgeEls.get(e.id);
-    if(!parts){const path=svg('path',{'marker-end':`url(#trace-arrow-${e.evidence})`}),title=svg('title'),label=svg('text',{'text-anchor':'middle'});title.textContent=e.relation+' — '+EVIDENCE[e.evidence];path.append(title);label.textContent=short(e.relation,40);parts={path,label};edgeEls.set(e.id,parts);edgeLayer.append(path);labelLayer.append(label)}
-    parts.path.setAttribute('d',route(a,b));if(DASH[e.evidence])parts.path.setAttribute('stroke-dasharray',DASH[e.evidence]);
-    parts.label.setAttribute('x',(a.x+W+b.x)/2);parts.label.setAttribute('y',(a.y+b.y)/2+H/2-6)}
+   for(const [id,p] of edgeEls)if(!edgeIds.has(id)||!positions.edges.has(id)){p.group.remove();p.label.remove();edgeEls.delete(id)}
+   // Each connector sits on a background-coloured casing so a crossing reads as one line passing over another.
+   for(const e of graph.edges){const placed=positions.edges.get(e.id);if(!placed)continue;let parts=edgeEls.get(e.id);
+    if(!parts){const group=svg('g'),casing=svg('path'),path=svg('path',{'marker-end':`url(#trace-arrow-${e.evidence})`}),title=svg('title'),label=svg('text',{'text-anchor':'middle'});title.textContent=e.relation+' — '+EVIDENCE[e.evidence];path.append(title);label.textContent=short(e.relation,40);group.append(casing,path);parts={group,casing,path,label};edgeEls.set(e.id,parts);edgeLayer.append(group);labelLayer.append(label)}
+    const d=route(placed.points);parts.casing.setAttribute('d',d);parts.path.setAttribute('d',d);if(DASH[e.evidence])parts.path.setAttribute('stroke-dasharray',DASH[e.evidence]);
+    const at=labelPoint(placed.points);parts.label.setAttribute('x',at.x);parts.label.setAttribute('y',at.y-5)}
    if(selected&&!ids.has(selected))select(null);else paint();
    if(!userMoved)fit();
   }
@@ -220,11 +318,12 @@ const SmelterTraceGraph=(()=>{
    search(value){query=value.trim();paint();return graph.nodes.filter(n=>query&&matches(n,query))},
    setFocus(value){focus=value;paint();if(value&&selected){userMoved=true;fit([...neighbours(graph,selected)])}},
    tidy(){positions=null;update(graph)},
+   setContainment(value){containment=value;update(graph)},
    selected:()=>selected,graph:()=>graph,element:root,
-   svgMarkup(){const clone=root.cloneNode(true);clone.setAttribute('xmlns',NS);const b=bounds(positions,graph.nodes.map(n=>n.id));clone.setAttribute('viewBox',`${b.x} ${b.y} ${b.width} ${b.height}`);clone.setAttribute('width',b.width);clone.setAttribute('height',b.height);clone.querySelector('.trace-viewport')?.removeAttribute('transform');
+   svgMarkup(){const clone=root.cloneNode(true);clone.setAttribute('xmlns',NS);const b=bounds(positions);clone.setAttribute('viewBox',`${b.x} ${b.y} ${b.width} ${b.height}`);clone.setAttribute('width',b.width);clone.setAttribute('height',b.height);clone.querySelector('.trace-viewport')?.removeAttribute('transform');
     const style=doc.createElementNS(NS,'style');style.textContent=EXPORT_STYLE;clone.prepend(style);return new XMLSerializer().serializeToString(clone)}};
  }
- const EXPORT_STYLE='svg{background:#0f172a;font-family:Segoe UI,sans-serif}.trace-lane-title{fill:#94a3b8;font-size:12px;font-weight:600}.trace-node rect{fill:#1b2336;stroke:#3a4762}.trace-node-label{fill:#f1f5f9;font-size:12px}.trace-node-sub{fill:#94a3b8;font-size:10px}.trace-edge{fill:none;stroke:#64748b;stroke-width:1.3}.trace-edge.evidence-observed{stroke:#4ade80}.trace-edge.evidence-binding{stroke:#60a5fa}.trace-edge-label{display:none}.trace-arrow{fill:#94a3b8}.state-active .trace-node-bar{fill:#22c55e}.state-waiting .trace-node-bar{fill:#fbbf24}.state-error .trace-node-bar{fill:#f87171}.state-stale .trace-node-bar{fill:#c084fc}.trace-node-bar{fill:#475569}';
- return {project,layout,mermaid,createView,fileIdentity,neighbours,matches,LANES,EVIDENCE};
+ const EXPORT_STYLE='svg{background:#0f172a;font-family:Segoe UI,sans-serif}.trace-lane-title{fill:#94a3b8;font-size:12px;font-weight:600}.trace-layer-band{fill-opacity:.12}.trace-layer-stripe{fill-opacity:.85}.trace-node rect{fill:#1b2336;stroke:#3a4762;stroke:var(--layer-colour,#3a4762);stroke-opacity:.75}.trace-node-label{fill:#f1f5f9;font-size:12px}.trace-node-sub{fill:#94a3b8;font-size:10px}.trace-edge-casing{fill:none;stroke:#0f172a;stroke-width:5}.trace-edge{fill:none;stroke:#94a3b8;stroke-width:1.4}.trace-edge.evidence-observed{stroke:#4ade80}.trace-edge.evidence-binding{stroke:#60a5fa}.trace-edge-label{display:none}.trace-arrow{fill:#94a3b8}.trace-arrow-observed{fill:#4ade80}.trace-arrow-binding{fill:#60a5fa}.state-active .trace-node-bar{fill:#22c55e}.state-waiting .trace-node-bar{fill:#fbbf24}.state-error .trace-node-bar{fill:#f87171}.state-stale .trace-node-bar{fill:#c084fc}.trace-node-bar{fill:#475569}';
+ return {project,layout,route,mermaid,createView,fileIdentity,neighbours,matches,LANES,EVIDENCE,LAYER_COLOURS,SIZE:{W,H}};
 })();
 if(typeof module!=='undefined')module.exports=SmelterTraceGraph;

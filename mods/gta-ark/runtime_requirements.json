@@ -1,11 +1,41 @@
 {
   "schema_version": 1,
-  "reviewed_on": "2026-10-26",
+  "reviewed_on": "2026-10-28",
+  "rage_plugin_hook_read_probe": {
+    "source": "https://www.lcpdfr.com/downloads/gta5mods/g17media/52970-lspd-first-response-enhanced-preview/",
+    "author_release": "LSPDFR Enhanced 0.4.9 Build 9695, 17 September 2026; bundled RPH lists Enhanced 1158.16",
+    "supported_enhanced_author_claim": [
+      "1.0.1158.16"
+    ],
+    "status": "candidate_author_documented_not_runtime_verified",
+    "development_sdk": {
+      "package": "RagePluginHook",
+      "version": "1.124.0",
+      "source": "https://www.nuget.org/packages/RagePluginHook/1.124.0",
+      "lock": "../../tools/setup/managed-sdk-lock.json",
+      "development_only": true,
+      "redistribute": false
+    },
+    "manifest": "managed.json",
+    "target": "SmelterNativeProbe",
+    "design": "../../docs/GTA_NATIVE_READ_PROBE.md",
+    "scope": "Exact-executable-gated player identity/position reads; no spawn/actions or Lua host",
+    "runtime_installed_by_smelter": false,
+    "artifact_executed": false,
+    "game_runtime_verified": false,
+    "verification": {
+      "runtime_inventory": "../../tools/setup/inspect_loader_runtime.py",
+      "verdict": "../../tools/setup/verify_runtime_probe.py",
+      "profile": "gta/rph/read_probe_expectations.json"
+    }
+  },
   "script_hook_v": {
     "source": "https://www.dev-c.com/gtav/scripthookv/",
     "version": "v3889.0 / 1158.13",
     "released": "2026-07-15",
-    "supported_enhanced": ["1.0.1158.13"],
+    "supported_enhanced": [
+      "1.0.1158.13"
+    ],
     "installed_by_smelter": false
   },
   "cougar_raptor_candidate": {
@@ -19,7 +49,10 @@
       "reviewed_source_commit": "f742117a5e8ccc359bf3b4644c6bce7dad77cc7a",
       "installed_by_smelter": false,
       "selected_for_camera_link": false,
-      "build_prerequisites": ["CMake 3.17 or later", "Visual Studio C++ toolchain"],
+      "build_prerequisites": [
+        "CMake 3.17 or later",
+        "Visual Studio C++ toolchain"
+      ],
       "compatibility": "Unverified for Enhanced 1.0.1158.16; README claims Enhanced support, not an exact-build acceptance result",
       "capability": "Asset archive loading/redirection through an ASI loader, not a GTA native scripting API",
       "artifact_pin": "No binary selected; release identity and SHA-256 required before any installation"
@@ -35,5 +68,19 @@
     "api_documentation": "https://docs.ue4ss.com/dev/lua-api/global-functions/delayedactions.html",
     "compatibility": "Unknown for this ARK client; current development documentation is not proof of stable-release or game compatibility",
     "installed_by_smelter": false
+  },
+  "managed_lua_bridge": {
+    "sdk": "KeraLua 1.4.11",
+    "source": "https://www.nuget.org/packages/KeraLua/1.4.11",
+    "lock": "../../tools/setup/managed-sdk-lock.json",
+    "module": "common/managed/LuaModuleHost.cs",
+    "target": "SmelterLuaHost",
+    "manifest": "managed.json",
+    "documentation": "../../docs/MANAGED_LUA_HOST.md",
+    "offline_frozen_checks": 128,
+    "native_game_callbacks_implemented": false,
+    "runtime_installed_in_game": false,
+    "game_runtime_verified": false,
+    "scope": "Engine-neutral reviewed-module host and explicit C# callback bridge; not a RPH loader or native game provider"
   }
 }

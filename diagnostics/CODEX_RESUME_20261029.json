@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "scope": "Backend continuation and stronger operator verification; no gameplay implementation or game-file changes",
+  "workspace_id": "897b9243-fd7e-42f4-a46a-d1b814a33a81",
+  "tree_sha256": "86f2d6e46551173969bccc5f9bc64ae1c4a01ca1b4d82586fa8ba1540f628a0d",
+  "source_hashes": {
+    "tools/setup/verify_runtime_probe.py": "48c21798acbcdc8b332e8c511432b68e18b2828090de3222905b1d31a87975ad",
+    "tools/setup/verify_lua_host_probe.py": "1835817e7fbd50419c711415ae446b393ae3d656f157204c3e97579f6d420053",
+    "tools/setup/test_runtime_probe_verdict.py": "faa34dc918b3dfa66d0da4775a32446df411d3c76e7599ed7735ec2e237bd18a",
+    "tools/setup/test_verify_lua_host_probe.py": "d51007a20b67eca56ac92f40a9b809db92e5757677c3d3140359cd2cc373df55",
+    "tools/setup/test_requirements_catalog.py": "af7b21a02842fd1ba9285a657484c7e9d1d4391035b3e577a671469ac802a39f",
+    "mods/gta-ark/gta/rph/read_probe_expectations.json": "245d52a772479518172e6d861ebdfc6eccd0c84500d70294b77b02cfce365135",
+    "mods/gta-ark/gta/rph/lua_host_probe_expectations.json": "eed44f3faa68f1cb3455bb14778346a71909ba2c52525ee5dfafbe1ce8f3900e",
+    "docs/GTA_NATIVE_PROVIDER_TASK.md": "9a8164f7d4bbddd9b9f0d0f82a42f8bbeb8a34770ca35ce822e01746c65b8796",
+    "docs/GTA_RPH_SDK_API_NOTES.md": "acd8fd6fb7f16ff16dd2f19eb8ca6ec6a827a1e4fd7ad4b5cfab16fdab0c31be"
+  },
+  "prepared_model_notes": {
+    "mods/gta-ark/docs/GTA_NATIVE_PROVIDER_TASK.md": "9a8164f7d4bbddd9b9f0d0f82a42f8bbeb8a34770ca35ce822e01746c65b8796",
+    "mods/gta-ark/docs/GTA_RPH_SDK_API_NOTES.md": "acd8fd6fb7f16ff16dd2f19eb8ca6ec6a827a1e4fd7ad4b5cfab16fdab0c31be",
+    "mods/gta-ark/docs/GTA_PREDATOR_ADAPTER.md": "b154ddb00e64abc0f620bcde66e6d44c3cc637826a018276985148a087ddd1b1"
+  },
+  "native_read_revalidation": {
+    "verdict": "native_reads_verified",
+    "reasons": [],
+    "receipt": ".smelter/runtime-probe-verdicts/0e9ef9d163ab41ddae5eb3496e4d69b4-20261029T052855189305Z.json",
+    "receipt_sha256": "ba19c11907b5b68322d3561e52be5b673000a4563f875a5a745cd20cd4ed64d2",
+    "deployed_plugin_hash_checked": true,
+    "exact_report_log_path_checked": true
+  },
+  "lua_host_gate": {
+    "state": "pending_live_run",
+    "report_present": false,
+    "plugin_sha256": "3f311c670481ce3eeca0323e24ea7a6b1cc69512b72890b6c1d60df5a101ac63",
+    "no_qwen_dispatch": true
+  },
+  "game_installs_unchanged": [
+    {
+      "id": "046eae2cdda84c4a9b59f766016b50d4",
+      "files": 25,
+      "known_preexisting_user_override": [
+        "XInput1_4.dll"
+      ]
+    },
+    {
+      "id": "c9334d2f93844c1f9155caa0c14d010e",
+      "files": 4,
+      "known_preexisting_user_override": []
+    }
+  ],
+  "tests": {
+    "setup": {
+      "tests": 203,
+      "stage": "OK"
+    },
+    "coding_workspace": {
+      "lua": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "tree_sha256": "86f2d6e46551173969bccc5f9bc64ae1c4a01ca1b4d82586fa8ba1540f628a0d",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\ae0287b2-265b-4c64-b1f0-3b38efa2bef2.json",
+        "contracts": [
+          {
+            "id": "entity-policy-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 30,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-controller-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 52,
+              "failures": 0
+            }
+          },
+          {
+            "id": "provider-admission-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 26,
+              "failures": 0
+            }
+          },
+          {
+            "id": "predator-system-v1",
+            "stage": "GREEN",
+            "counts": {
+              "checks": 20,
+              "failures": 0
+            }
+          }
+        ]
+      },
+      "mods": {
+        "stage": "GREEN",
+        "counts": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "tree_sha256": "86f2d6e46551173969bccc5f9bc64ae1c4a01ca1b4d82586fa8ba1540f628a0d",
+        "current_tree_matches": true,
+        "evidence_path": "C:\\Users\\Dr.Dark92\\Documents\\ChatGPT\\SMELTER\\.smelter\\coding-workspaces\\897b9243-fd7e-42f4-a46a-d1b814a33a81\\test-runs\\45241818-69b8-4ae9-b798-05ffffbe9e05.json"
+      }
+    }
+  },
+  "test_logs": {
+    ".smelter/codex-resume-setup-tests-20261029.log": "ecb835ba923d685846c8e0ab8779700c9d7ef52a092b260488e5f294fd9df385",
+    ".smelter/codex-resume-regressions-current-20261029.log": "9ba51552eec6bfc8a55e9dc54c0221e8fc54ed022fba67996847dd137928fa19"
+  },
+  "frozen_contracts": [
+    {
+      "id": "entity-policy-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/entity_policy.lua",
+      "verifier_sha256": "b303d3d738ee98a847174e706d15264c091731c23459d2c2ba9a4c59854680ea"
+    },
+    {
+      "id": "predator-controller-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua",
+      "verifier_sha256": "3a3b3b8d4069b3ce238cd309e7c878bce911e4e497fc7d60118027ab228a3b02"
+    },
+    {
+      "id": "provider-admission-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua",
+      "verifier_sha256": "11cd4e8195c02b6d18886c103130d986cc1359fabefa84b96a1616a96dcc9a87"
+    },
+    {
+      "id": "predator-system-v1",
+      "subject_path": "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua",
+      "verifier_sha256": "d121faecc157711292f8475db62c8deba803f9bd8529d853435ac501abf4d122"
+    }
+  ],
+  "services": {
+    "observed_at": "2026-10-29T09:56:33.985280+04:00",
+    "dashboard_port": 8769,
+    "managed_session": "ready",
+    "native_observer": "connected",
+    "native_tasks": {},
+    "watchdog_running": true,
+    "watchdog_pid": 32228,
+    "historical_task_flag": "GREEN",
+    "historical_task_retries": 0,
+    "lua_report_present": false
+  },
+  "notes": [
+    "Lua test runner/verifier sources unchanged; RED versus ERROR deferred",
+    "No new dependency or grant; two existing requirement files updated",
+    "Backend services restored using the existing database and access locations",
+    "C# provider compilation remains operator-owned; Lua GREEN is not C# or native validation",
+    "No commit, push or staging; dw3_decomp-main untouched"
+  ]
+}

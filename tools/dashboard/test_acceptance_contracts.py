@@ -201,7 +201,7 @@ class AcceptanceTests(unittest.TestCase):
         sid,target=self.prepare();acceptance.register(self.root,sid,'predator-controller-v1',relative)
         result=cw.test(self.root,{'workspace_id':sid,'profile':'lua'})
         self.assertEqual(result['stage'],'GREEN',result.get('log_tail'))
-        self.assertEqual(result['acceptance']['contracts'][0]['counts'],{'checks':48,'failures':0})
+        self.assertEqual(result['acceptance']['contracts'][0]['counts'],{'checks':52,'failures':0})
         # A controller that only mutates state (no adapter commands) cannot pass.
         state_only=CONTROLLER.replace('local okm, why = call("move_to", actor, t)','local okm, why = true, nil')
         contracts=acceptance.load(self.root,sid,target);(target/relative).write_text(state_only,encoding='utf-8')
@@ -212,7 +212,7 @@ class AcceptanceTests(unittest.TestCase):
         (target/relative).write_bytes(b'return {}\n')
         ran=acceptance.run(self.root,target,contracts,{relative:cw.digest(b'return {}\n')});ran.pop('_raw_output')
         self.assertEqual(ran['stage'],'RED')
-        self.assertEqual(ran['contracts'][0]['counts'],{'checks':48,'failures':48})
+        self.assertEqual(ran['contracts'][0]['counts'],{'checks':52,'failures':52})
 
     def predator_fixture(self,subject=None):
         relative='mods/demo/Scripts/controller.lua';path=self.root/relative;path.parent.mkdir(parents=True)
@@ -221,6 +221,21 @@ class AcceptanceTests(unittest.TestCase):
         (tests/'test_print_only.lua').write_text('print("editable suite says GREEN")\n',encoding='utf-8')
         sid,target=self.prepare();acceptance.register(self.root,sid,'predator-controller-v1',relative)
         return sid,target,relative
+
+    @unittest.skipUnless(toolchain(),'Pinned Lua sandbox required')
+    def test_redundant_describe_mutant_cannot_attack_without_verified_range(self):
+        # Reproduce the reviewed regression without touching the saved mod copy.
+        mutant=CONTROLLER.replace('    local t = s.target', '''    local okagain, again = pcall(a.describe, s.target)
+    r = okagain and eligible(again, actor, origin, p.lose_radius) or nil
+    local t = s.target''').replace('    if r > p.attack_radius then','    if type(r) == "number" and r > p.attack_radius then')
+        self.assertNotEqual(mutant,CONTROLLER)
+        sid,target,relative=self.predator_fixture(mutant)
+        contracts=acceptance.load(self.root,sid,target)
+        ran=acceptance.run(self.root,target,contracts,{relative:cw.digest((target/relative).read_bytes())})
+        self.assertEqual(ran['stage'],'RED',ran.get('log_tail'))
+        item=ran['contracts'][0]
+        self.assertEqual(item['counts'],{'checks':52,'failures':4})
+        self.assertTrue(all('verified range' in name for name in item['failed_checks']))
 
     def test_summary_carries_interface_checklist_for_contracts_that_define_one(self):
         sid,target,_=self.predator_fixture()
@@ -252,14 +267,14 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(result['stage'],'ERROR')
         detail=result['diagnostic']
         self.assertEqual(detail['classification'],'acceptance_failure')
-        self.assertEqual(detail['failed_total'],48)
+        self.assertEqual(detail['failed_total'],52)
         self.assertIn("observed: raised:",detail['failed_checks'][0])
         self.assertIn('require',detail['failed_checks'][0])
         self.assertEqual(detail['workspace_diagnostic']['classification'],'test_failure')
         self.assertEqual([c['id'] for c in detail['failing_contracts']],['predator-controller-v1'])
         self.assertIn('interface',detail['failing_contracts'][0])
         item=result['acceptance']['contracts'][0]
-        self.assertEqual(item['failed_total'],48);self.assertEqual(len(item['failed_checks']),8)
+        self.assertEqual(item['failed_total'],52);self.assertEqual(len(item['failed_checks']),8)
         from coding_recovery import recover
         context=recover(self.root,{'workspace_id':sid})
         lua=[t for t in context['tests'] if t['profile']=='lua'][0]

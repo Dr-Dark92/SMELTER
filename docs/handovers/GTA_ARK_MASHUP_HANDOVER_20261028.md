@@ -6,6 +6,33 @@ This document consolidates the creator's game vision, actual source architecture
 verified progress and remaining integration work. Historical loader observations
 below are dated evidence, not a fresh compatibility check.
 
+**Later managed-Lua checkpoint, 28 October:** A generic C# Lua 5.4 host now passes
+the same 128 frozen checks unchanged, plus real-controller/C# fake-provider
+movement/attack/cooldown/death-loss tests. This is operator-owned bridge/tooling
+work; Qwen's gameplay modules did not change. Setup 168 OK. No RPH runtime,
+native GTA provider or game was run. See [the host guide](../MANAGED_LUA_HOST.md)
+and [the exact checkpoint](../../diagnostics/MANAGED_LUA_HOST_20261028.json).
+
+**Later native-probe preparation, 28 October:** The RPH authors' Enhanced
+release lists build 1158.16 support. A read-only, exact-executable-gated managed
+plugin is compiled/staged, with seven fake-callback instrumentation tests and
+seven compiler/cache tests. No runtime loader was acquired/installed or run;
+this is a candidate route, not a live compatibility result. See
+[the probe guide](../GTA_NATIVE_READ_PROBE.md) and
+[source/build/test hashes](../../diagnostics/NATIVE_READ_PROBE_20261028.json).
+The passive provider/lifecycle milestone remains 128 frozen checks GREEN;
+fresh coding-copy Lua 10/10 and mods 14 tests with one C++ sample skip.
+No game or ARK runtime claim follows from these offline results.
+
+**Codex continuation, 28 October:** The current six-capability native adapter
+design and Lua-host gap are documented in
+[GTA predator adapter](../GTA_PREDATOR_ADAPTER.md). A fresh read-only inventory
+and current author support check are recorded in
+[the range/runtime review](../../diagnostics/PREDATOR_RANGE_REVIEW_20261028.md).
+The checked loader paths remain absent; no game was launched or modified.
+The controller verifier now has 52 checks after operator-reviewed range-reuse
+scenarios. Older 42/48-check results below are historical revisions.
+
 ## What the creator wants
 
 GTA V Enhanced Story Mode is the intended host for a GTA × ARK mashup, with ARK:

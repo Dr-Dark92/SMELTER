@@ -1,9 +1,351 @@
+# Reader promoted and GitHub checkpoint — 2026-10-30
+
+Read [the latest checkpoint](handovers/CODEX_COMMIT_20261030.md) first, then
+[the live Lua continuation](handovers/CODEX_LIVE_LUA_20261029.md).
+The native read boundary is now **reviewed and promoted**, source
+`01677229…`, after **31/31 fake SDK C# checks**, three rejected mutants and a
+successful real pinned RPH SDK compilation. Exact evidence:
+[reader proof](../diagnostics/GTA_ENTITY_READER_PROOF_20261030.json).
+It is not deployed or exposed as a complete provider. Next: Lua
+position/describe translation, bounded enumeration, owned-actor commands,
+then a reviewed bootstrap and controlled cougar test. No new live gameplay
+claim is made. The generic registry remains 46/46 offline; the actual Lua host
+passed its read-only live gate on 29 October.
+
+The user authorized a commit and push. This checkpoint includes the existing
+workbench changes and verified mod/tool progress; private runtime data, SDK
+binaries, tokens and `dw3_decomp-main/` stay excluded.
+
+---
+
+# Resumed: live Lua host gate passed — 2026-10-29
+
+The user resumed work and authorized desktop use while AFK. Codex launched GTA
+through the existing Steam installation, selected Story Mode, attached the
+installed RPH, and ran `LoadPlugin SmelterLuaHostProbe.dll`. The unchanged
+verifier returned **`lua_host_verified`**, no reasons, for run
+`d0b90a7e8cf748ca82378d7e3e729d8b`. Four callbacks/ticks ran on thread 13;
+the deployed plugin, KeraLua and loaded Lua 5.4 hashes match their pins.
+Read [the gate record](../diagnostics/LUA_HOST_GATE_20261029.json).
+No dependency-placement repair, game-file change or security change was needed.
+Existing user-installed trainer/Script Hook V files were present; no trainer
+action was used. This is read-only host evidence, not a gameplay demonstration.
+
+Qwen/watchdog work has resumed. The generic registry is now **promoted**, exact
+source SHA `638ff4f4…`, after 46 operator C# checks and three deliberately broken
+variants failed at the intended assertions. Read
+[the registry proof](../diagnostics/ENTITY_REGISTRY_PROOF_20261029.json).
+Its Qwen finish `659a5c13…` separately covers Lua 10/10 and frozen 128/128.
+The first read-only native slice specified in
+[the reader contract](GTA_ENTITY_READER_TASK.md). It is not deployed or admitted
+as a six-capability provider. New reader fixtures require explicit source review,
+fake SDK checks and real pinned SDK compilation before promotion. The newer
+30 October checkpoint above records that completed review.
+Next: bounded enumeration and native command slices after Lua read translation.
+Six game callbacks, the cougar demo, Raptor assets and ARK integration remain
+unverified. No Git staging, commit or push.
+
+---
+
+# Historical pause, superseded by the resume above — 2026-10-29
+
+**Qwen is stopped and unloaded; watchdog retries are disabled. Do not resume
+until the user asks.** Read [the pause checkpoint](handovers/CODEX_PAUSE_20261029.md).
+The independent registry draft in the owned copy is **C# compile RED** and was
+not promoted. Its native-task GREEN covers only Lua/mods regression scopes.
+Gate 1 remains passed; the installed Lua-host probe still awaits a live run.
+No game files, grants, security settings or Git commits were changed.
+
+---
+
+# Lua host gate staged in GTA, not yet run — 2026-10-29
+
+**Read [the Claude → Codex handover](handovers/CLAUDE_HANDOVER_CODEX_20261029.md) first.**
+
+**Codex continuation, 29 October:** Gate 1 was revalidated against the deployed
+DLL and the exact report path in RPH's log and still passes. The Lua-host
+verifier now also checks KeraLua on disk and complete typed tick/thread evidence.
+The game is closed and gate 2 still has no report. Next-task/API notes are
+indexed under `mods/gta-ark/docs/` in the owned copy; no Qwen prompt was sent.
+Docker, dashboard, headless ACP and watchdog were restored with the same
+database/grants. Read [the continuation checkpoint](handovers/CODEX_CONTINUATION_20261029.md)
+and [its exact evidence](../diagnostics/CODEX_RESUME_20261029.json).
+Current owned tree: `86f2d6e4…`; Lua 10/10, frozen 128/128, mods 14 tests
+(one C++ sample skip); setup 203 OK. Game files/binaries and protected acceptance unchanged.
+
+- **Gate 1 (native reads) passed live.**
+- **Gate 2:** `SmelterLuaHostProbe` (`3f311c67…`) is built, passes offline against
+  the real pinned Lua 5.4, and is installed in the game folder as install
+  `c9334d2f…`. It has not been loaded in game yet.
+- **Next:** the user runs `LoadPlugin SmelterLuaHostProbe.dll` in Story Mode, then
+  run `tools/setup/verify_lua_host_probe.py --latest --loader-log <RagePluginHook.log>`.
+- **Then:** Qwen authors the six callbacks through SMELTER.
+- **Safety:** BattlEye is off, and Script Hook V files the user installed are in
+  the game folder, so never go online.
+
+No commit or push.
+
+---
+
+# Native read gate passed in GTA Enhanced — 2026-10-29
+
+**The first live game gate is cleared.** RAGE Plugin Hook **1.132.1428.17748**
+loaded the unchanged staged `SmelterNativeProbe.dll` (`456c1006…`) into
+`GTA5_Enhanced.exe` **1.0.1158.16** (`b48e80f5…`) in Story Mode. The probe read
+the player ped four times, 250 ms apart: handle `00000002`, human, alive,
+finite position. It checked the network session before each read and made no
+mutating calls. `verify_runtime_probe.py` returned **`native_reads_verified`**
+with no failed gates. Exact hashes are in
+[the gate record](../diagnostics/NATIVE_READ_GATE_20261029.json).
+
+- **Runtime:** RPH comes only inside the author's LSPDFR 0.4.9 Enhanced 1158.16 zip
+  (`8524e534…`). The 24 top-level runtime files plus the probe were installed with
+  `tools/setup/stage_native_read_probe.py`, and **LSPDFR was not installed**.
+  Install record: `.smelter/native-read-gate/installs/046eae2c….json`. The game
+  had never been launched before, so one normal first launch preceded the run,
+  with the hook files removed beforehand. BattlEye was disabled by the user for
+  Story Mode.
+- **Same-process caveat:** for RPH's DirectStorage warning, the user installed
+  Script Hook V's ASI loader `XInput1_4.dll` (replacing RPH's), `ScriptHookV.dll`,
+  `DirectStorageFix.asi` and **`NativeTrainer.asi`** by hand. All were loaded
+  during the run, and Script Hook V reported the game as 1158.13. These do not
+  affect the probe's own reads, but later gameplay evidence should be captured
+  without the trainer. Their hashes are in the gate record.
+- **Still not established:** the Lua host inside GTA, the six-capability native
+  provider, actor spawn/move/attack, the cougar demo and Raptor assets. Next,
+  check Lua54 loading inside the RPH process, then have Qwen author the six
+  callbacks/bootstrap through SMELTER.
+- **Safety:** never go online with RPH or Script Hook files in the game folder.
+  `stage_native_read_probe.py remove` restores the tracked files, but it leaves
+  the user's hand-installed files and keeps the changed `XInput1_4.dll`.
+
+No commit or push.
+
+---
+
+# Claude checkpoint: live read-probe gate tooling — 2026-10-28 (uncommitted)
+
+Claude continued Codex's handover while the user was away. **The RPH gate is
+still not cleared.** It needs two things only the user can provide: the
+author-distributed Enhanced RPH runtime (backend download failed again
+earlier, and the site may need the user's account), and a supervised Story
+Mode run. No download, game launch, game-folder write or new Qwen dispatch
+was made. The six-capability adapter stays gated on that read probe.
+
+Verified before changing anything:
+- All 9 managed-host source hashes and 3 of 4 probe source hashes match their
+  checkpoints. The fourth, `managed.json`, differs as documented (host target added).
+- The staged plugin is still `456c1006…`.
+- `GTA5_Enhanced.exe` on `D:` is still 1.0.1158.16 / `b48e80f5…`, with no loader
+  or `Plugins` folder present.
+- Dashboard 8769, OpenCode 4096 and Ollama 11434 all answer.
+
+New operator-only, read-only tooling. It is in both requirement files, the mod
+runtime catalog and `docs/GTA_NATIVE_READ_PROBE.md`:
+
+| File | SHA-256 | Role |
+|---|---|---|
+| `tools/setup/inspect_loader_runtime.py` | `28ecab75…` | Hash and PE-version every file in a downloaded runtime folder or zip; members are never extracted and nothing is run |
+| `tools/setup/verify_runtime_probe.py` | `37a94338…` | Judge `probe.json` and the loader log against a profile; re-hash the executable on disk; write a receipt |
+| `mods/gta-ark/gta/rph/read_probe_expectations.json` | `2a986d51…` | GTA pins: exe 1158.16 hash, staged plugin hash, 4 samples, `RagePluginHook.log` must name the plugin |
+| `tools/setup/test_runtime_probe_verdict.py` | `54b163c8…` | 9 tests, including one on a report written by the real C# harness fixture |
+
+When the user is ready:
+1. Download the runtime.
+2. Run `inspect_loader_runtime.py` on it.
+3. Follow steps 2–4 of the probe guide.
+4. Run `verify_runtime_probe.py --profile mods/gta-ark/gta/rph/read_probe_expectations.json --latest --loader-log "<game>\RagePluginHook.log"`.
+5. Exit code 0 (`native_reads_verified`) clears the read gate. Then hand the six native callbacks/bootstrap to Qwen through SMELTER.
+
+Suites after this work: dashboard **807 OK (9 skipped)**, setup **186 OK**,
+analysis 30, web 19, JS 85/85.
+
+Frozen acceptance, the 131072/8192 profile, gameplay sources, the Lua runner
+and the staged DLL are unchanged.
+
+Claude's earlier fixes from the same evening are listed in
+`docs/handovers/CLAUDE_SYSTEM_REVIEW_20261028.md` ("Fix pass"):
+- binding archives were exported, so binding works again;
+- the child-environment and stale-token pollers were fixed;
+- Lua RED/ERROR was deferred because it would invalidate receipts.
+
+No commit or push. `dw3_decomp-main/` is untouched.
+
+---
+
+# Managed Lua 5.4 bridge checkpoint — 2026-10-28
+
+**An additional offline integration gate is complete.** The operator-owned
+`common/managed/LuaModuleHost.cs` runs the unchanged real controller, policy,
+provider admission and lifecycle through pinned KeraLua 1.4.11 / Lua 5.4.
+All **128 frozen checks** pass unchanged under that binding. A separate C# fake
+provider exercises all six callbacks, human/vehicle policy, move, attack,
+cooldown, death loss, duplicate registration and removal. A missing-attack
+mutant fails the same frozen checks. No game logic was changed or attributed
+to Qwen, and no new prompt/inference was submitted.
+
+Read [the managed host guide](MANAGED_LUA_HOST.md) and
+[the exact checkpoint](../diagnostics/MANAGED_LUA_HOST_20261028.json).
+Setup **168 OK**, including seven managed-Lua test methods, eight fixed-build
+tests and seven read-probe test methods. The host library is compile-only output
+`SmelterLuaHost.dll`; the reviewed offline fixture executes Lua with fake engine
+callbacks, never RPH or a game. Main/coding-copy Lua gameplay sources and all
+four protected verifiers remain unchanged. The coding-copy build tree is now
+`b1f67b33…` because the host source and second managed target were added.
+
+Every new dependency/tool is in both requirement files and the mod runtime
+catalog. MoonSharp 2.0.0 was evaluated but not selected (no observed `utf8`);
+the frozen verifier was not weakened. The host has an explicit module map,
+data-only callbacks/results, thread ownership and fault handling. It is not a
+security boundary or preemption for blocking CLR/native calls. Never retry a
+partially executed gameplay tick automatically after a host fault.
+
+**Next live gate remains RPH.** A fresh author-download attempt returned 403 /
+redirect failure; no runtime was obtained, installed or executed. Keep the
+read-only probe's staged DLL unchanged. Its earlier three-source build is still
+valid; `managed.json` now adds a host target, so the earlier manifest hash is
+historical. Once the supervised native read gate passes, Qwen can implement the
+six native callbacks/bootstrap using this generic bridge. It currently contains
+no GTA natives, cougar spawn, scheduler, Raptor assets or ARK integration.
+
+Backend only while the user uses the PC. Claude's workbench files untouched.
+No commit/push, new grants or changes to `dw3_decomp-main/`.
+Fresh coding-copy receipts match the host build tree: Lua 10/10, frozen 128/128,
+mods 14 tests with one C++ sample skip. The compiled host library SHA-256 is
+`3debc9fc6e1529937c126fd1c49047706da0b5285ffd4984d0e0ef4cab2a317c`.
+The MCP instance was refreshed while idle, watchdog restarted with its prior
+GREEN/retries preserved, and dashboard gracefully reloaded on port 8769 using
+the same database. The link rotated; obtain it from the private launch log.
+
+---
+
+# Native read-probe checkpoint — 2026-10-28
+
+The next game gate has a prepared **operator-owned RPH read-only plugin**.
+The authors' Enhanced release explicitly lists 1158.16 support; local runtime
+loading is still unverified. Read [the probe guide](GTA_NATIVE_READ_PROBE.md)
+and [the exact checkpoint](../diagnostics/NATIVE_READ_PROBE_20261028.json).
+Four source/manifest files are promoted byte-for-byte from coding workspace
+`897b9243-fd7e-42f4-a46a-d1b814a33a81`; final build tree `ad057891…`.
+The staged plugin SHA-256 is
+`456c10067fddea64829be2fe3bc41d44b372f853332b93756f6a0d3470033705`.
+It is under `.smelter/mod-packages/gta-native-read-probe-20261028/Plugins/`.
+No game-directory writes, game launch, security changes or SDK redistribution.
+
+Validation: dashboard **805 OK (9 skipped)**; setup **159 OK**, including seven
+managed-build and seven fake-callback probe test methods; requirements catalog
+**25 OK** after the final metadata update. Fresh coding-copy Lua **10/10**,
+frozen checks **128/128**, mods **14 tests, no failures, 1 skipped** (unbuilt C++
+sample). Gameplay files from the passive-system promotion are unchanged.
+The real plugin was **compiled only**, never executed. The SDK cache is a
+development reference, not an installed RPH runtime or a Lua host.
+
+A new Qwen probe-edit dispatch was rejected by automatic approval review with
+only `blocked by policy`. It was not retried via another route. Codex completed
+the narrower operator-owned diagnostic/tooling work; do not attribute this C#
+probe to Qwen. The prior Qwen GREEN watch remains historical Lua evidence, not
+a completion flag for this probe. Native OpenCode is idle; no inference queued.
+
+Next: obtain and identify the author-distributed Enhanced RPH runtime, then
+perform a supervised Story Mode read probe with runtime log and matching hashes.
+The author's backend download redirected repeatedly; no runtime archive was
+obtained. Continue with Lua host/transport and the real six-capability provider
+only after the native gate, then one controlled cougar placeholder. Keep
+SMELTER universal, game details confined to adapters/profiles, and Claude's
+workbench files untouched. Backend only while the creator uses the PC.
+No commit/push or change to the untracked `dw3_decomp-main/`.
+
+---
+
+# Resumed after reboot — 2026-10-28
+
+The user authorized resuming coding while away. Read
+[the resume checkpoint](handovers/CODEX_RESUME_CHECKPOINT_20261028.md), then
+[the prior pause checkpoint](handovers/CODEX_PAUSE_CHECKPOINT_20261028.md).
+The user is using the PC: **backend APIs/commands only; no desktop UI control**.
+Claude is handling workbench interface improvements; leave those files to Claude.
+**Offline adapter/entry milestone is complete and promoted.** Main tree:
+Lua **10/10**, mods **14/14** (no skips), frozen acceptance **128/128**
+(policy 30, controller 52, provider 26, lifecycle 20). Dashboard/backend suite:
+**805 OK, 9 skipped**; requirements catalog **24 OK**. Qwen's explicit final
+GREEN watch is `0bc75ea8f2094427a1fcc640b1bbf118`, zero retries, tree `bdea4710…`.
+See [the exact promotion manifest](../diagnostics/PASSIVE_SYSTEM_PROMOTION_20261028.json).
+
+The generic entry is passive, uses the real policy/controller and explicit
+provider, tracks fresh state per actor registration, and contains refused or
+throwing stops. A retained regression tests nonstring refusal reasons and error
+detail. Disposable mutations of swallowed refusal and false removal both fail
+the intended tests; their harness stage is ERROR because custom assertions are
+classified as runtime errors, not a claimed RED receipt. No broken draft was
+promoted. Constructor/test scaffolds are operator-provided; Qwen implemented the
+provider and lifecycle methods through scoped SMELTER tools. Generated tests
+are contract-derived conformance, not independent native/integration evidence.
+
+Services remain available, native task idle, watchdog terminal GREEN. No new
+inference is scheduled. The current private URL is in the launch log. Installed
+OpenCode 1.19.3 runs headless; Melty UI was not controlled after the user's
+backend-only instruction. Native provider/Lua host/loader gates remain unverified:
+this does **not** establish a playable game test. Clear the gates in
+[GTA predator adapter](GTA_PREDATOR_ADAPTER.md) next.
+No commit or push; never stage `dw3_decomp-main/`.
+
+---
+
+# Codex continuation — 2026-10-28 (uncommitted)
+
+Branch `feature/agent-stack-game-mods`, starting HEAD `876352f` after `17073e6`.
+No commit or push was requested. Never stage `dw3_decomp-main/`.
+
+- Verified Docker, the Codex-side database/seven existing grants, exact native
+  idle state and saved receipts before changing source. Refreshed the dashboard
+  gracefully and reloaded Melty's MCP process plus the watchdog. The current
+  private dashboard link remains in `.smelter/dashboard-knowledge.stdout.log`.
+- Operator-owned controller verifier is now **52 checks**: acquisition/retention
+  range-reuse cases at both adapter scales. Reference 52/52; regression mutant
+  fails exactly the four new checks. Registry migrated with an audit reason.
+- Qwen's range fix was reviewed and promoted, controller SHA `5e2077c8…`.
+  Saved Lua receipt `f4ef0e36-6b69-4c4a-b357-3a4e7d23ea36`: seven programs,
+  controller 52/52 and policy 30/30. Explicit GREEN, watch `2cafb13a…`, one nudge.
+- Infrastructure suites: dashboard **796 OK (9 skipped)**, setup **144 OK**,
+  Node **78/78**. See `.smelter/codex-*-20261028.log`.
+- **Real-policy editable test is recovered, verified and promoted.** Qwen's
+  dictionary-fixture test SHA `18b8b86d…` calls the real controller/policy and
+  exercises human movement/attack, fake-clock cooldown and death loss. The
+  operator's disposable baseline passes; policy-bypass and wrong-actor mutants
+  exit 1. Proof: `diagnostics/PREDATOR_POLICY_TEST_PROOF_20261028.json`.
+  Saved Lua `08a6f1b3-a405-44fa-a59d-cae855a05b7e`, mods
+  `ff186455-2417-4342-a88b-45810bf2d5fe`, both GREEN; explicit finish, zero nudges.
+  Three role labels share the same normalized human fixture; distinct native
+  role classification and explicit target-command spies remain future checks.
+- Long-context rollback loops were stopped without promoting bad fixtures.
+  The passing Qwen-authored checkpoint was recovered through a prepared proposal
+  applied by Qwen. Per-task tools excluded new edits/restores during recovery.
+  Future bounded coding tasks use fresh root sessions in Melty's OpenCode backend,
+  with explicit tool allowlists; original Melty UI conversation remains preserved.
+  Current adapter task session: `ses_e7e2fe04effe9czeNNkEuMhdgV`, same coding UUID,
+  131072/8192 ceiling and unchanged access grants. The observer follows this exact
+  native session; no Melty task ID is invented.
+- Native adapter design: [GTA predator adapter](GTA_PREDATOR_ADAPTER.md).
+  Fresh inventory still finds GTA 1.0.1158.16 and no loaders in the checked
+  locations. The author's current support list remains 1.0.1158.13. GTA Lua
+  hosting is also unverified. No game was launched, modified or auto-granted.
+- Full review, source hashes and fresh runtime inventory:
+  [range review](../diagnostics/PREDATOR_RANGE_REVIEW_20261028.md).
+  No new tool/package installed; acceptance declarations updated in both
+  requirement files. Real-policy tests are promoted. Next: reject/repair the
+  unpromoted adapter draft against operator-owned admission checks, then wire
+  the passive entry. Work is paused; real native actions remain gated.
+
+All evidence above is offline. Older checkpoints below are historical.
+
+---
+
 # Claude checkpoint: generic predator controller GREEN and promoted — 2026-10-28
 
 **Codex: start with [the Codex handover](handovers/CODEX_HANDOVER_20261028.md).**
 Commit `17073e6` (not pushed).
 
-Nothing is committed. All results below are offline (fake adapters, Docker
+At that checkpoint the changes were subsequently committed locally. All results below are offline (fake adapters, Docker
 Lua/Python). No GTA or ARK runtime behavior has been verified.
 
 **Result.** Qwen implemented `mods/gta-ark/Mods/GtaArkLink/Scripts/predator_controller.lua`

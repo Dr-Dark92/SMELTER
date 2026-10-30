@@ -291,6 +291,29 @@ local function scenarios(label, scale)
     local r = step(c, "actor")
     return r.action == "error" and w.count("stop", "actor") == 1 and w.count("attack") == 0
   end)
+  -- A candidate/retention record already established this tick's distance.
+  -- A redundant describe must never turn missing range into an in-range attack.
+  case("acquisition keeps verified range when describe is unavailable", function(w)
+    w.put("actor", "creature", 0); w.put("walker", "character", 5)
+    w.throw.describe = true
+    local r = step(w.controller(), "actor")
+    return r.action == "move" and r.target_id == "walker"
+       and w.count("move_to", "actor", "walker") == 1 and w.count("attack") == 0
+  end)
+  case("retention reuses verified range when a second describe fails", function(w)
+    w.put("actor", "creature", 0); w.put("walker", "character", 5)
+    local c = w.controller(); local first = step(c, "actor")
+    local describe, reads = w.adapter.describe, 0
+    w.adapter.describe = function(id)
+      reads = reads + 1
+      if reads > 1 then saw("redundant describe returned nil"); return nil, "unavailable" end
+      return describe(id)
+    end
+    w.now = w.now + 0.1
+    local r = step(c, "actor")
+    return first.action == "move" and r.action == "move" and r.target_id == "walker"
+       and w.count("move_to", "actor", "walker") == 1 and w.count("attack") == 0
+  end)
 end
 
 if new then
@@ -298,7 +321,7 @@ if new then
   scenarios("centimetre adapter", 100)
 else
   -- Keep the fixed check count so a missing constructor is RED, not a count ERROR.
-  for _ = 1, 2 * 22 do check("subject exposes new(deps)", function() return false end) end
+  for _ = 1, 2 * 24 do check("subject exposes new(deps)", function() return false end) end
 end
 print("SMELTER_ACCEPTANCE_CHECKS|{\"checks\":" .. checks .. ",\"failures\":" .. failures .. "}")
 os.exit(failures == 0 and 0 or 1)

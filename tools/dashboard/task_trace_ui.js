@@ -60,7 +60,7 @@ const SmelterTaskTrace=(()=>{
    const after=card.children?.[1];for(const b of buttons.reverse())after&&card.insertBefore?card.insertBefore(b,card.children[1]):card.append(b)}}
   function connect(){
    if(disposed)return;if(!ready()){timer=environment.setTimeout(connect,1000);return}
-   const secret=SmelterAuth.token(environment.location);if(!secret){feed='authorization required';show();timer=environment.setTimeout(connect,3000);return}
+   const secret=SmelterAuth.token(environment.location);if(!secret||SmelterAuth.isRejected?.(secret)){feed='authorization required';show();timer=environment.setTimeout(connect,3000);return}
    const protocol=environment.location.protocol==='https:'?'wss:':'ws:';
    socket=new environment.WebSocket(protocol+'//'+environment.location.host+'/api/task-trace/ws',['smelter.trace.v1','smelter.auth.'+secret]);
    socket.onopen=()=>{feed='connected';attempt=0;lastFrame=Date.now();show()};

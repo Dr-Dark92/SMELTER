@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "description": "Pass criteria for the supervised GTA Enhanced RPH Lua host probe: four player reads, each through the managed Lua 5.4 host on the game fiber",
+  "channel": "gta-rph-lua-host-probe",
+  "stage": "native_reads_observed",
+  "scope": "read_only_native_probe_not_gameplay",
+  "sample_count": 4,
+  "executable": {
+    "name": "GTA5_Enhanced.exe",
+    "file_version": "1.0.1158.16",
+    "sha256": "b48e80f5fc899eb89e5dcc9f3b68e9551cc8dcfac78b2a940b207e569e9987ea"
+  },
+  "plugin": {
+    "name": "SmelterLuaHostProbe.dll",
+    "deployed_relative_path": "Plugins/SmelterLuaHostProbe.dll",
+    "sha256": "3f311c670481ce3eeca0323e24ea7a6b1cc69512b72890b6c1d60df5a101ac63"
+  },
+  "loader_log": {
+    "name": "RagePluginHook.log",
+    "required": true,
+    "receipt_prefix": "[SMELTER] Lua host probe receipt:",
+    "must_mention": [
+      "SmelterLuaHostProbe"
+    ]
+  },
+  "package": {
+    "path": ".smelter/mod-packages/gta-lua-host-probe-20261029",
+    "root_files": [
+      "KeraLua.dll",
+      "lua54.dll",
+      "KeraLua.LICENSE.txt"
+    ]
+  },
+  "lua_host": {
+    "version": "Lua 5.4",
+    "lua54_sha256": "2d563db79f53acca0164fa0c0d53f99e2d1bd0d50b427b85c7cc2b2158657833",
+    "keralua_sha256": "5a8addbb6c119a887bdcbd9b971d338f0849066be82e25ff20eaaeaf00e0443c",
+    "callback_calls": 4,
+    "host_mutating_callbacks": 0
+  }
+}

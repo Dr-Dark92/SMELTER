@@ -1,3 +1,4 @@
+import hashlib
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
@@ -124,6 +125,24 @@ class NativeProgressTests(unittest.TestCase):
         archives = list((progress._path(self.root).parent / 'archives').glob('*.json'))
         self.assertEqual(len(archives), 1)
         self.assertEqual(json.loads(archives[0].read_text())['events'][0]['phase'], 'running')
+
+    def test_archive_cap_is_cleared_only_by_a_verified_export(self):
+        folder = progress._path(self.root).parent / 'archives'; folder.mkdir(parents=True)
+        for i in range(10): (folder / f'{i:032x}.json').write_text(json.dumps({'n': i}))
+        self.bridge.ingest(self.tool())
+        data = lambda: {'session_id': SID, 'directory': str(self.native), 'workspace_id': self.sid,
+                        'expected_revision': self.bridge.view()['configuration_revision']}
+        with patch.object(self.bridge, '_start'):
+            with self.assertRaisesRegex(ValueError, 'export_native_archives'):
+                self.bridge.bind(data())
+            result = progress.export_archives(self.root)
+            self.assertEqual(result['count'], 10); self.assertEqual(list(folder.glob('*.json')), [])
+            manifest = json.loads((Path(result['folder']) / 'manifest.json').read_text())
+            for row in manifest['files']:
+                self.assertEqual(hashlib.sha256((Path(result['folder']) / row['name']).read_bytes()).hexdigest(), row['sha256'])
+            self.bridge.bind(data())
+        self.assertEqual(len(list(folder.glob('*.json'))), 1)
+        self.assertIsNone(progress.export_archives(Path(self.tmp.name) / 'empty'))
 
     def test_chart_permissions_are_rechecked_after_access_is_narrowed(self):
         self.bridge.ingest(self.tool()); self.bridge.ingest(event('session.idle')); self.bridge.finish_pending()

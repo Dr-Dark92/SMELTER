@@ -1,0 +1,72 @@
+{
+  "scope": "offline disposable operator proof",
+  "source_hashes": {
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/engine_adapter.lua": "829b87ebc7d6e2d8af1eb67ae60679b01f1dde22ff345a13a11ea02d883bb756",
+    "mods/gta-ark/Mods/GtaArkLink/Scripts/raptor_system_main.lua": "65b497e1414bdd5c1872a18a4cca415636b640b4b324b93fc8c7637ee9b2446f"
+  },
+  "runs": [
+    {
+      "name": "baseline",
+      "stage": "GREEN",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failing_programs": []
+    },
+    {
+      "name": "adapter-refusal",
+      "stage": "ERROR",
+      "exit_code": 1,
+      "counts": {
+        "tests": 10,
+        "failures": 2,
+        "errors": 1,
+        "skipped": 0
+      },
+      "failing_programs": [
+        {
+          "test": "mods/gta-ark/tests/test_engine_adapter.lua",
+          "working_directory": "mods/gta-ark",
+          "exit_code": 1
+        },
+        {
+          "test": "mods/gta-ark/tests/test_failure_reasons.lua",
+          "working_directory": "mods/gta-ark",
+          "exit_code": 1
+        },
+        {
+          "test": "mods/gta-ark/tests/test_predator_system.lua",
+          "working_directory": "mods/gta-ark",
+          "exit_code": 1
+        }
+      ]
+    },
+    {
+      "name": "false-removal",
+      "stage": "ERROR",
+      "exit_code": 1,
+      "counts": {
+        "tests": 10,
+        "failures": 1,
+        "errors": 1,
+        "skipped": 0
+      },
+      "failing_programs": [
+        {
+          "test": "mods/gta-ark/tests/test_failure_reasons.lua",
+          "working_directory": "mods/gta-ark",
+          "exit_code": 1
+        },
+        {
+          "test": "mods/gta-ark/tests/test_predator_system.lua",
+          "working_directory": "mods/gta-ark",
+          "exit_code": 1
+        }
+      ]
+    }
+  ]
+}

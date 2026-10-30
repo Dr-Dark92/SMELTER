@@ -36,6 +36,12 @@ class RenderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'rules'):
             render('x', {'deps': [{'name': 'p', 'type': 'table', 'rules': [['a', '==', 'b']]}], 'methods': [{'name': 'u'}]})
         with self.assertRaisesRegex(ValueError, 'one to six methods'):render('x', {'deps': [], 'methods': []})
+        for imports in ('bad',[{'name':'Adapter','module':'../outside'}],
+                        [{'name':'state','module':'engine_adapter'}]):
+            with self.subTest(imports=imports), self.assertRaisesRegex(ValueError, 'import'):
+                render('x', {'imports':imports,'methods':[{'name':'tick'}]})
+        with self.assertRaisesRegex(ValueError, 'setup'):
+            render('x', {'setup':['x'*161],'methods':[{'name':'tick'}]})
 
 
 class ScaffoldToolTests(unittest.TestCase):
@@ -103,8 +109,8 @@ class ScaffoldToolTests(unittest.TestCase):
         cw.apply(self.root, {'workspace_id': sid, 'proposal_id': result['proposal_id']})
         tested = cw.test(self.root, {'workspace_id': sid, 'profile': 'lua'})
         counts = tested['acceptance']['contracts'][0]['counts']
-        self.assertEqual(counts['checks'], 48)
-        self.assertEqual(counts['failures'], 40)
+        self.assertEqual(counts['checks'], 52)
+        self.assertEqual(counts['failures'], 44)
         self.assertIn('not_implemented', tested['diagnostic']['failed_checks'][0])
 
 

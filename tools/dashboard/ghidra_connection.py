@@ -109,7 +109,10 @@ def _query(arguments):
 def _environment():
     # Ghidra's batch launcher expands its own arguments; never inherit Java agent
     # options or arbitrary Ghidra VM flags from the parent environment.
-    allowed = ('SystemRoot', 'WINDIR', 'COMSPEC', 'TEMP', 'TMP', 'LOCALAPPDATA', 'APPDATA', 'USERPROFILE', 'HOME', 'PATH', 'JAVA_HOME')
+    # Read-only Windows locations are kept: without SystemDrive/ProgramData, Windows
+    # components expand '%SystemDrive%' relative to the working directory.
+    allowed = ('SystemRoot', 'SystemDrive', 'ProgramData', 'ProgramFiles', 'ProgramFiles(x86)', 'ALLUSERSPROFILE',
+               'WINDIR', 'COMSPEC', 'TEMP', 'TMP', 'LOCALAPPDATA', 'APPDATA', 'USERPROFILE', 'HOME', 'PATH', 'JAVA_HOME')
     env = {k: os.environ[k] for k in allowed if k in os.environ}
     if os.name == 'nt':
         # A stale/quoted JAVA_HOME must not reach Ghidra's batch launcher.

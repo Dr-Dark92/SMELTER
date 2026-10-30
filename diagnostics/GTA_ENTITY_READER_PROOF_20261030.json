@@ -1,0 +1,46 @@
+{
+  "stage": "GREEN",
+  "checks": 31,
+  "source_sha256": {
+    "mods/gta-ark/common/managed/EntityRegistry.cs": "638ff4f46570db098ce418cc787d8d656821b746637174d67754ff5cc42e8fb8",
+    "mods/gta-ark/common/managed/EntitySnapshot.cs": "2472ec01254f4eb8ea068048584934fee31876b46f7f1f578ca47a3bf862e978",
+    "mods/gta-ark/gta/rph/GtaEntityReader.cs": "016772291e5be70b8f7404f7f67b0cbb7413ae6f22e819bbf7a697488dbafa61"
+  },
+  "fixture_sha256": "20837685fe425b21aa13a40fa2297e81d3124dec77174d15d40533f3a401f381",
+  "log_sha256": "fc0b47217dce28ad136b9acb9fa5a9aece3e8f04960e323f340e4394162c13f1",
+  "framework_release": 534296,
+  "scope": "fake SDK C# reader fixture only",
+  "game_runtime_verified": false,
+  "rph_loaded": false,
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "promoted": true,
+  "live_reader_verified": false,
+  "fixture_receipt": ".smelter/codex-reader-final-fixture-20261030.json",
+  "real_sdk_build_receipt": ".smelter/managed-builds/1f0cb52f-dcbe-455a-bc79-f3c0053bc841/receipt.json",
+  "compiled_artifact_sha256": "c9592aad4286b30832c3dc3a3cc793ea0ce17708fde40b189947fc3fc899fc0c",
+  "artifact_executed": false,
+  "mutation_evidence": [
+    {
+      "mutant": "runtime_gate_bypass",
+      "stage": "RED",
+      "failure": "System.Exception: READER FAIL: refused observation touches no SDK",
+      "source_sha256": "dd8c177c38bee75fd7c06e01f33223faef3f88e8bd24424e54d3623fc92851d5"
+    },
+    {
+      "mutant": "vehicle_as_human",
+      "stage": "RED",
+      "failure": "System.Exception: READER FAIL: vehicle never fabricated as human",
+      "source_sha256": "7d398fdd2bb754fcce63ab6c4561a71304bcc115e154f7f2349c7f8a613c174d"
+    },
+    {
+      "mutant": "missing_post_read_validation",
+      "stage": "RED",
+      "failure": "System.Exception: READER FAIL: capture revalidates after reads",
+      "source_sha256": "afa6a4b70d734d5ef04edbc6c0fb9dcdc4a8389477e5a04d847f3096b2038ea8"
+    }
+  ],
+  "qwen_session": "ses_e74296650ffehcQmtKwZZikvyh",
+  "qwen_lua_finish_receipt": "be0a8947-9788-4173-808c-61382eabb8ad",
+  "qwen_lua_tree_sha256": "70748e1baafe44b5f394bc054bbc697198f65921df7b263d8888138b34afafaa"
+}

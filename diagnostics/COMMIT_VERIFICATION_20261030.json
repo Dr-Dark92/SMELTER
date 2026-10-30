@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "suites": [
+    {
+      "suite": "dashboard",
+      "tests": 807,
+      "skipped": 9,
+      "failed": 0,
+      "log": ".smelter/codex-commit-dashboard-docker-20261030.log",
+      "sha256": "4f7448c74ffb6fafcf87016e450b2a2933a8f7dd796a81ff67c9b9fba47b87b4"
+    },
+    {
+      "suite": "setup",
+      "tests": 212,
+      "skipped": 0,
+      "failed": 0,
+      "log": ".smelter/codex-commit-setup-20261030.log",
+      "sha256": "2c36c4ec07dfabb7552e62de4e9b43588915521a9f6c42682db6c83e435213f8"
+    },
+    {
+      "suite": "analysis",
+      "tests": 30,
+      "skipped": 0,
+      "failed": 0,
+      "log": ".smelter/codex-commit-analysis-20261030.log",
+      "sha256": "d6959b9b4e6f691bd8fb93991b818543e8b142926efa3ac25d8c8d8bbbbe68ea"
+    },
+    {
+      "suite": "javascript",
+      "tests": 74,
+      "skipped": 0,
+      "failed": 0,
+      "log": ".smelter/codex-commit-node-20261030.log",
+      "sha256": "3ccdc32175e1d2c866ae0a5735982746a2e87dc17c1d5c078c55633cb2c445cd"
+    }
+  ],
+  "mod_python": {
+    "tests": 14,
+    "skipped": 1,
+    "failed": 0,
+    "evidence": "operator unittest output, 30 October"
+  },
+  "lua": {
+    "receipt": ".smelter/coding-workspaces/897b9243-fd7e-42f4-a46a-d1b814a33a81/test-runs/be0a8947-9788-4173-808c-61382eabb8ad.json",
+    "sha256": "fd773bc0ae336a7edd245f2bb0edde3eafa611ea3331bca3955ba88b077a1b0e",
+    "stage": "GREEN",
+    "programs": 10,
+    "frozen_checks": 128,
+    "tree_sha256": "70748e1baafe44b5f394bc054bbc697198f65921df7b263d8888138b34afafaa"
+  },
+  "native_reader_proof": "diagnostics/GTA_ENTITY_READER_PROOF_20261030.json",
+  "registry_proof": "diagnostics/ENTITY_REGISTRY_PROOF_20261029.json",
+  "live_lua_proof": "diagnostics/LUA_HOST_GATE_20261029.json",
+  "gameplay_verified": false
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "sdk": "rph",
+  "targets": [
+    {
+      "name": "SmelterNativeProbe",
+      "sources": [
+        "common/managed/RuntimeProbeHarness.cs",
+        "gta/rph/GtaProbeProfile.cs",
+        "gta/rph/ReadOnlyProbe.cs"
+      ]
+    },
+    {
+      "name": "SmelterLuaHost",
+      "sdk": "keralua",
+      "sources": [
+        "common/managed/LuaModuleHost.cs"
+      ]
+    },
+    {
+      "name": "SmelterLuaHostProbe",
+      "sdk": [
+        "rph",
+        "keralua"
+      ],
+      "sources": [
+        "common/managed/RuntimeProbeHarness.cs",
+        "common/managed/LuaModuleHost.cs",
+        "common/managed/LuaTickProbe.cs",
+        "gta/rph/GtaProbeProfile.cs",
+        "gta/rph/LuaHostProbe.cs"
+      ]
+    },
+    {
+      "name": "SmelterGtaEntityReader",
+      "sdk": "rph",
+      "sources": [
+        "common/managed/EntityRegistry.cs",
+        "common/managed/EntitySnapshot.cs",
+        "gta/rph/GtaEntityReader.cs"
+      ]
+    }
+  ]
+}

@@ -26,15 +26,175 @@ budgeted. `tools/dashboard/requirements-mcp.txt` explicitly pins the already
 installed `jsonschema==4.26.0` dependency used for validation. No new package
 installation was needed. See [coding recovery](docs/RECOVERY_GUARDRAILS.md).
 
+## Managed plugin development (operator build only)
+
+`tools/setup/install_managed_sdk.py --sdk rph` caches the author-owned NuGet
+RagePluginHook SDK **1.124.0** from its SHA-256-pinned package in
+`tools/setup/managed-sdk-lock.json`. It is a development reference, not a game
+loader. The SDK license prohibits redistribution; it stays in ignored
+`.smelter/tooling/rph-sdk/` and is never copied into plugin outputs or releases.
+
+`tools/setup/build_managed_mod.py --workspace-id <UUID> --mod <id> --target <name>`
+is an **operator-only** fixed C# 5/x64 library compiler for an owned coding copy
+and `managed.json`. It uses the installed Windows .NET Framework compiler
+(4.7.2+ runtime required), fixed framework references and a pinned SDK. No
+MSBuild targets, analyzers, custom flags, SDK execution or output execution.
+This is not exposed to the model and is not a host fallback for the confined
+native builder. Receipts pin sources/compiler/references/artifact hashes;
+compilation does not establish game compatibility. C# source is editable in
+coding copies; DLLs and other build outputs remain excluded. Python standard
+library only; no new Python package or system compiler was installed.
+The CLI preserves its JSON receipt and exits nonzero when its stage is not
+`compiled`, so an automated shell cannot mistake a compiler failure for success.
+
+The [RPH team's Enhanced release](https://www.lcpdfr.com/downloads/gta5mods/g17media/52970-lspd-first-response-enhanced-preview/)
+dated 17 September 2026 lists build 1158.16 support. That supplies a candidate
+runtime route separate from Script Hook V; live loading and native reads remain
+separate proof gates. No game or security settings are changed by these tools.
+
+The optional `mods/gta-ark/managed.json` target `SmelterNativeProbe` compiles a
+read-only RPH diagnostic, with an engine-neutral report/gating harness in
+`common/managed/RuntimeProbeHarness.cs`. Its game-specific profile and callbacks
+live under `gta/rph/`. It does not implement the six gameplay capabilities or
+host Lua. See [probe preparation and evidence](docs/GTA_NATIVE_READ_PROBE.md).
+`tools/setup/test_managed_mod_build.py` checks the compiler/cache boundaries;
+`tools/setup/test_runtime_probe.py` compiles and runs only a reviewed fake-callback
+fixture, without referencing RPH or opening a game. Both reuse the installed
+Framework compiler and Python standard library. The real plugin is never run by
+the builder or tests, and RPH runtime installation remains separate.
+
+Two operator-only, read-only tools support the supervised run.
+`tools/setup/inspect_loader_runtime.py <folder-or-zip>` records each file's
+SHA-256 and PE file version under `.smelter/runtime-inventories/`. Zip members are
+read in place, never extracted, and nothing is executed.
+`tools/setup/verify_runtime_probe.py --profile <expectations.json> --latest --loader-log <log>`
+judges the newest probe report against a reviewed per-game profile (GTA:
+`mods/gta-ark/gta/rph/read_probe_expectations.json`). It re-hashes the
+executable and the profile-selected deployed plugin on disk, and requires the
+loader's receipt marker to name the exact report path/run. Windows long/8.3
+aliases and slash/case differences are normalized. It writes a verdict under
+`.smelter/runtime-probe-verdicts/`. Both use only the Python standard library.
+Receipt filenames cannot be selected by malformed report run IDs. These tools
+are tested by `tools/setup/test_runtime_probe_verdict.py`, which also judges a
+real harness fixture report.
+
+`tools/setup/stage_native_read_probe.py plan|apply|remove` performs the one
+game-folder change of that run, reversibly. `extract --archive <author zip>`
+copies only the archive's top-level files into `.smelter/native-read-gate/runtime/`.
+`plan --runtime-dir <folder>` selects every top-level file plus the staged probe
+(RPH's readme: everything except its SDK and Licenses folders) and requires
+`RAGEPluginHook.exe`. Anything in a subfolder, such as a bundled LSPDFR's
+`plugins/` and `lspdfr/`, is listed as excluded and needs an explicit `--file`. `apply --plan <plan.json>` refuses any existing target, re-hashes the
+executable and every source first, and writes an install manifest under
+`.smelter/native-read-gate/installs/` before copying. `remove --install <manifest>`
+deletes only files whose bytes still match. Pins come from the same expectations
+profile. Python standard library only; tested by `tools/setup/test_stage_native_read_probe.py`.
+
+## In-game Lua host probe (operator-only)
+
+`SmelterLuaHostProbe` (`mods/gta-ark/gta/rph/LuaHostProbe.cs` plus the engine-neutral
+`common/managed/LuaTickProbe.cs`) is a read-only RPH plugin. It runs four player
+reads, each through the managed Lua 5.4 host and one read-only callback, and
+records the `lua54.dll` the game process actually loaded. `build_managed_mod.py`
+now accepts a list of pinned SDKs per target (`["rph","keralua"]`).
+`tools/setup/verify_lua_host_probe.py` applies the read-probe verdict plus the Lua
+evidence against `mods/gta-ark/gta/rph/lua_host_probe_expectations.json`.
+It independently re-hashes the reported Lua54 and KeraLua files, requires four
+integer tick/thread records on the positive host thread ID, and rejects malformed
+Lua evidence with a named reason. These checks do not change the deployed probes.
+`stage_native_read_probe.py plan --profile … --package …` without `--runtime-dir`
+deploys it onto an existing RPH install, including the pinned `KeraLua.dll`,
+`lua54.dll` and KeraLua license beside the game executable. Tests:
+`test_lua_tick_probe.py` (real pinned Lua 5.4, fake reads) and
+`test_verify_lua_host_probe.py`. Python standard library only.
+
+## Optional managed Lua 5.4 host (offline verified)
+
+The independent entity-registry preparation uses
+`tools/setup/check_entity_registry.py --workspace-id <UUID> --reviewed-sha256 <hash>`.
+After explicit operator source review it compiles/runs only the pure C# fixture
+`tools/setup/fixtures/EntityRegistryFixture.cs` with fixed Framework references,
+no SDK/game/native provider. The checker is not an MCP tool. It reuses Python
+standard library and the installed Framework compiler; no new package is needed.
+Source review/hash, bounded snapshots, compiler/test timeouts and receipts are
+separate from Lua regression GREEN. Success requires one well-formed summary
+with zero failures and a positive check count matching the individual pass
+lines; exit zero or an arbitrary success marker is insufficient. Checker tests
+cover malformed/inconsistent summaries and compile/review failures. See
+[the registry contract](docs/ENTITY_REGISTRY_TASK.md).
+
+The first GTA-specific read slice is checked by
+`tools/setup/test_gta_entity_reader.py` with the fixed fake SDK fixture
+`tools/setup/fixtures/GtaEntityReaderFixture.cs`, then compiled separately with
+the existing `build_managed_mod.py` target `SmelterGtaEntityReader` and the
+pinned RPH development SDK. The fixture accepts exact operator-reviewed source
+hashes, uses the existing Framework compiler, and bounds compile/run time at
+30/10 seconds. It never loads RPH or a game and adds no dependency. Live reader
+behavior and the six callbacks remain separate gates. See
+[the read-boundary contract](docs/GTA_ENTITY_READER_TASK.md).
+
+`tools/setup/install_managed_sdk.py --sdk keralua` caches **KeraLua 1.4.11**,
+its .NET Framework 4.6 binding and Windows x64 `lua54.dll`, using package/member
+hashes in `managed-sdk-lock.json`. Its MIT license and Lua's license must be
+retained with any future runtime distribution. Nothing is installed into a game.
+The existing .NET Framework compiler and Python standard library are reused.
+
+`mods/gta-ark/common/managed/LuaModuleHost.cs` is an engine-neutral host for
+reviewed module strings and explicit C# callbacks. It exposes no file loader,
+OS libraries or CLR object translator to those modules. It enforces thread
+ownership, module/result bounds, explicit failures and a Lua instruction budget.
+This is **not a security boundary** for hostile code or blocking CLR callbacks;
+callback time overruns are detected after return and fault the host.
+
+`SmelterLuaHost` in `mods/gta-ark/managed.json` selects the pinned `keralua` SDK
+for that target. Native DLLs are marked `reference=false` in the lock; the fixed
+compiler references only managed assemblies, copies no runtime and executes
+no output. Existing `SmelterNativeProbe` still uses the default RPH SDK.
+
+`tools/setup/check_managed_lua.py --workspace-id <UUID>` compiles/runs **only an
+operator-reviewed offline fixture**, with fake engine callbacks and the pinned
+Lua runtime. It checks all 128 unchanged frozen cases and a missing-attack
+mutant. `tools/setup/test_managed_lua.py` tests the bridge independently of GTA;
+`test_managed_mod_build.py` tests SDK selection/native-reference exclusion.
+The interpreter is not exposed as an MCP host-command fallback. See
+[managed Lua host evidence and limitations](docs/MANAGED_LUA_HOST.md).
+
+MoonSharp 2.0.0 was evaluated in a private research fixture and rejected for
+this route: it does not supply the Lua 5.4 `utf8` library used by the verifier.
+It is not a selected dependency or game runtime; no verifier was weakened to
+accommodate it. Its package identity is recorded in the machine catalog.
+
 ## Frozen acceptance checks
 
 `tools/dashboard/acceptance_contracts.py` registers reviewed module behavior in
 controller metadata outside the model-editable copy. The initial
 `entity-policy-v1` verifier uses the existing pinned Lua sandbox and checks 30
-engine-neutral entity-policy cases. `predator-controller-v1` (48 checks) verifies
+engine-neutral entity-policy cases. `predator-controller-v1` (52 checks) verifies
 a generic controller against two injected fake adapters: target selection
 through the evaluator, movement/attack commands, cooldown and target loss.
-No new packages are required.
+`provider-admission-v1` (26 checks) validates an explicit six-function provider,
+unchanged read results and command refusals, passive construction and explicit
+simulation/provider modes. Admission does not verify game compatibility or supply
+a native runtime. Its disposable reference and eight regression mutants are
+tested in `tools/dashboard/test_provider_admission.py`. No new packages are required.
+`predator-system-v1` adds 20 generic lifecycle checks for passive construction,
+explicit provider admission, real policy/controller wiring, actor registration,
+refused removal, per-actor errors and fresh state after removal/re-add. It uses
+allowlisted sibling modules in the same read-only snapshot; the other three
+registered contracts verify those dependencies independently.
+
+For a registered pure Lua contract, the operator can generate an editable
+conformance test with `tools/setup/scaffold_acceptance_test.py --workspace-id
+<UUID> --contract <id> --destination <project>/tests/test_<name>.lua`. This
+creates a hash-checked proposal only; it never applies or registers anything.
+It embeds the pinned verifier with the actual subject path relative to the
+test working directory. Independent protected acceptance still runs separately.
+This uses Python standard library and the existing Lua parser/sandbox.
+The subject scaffold also supports `predator-system-v1`: operator-declared
+imports and a bounded constructor setup create the real adapter/policy/controller
+factory and per-instance state. Actor lifecycle methods remain explicit TODOs
+for the model. The scaffold passes 9/20 lifecycle checks; completing its three
+methods in a disposable fixture passes 20/20. No new package is needed.
 
 Register a subject explicitly with
 `python tools/setup/register_acceptance.py --workspace-id <UUID> --contract entity-policy-v1 --subject <relative-module.lua>`.

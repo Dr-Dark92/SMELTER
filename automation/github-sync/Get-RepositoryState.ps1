@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param([string]$Root='C:\SMELTER',[switch]$Fetch)
+param([string]$Root='',[switch]$Fetch)
+# Default to the checkout this script lives in, not a fixed drive path.
+if (-not $Root) { $Root=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path }
 $ErrorActionPreference='Stop'
 if (-not (Test-Path (Join-Path $Root '.git'))) { throw "Not a Git repository: $Root" }
 Push-Location $Root
